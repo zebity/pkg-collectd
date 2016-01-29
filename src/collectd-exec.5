@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-EXEC 5"
-.TH COLLECTD-EXEC 5 "2015-05-20" "5.4.2.911.g0c88d3b" "collectd"
+.TH COLLECTD-EXEC 5 "2016-01-22" "5.5.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -154,7 +154,7 @@ collectd\-exec \- Documentation of collectd's "exec plugin"
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-The \f(CW\*(C`exec plugin\*(C'\fR forks of an executable either to receive values or to
+The \f(CW\*(C`exec plugin\*(C'\fR forks off an executable either to receive values or to
 dispatch notifications to the outside world. The syntax of the configuration is
 explained in \fIcollectd.conf\fR\|(5) but summarized in the above synopsis.
 .PP
@@ -176,7 +176,7 @@ time and continuously write values to \f(CW\*(C`STDOUT\*(C'\fR.
 See \*(L"\s-1EXEC DATA FORMAT\*(R"\s0 below for a description of the output format expected
 from these programs.
 .Sp
-\&\fBWarning:\fR If the executable only writes one value and then exits I will be
+\&\fBWarning:\fR If the executable only writes one value and then exits it will be
 executed every \fIInterval\fR seconds. If \fIInterval\fR is short (the default is 10
 seconds) this may result in serious system load.
 .ie n .IP """NotificationExec""" 4

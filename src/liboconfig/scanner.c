@@ -3351,6 +3351,7 @@ char *yytext;
  */
 #line 30 "scanner.l"
 #include <stdlib.h>
+#include <string.h>
 #include "oconfig.h"
 #include "aux_types.h"
 #include "parser.h"
@@ -3370,13 +3371,14 @@ static void ml_append (char *);
 #define yyterminate() \
 	do { free (ml_buffer); ml_buffer = NULL; ml_pos = 0; ml_len = 0; \
 		return YY_NULL; } while (0)
+#define YY_NO_INPUT 1
 
 /* IPv6 address according to http://www.ietf.org/rfc/rfc2373.txt
  * This supports embedded IPv4 addresses as well but does not strictly check
  * for the right prefix (::0:<v4> or ::FFFF:<v4>) because there are too many
  * ways to correctly represent the zero bytes. It's up to the user to check
  * for valid addresses. */
-#line 3380 "scanner.c"
+#line 3382 "scanner.c"
 
 #define INITIAL 0
 #define ML 1
@@ -3436,8 +3438,6 @@ extern int yywrap (void );
 #endif
 #endif
 
-    static void yyunput (int c,char *buf_ptr  );
-    
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char *,yyconst char *,int );
 #endif
@@ -3594,7 +3594,7 @@ YY_DECL
 		}
 
 	{
-#line 82 "scanner.l"
+#line 85 "scanner.l"
 
 #line 3600 "scanner.c"
 
@@ -3665,79 +3665,79 @@ do_action:	/* This label is used only to access EOF actions. */
 			goto yy_find_action;
 
 case 1:
-#line 84 "scanner.l"
+#line 87 "scanner.l"
 case 2:
 YY_RULE_SETUP
-#line 84 "scanner.l"
+#line 87 "scanner.l"
 {/* ignore */}
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 86 "scanner.l"
+#line 89 "scanner.l"
 {/* continue line */}
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 88 "scanner.l"
+#line 91 "scanner.l"
 {return (EOL);}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 89 "scanner.l"
+#line 92 "scanner.l"
 {return (SLASH);}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 90 "scanner.l"
+#line 93 "scanner.l"
 {return (OPENBRAC);}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 91 "scanner.l"
+#line 94 "scanner.l"
 {return (CLOSEBRAC);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 92 "scanner.l"
+#line 95 "scanner.l"
 {yylval.boolean = 1; return (BTRUE);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 93 "scanner.l"
+#line 96 "scanner.l"
 {yylval.boolean = 0; return (BFALSE);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 95 "scanner.l"
+#line 98 "scanner.l"
 {yylval.string = yytext; return (UNQUOTED_STRING);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 96 "scanner.l"
+#line 99 "scanner.l"
 {yylval.string = yytext; return (UNQUOTED_STRING);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 98 "scanner.l"
+#line 101 "scanner.l"
 {yylval.number = strtod (yytext, NULL); return (NUMBER);}
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 100 "scanner.l"
+#line 103 "scanner.l"
 {yylval.string = yytext; return (QUOTED_STRING);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 101 "scanner.l"
+#line 104 "scanner.l"
 {yylval.string = yytext; return (UNQUOTED_STRING);}
 	YY_BREAK
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 103 "scanner.l"
+#line 106 "scanner.l"
 {
 	int len = strlen (yytext);
 
@@ -3756,13 +3756,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 118 "scanner.l"
+#line 121 "scanner.l"
 {/* remove leading white-space */}
 	YY_BREAK
 case 17:
 /* rule 17 can match eol */
 YY_RULE_SETUP
-#line 119 "scanner.l"
+#line 122 "scanner.l"
 {
 	int len = strlen (yytext);
 
@@ -3779,7 +3779,7 @@ YY_RULE_SETUP
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 131 "scanner.l"
+#line 134 "scanner.l"
 {
 	ml_append(yytext);
 	yylval.string = ml_buffer;
@@ -3790,7 +3790,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 138 "scanner.l"
+#line 141 "scanner.l"
 ECHO;
 	YY_BREAK
 #line 3797 "scanner.c"
@@ -4123,47 +4123,6 @@ static int yy_get_next_buffer (void)
 	yy_is_jam = (yy_current_state == 1518);
 
 		return yy_is_jam ? 0 : yy_current_state;
-}
-
-    static void yyunput (int c, register char * yy_bp )
-{
-	register char *yy_cp;
-    
-    yy_cp = (yy_c_buf_p);
-
-	/* undo effects of setting up yytext */
-	*yy_cp = (yy_hold_char);
-
-	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
-		{ /* need to shift things up to make room */
-		/* +2 for EOB chars. */
-		register yy_size_t number_to_move = (yy_n_chars) + 2;
-		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
-					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
-		register char *source =
-				&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
-
-		while ( source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
-			*--dest = *--source;
-
-		yy_cp += (int) (dest - source);
-		yy_bp += (int) (dest - source);
-		YY_CURRENT_BUFFER_LVALUE->yy_n_chars =
-			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
-
-		if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
-			YY_FATAL_ERROR( "flex scanner push-back overflow" );
-		}
-
-	*--yy_cp = (char) c;
-
-    if ( c == '\n' ){
-        --yylineno;
-    }
-
-	(yytext_ptr) = yy_bp;
-	(yy_hold_char) = *yy_cp;
-	(yy_c_buf_p) = yy_cp;
 }
 
 #ifndef YY_NO_INPUT
@@ -4803,7 +4762,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 137 "scanner.l"
+#line 140 "scanner.l"
 
 
 static void ml_append (char *string)
