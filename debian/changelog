@@ -1,3 +1,19 @@
+collectd (5.5.1-5) unstable; urgency=low
+
+  * debian/control, debian/rules:
+    - Disable the sigrok plugin on non-Linux; restrict build dependency to
+      linux-any; thanks to Andreas Beckmann for reporting this
+      (Closes: #825606).
+  * debian/rules:
+    - Fix failure to build twice in a row introduced by dh_autoreconf_clean;
+      drop the separate config.status target and, hence, a dependency on the
+      configure script.
+  * debian/patches/:
+    - Added gcc6.patch: Fix FTBFS with GCC 6; thanks to Lucas Nussbaum for
+      reporting this (Closes: #831194).
+
+ -- Sebastian Harl <tokkee@debian.org>  Sun, 17 Jul 2016 23:30:33 +0200
+
 collectd (5.5.1-4) unstable; urgency=medium
 
   * debian/control:
