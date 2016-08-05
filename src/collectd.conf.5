@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2016-01-22" "5.5.1" "collectd"
+.TH COLLECTD.CONF 5 "2016-07-26" "5.5.2" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -333,11 +333,7 @@ If the \f(CW\*(C`fnmatch\*(C'\fR function is available on your system, a shell-l
 in combination with recursively including a directory to easily be able to
 arbitrarily mix configuration files and other documents (e.g. \s-1README\s0 files).
 The given example is similar to the first example above but includes all files
-matching \f(CW\*(C`*.conf\*(C'\fR in any subdirectory of \f(CW\*(C`/etc/collectd.d\*(C'\fR:
-.Sp
-.Vb 1
-\&  Include "/etc/collectd.d" "*.conf"
-.Ve
+matching \f(CW\*(C`*.conf\*(C'\fR in any subdirectory of \f(CW\*(C`/etc/collectd.d\*(C'\fR.
 .RE
 .RS 4
 .Sp
@@ -2381,7 +2377,7 @@ Select this interface. By default these interfaces will then be collected. For
 a more detailed description see \fBIgnoreSelected\fR below.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
-If no configuration if given, the \fBtraffic\fR\-plugin will collect data from
+If no configuration if given, the \fBinterface\fR\-plugin will collect data from
 all interfaces. This may not be practical, especially for loopback\- and
 similar interfaces. Thus, you can use the \fBInterface\fR\-option to pick the
 interfaces you're interested in. Sometimes, however, it's easier/preferred
@@ -3970,11 +3966,11 @@ Default: \f(CW\*(C`Collectd notify: %s@%s\*(C'\fR
 .ie n .SS "Plugin ""ntpd"""
 .el .SS "Plugin \f(CWntpd\fP"
 .IX Subsection "Plugin ntpd"
-The \f(CW\*(C`ntpd\*(C'\fR plugin collects per-peer ntpd data such as time offset and time
+The \f(CW\*(C`ntpd\*(C'\fR plugin collects per-peer ntp data such as time offset and time
 dispersion.
 .PP
 For talking to \fBntpd\fR, it mimics what the \fBntpdc\fR control program does on
-wire \- using \fBmode 7\fR specific requests. This mode is deprecated with
+the wire \- using \fBmode 7\fR specific requests. This mode is deprecated with
 newer \fBntpd\fR releases (4.2.7p230 and later). For the \f(CW\*(C`ntpd\*(C'\fR plugin to work
 correctly with them, the ntp daemon must be explicitly configured to
 enable \fBmode 7\fR (which is disabled by default). Refer to the \fI\fIntp.conf\fI\|(5)\fR
@@ -5001,6 +4997,9 @@ Select more detailed statistics of processes matching this name. The statistics
 collected for these selected processes are size of the resident segment size
 (\s-1RSS\s0), user\- and system-time used, number of processes and number of threads,
 io data (where available) and minor and major pagefaults.
+.Sp
+Some platforms have a limit on the length of process names. \fIName\fR must stay
+below this limit.
 .IP "\fBProcessMatch\fR \fIname\fR \fIregex\fR" 4
 .IX Item "ProcessMatch name regex"
 Similar to the \fBProcess\fR option this allows to select more detailed

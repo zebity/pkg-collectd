@@ -1,3 +1,32 @@
+collectd (5.5.2-1~bpo7+1) wheezy-backports-sloppy; urgency=high
+
+  * Rebuild for wheezy-backports-sloopy.
+
+ -- Marc Fournier <marc@bl.uem.li>  Sat, 06 Aug 2016 00:43:12 +0200
+
+collectd (5.5.2-1) unstable; urgency=high
+
+  * New upstream release.
+    - Fix heap overflow in the network plugin. Emilien Gaspar has identified a
+      heap overflow in parse_packet(), the function used by the network plugin
+      to parse incoming network packets. Thanks to Florian Forster for
+      reporting the bug in Debian. (Closes: #832507, CVE-2016-6254)
+    - Fix improper usage of gcry_control. A team of security researchers at
+      Columbia University and the University of Virginia discovered that
+      GCrypt's gcry_control is sometimes called without checking its return
+      value for an error. This may cause the program to be initialized without
+      the desired, secure settings. (Closes: #832577)
+  * debian/patches:
+    - bts832577-gcry-control.patch: Update for 5.5.2. Mostly part of the new
+      upstream release, except for: Don't abort() if gcrypt initialization
+      failed.
+    - Drop bts823012_librrd8.patch; merged upstream.
+  * Rebuild with linux-libc-dev >= 4.6 (now in testing and unstable) to
+    accommodate a change to rtnl_link_stats64. Thanks to Gábor Gombás for
+    reporting this (Closes: #829634).
+
+ -- Sebastian Harl <tokkee@debian.org>  Fri, 29 Jul 2016 00:02:11 +0200
+
 collectd (5.5.1-5) unstable; urgency=low
 
   * debian/control, debian/rules:
@@ -43,6 +72,12 @@ collectd (5.5.1-2) unstable; urgency=medium
 
  -- Sebastian Harl <tokkee@debian.org>  Sat, 02 Apr 2016 11:02:49 +0200
 
+collectd (5.5.1-1~bpo7+1) wheezy-backports-sloppy; urgency=medium
+
+  * Rebuild for wheezy-backports-sloppy.
+
+ -- Marc Fournier <marc@bl.uem.li>  Fri, 29 Jan 2016 14:18:24 +0100
+
 collectd (5.5.1-1) unstable; urgency=medium
 
   * New upstream release:
@@ -69,6 +104,20 @@ collectd (5.5.0-4) unstable; urgency=medium
     - Add bts802249_varnish_41.patch (Closes: #802249)
 
  -- Marc Fournier <marc@bl.uem.li>  Mon, 16 Nov 2015 21:03:31 +0100
+
+collectd (5.5.0-3~bpo7+1) wheezy-backports-sloppy; urgency=medium
+
+  * Rebuild for wheezy-backports-sloppy.
+  * debian/rules, debian/control:
+    - remove references to systemd and strip-nondeterminism, which were
+      introduced in jessie.
+    - disable building sigrok, turbostat and write_kafka plugins, as the
+      required build-dependencies aren't available in wheezy.
+    - build uuid plugin against libhal, as this lib is still available on
+      wheezy.
+    - adjust libprotobuf build-dependency name.
+
+ -- Marc Fournier <marc@bl.uem.li>  Thu, 08 Oct 2015 08:26:10 +0200
 
 collectd (5.5.0-3) unstable; urgency=medium
 
@@ -173,6 +222,22 @@ collectd (5.5.0-1) unstable; urgency=medium
     - Update the JRE path for the rpath override.
 
  -- Marc Fournier <marc.fournier@camptocamp.com>  Fri, 21 Aug 2015 13:29:17 +0200
+
+collectd (5.4.1-6+deb8u1) jessie-security; urgency=high
+
+  * debian/patches/CVE-2016-6254.dpatch: Fix heap overflow in the network
+    plugin. Emilien Gaspar has identified a heap overflow in parse_packet(),
+    the function used by the network plugin to parse incoming network packets.
+    Thanks to Florian Forster for reporting the bug in Debian.
+    (Closes: #832507, CVE-2016-6254)
+  * debian/patches/bts832577-gcry-control.dpatch: Fix improper usage of
+    gcry_control. A team of security researchers at Columbia University and
+    the University of Virginia discovered that GCrypt's gcry_control is
+    sometimes called without checking its return value for an error. This may
+    cause the program to be initialized without the desired, secure settings.
+    (Closes: #832577)
+
+ -- Sebastian Harl <tokkee@debian.org>  Thu, 28 Jul 2016 22:25:08 +0200
 
 collectd (5.4.1-6) unstable; urgency=medium
 
@@ -459,6 +524,22 @@ collectd (5.1.0-3.1) unstable; urgency=low
     (Closes: #683525)
 
  -- gregor herrmann <gregoa@debian.org>  Sun, 26 May 2013 00:52:37 +0200
+
+collectd (5.1.0-3+deb7u1) wheezy-security; urgency=high
+
+  * debian/patches/CVE-2016-6254.dpatch: Fix heap overflow in the network
+    plugin. Emilien Gaspar has identified a heap overflow in parse_packet(),
+    the function used by the network plugin to parse incoming network packets.
+    Thanks to Florian Forster for reporting the bug in Debian.
+    (Closes: #832507, CVE-2016-6254)
+  * debian/patches/bts832577-gcry-control.dpatch: Fix improper usage of
+    gcry_control. A team of security researchers at Columbia University and
+    the University of Virginia discovered that GCrypt's gcry_control is
+    sometimes called without checking its return value for an error. This may
+    cause the program to be initialized without the desired, secure settings.
+    (Closes: #832577)
+
+ -- Sebastian Harl <tokkee@debian.org>  Thu, 28 Jul 2016 20:52:12 +0200
 
 collectd (5.1.0-3) unstable; urgency=low
 

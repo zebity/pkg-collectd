@@ -577,7 +577,7 @@ gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
   return (ret);
 } /* gauge_t *uc_get_rate */
 
-size_t uc_get_size() {
+size_t uc_get_size (void) {
   size_t size_arrays = 0;
 
   pthread_mutex_lock (&cache_lock);
@@ -709,7 +709,7 @@ int uc_set_state (const data_set_t *ds, const value_list_t *vl, int state)
 
   if (FORMAT_VL (name, sizeof (name), vl) != 0)
   {
-    ERROR ("uc_get_state: FORMAT_VL failed.");
+    ERROR ("uc_set_state: FORMAT_VL failed.");
     return (STATE_ERROR);
   }
 
@@ -754,7 +754,6 @@ int uc_get_history_by_name (const char *name,
   if (ce->history_length < num_steps)
   {
     gauge_t *tmp;
-    size_t i;
 
     tmp = realloc (ce->history, sizeof (*ce->history)
 	* num_steps * ce->values_num);
@@ -818,7 +817,7 @@ int uc_get_hits (const data_set_t *ds, const value_list_t *vl)
 
   if (FORMAT_VL (name, sizeof (name), vl) != 0)
   {
-    ERROR ("uc_get_state: FORMAT_VL failed.");
+    ERROR ("uc_get_hits: FORMAT_VL failed.");
     return (STATE_ERROR);
   }
 
@@ -843,7 +842,7 @@ int uc_set_hits (const data_set_t *ds, const value_list_t *vl, int hits)
 
   if (FORMAT_VL (name, sizeof (name), vl) != 0)
   {
-    ERROR ("uc_get_state: FORMAT_VL failed.");
+    ERROR ("uc_set_hits: FORMAT_VL failed.");
     return (STATE_ERROR);
   }
 
@@ -869,7 +868,7 @@ int uc_inc_hits (const data_set_t *ds, const value_list_t *vl, int step)
 
   if (FORMAT_VL (name, sizeof (name), vl) != 0)
   {
-    ERROR ("uc_get_state: FORMAT_VL failed.");
+    ERROR ("uc_inc_hits: FORMAT_VL failed.");
     return (STATE_ERROR);
   }
 

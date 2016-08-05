@@ -1435,7 +1435,7 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
-/* Define to 1 if you have the threadsafe rrd library (-lrrd_th). */
+/* Define to 1 if the rrd library is thread-safe */
 #undef HAVE_THREADSAFE_LIBRRD
 
 /* Define to 1 if you have the `thread_info' function. */
