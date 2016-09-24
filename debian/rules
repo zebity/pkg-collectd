@@ -85,10 +85,14 @@ confflags += --disable-write_mongodb
 # xmms1 is required for the xmms plugin.
 confflags += --disable-xmms
 
+# protobuf-compiler >= 3.0.0 and libgrpc++ are required for the grpc plugin.
+confflags += --disable-grpc
+
 # These plugins are Linux-specific.
 ifneq (,$(filter kfreebsd-i386 kfreebsd-amd64, $(DEB_BUILD_ARCH)))
 	confflags += \
 		--disable-cgroups \
+		--disable-cpusleep \
 		--disable-ethstat \
 		--disable-iptables \
 		--disable-ipvs \
@@ -111,6 +115,10 @@ ifeq (,$(filter kfreebsd-i386 kfreebsd-amd64, $(DEB_BUILD_ARCH)))
 		--disable-pf
 endif
 
+# This plugin is Solaris-specific.
+confflags += \
+		--disable-zone
+
 # These plugins have not been ported to FreeBSD yet.
 ifneq (,$(filter kfreebsd-i386 kfreebsd-amd64, $(DEB_BUILD_ARCH)))
 	# Work-around an incomplete check for kvm functionality
@@ -122,7 +130,6 @@ ifneq (,$(filter kfreebsd-i386 kfreebsd-amd64, $(DEB_BUILD_ARCH)))
 		--disable-conntrack \
 		--disable-contextswitch \
 		--disable-cpufreq \
-		--disable-disk \
 		--disable-entropy \
 		--disable-fscache \
 		--disable-irq \
@@ -147,6 +154,12 @@ endif
 ifeq (,$(filter amd64 i386, $(DEB_BUILD_ARCH)))
 	confflags += \
 		--disable-turbostat
+endif
+
+# This plugin is x86 and arm specific.
+ifeq (,$(filter amd64 arm64 armhf i386, $(DEB_BUILD_ARCH)))
+	confflags += \
+		--disable-xencpu
 endif
 
 # libatasmart isn't available on these platforms.
@@ -217,7 +230,7 @@ install-indep:
 			libname=$$(basename $$lib); \
 			fullpath=$$(echo $$lib | sed -r -e 's,^\./,collectd/,'); \
 			for dir in $$(find . -mindepth 1 -type d); do \
-				sed -r -i -e "s,(include\s+)\".*$$libname\",\1\"$$fullpath\"," $$dir/*.h; \
+				sed -r -i -e "s,(include\s+)\".*\<$$libname\",\1\"$$fullpath\"," $$dir/*.h; \
 			done; \
 		done )
 

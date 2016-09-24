@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PYTHON 5"
-.TH COLLECTD-PYTHON 5 "2016-07-25" "5.5.1.166.g0e60b30" "collectd"
+.TH COLLECTD-PYTHON 5 "2016-09-11" "5.6.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -164,7 +164,7 @@ for collectd in Python. This is a lot more efficient than executing a
 Python-script every time you want to read a value with the \f(CW\*(C`exec plugin\*(C'\fR (see
 \&\fIcollectd\-exec\fR\|(5)) and provides a lot more functionality, too.
 .PP
-The minimum required Python version is \fI2.3\fR.
+The minimum required Python version is \fI2.6\fR.
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
 .IP "\fBLoadPlugin\fR \fIPlugin\fR" 4
@@ -209,11 +209,12 @@ collectd script as well as from a normal Python interpreter:
 \&\fB1.\fR collectd will try to import the \fBreadline\fR module to give you a decent
 way of entering your commands. The daemonized collectd won't do that.
 .IP "\(bu" 4
-\&\fB2.\fR collectd will block \fI\s-1SIGINT\s0\fR. Pressing \fICtrl+C\fR will usually cause
+\&\fB2.\fR Python will be handling \fI\s-1SIGINT\s0\fR. Pressing \fICtrl+C\fR will usually cause
 collectd to shut down. This would be problematic in an interactive session,
-therefore this signal will be blocked. You can still use it to interrupt
-syscalls like sleep and pause but it won't generate a \fIKeyboardInterrupt\fR
-exception either.
+therefore Python will be handling it in interactive sessions. This allows you
+to use \fICtrl+C\fR to interrupt Python code without killing collectd. This also
+means you can catch \fIKeyboardInterrupt\fR exceptions which does not work during
+normal operation.
 .Sp
 To quit collectd send \fI\s-1EOF\s0\fR (press \fICtrl+D\fR at the beginning of a new line).
 .IP "\(bu" 4
@@ -681,7 +682,9 @@ Any Python module will start similar to:
 .PP
 A very simple read function might look like:
 .PP
-.Vb 4
+.Vb 1
+\&  import random
+\&
 \&  def read(data=None):
 \&    vl = collectd.Values(type=\*(Aqgauge\*(Aq)
 \&    vl.plugin=\*(Aqpython.spam\*(Aq
@@ -699,22 +702,12 @@ A very simple write function might look like:
 To register those functions with collectd:
 .PP
 .Vb 2
-\&  collectd.register_read(read);
-\&  collectd.register_write(write);
+\&  collectd.register_read(read)
+\&  collectd.register_write(write)
 .Ve
 .PP
 See the section \*(L"\s-1CLASSES\*(R"\s0 above for a complete documentation of the data
 types used by the read, write and match functions.
-.SH "NOTES"
-.IX Header "NOTES"
-.IP "\(bu" 4
-Please feel free to send in new plugins to collectd's mailing list at
-<collectd\ at\ collectd.org> for review and, possibly,
-inclusion in the main distribution. In the latter case, we will take care of
-keeping the plugin up to date and adapting it to new versions of collectd.
-.Sp
-Before submitting your plugin, please take a look at
-<http://collectd.org/dev\-info.shtml>.
 .SH "CAVEATS"
 .IX Header "CAVEATS"
 .IP "\(bu" 4

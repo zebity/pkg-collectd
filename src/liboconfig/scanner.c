@@ -3356,6 +3356,12 @@ char *yytext;
 #include "aux_types.h"
 #include "parser.h"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+#endif
+
+
 /* multiline string buffer */
 static char *ml_buffer = NULL;
 static int   ml_pos    = 0;
@@ -3378,7 +3384,7 @@ static void ml_append (char *);
  * for the right prefix (::0:<v4> or ::FFFF:<v4>) because there are too many
  * ways to correctly represent the zero bytes. It's up to the user to check
  * for valid addresses. */
-#line 3382 "scanner.c"
+#line 3388 "scanner.c"
 
 #define INITIAL 0
 #define ML 1
@@ -3594,9 +3600,9 @@ YY_DECL
 		}
 
 	{
-#line 85 "scanner.l"
+#line 91 "scanner.l"
 
-#line 3600 "scanner.c"
+#line 3606 "scanner.c"
 
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
@@ -3665,79 +3671,79 @@ do_action:	/* This label is used only to access EOF actions. */
 			goto yy_find_action;
 
 case 1:
-#line 87 "scanner.l"
+#line 93 "scanner.l"
 case 2:
 YY_RULE_SETUP
-#line 87 "scanner.l"
+#line 93 "scanner.l"
 {/* ignore */}
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 89 "scanner.l"
+#line 95 "scanner.l"
 {/* continue line */}
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 91 "scanner.l"
+#line 97 "scanner.l"
 {return (EOL);}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 92 "scanner.l"
+#line 98 "scanner.l"
 {return (SLASH);}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 93 "scanner.l"
+#line 99 "scanner.l"
 {return (OPENBRAC);}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 94 "scanner.l"
+#line 100 "scanner.l"
 {return (CLOSEBRAC);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 95 "scanner.l"
+#line 101 "scanner.l"
 {yylval.boolean = 1; return (BTRUE);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 96 "scanner.l"
+#line 102 "scanner.l"
 {yylval.boolean = 0; return (BFALSE);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 98 "scanner.l"
+#line 104 "scanner.l"
 {yylval.string = yytext; return (UNQUOTED_STRING);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 99 "scanner.l"
+#line 105 "scanner.l"
 {yylval.string = yytext; return (UNQUOTED_STRING);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 101 "scanner.l"
+#line 107 "scanner.l"
 {yylval.number = strtod (yytext, NULL); return (NUMBER);}
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 103 "scanner.l"
+#line 109 "scanner.l"
 {yylval.string = yytext; return (QUOTED_STRING);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 104 "scanner.l"
+#line 110 "scanner.l"
 {yylval.string = yytext; return (UNQUOTED_STRING);}
 	YY_BREAK
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 106 "scanner.l"
+#line 112 "scanner.l"
 {
 	int len = strlen (yytext);
 
@@ -3756,13 +3762,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 121 "scanner.l"
+#line 127 "scanner.l"
 {/* remove leading white-space */}
 	YY_BREAK
 case 17:
 /* rule 17 can match eol */
 YY_RULE_SETUP
-#line 122 "scanner.l"
+#line 128 "scanner.l"
 {
 	int len = strlen (yytext);
 
@@ -3779,7 +3785,7 @@ YY_RULE_SETUP
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 134 "scanner.l"
+#line 140 "scanner.l"
 {
 	ml_append(yytext);
 	yylval.string = ml_buffer;
@@ -3790,10 +3796,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 141 "scanner.l"
+#line 147 "scanner.l"
 ECHO;
 	YY_BREAK
-#line 3797 "scanner.c"
+#line 3803 "scanner.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(ML):
 	yyterminate();
@@ -4762,7 +4768,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 140 "scanner.l"
+#line 146 "scanner.l"
 
 
 static void ml_append (char *string)
@@ -4772,7 +4778,7 @@ static void ml_append (char *string)
 
 	if (ml_free <= len) {
 		ml_len += len - ml_free + 1;
-		ml_buffer = (char *)realloc (ml_buffer, ml_len);
+		ml_buffer = realloc (ml_buffer, ml_len);
 		if (NULL == ml_buffer)
 			YY_FATAL_ERROR ("out of dynamic memory in ml_append");
 	}
@@ -4785,4 +4791,7 @@ static void ml_append (char *string)
 	return;
 } /* ml_append */
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 

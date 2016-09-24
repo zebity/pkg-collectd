@@ -15,6 +15,12 @@
 /* Wether or not to use the esmtp library */
 #undef COLLECT_LIBESMTP
 
+/* wether or not to enable feature building with -Werror */
+#undef COLLECT_WERROR
+
+/* Maximum length of data buffers */
+#undef DATA_MAX_NAME_LEN
+
 /* Define if endianflip is needed to convert to x86 representation. */
 #undef FP_LAYOUT_NEED_ENDIANFLIP
 
@@ -75,6 +81,9 @@
 /* Define to 1 if you have the <asm/msr-index.h> header file. */
 #undef HAVE_ASM_MSR_INDEX_H
 
+/* Define to 1 if you have the `asprintf' function. */
+#undef HAVE_ASPRINTF
+
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
@@ -102,6 +111,9 @@
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
+
+/* Define if curl.h defines CURLINFO_APPCONNECT_TIME. */
+#undef HAVE_CURLINFO_APPCONNECT_TIME
 
 /* Define if libcurl supports CURLOPT_TIMEOUT_MS option. */
 #undef HAVE_CURLOPT_TIMEOUT_MS
@@ -173,7 +185,7 @@
 /* Define to 1 if you have the <gcrypt.h> header file. */
 #undef HAVE_GCRYPT_H
 
-/* Define if the function getmntent exists. It's the version from libgen. */
+/* Define if the function getmntent exists. It is the version from libgen. */
 #undef HAVE_GEN_GETMNTENT
 
 /* Define to 1 if you have the `getaddrinfo' function. */
@@ -221,6 +233,16 @@
 /* Define to 1 if you have the <google/protobuf-c/protobuf-c.h> header file.
    */
 #undef HAVE_GOOGLE_PROTOBUF_C_PROTOBUF_C_H
+
+/* Define to 1 if you have the <google/protobuf/util/time_util.h> header file.
+   */
+#undef HAVE_GOOGLE_PROTOBUF_UTIL_TIME_UTIL_H
+
+/* Define to 1 if you have the <gps.h> header file. */
+#undef HAVE_GPS_H
+
+/* Define to 1 if you have the <grpc++/grpc++.h> header file. */
+#undef HAVE_GRPC___GRPC___H
 
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
@@ -292,6 +314,9 @@
 /* Define to 1 if you have the <kvm.h> header file. */
 #undef HAVE_KVM_H
 
+/* Define to 1 if you have the <lauxlib.h> header file. */
+#undef HAVE_LAUXLIB_H
+
 /* Define to 1 if you have the <ldap.h> header file. */
 #undef HAVE_LDAP_H
 
@@ -322,8 +347,8 @@
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
-/* Define to 1 if you have 'hal' library */
-#undef HAVE_LIBHAL
+/* Define to 1 if you have the <libhal.h> header file. */
+#undef HAVE_LIBHAL_H
 
 /* Define to 1 if you have the <libiptc/libip6tc.h> header file. */
 #undef HAVE_LIBIPTC_LIBIP6TC_H
@@ -376,7 +401,7 @@
 /* Define to 1 if you have the <libpq-fe.h> header file. */
 #undef HAVE_LIBPQ_FE_H
 
-/* Wether or not to use pthread (POSIX threads) library */
+/* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
 
 /* Define if librabbitmq is present and usable. */
@@ -399,12 +424,6 @@
 
 /* Define to 1 if you have the sensors library (-lsensors). */
 #undef HAVE_LIBSENSORS
-
-/* Define to 1 if you have the sigrok library (-lsigrok). */
-#undef HAVE_LIBSIGROK
-
-/* Define to 1 if you have the <libsigrok/libsigrok.h> header file. */
-#undef HAVE_LIBSIGROK_LIBSIGROK_H
 
 /* Define to 1 if you have the 'statgrab' library (-lstatgrab) */
 #undef HAVE_LIBSTATGRAB
@@ -483,6 +502,12 @@
 
 /* Define this if a modern libltdl is already installed */
 #undef HAVE_LTDL
+
+/* Define to 1 if you have the <lualib.h> header file. */
+#undef HAVE_LUALIB_H
+
+/* Define to 1 if you have the <lua.h> header file. */
+#undef HAVE_LUA_H
 
 /* Define to 1 if you have the <lvm2app.h> header file. */
 #undef HAVE_LVM2APP_H
@@ -565,6 +590,9 @@
 /* Define to 1 if you have the <mongo.h> header file. */
 #undef HAVE_MONGO_H
 
+/* Define to 1 if you have the <mosquitto.h> header file. */
+#undef HAVE_MOSQUITTO_H
+
 /* Define to 1 if you have the <mysql.h> header file. */
 #undef HAVE_MYSQL_H
 
@@ -597,9 +625,6 @@
 
 /* Define to 1 if you have the <netinet/ip6.h> header file. */
 #undef HAVE_NETINET_IP6_H
-
-/* Define to 1 if you have the <netinet/ip_compat.h> header file. */
-#undef HAVE_NETINET_IP_COMPAT_H
 
 /* Define to 1 if you have the <netinet/ip.h> header file. */
 #undef HAVE_NETINET_IP_H
@@ -712,6 +737,9 @@
 /* Define to 1 if the cgroups plugin is enabled. */
 #undef HAVE_PLUGIN_CGROUPS
 
+/* Define to 1 if the chrony plugin is enabled. */
+#undef HAVE_PLUGIN_CHRONY
+
 /* Define to 1 if the conntrack plugin is enabled. */
 #undef HAVE_PLUGIN_CONNTRACK
 
@@ -723,6 +751,9 @@
 
 /* Define to 1 if the cpufreq plugin is enabled. */
 #undef HAVE_PLUGIN_CPUFREQ
+
+/* Define to 1 if the cpusleep plugin is enabled. */
+#undef HAVE_PLUGIN_CPUSLEEP
 
 /* Define to 1 if the csv plugin is enabled. */
 #undef HAVE_PLUGIN_CSV
@@ -775,6 +806,12 @@
 /* Define to 1 if the gmond plugin is enabled. */
 #undef HAVE_PLUGIN_GMOND
 
+/* Define to 1 if the gps plugin is enabled. */
+#undef HAVE_PLUGIN_GPS
+
+/* Define to 1 if the grpc plugin is enabled. */
+#undef HAVE_PLUGIN_GRPC
+
 /* Define to 1 if the hddtemp plugin is enabled. */
 #undef HAVE_PLUGIN_HDDTEMP
 
@@ -810,6 +847,9 @@
 
 /* Define to 1 if the lpar plugin is enabled. */
 #undef HAVE_PLUGIN_LPAR
+
+/* Define to 1 if the lua plugin is enabled. */
+#undef HAVE_PLUGIN_LUA
 
 /* Define to 1 if the lvm plugin is enabled. */
 #undef HAVE_PLUGIN_LVM
@@ -853,6 +893,9 @@
 /* Define to 1 if the modbus plugin is enabled. */
 #undef HAVE_PLUGIN_MODBUS
 
+/* Define to 1 if the mqtt plugin is enabled. */
+#undef HAVE_PLUGIN_MQTT
+
 /* Define to 1 if the multimeter plugin is enabled. */
 #undef HAVE_PLUGIN_MULTIMETER
 
@@ -879,6 +922,9 @@
 
 /* Define to 1 if the notify_email plugin is enabled. */
 #undef HAVE_PLUGIN_NOTIFY_EMAIL
+
+/* Define to 1 if the notify_nagios plugin is enabled. */
+#undef HAVE_PLUGIN_NOTIFY_NAGIOS
 
 /* Define to 1 if the ntpd plugin is enabled. */
 #undef HAVE_PLUGIN_NTPD
@@ -1069,11 +1115,17 @@
 /* Define to 1 if the write_tsdb plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_TSDB
 
+/* Define to 1 if the xencpu plugin is enabled. */
+#undef HAVE_PLUGIN_XENCPU
+
 /* Define to 1 if the xmms plugin is enabled. */
 #undef HAVE_PLUGIN_XMMS
 
 /* Define to 1 if the zfs_arc plugin is enabled. */
 #undef HAVE_PLUGIN_ZFS_ARC
+
+/* Define to 1 if the zone plugin is enabled. */
+#undef HAVE_PLUGIN_ZONE
 
 /* Define to 1 if the zookeeper plugin is enabled. */
 #undef HAVE_PLUGIN_ZOOKEEPER
@@ -1135,7 +1187,7 @@
 /* Define to 1 if you have the <sensors/sensors.h> header file. */
 #undef HAVE_SENSORS_SENSORS_H
 
-/* Define if the function getmntent exists. It's the version from libseq. */
+/* Define if the function getmntent exists. It is the version from libseq. */
 #undef HAVE_SEQ_GETMNTENT
 
 /* Define to 1 if you have the `setenv' function. */
@@ -1252,6 +1304,15 @@
 /* Define to 1 if `imr_ifindex' is a member of `struct ip_mreqn'. */
 #undef HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
 
+/* Define if struct kinfo_proc2 exists in the NetBSD variant. */
+#undef HAVE_STRUCT_KINFO_PROC2_NETBSD
+
+/* Define to 1 if `p_pid' is a member of `struct kinfo_proc2'. */
+#undef HAVE_STRUCT_KINFO_PROC2_P_PID
+
+/* Define to 1 if `p_uru_maxrss' is a member of `struct kinfo_proc2'. */
+#undef HAVE_STRUCT_KINFO_PROC2_P_URU_MAXRSS
+
 /* Define if struct kinfo_proc exists in the FreeBSD variant. */
 #undef HAVE_STRUCT_KINFO_PROC_FREEBSD
 
@@ -1304,7 +1365,7 @@
 /* Define to 1 if `uh_sport' is a member of `struct udphdr'. */
 #undef HAVE_STRUCT_UDPHDR_UH_SPORT
 
-/* Define if the function getmntent exists. It's the version from libsun. */
+/* Define if the function getmntent exists. It is the version from libsun. */
 #undef HAVE_SUN_GETMNTENT
 
 /* Define to 1 if you have the `swapctl' function. */
@@ -1324,6 +1385,9 @@
 
 /* Define to 1 if you have the `sysctlbyname' function. */
 #undef HAVE_SYSCTLBYNAME
+
+/* Define if sysctl supports kern.cp_time */
+#undef HAVE_SYSCTL_KERN_CP_TIME
 
 /* Define if sysctl supports kern.cp_times */
 #undef HAVE_SYSCTL_KERN_CP_TIMES
@@ -1381,6 +1445,9 @@
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
 
+/* Define to 1 if you have the <sys/rndio.h> header file. */
+#undef HAVE_SYS_RNDIO_H
+
 /* Define to 1 if you have the <sys/select.h> header file. */
 #undef HAVE_SYS_SELECT_H
 
@@ -1401,6 +1468,9 @@
 
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
 #undef HAVE_SYS_SYSCTL_H
+
+/* Define to 1 if you have the <sys/sysmacros.h> header file. */
+#undef HAVE_SYS_SYSMACROS_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
@@ -1489,6 +1559,9 @@
 /* This value is set to 1 to indicate that the system argz facility works */
 #undef HAVE_WORKING_ARGZ
 
+/* Define to 1 if you have the <xenctrl.h> header file. */
+#undef HAVE_XENCTRL_H
+
 /* Define to 1 if you have the <xfs/xqm.h> header file. */
 #undef HAVE_XFS_XQM_H
 
@@ -1512,6 +1585,9 @@
 
 /* True if program is to be compiled for a Linux kernel */
 #undef KERNEL_LINUX
+
+/* True if program is to be compiled for a NetBSD kernel */
+#undef KERNEL_NETBSD
 
 /* True if program is to be compiled for an OpenBSD kernel */
 #undef KERNEL_OPENBSD
@@ -1630,11 +1706,6 @@
 /* Define to use the thread-safe version of errno under AIX. */
 #undef _THREAD_SAFE_ERRNO
 
-/* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
-   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
-   #define below would cause a syntax error. */
-#undef _UINT32_T
-
 /* Define to enforce X/Open 7 (XSI) compliance. */
 #undef _XOPEN_SOURCE
 
@@ -1650,27 +1721,11 @@
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
 
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-#undef inline
-#endif
-
-/* Define to `long int' if <sys/types.h> does not define. */
-#undef off_t
-
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
-/* Define to `int' if <sys/types.h> does not define. */
-#undef ssize_t
-
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef uid_t
-
-/* Define to the type of an unsigned integer type of width exactly 32 bits if
-   such a type exists and the standard includes do not define it. */
-#undef uint32_t

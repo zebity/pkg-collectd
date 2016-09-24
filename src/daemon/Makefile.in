@@ -84,22 +84,23 @@ host_triplet = @host@
 @BUILD_WITH_LIBPOSIX4_TRUE@am__append_3 = -lposix4
 @BUILD_WITH_LIBSOCKET_TRUE@am__append_4 = -lsocket
 @BUILD_WITH_LIBRESOLV_TRUE@am__append_5 = -lresolv
-@BUILD_WITH_LIBPTHREAD_TRUE@am__append_6 = -lpthread
-@BUILD_WITH_LIBKSTAT_TRUE@am__append_7 = -lkstat
-@BUILD_WITH_LIBDEVINFO_TRUE@am__append_8 = -ldevinfo
+@BUILD_WITH_LIBKSTAT_TRUE@am__append_6 = -lkstat
+@BUILD_WITH_LIBDEVINFO_TRUE@am__append_7 = -ldevinfo
 sbin_PROGRAMS = collectd$(EXEEXT)
 
 # The daemon needs to call sg_init, so we need to link it against libstatgrab,
 # too. -octo
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_9 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_10 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_11 = $(LIBLTDL) $(top_builddir)/src/liboconfig/liboconfig.la
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_12 = $(top_builddir)/src/liboconfig/liboconfig.la
-@BUILD_WITH_OWN_LIBOCONFIG_FALSE@am__append_13 = -loconfig
-check_PROGRAMS = test_common$(EXEEXT) test_utils_avltree$(EXEEXT) \
-	test_utils_heap$(EXEEXT)
-TESTS = test_common$(EXEEXT) test_utils_avltree$(EXEEXT) \
-	test_utils_heap$(EXEEXT)
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_8 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_9 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_10 = $(LIBLTDL) $(top_builddir)/src/liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_11 = $(top_builddir)/src/liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_FALSE@am__append_12 = -loconfig
+check_PROGRAMS = test_common$(EXEEXT) test_meta_data$(EXEEXT) \
+	test_utils_avltree$(EXEEXT) test_utils_heap$(EXEEXT) \
+	test_utils_time$(EXEEXT) test_utils_subst$(EXEEXT)
+TESTS = test_common$(EXEEXT) test_meta_data$(EXEEXT) \
+	test_utils_avltree$(EXEEXT) test_utils_heap$(EXEEXT) \
+	test_utils_time$(EXEEXT) test_utils_subst$(EXEEXT)
 subdir = src/daemon
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/libltdl/config/depcomp \
@@ -131,9 +132,13 @@ libcommon_la_OBJECTS = $(am_libcommon_la_OBJECTS)
 libheap_la_LIBADD =
 am_libheap_la_OBJECTS = utils_heap.lo
 libheap_la_OBJECTS = $(am_libheap_la_OBJECTS)
-libplugin_mock_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_libplugin_mock_la_OBJECTS = plugin_mock.lo utils_cache_mock.lo \
-	utils_time_mock.lo
+libmetadata_la_LIBADD =
+am_libmetadata_la_OBJECTS = meta_data.lo
+libmetadata_la_OBJECTS = $(am_libmetadata_la_OBJECTS)
+libplugin_mock_la_DEPENDENCIES = $(am__DEPENDENCIES_2) libcommon.la
+am_libplugin_mock_la_OBJECTS = libplugin_mock_la-plugin_mock.lo \
+	libplugin_mock_la-utils_cache_mock.lo \
+	libplugin_mock_la-utils_time.lo
 libplugin_mock_la_OBJECTS = $(am_libplugin_mock_la_OBJECTS)
 am__installdirs = "$(DESTDIR)$(sbindir)"
 PROGRAMS = $(sbin_PROGRAMS)
@@ -160,14 +165,23 @@ collectd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(collectd_LDFLAGS) $(LDFLAGS) -o $@
 am_test_common_OBJECTS = common_test.$(OBJEXT)
 test_common_OBJECTS = $(am_test_common_OBJECTS)
-test_common_DEPENDENCIES = libcommon.la libplugin_mock.la \
-	$(am__DEPENDENCIES_2)
+test_common_DEPENDENCIES = libplugin_mock.la
+am_test_meta_data_OBJECTS = meta_data_test.$(OBJEXT)
+test_meta_data_OBJECTS = $(am_test_meta_data_OBJECTS)
+test_meta_data_DEPENDENCIES = libmetadata.la libplugin_mock.la
 am_test_utils_avltree_OBJECTS = utils_avltree_test.$(OBJEXT)
 test_utils_avltree_OBJECTS = $(am_test_utils_avltree_OBJECTS)
 test_utils_avltree_DEPENDENCIES = libavltree.la $(am__DEPENDENCIES_2)
 am_test_utils_heap_OBJECTS = utils_heap_test.$(OBJEXT)
 test_utils_heap_OBJECTS = $(am_test_utils_heap_OBJECTS)
 test_utils_heap_DEPENDENCIES = libheap.la $(am__DEPENDENCIES_2)
+am_test_utils_subst_OBJECTS = utils_subst_test.$(OBJEXT) \
+	utils_subst.$(OBJEXT)
+test_utils_subst_OBJECTS = $(am_test_utils_subst_OBJECTS)
+test_utils_subst_DEPENDENCIES = libplugin_mock.la
+am_test_utils_time_OBJECTS = utils_time_test.$(OBJEXT)
+test_utils_time_OBJECTS = $(am_test_utils_time_OBJECTS)
+test_utils_time_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -203,13 +217,17 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libavltree_la_SOURCES) $(libcommon_la_SOURCES) \
-	$(libheap_la_SOURCES) $(libplugin_mock_la_SOURCES) \
-	$(collectd_SOURCES) $(test_common_SOURCES) \
-	$(test_utils_avltree_SOURCES) $(test_utils_heap_SOURCES)
+	$(libheap_la_SOURCES) $(libmetadata_la_SOURCES) \
+	$(libplugin_mock_la_SOURCES) $(collectd_SOURCES) \
+	$(test_common_SOURCES) $(test_meta_data_SOURCES) \
+	$(test_utils_avltree_SOURCES) $(test_utils_heap_SOURCES) \
+	$(test_utils_subst_SOURCES) $(test_utils_time_SOURCES)
 DIST_SOURCES = $(libavltree_la_SOURCES) $(libcommon_la_SOURCES) \
-	$(libheap_la_SOURCES) $(libplugin_mock_la_SOURCES) \
-	$(collectd_SOURCES) $(test_common_SOURCES) \
-	$(test_utils_avltree_SOURCES) $(test_utils_heap_SOURCES)
+	$(libheap_la_SOURCES) $(libmetadata_la_SOURCES) \
+	$(libplugin_mock_la_SOURCES) $(collectd_SOURCES) \
+	$(test_common_SOURCES) $(test_meta_data_SOURCES) \
+	$(test_utils_avltree_SOURCES) $(test_utils_heap_SOURCES) \
+	$(test_utils_subst_SOURCES) $(test_utils_time_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -441,6 +459,8 @@ TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_CFLAGS = @AM_CFLAGS@
+AM_CXXFLAGS = @AM_CXXFLAGS@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 ARGZ_H = @ARGZ_H@
@@ -458,6 +478,12 @@ BUILD_WITH_LIBCURL_LIBS = @BUILD_WITH_LIBCURL_LIBS@
 BUILD_WITH_LIBDBI_CPPFLAGS = @BUILD_WITH_LIBDBI_CPPFLAGS@
 BUILD_WITH_LIBDBI_LDFLAGS = @BUILD_WITH_LIBDBI_LDFLAGS@
 BUILD_WITH_LIBDBI_LIBS = @BUILD_WITH_LIBDBI_LIBS@
+BUILD_WITH_LIBGPS_CFLAGS = @BUILD_WITH_LIBGPS_CFLAGS@
+BUILD_WITH_LIBGPS_LDFLAGS = @BUILD_WITH_LIBGPS_LDFLAGS@
+BUILD_WITH_LIBGPS_LIBS = @BUILD_WITH_LIBGPS_LIBS@
+BUILD_WITH_LIBGRPCPP_CPPFLAGS = @BUILD_WITH_LIBGRPCPP_CPPFLAGS@
+BUILD_WITH_LIBGRPCPP_LDFLAGS = @BUILD_WITH_LIBGRPCPP_LDFLAGS@
+BUILD_WITH_LIBGRPCPP_LIBS = @BUILD_WITH_LIBGRPCPP_LIBS@
 BUILD_WITH_LIBHAL_CFLAGS = @BUILD_WITH_LIBHAL_CFLAGS@
 BUILD_WITH_LIBHAL_LIBS = @BUILD_WITH_LIBHAL_LIBS@
 BUILD_WITH_LIBHIREDIS_CPPFLAGS = @BUILD_WITH_LIBHIREDIS_CPPFLAGS@
@@ -466,6 +492,8 @@ BUILD_WITH_LIBIPTC_CPPFLAGS = @BUILD_WITH_LIBIPTC_CPPFLAGS@
 BUILD_WITH_LIBIPTC_LDFLAGS = @BUILD_WITH_LIBIPTC_LDFLAGS@
 BUILD_WITH_LIBLDAP_CPPFLAGS = @BUILD_WITH_LIBLDAP_CPPFLAGS@
 BUILD_WITH_LIBLDAP_LDFLAGS = @BUILD_WITH_LIBLDAP_LDFLAGS@
+BUILD_WITH_LIBLUA_CFLAGS = @BUILD_WITH_LIBLUA_CFLAGS@
+BUILD_WITH_LIBLUA_LIBS = @BUILD_WITH_LIBLUA_LIBS@
 BUILD_WITH_LIBLVM2APP_CPPFLAGS = @BUILD_WITH_LIBLVM2APP_CPPFLAGS@
 BUILD_WITH_LIBLVM2APP_LDFLAGS = @BUILD_WITH_LIBLVM2APP_LDFLAGS@
 BUILD_WITH_LIBLVM2APP_LIBS = @BUILD_WITH_LIBLVM2APP_LIBS@
@@ -478,14 +506,27 @@ BUILD_WITH_LIBMODBUS_CFLAGS = @BUILD_WITH_LIBMODBUS_CFLAGS@
 BUILD_WITH_LIBMODBUS_LIBS = @BUILD_WITH_LIBMODBUS_LIBS@
 BUILD_WITH_LIBMONGOC_CPPFLAGS = @BUILD_WITH_LIBMONGOC_CPPFLAGS@
 BUILD_WITH_LIBMONGOC_LDFLAGS = @BUILD_WITH_LIBMONGOC_LDFLAGS@
+BUILD_WITH_LIBMOSQUITTO_CPPFLAGS = @BUILD_WITH_LIBMOSQUITTO_CPPFLAGS@
+BUILD_WITH_LIBMOSQUITTO_LDFLAGS = @BUILD_WITH_LIBMOSQUITTO_LDFLAGS@
+BUILD_WITH_LIBMOSQUITTO_LIBS = @BUILD_WITH_LIBMOSQUITTO_LIBS@
 BUILD_WITH_LIBMYSQL_CFLAGS = @BUILD_WITH_LIBMYSQL_CFLAGS@
 BUILD_WITH_LIBMYSQL_LIBS = @BUILD_WITH_LIBMYSQL_LIBS@
+BUILD_WITH_LIBNETSNMP_CPPFLAGS = @BUILD_WITH_LIBNETSNMP_CPPFLAGS@
+BUILD_WITH_LIBNETSNMP_LDFLAGS = @BUILD_WITH_LIBNETSNMP_LDFLAGS@
+BUILD_WITH_LIBNETSNMP_LIBS = @BUILD_WITH_LIBNETSNMP_LIBS@
 BUILD_WITH_LIBOPING_CPPFLAGS = @BUILD_WITH_LIBOPING_CPPFLAGS@
 BUILD_WITH_LIBOPING_LDFLAGS = @BUILD_WITH_LIBOPING_LDFLAGS@
 BUILD_WITH_LIBOWCAPI_CPPFLAGS = @BUILD_WITH_LIBOWCAPI_CPPFLAGS@
+BUILD_WITH_LIBOWCAPI_LDFLAGS = @BUILD_WITH_LIBOWCAPI_LDFLAGS@
 BUILD_WITH_LIBOWCAPI_LIBS = @BUILD_WITH_LIBOWCAPI_LIBS@
 BUILD_WITH_LIBPQ_CPPFLAGS = @BUILD_WITH_LIBPQ_CPPFLAGS@
 BUILD_WITH_LIBPQ_LDFLAGS = @BUILD_WITH_LIBPQ_LDFLAGS@
+BUILD_WITH_LIBPROTOBUF_CPPFLAGS = @BUILD_WITH_LIBPROTOBUF_CPPFLAGS@
+BUILD_WITH_LIBPROTOBUF_C_CPPFLAGS = @BUILD_WITH_LIBPROTOBUF_C_CPPFLAGS@
+BUILD_WITH_LIBPROTOBUF_C_LDFLAGS = @BUILD_WITH_LIBPROTOBUF_C_LDFLAGS@
+BUILD_WITH_LIBPROTOBUF_C_LIBS = @BUILD_WITH_LIBPROTOBUF_C_LIBS@
+BUILD_WITH_LIBPROTOBUF_LDFLAGS = @BUILD_WITH_LIBPROTOBUF_LDFLAGS@
+BUILD_WITH_LIBPROTOBUF_LIBS = @BUILD_WITH_LIBPROTOBUF_LIBS@
 BUILD_WITH_LIBRABBITMQ_CPPFLAGS = @BUILD_WITH_LIBRABBITMQ_CPPFLAGS@
 BUILD_WITH_LIBRABBITMQ_LDFLAGS = @BUILD_WITH_LIBRABBITMQ_LDFLAGS@
 BUILD_WITH_LIBRABBITMQ_LIBS = @BUILD_WITH_LIBRABBITMQ_LIBS@
@@ -499,10 +540,6 @@ BUILD_WITH_LIBRRD_LDFLAGS = @BUILD_WITH_LIBRRD_LDFLAGS@
 BUILD_WITH_LIBRRD_LIBS = @BUILD_WITH_LIBRRD_LIBS@
 BUILD_WITH_LIBSENSORS_CFLAGS = @BUILD_WITH_LIBSENSORS_CFLAGS@
 BUILD_WITH_LIBSENSORS_LDFLAGS = @BUILD_WITH_LIBSENSORS_LDFLAGS@
-BUILD_WITH_LIBSIGROK_CFLAGS = @BUILD_WITH_LIBSIGROK_CFLAGS@
-BUILD_WITH_LIBSIGROK_LDFLAGS = @BUILD_WITH_LIBSIGROK_LDFLAGS@
-BUILD_WITH_LIBSNMP_CFLAGS = @BUILD_WITH_LIBSNMP_CFLAGS@
-BUILD_WITH_LIBSNMP_LIBS = @BUILD_WITH_LIBSNMP_LIBS@
 BUILD_WITH_LIBSTATGRAB_CFLAGS = @BUILD_WITH_LIBSTATGRAB_CFLAGS@
 BUILD_WITH_LIBSTATGRAB_LDFLAGS = @BUILD_WITH_LIBSTATGRAB_LDFLAGS@
 BUILD_WITH_LIBTOKYOTYRANT_CPPFLAGS = @BUILD_WITH_LIBTOKYOTYRANT_CPPFLAGS@
@@ -529,16 +566,17 @@ BUILD_WITH_MIC_LDADD = @BUILD_WITH_MIC_LDADD@
 BUILD_WITH_MIC_LIBPATH = @BUILD_WITH_MIC_LIBPATH@
 BUILD_WITH_OPENIPMI_CFLAGS = @BUILD_WITH_OPENIPMI_CFLAGS@
 BUILD_WITH_OPENIPMI_LIBS = @BUILD_WITH_OPENIPMI_LIBS@
-BUILD_WITH_ORACLE_CFLAGS = @BUILD_WITH_ORACLE_CFLAGS@
+BUILD_WITH_ORACLE_CPPFLAGS = @BUILD_WITH_ORACLE_CPPFLAGS@
 BUILD_WITH_ORACLE_LIBS = @BUILD_WITH_ORACLE_LIBS@
-BUILD_WITH_PYTHON_CPPFLAGS = @BUILD_WITH_PYTHON_CPPFLAGS@
-BUILD_WITH_PYTHON_LDFLAGS = @BUILD_WITH_PYTHON_LDFLAGS@
-BUILD_WITH_PYTHON_LIBS = @BUILD_WITH_PYTHON_LIBS@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFAULT_LOG_LEVEL = @DEFAULT_LOG_LEVEL@
 DEFS = @DEFS@
@@ -558,13 +596,12 @@ GANGLIA_LIBS = @GANGLIA_LIBS@
 GCRYPT_CPPFLAGS = @GCRYPT_CPPFLAGS@
 GCRYPT_LDFLAGS = @GCRYPT_LDFLAGS@
 GCRYPT_LIBS = @GCRYPT_LIBS@
-GLIB_CFLAGS = @GLIB_CFLAGS@
-GLIB_COMPILE_RESOURCES = @GLIB_COMPILE_RESOURCES@
-GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
-GLIB_LIBS = @GLIB_LIBS@
-GLIB_MKENUMS = @GLIB_MKENUMS@
-GOBJECT_QUERY = @GOBJECT_QUERY@
 GREP = @GREP@
+GRPCPP_CFLAGS = @GRPCPP_CFLAGS@
+GRPCPP_LIBS = @GRPCPP_LIBS@
+GRPC_CPP_PLUGIN = @GRPC_CPP_PLUGIN@
+HAL_CFLAGS = @HAL_CFLAGS@
+HAL_LIBS = @HAL_LIBS@
 INCLTDL = @INCLTDL@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -593,18 +630,25 @@ LIBADD_DL = @LIBADD_DL@
 LIBADD_DLD_LINK = @LIBADD_DLD_LINK@
 LIBADD_DLOPEN = @LIBADD_DLOPEN@
 LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
-LIBGCRYPT_CFLAGS = @LIBGCRYPT_CFLAGS@
-LIBGCRYPT_CONFIG = @LIBGCRYPT_CONFIG@
-LIBGCRYPT_LIBS = @LIBGCRYPT_LIBS@
 LIBLTDL = @LIBLTDL@
+LIBLUA_PKG_CONFIG_NAME = @LIBLUA_PKG_CONFIG_NAME@
 LIBNETAPP_CPPFLAGS = @LIBNETAPP_CPPFLAGS@
 LIBNETAPP_LDFLAGS = @LIBNETAPP_LDFLAGS@
 LIBNETAPP_LIBS = @LIBNETAPP_LIBS@
 LIBNOTIFY_CFLAGS = @LIBNOTIFY_CFLAGS@
 LIBNOTIFY_LIBS = @LIBNOTIFY_LIBS@
 LIBOBJS = @LIBOBJS@
+LIBPYTHON_CPPFLAGS = @LIBPYTHON_CPPFLAGS@
+LIBPYTHON_LDFLAGS = @LIBPYTHON_LDFLAGS@
+LIBPYTHON_LIBS = @LIBPYTHON_LIBS@
+LIBRIEMANN_CLIENT_CFLAGS = @LIBRIEMANN_CLIENT_CFLAGS@
+LIBRIEMANN_CLIENT_LIBS = @LIBRIEMANN_CLIENT_LIBS@
 LIBS = @LIBS@
+LIBSIGROK_CFLAGS = @LIBSIGROK_CFLAGS@
+LIBSIGROK_LIBS = @LIBSIGROK_LIBS@
 LIBTOOL = @LIBTOOL@
+LIBXENCTL_CPPFLAGS = @LIBXENCTL_CPPFLAGS@
+LIBXENCTL_LDFLAGS = @LIBXENCTL_LDFLAGS@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LOAD_PLUGIN_CSV = @LOAD_PLUGIN_CSV@
@@ -620,6 +664,8 @@ LTLIBOBJS = @LTLIBOBJS@
 LT_CONFIG_H = @LT_CONFIG_H@
 LT_DLLOADERS = @LT_DLLOADERS@
 LT_DLPREOPEN = @LT_DLPREOPEN@
+LUA_CFLAGS = @LUA_CFLAGS@
+LUA_LIBS = @LUA_LIBS@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
@@ -645,6 +691,14 @@ PERL_LIBS = @PERL_LIBS@
 PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
+PROTOBUF_CFLAGS = @PROTOBUF_CFLAGS@
+PROTOBUF_C_CFLAGS = @PROTOBUF_C_CFLAGS@
+PROTOBUF_C_LIBS = @PROTOBUF_C_LIBS@
+PROTOBUF_LIBS = @PROTOBUF_LIBS@
+PROTOC = @PROTOC@
+PROTOC_C = @PROTOC_C@
+PTHREAD_LIBS = @PTHREAD_LIBS@
+PYTHON_CONFIG = @PYTHON_CONFIG@
 RANLIB = @RANLIB@
 RRD_CFLAGS = @RRD_CFLAGS@
 RRD_LIBS = @RRD_LIBS@
@@ -652,6 +706,7 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+VALGRIND = @VALGRIND@
 VERSION = @VERSION@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
@@ -661,6 +716,7 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
@@ -679,7 +735,6 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-have_protoc_c = @have_protoc_c@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -713,7 +768,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
 AM_CPPFLAGS = -I$(top_srcdir)/src -DPREFIX='"${prefix}"' \
 	-DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"' \
 	-DLOCALSTATEDIR='"${localstatedir}"' \
@@ -722,17 +776,20 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -DPREFIX='"${prefix}"' \
 	-DPKGDATADIR='"${pkgdatadir}"'
 
 # Link to these libraries..
-COMMON_LIBS = $(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8)
-AUTOMAKE_OPTIONS = subdir-objects
-noinst_LTLIBRARIES = libavltree.la libcommon.la libheap.la libplugin_mock.la
+COMMON_LIBS = $(PTHREAD_LIBS) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_7)
+noinst_LTLIBRARIES = libavltree.la libcommon.la libheap.la libmetadata.la libplugin_mock.la
 libavltree_la_SOURCES = utils_avltree.c utils_avltree.h
 libcommon_la_SOURCES = common.c common.h
 libcommon_la_LIBADD = $(COMMON_LIBS)
 libheap_la_SOURCES = utils_heap.c utils_heap.h
-libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c utils_time_mock.c
-libplugin_mock_la_LIBADD = $(COMMON_LIBS)
+libmetadata_la_SOURCES = meta_data.c meta_data.h
+libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c \
+			    utils_time.c utils_time.h
+
+libplugin_mock_la_CPPFLAGS = $(AM_CPPFLAGS) -DMOCK_TIME
+libplugin_mock_la_LIBADD = $(COMMON_LIBS) libcommon.la
 collectd_SOURCES = collectd.c collectd.h \
 		   configfile.c configfile.h \
 		   filter_chain.c filter_chain.h \
@@ -752,19 +809,27 @@ collectd_SOURCES = collectd.c collectd.h \
 		   utils_threshold.c utils_threshold.h
 
 collectd_CPPFLAGS = $(AM_CPPFLAGS) $(LTDLINCL)
-collectd_CFLAGS = $(AM_CFLAGS) $(am__append_9)
+collectd_CFLAGS = $(AM_CFLAGS) $(am__append_8)
 collectd_LDFLAGS = -export-dynamic
 collectd_LDADD = libavltree.la libcommon.la libheap.la -lm \
-	$(COMMON_LIBS) $(am__append_10) $(am__append_11) \
-	$(am__append_13)
-collectd_DEPENDENCIES = libavltree.la libcommon.la libheap.la \
+	$(COMMON_LIBS) $(am__append_9) $(am__append_10) \
 	$(am__append_12)
+collectd_DEPENDENCIES = libavltree.la libcommon.la libheap.la \
+	libmetadata.la $(am__append_11)
+LOG_COMPILER = env VALGRIND="@VALGRIND@" $(abs_top_srcdir)/testwrapper.sh
 test_common_SOURCES = common_test.c ../testing.h
-test_common_LDADD = libcommon.la libplugin_mock.la $(COMMON_LIBS)
+test_common_LDADD = libplugin_mock.la
+test_meta_data_SOURCES = meta_data_test.c ../testing.h
+test_meta_data_LDADD = libmetadata.la libplugin_mock.la
 test_utils_avltree_SOURCES = utils_avltree_test.c ../testing.h
 test_utils_avltree_LDADD = libavltree.la $(COMMON_LIBS)
 test_utils_heap_SOURCES = utils_heap_test.c ../testing.h
 test_utils_heap_LDADD = libheap.la $(COMMON_LIBS)
+test_utils_time_SOURCES = utils_time_test.c ../testing.h
+test_utils_subst_SOURCES = utils_subst_test.c ../testing.h \
+			   utils_subst.c utils_subst.h
+
+test_utils_subst_LDADD = libplugin_mock.la
 all: all-am
 
 .SUFFIXES:
@@ -819,6 +884,9 @@ libcommon.la: $(libcommon_la_OBJECTS) $(libcommon_la_DEPENDENCIES) $(EXTRA_libco
 
 libheap.la: $(libheap_la_OBJECTS) $(libheap_la_DEPENDENCIES) $(EXTRA_libheap_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK)  $(libheap_la_OBJECTS) $(libheap_la_LIBADD) $(LIBS)
+
+libmetadata.la: $(libmetadata_la_OBJECTS) $(libmetadata_la_DEPENDENCIES) $(EXTRA_libmetadata_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK)  $(libmetadata_la_OBJECTS) $(libmetadata_la_LIBADD) $(LIBS)
 
 libplugin_mock.la: $(libplugin_mock_la_OBJECTS) $(libplugin_mock_la_DEPENDENCIES) $(EXTRA_libplugin_mock_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK)  $(libplugin_mock_la_OBJECTS) $(libplugin_mock_la_LIBADD) $(LIBS)
@@ -889,6 +957,10 @@ test_common$(EXEEXT): $(test_common_OBJECTS) $(test_common_DEPENDENCIES) $(EXTRA
 	@rm -f test_common$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_common_OBJECTS) $(test_common_LDADD) $(LIBS)
 
+test_meta_data$(EXEEXT): $(test_meta_data_OBJECTS) $(test_meta_data_DEPENDENCIES) $(EXTRA_test_meta_data_DEPENDENCIES) 
+	@rm -f test_meta_data$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_meta_data_OBJECTS) $(test_meta_data_LDADD) $(LIBS)
+
 test_utils_avltree$(EXEEXT): $(test_utils_avltree_OBJECTS) $(test_utils_avltree_DEPENDENCIES) $(EXTRA_test_utils_avltree_DEPENDENCIES) 
 	@rm -f test_utils_avltree$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_utils_avltree_OBJECTS) $(test_utils_avltree_LDADD) $(LIBS)
@@ -896,6 +968,14 @@ test_utils_avltree$(EXEEXT): $(test_utils_avltree_OBJECTS) $(test_utils_avltree_
 test_utils_heap$(EXEEXT): $(test_utils_heap_OBJECTS) $(test_utils_heap_DEPENDENCIES) $(EXTRA_test_utils_heap_DEPENDENCIES) 
 	@rm -f test_utils_heap$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_utils_heap_OBJECTS) $(test_utils_heap_LDADD) $(LIBS)
+
+test_utils_subst$(EXEEXT): $(test_utils_subst_OBJECTS) $(test_utils_subst_DEPENDENCIES) $(EXTRA_test_utils_subst_DEPENDENCIES) 
+	@rm -f test_utils_subst$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_utils_subst_OBJECTS) $(test_utils_subst_LDADD) $(LIBS)
+
+test_utils_time$(EXEEXT): $(test_utils_time_OBJECTS) $(test_utils_time_DEPENDENCIES) $(EXTRA_test_utils_time_DEPENDENCIES) 
+	@rm -f test_utils_time$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_utils_time_OBJECTS) $(test_utils_time_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -922,13 +1002,18 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plugin_mock.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libplugin_mock_la-plugin_mock.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libplugin_mock_la-utils_cache_mock.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libplugin_mock_la-utils_time.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/meta_data.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/meta_data_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_avltree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_avltree_test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_cache_mock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_heap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_heap_test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_time_mock.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_subst.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_subst_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_time_test.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -953,6 +1038,27 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libplugin_mock_la-plugin_mock.lo: plugin_mock.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libplugin_mock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libplugin_mock_la-plugin_mock.lo -MD -MP -MF $(DEPDIR)/libplugin_mock_la-plugin_mock.Tpo -c -o libplugin_mock_la-plugin_mock.lo `test -f 'plugin_mock.c' || echo '$(srcdir)/'`plugin_mock.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libplugin_mock_la-plugin_mock.Tpo $(DEPDIR)/libplugin_mock_la-plugin_mock.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='plugin_mock.c' object='libplugin_mock_la-plugin_mock.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libplugin_mock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libplugin_mock_la-plugin_mock.lo `test -f 'plugin_mock.c' || echo '$(srcdir)/'`plugin_mock.c
+
+libplugin_mock_la-utils_cache_mock.lo: utils_cache_mock.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libplugin_mock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libplugin_mock_la-utils_cache_mock.lo -MD -MP -MF $(DEPDIR)/libplugin_mock_la-utils_cache_mock.Tpo -c -o libplugin_mock_la-utils_cache_mock.lo `test -f 'utils_cache_mock.c' || echo '$(srcdir)/'`utils_cache_mock.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libplugin_mock_la-utils_cache_mock.Tpo $(DEPDIR)/libplugin_mock_la-utils_cache_mock.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_cache_mock.c' object='libplugin_mock_la-utils_cache_mock.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libplugin_mock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libplugin_mock_la-utils_cache_mock.lo `test -f 'utils_cache_mock.c' || echo '$(srcdir)/'`utils_cache_mock.c
+
+libplugin_mock_la-utils_time.lo: utils_time.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libplugin_mock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libplugin_mock_la-utils_time.lo -MD -MP -MF $(DEPDIR)/libplugin_mock_la-utils_time.Tpo -c -o libplugin_mock_la-utils_time.lo `test -f 'utils_time.c' || echo '$(srcdir)/'`utils_time.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libplugin_mock_la-utils_time.Tpo $(DEPDIR)/libplugin_mock_la-utils_time.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_time.c' object='libplugin_mock_la-utils_time.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libplugin_mock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libplugin_mock_la-utils_time.lo `test -f 'utils_time.c' || echo '$(srcdir)/'`utils_time.c
 
 collectd-collectd.o: collectd.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-collectd.o -MD -MP -MF $(DEPDIR)/collectd-collectd.Tpo -c -o collectd-collectd.o `test -f 'collectd.c' || echo '$(srcdir)/'`collectd.c
@@ -1398,6 +1504,13 @@ test_common.log: test_common$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_meta_data.log: test_meta_data$(EXEEXT)
+	@p='test_meta_data$(EXEEXT)'; \
+	b='test_meta_data'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 test_utils_avltree.log: test_utils_avltree$(EXEEXT)
 	@p='test_utils_avltree$(EXEEXT)'; \
 	b='test_utils_avltree'; \
@@ -1408,6 +1521,20 @@ test_utils_avltree.log: test_utils_avltree$(EXEEXT)
 test_utils_heap.log: test_utils_heap$(EXEEXT)
 	@p='test_utils_heap$(EXEEXT)'; \
 	b='test_utils_heap'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_utils_time.log: test_utils_time$(EXEEXT)
+	@p='test_utils_time$(EXEEXT)'; \
+	b='test_utils_time'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_utils_subst.log: test_utils_subst$(EXEEXT)
+	@p='test_utils_subst$(EXEEXT)'; \
+	b='test_utils_subst'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
