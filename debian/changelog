@@ -1,3 +1,23 @@
+collectd (5.6.1-1) unstable; urgency=medium
+
+  * New upstream release.
+    - write_graphite plugin is no longer linked against libyajl. Thanks to
+      Shish for reporting this (Closes: #839771).
+    - rrdcached plugin now reconnects to daemon. Thanks to Matthias Urlichs
+      for reporting this (Closes: #657877).
+  * debian/control:
+    - Add "Multi-Arch: same" to libcollectdclient-dev, as suggested by the
+      Multiarch hinter.
+  * debian/patches:
+    - Update configure_find_lc_all.patch to reliably pick the same JVM for
+      each build, making the process reproducible.
+  * debian/rules:
+    - Disable building the barometer, drbd, fhcount and ipc plugins on
+      kfreebsd architectures, as they are Linux-only.
+    - Run the test suite using dh_auto_test.
+
+ -- Marc Fournier <marc@bl.uem.li>  Sun, 09 Oct 2016 21:42:29 +0200
+
 collectd (5.6.0-1) unstable; urgency=medium
 
   * New upstream release.

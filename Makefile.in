@@ -82,12 +82,13 @@ subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(top_srcdir)/src/libcollectdclient/collectd/lcc_features.h.in \
-	AUTHORS COPYING ChangeLog NEWS README TODO \
-	libltdl/config/compile libltdl/config/config.guess \
-	libltdl/config/config.sub libltdl/config/depcomp \
-	libltdl/config/install-sh libltdl/config/missing \
-	libltdl/config/ylwrap libltdl/config/ltmain.sh \
-	$(top_srcdir)/libltdl/config/compile \
+	AUTHORS COPYING ChangeLog INSTALL NEWS README TODO compile \
+	libltdl/config/compile config.guess \
+	libltdl/config/config.guess config.sub \
+	libltdl/config/config.sub depcomp libltdl/config/depcomp \
+	install-sh libltdl/config/install-sh missing \
+	libltdl/config/missing ylwrap libltdl/config/ylwrap ltmain.sh \
+	libltdl/config/ltmain.sh $(top_srcdir)/libltdl/config/compile \
 	$(top_srcdir)/libltdl/config/config.guess \
 	$(top_srcdir)/libltdl/config/config.sub \
 	$(top_srcdir)/libltdl/config/install-sh \

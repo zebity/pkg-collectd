@@ -1621,8 +1621,7 @@ wireless_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(wireless_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_WIRELESS_TRUE@am_wireless_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@write_graphite_la_DEPENDENCIES =  \
-@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@	libformat_json.la
+write_graphite_la_LIBADD =
 am__write_graphite_la_SOURCES_DIST = write_graphite.c \
 	utils_format_graphite.c utils_format_graphite.h
 @BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@am_write_graphite_la_OBJECTS =  \
@@ -3195,7 +3194,6 @@ CLEANFILES = $(am__append_18) $(am__append_218)
 @BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@                        utils_format_graphite.c utils_format_graphite.h
 
 @BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@write_graphite_la_LDFLAGS = $(PLUGIN_LDFLAGS)
-@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@write_graphite_la_LIBADD = libformat_json.la
 @BUILD_PLUGIN_WRITE_HTTP_TRUE@write_http_la_SOURCES = write_http.c \
 @BUILD_PLUGIN_WRITE_HTTP_TRUE@			utils_format_kairosdb.c utils_format_kairosdb.h
 
