@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2016-10-07" "5.6.1" "collectd"
+.TH COLLECTD.CONF 5 "2016-12-12" "5.7.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -670,6 +670,7 @@ possibly filtering out messages.
 \& #   GraphiteEscapeChar "_"
 \& #   GraphiteSeparateInstances false
 \& #   GraphiteAlwaysAppendDS false
+\& #   GraphitePreserveSeparator false
 \&   </Publish>
 \&
 \&   # Receive values from an AMQP broker
@@ -825,6 +826,11 @@ instance) are put into one component, for example \f(CW\*(C`host.cpu\-0.cpu\-idl
 If set to \fBtrue\fR, append the name of the \fIData Source\fR (\s-1DS\s0) to the \*(L"metric\*(R"
 identifier. If set to \fBfalse\fR (the default), this is only done when there is
 more than one \s-1DS.\s0
+.IP "\fBGraphitePreserveSeparator\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "GraphitePreserveSeparator false|true"
+If set to \fBfalse\fR (the default) the \f(CW\*(C`.\*(C'\fR (dot) character is replaced with
+\&\fIGraphiteEscapeChar\fR. Otherwise, if set to \fBtrue\fR, the \f(CW\*(C`.\*(C'\fR (dot) character
+is preserved, i.e. passed through.
 .ie n .SS "Plugin ""apache"""
 .el .SS "Plugin \f(CWapache\fP"
 .IX Subsection "Plugin apache"
@@ -1018,7 +1024,7 @@ support the \s-1SM\s0 Bus command subset).
 .PP
 The reduction or normalization to mean sea level pressure requires (depending
 on selected method/approximation) also altitude and reference to temperature
-sensor(s).  When multiple temperature sensors are configured the minumum of
+sensor(s).  When multiple temperature sensors are configured the minimum of
 their values is always used (expecting that the warmer ones are affected by
 e.g. direct sun light at that moment).
 .PP
@@ -1122,7 +1128,7 @@ The altitude (in meters) of the location where you meassure the pressure.
 .IX Item "TemperatureSensor reference"
 Temperature sensor(s) which should be used as a reference when normalizing the
 pressure using \f(CW\*(C`Normalization\*(C'\fR method 2.
-When specified more sensors a minumum is found and used each time.  The
+When specified more sensors a minimum is found and used each time.  The
 temperature reading directly from this pressure sensor/plugin is typically not
 suitable as the pressure sensor will be probably inside while we want outside
 temperature.  The collectd reference name is something like
@@ -1157,6 +1163,12 @@ When set to \fBtrue\fR, the battery plugin will report three values: \fBcharged\
 (remaining capacity), \fBdischarged\fR (difference between \*(L"last full capacity\*(R"
 and \*(L"remaining capacity\*(R") and \fBdegraded\fR (difference between \*(L"design capacity\*(R"
 and \*(L"last full capacity\*(R").
+.IP "\fBQueryStateFS\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "QueryStateFS false|true"
+When set to \fBtrue\fR, the battery plugin will only read statistics
+related to battery performance as exposed by StateFS at
+/run/state. StateFS is used in Mer-based Sailfish \s-1OS,\s0 for
+example.
 .ie n .SS "Plugin ""bind"""
 .el .SS "Plugin \f(CWbind\fP"
 .IX Subsection "Plugin bind"
@@ -2144,7 +2156,7 @@ is passed to them, so invalid settings here may go unnoticed. This is not the
 plugin's fault, it will report errors if it gets them from the library\ /
 the driver. If a driver complains about an option, the plugin will dump a
 complete list of all options understood by that driver to the log. There is no
-way to programatically find out if an option expects a string or a numeric
+way to programmatically find out if an option expects a string or a numeric
 argument, so you will have to refer to the appropriate \s-1DBD\s0's documentation to
 find this out. Sorry.
 .IP "\fBSelectDB\fR \fIDatabase\fR" 4
@@ -2264,6 +2276,58 @@ Ignore packets that originate from this address.
 .IP "\fBSelectNumericQueryTypes\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "SelectNumericQueryTypes true|false"
 Enabled by default, collects unknown (and thus presented as numeric only) query types.
+.ie n .SS "Plugin ""dpdkstat"""
+.el .SS "Plugin \f(CWdpdkstat\fP"
+.IX Subsection "Plugin dpdkstat"
+The \fIdpdkstat plugin\fR collects information about \s-1DPDK\s0 interfaces using the
+extended \s-1NIC\s0 stats \s-1API\s0 in \s-1DPDK.\s0
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 9
+\& <Plugin "dpdkstat">
+\&    Coremask "0x4"
+\&    MemoryChannels "4"
+\&    ProcessType "secondary"
+\&    FilePrefix "rte"
+\&    EnabledPortMask 0xffff
+\&    PortName "interface1"
+\&    PortName "interface2"
+\& </Plugin>
+.Ve
+.PP
+\&\fBOptions:\fR
+.IP "\fBCoremask\fR \fIMask\fR" 4
+.IX Item "Coremask Mask"
+A string containing an hexadecimal bit mask of the cores to run on. Note that
+core numbering can change between platforms and should be determined beforehand.
+.IP "\fBMemorychannels\fR \fIChannels\fR" 4
+.IX Item "Memorychannels Channels"
+A string containing a number of memory channels per processor socket.
+.IP "\fBProcessType\fR \fItype\fR" 4
+.IX Item "ProcessType type"
+A string containing the type of \s-1DPDK\s0 process instance.
+.IP "\fBFilePrefix\fR \fIFile\fR" 4
+.IX Item "FilePrefix File"
+The prefix text used for hugepage filenames. The filename will be set to
+/var/run/.<prefix>_config where prefix is what is passed in by the user.
+.IP "\fBSocketMemory\fR \fI\s-1MB\s0\fR" 4
+.IX Item "SocketMemory MB"
+A string containing amount of Memory to allocate from hugepages on specific
+sockets in \s-1MB\s0
+.IP "\fBEnabledPortMask\fR \fIMask\fR" 4
+.IX Item "EnabledPortMask Mask"
+A hexidecimal bit mask of the \s-1DPDK\s0 ports which should be enabled. A mask
+of 0x0 means that all ports will be disabled. A bitmask of all Fs means
+that all ports will be enabled. This is an optional argument \- default
+is all ports enabled.
+.IP "\fBPortName\fR \fIName\fR" 4
+.IX Item "PortName Name"
+A string containing an optional name for the enabled \s-1DPDK\s0 ports. Each PortName
+option should contain only one port name; specify as many PortName options as
+desired. Default naming convention will be used if PortName is blank. If there
+are less PortName options than there are enabled ports, the default naming
+convention will be used for the additional ports.
 .ie n .SS "Plugin ""email"""
 .el .SS "Plugin \f(CWemail\fP"
 .IX Subsection "Plugin email"
@@ -2640,6 +2704,88 @@ Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB7634\fR.
+.ie n .SS "Plugin ""hugepages"""
+.el .SS "Plugin \f(CWhugepages\fP"
+.IX Subsection "Plugin hugepages"
+To collect \fBhugepages\fR information, collectd reads directories
+\&\*(L"/sys/devices/system/node/*/hugepages\*(R" and
+\&\*(L"/sys/kernel/mm/hugepages\*(R".
+Reading of these directories can be disabled by the following
+options (default is enabled).
+.IP "\fBReportPerNodeHP\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportPerNodeHP true|false"
+If enabled, information will be collected from the hugepage
+counters in \*(L"/sys/devices/system/node/*/hugepages\*(R".
+This is used to check the per-node hugepage statistics on
+a \s-1NUMA\s0 system.
+.IP "\fBReportRootHP\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportRootHP true|false"
+If enabled, information will be collected from the hugepage
+counters in \*(L"/sys/kernel/mm/hugepages\*(R".
+This can be used on both \s-1NUMA\s0 and non-NUMA systems to check
+the overall hugepage statistics.
+.IP "\fBValuesPages\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ValuesPages true|false"
+Whether to report hugepages metrics in number of pages.
+Defaults to \fBtrue\fR.
+.IP "\fBValuesBytes\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "ValuesBytes false|true"
+Whether to report hugepages metrics in bytes.
+Defaults to \fBfalse\fR.
+.IP "\fBValuesPercentage\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "ValuesPercentage false|true"
+Whether to report hugepages metrics as percentage.
+Defaults to \fBfalse\fR.
+.ie n .SS "Plugin ""intel_rdt"""
+.el .SS "Plugin \f(CWintel_rdt\fP"
+.IX Subsection "Plugin intel_rdt"
+The \fIintel_rdt\fR plugin collects information provided by monitoring features of
+Intel Resource Director Technology (Intel(R) \s-1RDT\s0) like Cache Monitoring
+Technology (\s-1CMT\s0), Memory Bandwidth Monitoring (\s-1MBM\s0). These features provide
+information about utilization of shared resources. \s-1CMT\s0 monitors last level cache
+occupancy (\s-1LLC\s0). \s-1MBM\s0 supports two types of events reporting local and remote
+memory bandwidth. Local memory bandwidth (\s-1MBL\s0) reports the bandwidth of
+accessing memory associated with the local socket. Remote memory bandwidth (\s-1MBR\s0)
+reports the bandwidth of accessing the remote socket. Also this technology
+allows to monitor instructions per clock (\s-1IPC\s0).
+Monitor events are hardware dependant. Monitoring capabilities are detected on
+plugin initialization and only supported events are monitored.
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 3
+\&  <Plugin "intel_rdt">
+\&    Cores "0\-2" "3,4,6" "8\-10,15"
+\&  </Plugin>
+.Ve
+.PP
+\&\fBOptions:\fR
+.IP "\fBInterval\fR \fIseconds\fR" 4
+.IX Item "Interval seconds"
+The interval within which to retrieve statistics on monitored events in seconds.
+For milliseconds divide the time by 1000 for example if the desired interval
+is 50ms, set interval to 0.05. Due to limited capacity of counters it is not
+recommended to set interval higher than 1 sec.
+.IP "\fBCores\fR \fIcores groups\fR" 4
+.IX Item "Cores cores groups"
+All events are reported on a per core basis. Monitoring of the events can be
+configured for group of cores (aggregated statistics). This field defines groups
+of cores on which to monitor supported events. The field is represented as list
+of strings with core group values. Each string represents a list of cores in a
+group. Allowed formats are:
+    0,1,2,3
+    0\-10,20\-18
+    1,3,5\-8,10,0x10\-12
+.Sp
+If an empty string is provided as value for this field default cores
+configuration is applied \- a separate group is created for each core.
+.PP
+\&\fBNote:\fR By default global interval is used to retrieve statistics on monitored
+events. To configure a plugin specific interval use \fBInterval\fR option of the
+intel_rdt <LoadPlugin> block. For milliseconds divide the time by 1000 for
+example if the desired interval is 50ms, set interval to 0.05.
+Due to limited capacity of counters it is not recommended to set interval higher
+than 1 sec.
 .ie n .SS "Plugin ""interface"""
 .el .SS "Plugin \f(CWinterface\fP"
 .IX Subsection "Plugin interface"
@@ -2985,12 +3131,13 @@ interpreted. For a description of match blocks, please see \*(L"Plugin tail\*(R"
 .IX Subsection "Plugin memcached"
 The \fBmemcached plugin\fR connects to a memcached server and queries statistics
 about cache utilization, memory and bandwidth used.
-<http://www.danga.com/memcached/>
+<http://memcached.org/>
 .PP
-.Vb 6
+.Vb 7
 \& <Plugin "memcached">
 \&   <Instance "name">
-\&     Host "memcache.example.com"
+\&     #Host "memcache.example.com"
+\&     Address "127.0.0.1"
 \&     Port 11211
 \&   </Instance>
 \& </Plugin>
@@ -3001,14 +3148,22 @@ specify one \fImemcached\fR connection each. Within the \fBInstance\fR blocks, t
 following options are allowed:
 .IP "\fBHost\fR \fIHostname\fR" 4
 .IX Item "Host Hostname"
-Hostname to connect to. Defaults to \fB127.0.0.1\fR.
+Sets the \fBhost\fR field of dispatched values. Defaults to the global hostname
+setting.
+For backwards compatibility, values are also dispatched with the global
+hostname when \fBHost\fR is set to \fB127.0.0.1\fR or \fBlocalhost\fR and \fBAddress\fR is
+not set.
+.IP "\fBAddress\fR \fIAddress\fR" 4
+.IX Item "Address Address"
+Hostname or \s-1IP\s0 to connect to. For backwards compatibility, defaults to the
+value of \fBHost\fR or \fB127.0.0.1\fR if \fBHost\fR is unset.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
-TCP-Port to connect to. Defaults to \fB11211\fR.
+\&\s-1TCP\s0 port to connect to. Defaults to \fB11211\fR.
 .IP "\fBSocket\fR \fIPath\fR" 4
 .IX Item "Socket Path"
 Connect to \fImemcached\fR using the \s-1UNIX\s0 domain socket at \fIPath\fR. If this
-setting is given, the \fBHost\fR and \fBPort\fR settings are ignored.
+setting is given, the \fBAddress\fR and \fBPort\fR settings are ignored.
 .ie n .SS "Plugin ""mic"""
 .el .SS "Plugin \f(CWmic\fP"
 .IX Subsection "Plugin mic"
@@ -4304,7 +4459,7 @@ so the values will not loop.
 .IP "\fBReportStats\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "ReportStats true|false"
 The network plugin cannot only receive and send statistics, it can also create
-statistics about itself. Collected data included the number of received and
+statistics about itself. Collectd data included the number of received and
 sent octets and packets, the length of the receive queue and the number of
 values handled. When set to \fBtrue\fR, the \fINetwork plugin\fR will make these
 statistics available. Defaults to \fBfalse\fR.
@@ -5173,7 +5328,7 @@ values are made available through those parameters:
 .ie n .IP "\fB\fB$1\fB\fR" 4
 .el .IP "\fB\f(CB$1\fB\fR" 4
 .IX Item "$1"
-The timestamp of the queried value as a floating point number.
+The timestamp of the queried value as an \s-1RFC\s0 3339\-formatted local time.
 .ie n .IP "\fB\fB$2\fB\fR" 4
 .el .IP "\fB\f(CB$2\fB\fR" 4
 .IX Item "$2"
@@ -5252,7 +5407,7 @@ transaction fails or if the database server crashes.
 .IX Item "Instance name"
 Specify the plugin instance name that should be used instead of the database
 name (which is the default, if this option has not been specified). This
-allows to query multiple databases of the same name on the same host (e.g.
+allows one to query multiple databases of the same name on the same host (e.g.
 when running multiple database server versions in parallel).
 The plugin instance name can also be set from the query result using
 the \fBPluginInstanceFrom\fR option in \fBQuery\fR block.
@@ -5304,7 +5459,7 @@ Use \s-1SSL\s0 only.
 .IX Item "Instance name"
 Specify the plugin instance name that should be used instead of the database
 name (which is the default, if this option has not been specified). This
-allows to query multiple databases of the same name on the same host (e.g.
+allows one to query multiple databases of the same name on the same host (e.g.
 when running multiple database server versions in parallel).
 .IP "\fBKRBSrvName\fR \fIkerberos_service_name\fR" 4
 .IX Item "KRBSrvName kerberos_service_name"
@@ -5491,11 +5646,11 @@ Some platforms have a limit on the length of process names. \fIName\fR must stay
 below this limit.
 .IP "\fBProcessMatch\fR \fIname\fR \fIregex\fR" 4
 .IX Item "ProcessMatch name regex"
-Similar to the \fBProcess\fR option this allows to select more detailed
+Similar to the \fBProcess\fR option this allows one to select more detailed
 statistics of processes matching the specified \fIregex\fR (see \fIregex\fR\|(7) for
 details). The statistics of all matching processes are summed up and
 dispatched to the daemon using the specified \fIname\fR as an identifier. This
-allows to \*(L"group\*(R" several processes together. \fIname\fR must not contain
+allows one to \*(L"group\*(R" several processes together. \fIname\fR must not contain
 slashes.
 .IP "\fBCollectContextSwitch\fR \fIBoolean\fR" 4
 .IX Item "CollectContextSwitch Boolean"
@@ -5681,8 +5836,8 @@ provides a number of benefits, though: Because the cache is not within
 restarted. This results in much shorter (if any) gaps in graphs, especially
 under heavy load. Also, the \f(CW\*(C`rrdtool\*(C'\fR command line utility is aware of the
 daemon so that it can flush values to disk automatically when needed. This
-allows to integrate automated flushing of values into graphing solutions much
-more easily.
+allows one to integrate automated flushing of values into graphing solutions
+much more easily.
 .PP
 There are disadvantages, though: The daemon may reside on a different host, so
 it may not be possible for \f(CW\*(C`collectd\*(C'\fR to create the appropriate \s-1RRD\s0 files
@@ -6244,6 +6399,15 @@ user using (extended) regular expressions, as described in \fIregex\fR\|(7).
 \&        Type "counter"
 \&        Instance "local_user"
 \&      </Match>
+\&      <Match>
+\&        Regex "l=([0\-9]*\e\e.[0\-9]*)"
+\&        <DSType "Distribution">
+\&          Percentile 99
+\&          Bucket 0 100
+\&        </DSType>
+\&        Type "latency"
+\&        Instance "foo"
+\&      </Match>
 \&    </File>
 \&  </Plugin>
 .Ve
@@ -6300,6 +6464,12 @@ Use the greatest number only.
 .IP "\fBGaugeLast\fR" 4
 .IX Item "GaugeLast"
 Use the last number found.
+.IP "\fBGaugePersist\fR" 4
+.IX Item "GaugePersist"
+Use the last number found. The number is not reset at the end of an interval.
+It is continously reported until another number is matched. This is intended
+for cases in which only state changes are reported, for example a thermometer
+that only reports the temperature when it changes.
 .IP "\fBCounterSet\fR" 4
 .IX Item "CounterSet"
 .PD 0
@@ -6332,15 +6502,76 @@ internal counter.
 Increase the internal counter by one. These \fBDSType\fR are the only ones that do
 not use the matched subexpression, but simply count the number of matched
 lines. Thus, you may use a regular expression without submatch in this case.
+.IP "\fBDistribution\fR" 4
+.IX Item "Distribution"
+Type to do calculations based on the distribution of values, primarily
+calculating percentiles. This is primarily geared towards latency, but can be
+used for other metrics as well. The range of values tracked with this setting
+must be in the range (0X2^34) and can be fractional. Please note that neither
+zero nor 2^34 are inclusive bounds, i.e. zero \fIcannot\fR be handled by a
+distribution.
+.Sp
+This option must be used together with the \fBPercentile\fR and/or \fBBucket\fR
+options.
+.Sp
+\&\fBSynopsis:\fR
+.Sp
+.Vb 4
+\&  <DSType "Distribution">
+\&    Percentile 99
+\&    Bucket 0 100
+\&  </DSType>
+.Ve
+.RS 4
+.IP "\fBPercentile\fR \fIPercent\fR" 4
+.IX Item "Percentile Percent"
+Calculate and dispatch the configured percentile, i.e. compute the value, so
+that \fIPercent\fR of all matched values are smaller than or equal to the computed
+latency.
+.Sp
+Metrics are reported with the \fItype\fR \fBType\fR (the value of the above option)
+and the \fItype instance\fR \f(CW\*(C`[<Instance>\-]<Percent>\*(C'\fR.
+.Sp
+This option may be repeated to calculate more than one percentile.
+.IP "\fBBucket\fR \fIlower_bound\fR \fIupper_bound\fR" 4
+.IX Item "Bucket lower_bound upper_bound"
+Export the number of values (a \f(CW\*(C`DERIVE\*(C'\fR) falling within the given range. Both,
+\&\fIlower_bound\fR and \fIupper_bound\fR may be a fractional number, such as \fB0.5\fR.
+Each \fBBucket\fR option specifies an interval \f(CW\*(C`(\f(CIlower_bound\f(CW,
+\&\f(CIupper_bound\f(CW]\*(C'\fR, i.e. the range \fIexcludes\fR the lower bound and \fIincludes\fR
+the upper bound. \fIlower_bound\fR and \fIupper_bound\fR may be zero, meaning no
+lower/upper bound.
+.Sp
+To export the entire (0Xinf) range without overlap, use the upper bound of the
+previous range as the lower bound of the following range. In other words, use
+the following schema:
+.Sp
+.Vb 7
+\&  Bucket   0   1
+\&  Bucket   1   2
+\&  Bucket   2   5
+\&  Bucket   5  10
+\&  Bucket  10  20
+\&  Bucket  20  50
+\&  Bucket  50   0
+.Ve
+.Sp
+Metrics are reported with the \fItype\fR \f(CW\*(C`bucket\*(C'\fR and the \fItype instance\fR
+\&\f(CW\*(C`<Type>[\-<Instance>]\-<lower_bound>_<upper_bound>\*(C'\fR.
+.Sp
+This option may be repeated to calculate more than one rate.
+.RE
+.RS 4
+.RE
 .RE
 .RS 4
 .Sp
-As you'd expect the \fBGauge*\fR types interpret the submatch as a floating point
-number, using \fIstrtod\fR\|(3). The \fBCounter*\fR and \fBAbsoluteSet\fR types interpret
-the submatch as an unsigned integer using \fIstrtoull\fR\|(3). The \fBDerive*\fR types
-interpret the submatch as a signed integer using \fIstrtoll\fR\|(3). \fBCounterInc\fR
-and \fBDeriveInc\fR do not use the submatch at all and it may be omitted in this
-case.
+The \fBGauge*\fR and \fBDistribution\fR types interpret the submatch as a floating
+point number, using \fIstrtod\fR\|(3). The \fBCounter*\fR and \fBAbsoluteSet\fR types
+interpret the submatch as an unsigned integer using \fIstrtoull\fR\|(3). The
+\&\fBDerive*\fR types interpret the submatch as a signed integer using
+\&\fIstrtoll\fR\|(3). \fBCounterInc\fR and \fBDeriveInc\fR do not use the submatch at all
+and it may be omitted in this case.
 .RE
 .IP "\fBType\fR \fIType\fR" 4
 .IX Item "Type Type"
@@ -6553,7 +6784,7 @@ The \fITokyoTyrant plugin\fR connects to a TokyoTyrant server and collects a
 couple metrics: number of records, and database size on disk.
 .IP "\fBHost\fR \fIHostname/IP\fR" 4
 .IX Item "Host Hostname/IP"
-The hostname or ip which identifies the server.
+The hostname or \s-1IP\s0 which identifies the server.
 Default: \fB127.0.0.1\fR
 .IP "\fBPort\fR \fIService/Port\fR" 4
 .IX Item "Port Service/Port"
@@ -6564,52 +6795,56 @@ Default: \fB1978\fR
 .el .SS "Plugin \f(CWturbostat\fP"
 .IX Subsection "Plugin turbostat"
 The \fITurbostat plugin\fR reads \s-1CPU\s0 frequency and C\-state residency on modern
-Intel processors by using the new Model Specific Registers.
+Intel processors by using \fIModel Specific Registers\fR.
 .IP "\fBCoreCstates\fR \fIBitmask(Integer)\fR" 4
 .IX Item "CoreCstates Bitmask(Integer)"
-Bitmask of the list of core C states supported by the processor.
+Bit mask of the list of core C\-states supported by the processor.
 This option should only be used if the automated detection fails.
-Default value extracted from the cpu model and family.
+Default value extracted from the \s-1CPU\s0 model and family.
 .Sp
 Currently supported C\-states (by this plugin): 3, 6, 7
 .Sp
-Example: (1<<3)+(1<<6)+(1<<7) = 392 for all states
+\&\fBExample:\fR
+.Sp
+.Vb 2
+\&  All states (3, 6 and 7):
+\&  (1<<3) + (1<<6) + (1<<7) = 392
+.Ve
 .IP "\fBPackageCstates\fR \fIBitmask(Integer)\fR" 4
 .IX Item "PackageCstates Bitmask(Integer)"
-Bitmask of the list of pacages C states supported by the processor.
-This option should only be used if the automated detection fails.
-Default value extracted from the cpu model and family.
+Bit mask of the list of packages C\-states supported by the processor. This
+option should only be used if the automated detection fails. Default value
+extracted from the \s-1CPU\s0 model and family.
 .Sp
 Currently supported C\-states (by this plugin): 2, 3, 6, 7, 8, 9, 10
 .Sp
-Example: (1<<2)+(1<<3)+(1<<6)+(1<<7) = 396 for states 2, 3, 6 and 7
+\&\fBExample:\fR
+.Sp
+.Vb 2
+\&  States 2, 3, 6 and 7:
+\&  (1<<2) + (1<<3) + (1<<6) + (1<<7) = 396
+.Ve
 .IP "\fBSystemManagementInterrupt\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "SystemManagementInterrupt true|false"
-Boolean enabling the collection of the I/O System-Management Interrupt
-counter'. This option should only be used if the automated detection
-fails or if you want to disable this feature.
+Boolean enabling the collection of the I/O System-Management Interrupt counter.
+This option should only be used if the automated detection fails or if you want
+to disable this feature.
 .IP "\fBDigitalTemperatureSensor\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "DigitalTemperatureSensor true|false"
-Boolean enabling the collection of the temperature of each core.
-This option should only be used if the automated detectionfails or
-if you want to disable this feature.
-.IP "\fBDigitalTemperatureSensor\fR \fItrue\fR|\fIfalse\fR" 4
-.IX Item "DigitalTemperatureSensor true|false"
-Boolean enabling the collection of the temperature of each package.
-This option should only be used if the automated detectionfails or
-if you want to disable this feature.
+Boolean enabling the collection of the temperature of each core. This option
+should only be used if the automated detection fails or if you want to disable
+this feature.
 .IP "\fBTCCActivationTemp\fR \fITemperature\fR" 4
 .IX Item "TCCActivationTemp Temperature"
-Thermal Control Circuit Activation Temperature of the installed
-\&\s-1CPU.\s0 This temperature is used when collecting the temperature of
-cores or packages. This option should only be used if the automated
-detection fails. Default value extracted from \fB\s-1MSR_IA32_TEMPERATURE_TARGET\s0\fR
+\&\fIThermal Control Circuit Activation Temperature\fR of the installed \s-1CPU.\s0 This
+temperature is used when collecting the temperature of cores or packages. This
+option should only be used if the automated detection fails. Default value
+extracted from \fB\s-1MSR_IA32_TEMPERATURE_TARGET\s0\fR.
 .IP "\fBRunningAveragePowerLimit\fR \fIBitmask(Integer)\fR" 4
 .IX Item "RunningAveragePowerLimit Bitmask(Integer)"
-Bitmask of the list of elements to be thermally monitored. This option
-should only be used if the automated detection fails or if you want to
-disable some collections. The different bits of this bitmask accepted
-by this plugin are:
+Bit mask of the list of elements to be thermally monitored. This option should
+only be used if the automated detection fails or if you want to disable some
+collections. The different bits of this bit mask accepted by this plugin are:
 .RS 4
 .IP "0 ('1'): Package" 4
 .IX Item "0 ('1'): Package"
@@ -6623,7 +6858,14 @@ by this plugin are:
 .RE
 .RS 4
 .RE
+.IP "\fBLogicalCoreNames\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "LogicalCoreNames true|false"
 .PD
+Boolean enabling the use of logical core numbering for per core statistics.
+When enabled, \f(CW\*(C`cpu<n>\*(C'\fR is used as plugin instance, where \fIn\fR is a
+sequential number assigned by the kernel. Otherwise, \f(CW\*(C`core<n>\*(C'\fR is used
+where \fIn\fR is the n\-th core of the socket, causing name conflicts when there is
+more than one socket.
 .ie n .SS "Plugin ""unixsock"""
 .el .SS "Plugin \f(CWunixsock\fP"
 .IX Subsection "Plugin unixsock"
@@ -6857,6 +7099,49 @@ Example:
 .Sp
 Ignore all \fIhdb\fR devices on any domain, but other block devices (eg. \fIhda\fR)
 will be collected.
+.IP "\fBBlockDeviceFormat\fR \fBtarget\fR|\fBsource\fR" 4
+.IX Item "BlockDeviceFormat target|source"
+If \fIBlockDeviceFormat\fR is set to \fBtarget\fR, the default, then the device name
+seen by the guest will be used for reporting metrics. 
+This corresponds to the \f(CW\*(C`<target>\*(C'\fR node in the \s-1XML\s0 definition of the
+domain.
+.Sp
+If \fIBlockDeviceFormat\fR is set to \fBsource\fR, then metrics will be reported
+using the path of the source, e.g. an image file.
+This corresponds to the \f(CW\*(C`<source>\*(C'\fR node in the \s-1XML\s0 definition of the
+domain.
+.Sp
+\&\fBExample:\fR
+.Sp
+If the domain \s-1XML\s0 have the following device defined:
+.Sp
+.Vb 7
+\&  <disk type=\*(Aqblock\*(Aq device=\*(Aqdisk\*(Aq>
+\&    <driver name=\*(Aqqemu\*(Aq type=\*(Aqraw\*(Aq cache=\*(Aqnone\*(Aq io=\*(Aqnative\*(Aq discard=\*(Aqunmap\*(Aq/>
+\&    <source dev=\*(Aq/var/lib/libvirt/images/image1.qcow2\*(Aq/>
+\&    <target dev=\*(Aqsda\*(Aq bus=\*(Aqscsi\*(Aq/>
+\&    <boot order=\*(Aq2\*(Aq/>
+\&    <address type=\*(Aqdrive\*(Aq controller=\*(Aq0\*(Aq bus=\*(Aq0\*(Aq target=\*(Aq0\*(Aq unit=\*(Aq0\*(Aq/>
+\&  </disk>
+.Ve
+.Sp
+Setting \f(CW\*(C`BlockDeviceFormat target\*(C'\fR will cause the \fItype instance\fR to be set
+to \f(CW\*(C`sda\*(C'\fR.
+Setting \f(CW\*(C`BlockDeviceFormat source\*(C'\fR will cause the \fItype instance\fR to be set
+to \f(CW\*(C`var_lib_libvirt_images_image1.qcow2\*(C'\fR.
+.IP "\fBBlockDeviceFormatBasename\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "BlockDeviceFormatBasename false|true"
+The \fBBlockDeviceFormatBasename\fR controls whether the full path or the
+\&\fIbasename\fR\|(1) of the source is being used as the \fItype instance\fR when
+\&\fBBlockDeviceFormat\fR is set to \fBsource\fR. Defaults to \fBfalse\fR.
+.Sp
+\&\fBExample:\fR
+.Sp
+Assume the device path (source tag) is \f(CW\*(C`/var/lib/libvirt/images/image1.qcow2\*(C'\fR.
+Setting \f(CW\*(C`BlockDeviceFormatBasename false\*(C'\fR will cause the \fItype instance\fR to
+be set to \f(CW\*(C`var_lib_libvirt_images_image1.qcow2\*(C'\fR.
+Setting \f(CW\*(C`BlockDeviceFormatBasename true\*(C'\fR will cause the \fItype instance\fR to be
+set to \f(CW\*(C`image1.qcow2\*(C'\fR.
 .IP "\fBHostnameFormat\fR \fBname|uuid|hostname|...\fR" 4
 .IX Item "HostnameFormat name|uuid|hostname|..."
 When the virt plugin logs data, it sets the hostname of the collected data
@@ -7002,6 +7287,33 @@ instance) are put into one component, for example \f(CW\*(C`host.cpu\-0.cpu\-idl
 If set to \fBtrue\fR, append the name of the \fIData Source\fR (\s-1DS\s0) to the \*(L"metric\*(R"
 identifier. If set to \fBfalse\fR (the default), this is only done when there is
 more than one \s-1DS.\s0
+.IP "\fBPreserveSeparator\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "PreserveSeparator false|true"
+If set to \fBfalse\fR (the default) the \f(CW\*(C`.\*(C'\fR (dot) character is replaced with
+\&\fIEscapeCharacter\fR. Otherwise, if set to \fBtrue\fR, the \f(CW\*(C`.\*(C'\fR (dot) character
+is preserved, i.e. passed through.
+.IP "\fBDropDuplicateFields\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "DropDuplicateFields false|true"
+If set to \fBtrue\fR, detect and remove duplicate components in Graphite metric
+names. For example, the metric name  \f(CW\*(C`host.load.load.shortterm\*(C'\fR will
+be shortened to \f(CW\*(C`host.load.shortterm\*(C'\fR.
+.ie n .SS "Plugin ""write_log"""
+.el .SS "Plugin \f(CWwrite_log\fP"
+.IX Subsection "Plugin write_log"
+The \f(CW\*(C`write_log\*(C'\fR plugin writes metrics as \s-1INFO\s0 log messages.
+.PP
+This plugin supports two output formats: \fIGraphite\fR and \fI\s-1JSON\s0\fR.
+.PP
+Synopsis:
+.PP
+.Vb 3
+\& <Plugin write_log>
+\&   Format Graphite
+\& </Plugin>
+.Ve
+.IP "\fBFormat\fR \fIFormat\fR" 4
+.IX Item "Format Format"
+The output format to use. Can be one of \f(CW\*(C`Graphite\*(C'\fR or \f(CW\*(C`JSON\*(C'\fR.
 .ie n .SS "Plugin ""write_tsdb"""
 .el .SS "Plugin \f(CWwrite_tsdb\fP"
 .IX Subsection "Plugin write_tsdb"
@@ -7095,6 +7407,35 @@ number.
 Sets the information used when authenticating to a \fIMongoDB\fR database. The
 fields are optional (in which case no authentication is attempted), but if you
 want to use authentication all three fields must be set.
+.ie n .SS "Plugin ""write_prometheus"""
+.el .SS "Plugin \f(CWwrite_prometheus\fP"
+.IX Subsection "Plugin write_prometheus"
+The \fIwrite_prometheus plugin\fR implements a tiny webserver that can be scraped
+using \fIPrometheus\fR.
+.PP
+\&\fBOptions:\fR
+.IP "\fBPort\fR \fIPort\fR" 4
+.IX Item "Port Port"
+Port the embedded webserver should listen on. Defaults to \fB9103\fR.
+.IP "\fBStalenessDelta\fR \fISeconds\fR" 4
+.IX Item "StalenessDelta Seconds"
+Time in seconds after which \fIPrometheus\fR considers a metric \*(L"stale\*(R" if it
+hasn't seen any update for it. This value must match the setting in Prometheus.
+It defaults to \fB300\fR seconds (5 minutes), same as Prometheus.
+.Sp
+\&\fBBackground:\fR
+.Sp
+\&\fIPrometheus\fR has a global setting, \f(CW\*(C`StalenessDelta\*(C'\fR, which controls after
+which time a metric without updates is considered \*(L"stale\*(R". This setting
+effectively puts an upper limit on the interval in which metrics are reported.
+.Sp
+When the \fIwrite_prometheus plugin\fR encounters a metric with an interval
+exceeding this limit, it will inform you, the user, and provide the metric to
+\&\fIPrometheus\fR \fBwithout\fR a timestamp. That causes \fIPrometheus\fR to consider the
+metric \*(L"fresh\*(R" each time it is scraped, with the time of the scrape being
+considered the time of the update. The result is that there appear more
+datapoints in \fIPrometheus\fR than were actually created, but at least the metric
+doesn't disappear periodically.
 .ie n .SS "Plugin ""write_http"""
 .el .SS "Plugin \f(CWwrite_http\fP"
 .IX Subsection "Plugin write_http"
@@ -7249,7 +7590,7 @@ Configure the named property for the current topic. Properties are
 forwarded to the kafka producer library \fBlibrdkafka\fR.
 .IP "\fBKey\fR \fIString\fR" 4
 .IX Item "Key String"
-Use the specified string as a partioning key for the topic. Kafka breaks
+Use the specified string as a partitioning key for the topic. Kafka breaks
 topic into partitions and guarantees that for a given topology, the same
 consumer will be used for a specific key. The special (case insensitive)
 string \fBRandom\fR can be used to specify that an arbitrary partition should
@@ -7298,6 +7639,16 @@ If set to \fBtrue\fR, the plugin instance and type instance will be in their own
 path component, for example \f(CW\*(C`host.cpu.0.cpu.idle\*(C'\fR. If set to \fBfalse\fR (the
 default), the plugin and plugin instance (and likewise the type and type
 instance) are put into one component, for example \f(CW\*(C`host.cpu\-0.cpu\-idle\*(C'\fR.
+.IP "\fBGraphiteAlwaysAppendDS\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GraphiteAlwaysAppendDS true|false"
+If set to \fBtrue\fR, append the name of the \fIData Source\fR (\s-1DS\s0) to the \*(L"metric\*(R"
+identifier. If set to \fBfalse\fR (the default), this is only done when there is
+more than one \s-1DS.\s0
+.IP "\fBGraphitePreserveSeparator\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "GraphitePreserveSeparator false|true"
+If set to \fBfalse\fR (the default) the \f(CW\*(C`.\*(C'\fR (dot) character is replaced with
+\&\fIGraphiteEscapeChar\fR. Otherwise, if set to \fBtrue\fR, the \f(CW\*(C`.\*(C'\fR (dot) character
+is preserved, i.e. passed through.
 .IP "\fBStoreRates\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "StoreRates true|false"
 If set to \fBtrue\fR (the default), convert counter values to rates. If set to
@@ -8156,6 +8507,8 @@ Available options:
 .IX Item "Type Regex"
 .IP "\fBTypeInstance\fR \fIRegex\fR" 4
 .IX Item "TypeInstance Regex"
+.IP "\fBMetaData\fR \fIString\fR \fIRegex\fR" 4
+.IX Item "MetaData String Regex"
 .PD
 Match values where the given regular expressions match the various fields of
 the identifier of a value. If multiple regular expressions are given, \fBall\fR
@@ -8441,6 +8794,10 @@ Available options:
 .IX Item "PluginInstance Regex Replacement"
 .IP "\fBTypeInstance\fR \fIRegex\fR \fIReplacement\fR" 4
 .IX Item "TypeInstance Regex Replacement"
+.IP "\fBMetaData\fR \fIString\fR \fIRegex\fR \fIReplacement\fR" 4
+.IX Item "MetaData String Regex Replacement"
+.IP "\fBDeleteMetaData\fR \fIString\fR \fIRegex\fR" 4
+.IX Item "DeleteMetaData String Regex"
 .PD
 Match the appropriate field with the given regular expression \fIRegex\fR. If the
 regular expression matches, that part that matches is replaced with
@@ -8482,9 +8839,36 @@ Available options:
 .IP "\fBMetaData\fR \fIString\fR \fIString\fR" 4
 .IX Item "MetaData String String"
 .PD
-Set the appropriate field to the given string. The strings for plugin instance
-and type instance may be empty, the strings for host and plugin may not be
-empty. It's currently not possible to set the type of a value this way.
+Set the appropriate field to the given string. The strings for plugin instance,
+type instance, and meta data may be empty, the strings for host and plugin may
+not be empty. It's currently not possible to set the type of a value this way.
+.Sp
+The following placeholders will be replaced by an appropriate value:
+.RS 4
+.IP "\fB%{host}\fR" 4
+.IX Item "%{host}"
+.PD 0
+.IP "\fB%{plugin}\fR" 4
+.IX Item "%{plugin}"
+.IP "\fB%{plugin_instance}\fR" 4
+.IX Item "%{plugin_instance}"
+.IP "\fB%{type}\fR" 4
+.IX Item "%{type}"
+.IP "\fB%{type_instance}\fR" 4
+.IX Item "%{type_instance}"
+.PD
+These placeholders are replaced by the identifier field of the same name.
+.IP "\fB%{meta:\fR\fIname\fR\fB}\fR" 4
+.IX Item "%{meta:name}"
+These placeholders are replaced by the meta data value with the given name.
+.RE
+.RS 4
+.Sp
+Please note that these placeholders are \fBcase sensitive\fR!
+.RE
+.IP "\fBDeleteMetaData\fR \fIString\fR" 4
+.IX Item "DeleteMetaData String"
+Delete the named meta data field.
 .RE
 .RS 4
 .Sp

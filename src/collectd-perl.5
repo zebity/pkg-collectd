@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PERL 5"
-.TH COLLECTD-PERL 5 "2016-10-07" "5.6.1" "collectd"
+.TH COLLECTD-PERL 5 "2016-12-12" "5.7.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -204,6 +204,19 @@ the command line driven interface of the debugger.
 Adds \fIDir\fR to the \fB\f(CB@INC\fB\fR array. This is the same as using the \fB\-IDir\fR
 command line option or \fBuse lib Dir\fR in the source code. Please note that it
 only has effect on plugins loaded after this option.
+.IP "\fBRegisterLegacyFlush\fR \fItrue|false\fR" 4
+.IX Item "RegisterLegacyFlush true|false"
+The \f(CW\*(C`Perl plugin\*(C'\fR used to register one flush callback (called \fB\*(L"perl\*(R"\fR) and
+call all Perl-based flush handlers when this callback was called. Newer versions
+of the plugin wrap the Perl flush handlers and register them directly with the
+daemon \fIin addition\fR to the legacy \fB\*(L"perl\*(R"\fR callback. This allows to call
+specific Perl flush handlers, but has the downside that flushing \fIall\fR plugins
+now calls the Perl flush handlers twice (once directly and once via the legacy
+callback). Unfortunately, removing the \fB\*(L"perl\*(R"\fR callback would break backwards
+compatibility.
+.Sp
+This option allows you to disable the legacy \fB\*(L"perl\*(R"\fR flush callback if you care
+about the double call and don't call the \fB\*(L"perl\*(R"\fR callback in your setup.
 .SH "WRITING YOUR OWN PLUGINS"
 .IX Header "WRITING YOUR OWN PLUGINS"
 Writing your own plugins is quite simple. collectd manages plugins by means of
@@ -832,12 +845,6 @@ unstable and subject to change at any time. We try hard to not break backwards
 compatibility in the Perl \s-1API\s0 during the life cycle of one major release.
 However, this cannot be guaranteed at all times. Watch out for warnings
 dispatched by the perl plugin after upgrades.
-.SH "KNOWN BUGS"
-.IX Header "KNOWN BUGS"
-.IP "\(bu" 4
-Currently, it is not possible to flush a single Perl plugin only. You can
-either flush all Perl plugins or none at all and you have to use \f(CW\*(C`perl\*(C'\fR as
-plugin name when doing so.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),

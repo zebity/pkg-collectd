@@ -80,21 +80,22 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @BUILD_FEATURE_DAEMON_TRUE@am__append_1 = -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
-@BUILD_WITH_LIBRT_TRUE@am__append_2 = -lrt
-@BUILD_WITH_LIBPOSIX4_TRUE@am__append_3 = -lposix4
-@BUILD_WITH_LIBSOCKET_TRUE@am__append_4 = -lsocket
-@BUILD_WITH_LIBRESOLV_TRUE@am__append_5 = -lresolv
-@BUILD_WITH_LIBKSTAT_TRUE@am__append_6 = -lkstat
-@BUILD_WITH_LIBDEVINFO_TRUE@am__append_7 = -ldevinfo
+@BUILD_WITH_CAPABILITY_TRUE@am__append_2 = -lcap
+@BUILD_WITH_LIBRT_TRUE@am__append_3 = -lrt
+@BUILD_WITH_LIBPOSIX4_TRUE@am__append_4 = -lposix4
+@BUILD_WITH_LIBSOCKET_TRUE@am__append_5 = -lsocket
+@BUILD_WITH_LIBRESOLV_TRUE@am__append_6 = -lresolv
+@BUILD_WITH_LIBKSTAT_TRUE@am__append_7 = -lkstat
+@BUILD_WITH_LIBDEVINFO_TRUE@am__append_8 = -ldevinfo
 sbin_PROGRAMS = collectd$(EXEEXT)
 
 # The daemon needs to call sg_init, so we need to link it against libstatgrab,
 # too. -octo
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_8 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_9 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_10 = $(LIBLTDL) $(top_builddir)/src/liboconfig/liboconfig.la
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_11 = $(top_builddir)/src/liboconfig/liboconfig.la
-@BUILD_WITH_OWN_LIBOCONFIG_FALSE@am__append_12 = -loconfig
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_9 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_10 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_11 = $(LIBLTDL) $(top_builddir)/src/liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_12 = $(top_builddir)/src/liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_FALSE@am__append_13 = -loconfig
 check_PROGRAMS = test_common$(EXEEXT) test_meta_data$(EXEEXT) \
 	test_utils_avltree$(EXEEXT) test_utils_heap$(EXEEXT) \
 	test_utils_time$(EXEEXT) test_utils_subst$(EXEEXT)
@@ -125,7 +126,7 @@ am__DEPENDENCIES_1 =
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 libcommon_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_libcommon_la_OBJECTS = common.lo
 libcommon_la_OBJECTS = $(am_libcommon_la_OBJECTS)
@@ -149,9 +150,7 @@ am_collectd_OBJECTS = collectd-collectd.$(OBJEXT) \
 	collectd-utils_complain.$(OBJEXT) \
 	collectd-utils_ignorelist.$(OBJEXT) \
 	collectd-utils_llist.$(OBJEXT) collectd-utils_random.$(OBJEXT) \
-	collectd-utils_tail_match.$(OBJEXT) \
-	collectd-utils_match.$(OBJEXT) collectd-utils_subst.$(OBJEXT) \
-	collectd-utils_tail.$(OBJEXT) collectd-utils_time.$(OBJEXT) \
+	collectd-utils_subst.$(OBJEXT) collectd-utils_time.$(OBJEXT) \
 	collectd-types_list.$(OBJEXT) \
 	collectd-utils_threshold.$(OBJEXT)
 collectd_OBJECTS = $(am_collectd_OBJECTS)
@@ -500,6 +499,9 @@ BUILD_WITH_LIBLVM2APP_LIBS = @BUILD_WITH_LIBLVM2APP_LIBS@
 BUILD_WITH_LIBMEMCACHED_CPPFLAGS = @BUILD_WITH_LIBMEMCACHED_CPPFLAGS@
 BUILD_WITH_LIBMEMCACHED_LDFLAGS = @BUILD_WITH_LIBMEMCACHED_LDFLAGS@
 BUILD_WITH_LIBMEMCACHED_LIBS = @BUILD_WITH_LIBMEMCACHED_LIBS@
+BUILD_WITH_LIBMICROHTTPD_CPPFLAGS = @BUILD_WITH_LIBMICROHTTPD_CPPFLAGS@
+BUILD_WITH_LIBMICROHTTPD_LDFLAGS = @BUILD_WITH_LIBMICROHTTPD_LDFLAGS@
+BUILD_WITH_LIBMICROHTTPD_LIBS = @BUILD_WITH_LIBMICROHTTPD_LIBS@
 BUILD_WITH_LIBMNL_CFLAGS = @BUILD_WITH_LIBMNL_CFLAGS@
 BUILD_WITH_LIBMNL_LIBS = @BUILD_WITH_LIBMNL_LIBS@
 BUILD_WITH_LIBMODBUS_CFLAGS = @BUILD_WITH_LIBMODBUS_CFLAGS@
@@ -519,6 +521,9 @@ BUILD_WITH_LIBOPING_LDFLAGS = @BUILD_WITH_LIBOPING_LDFLAGS@
 BUILD_WITH_LIBOWCAPI_CPPFLAGS = @BUILD_WITH_LIBOWCAPI_CPPFLAGS@
 BUILD_WITH_LIBOWCAPI_LDFLAGS = @BUILD_WITH_LIBOWCAPI_LDFLAGS@
 BUILD_WITH_LIBOWCAPI_LIBS = @BUILD_WITH_LIBOWCAPI_LIBS@
+BUILD_WITH_LIBPQOS_CPPFLAGS = @BUILD_WITH_LIBPQOS_CPPFLAGS@
+BUILD_WITH_LIBPQOS_LDFLAGS = @BUILD_WITH_LIBPQOS_LDFLAGS@
+BUILD_WITH_LIBPQOS_LIBS = @BUILD_WITH_LIBPQOS_LIBS@
 BUILD_WITH_LIBPQ_CPPFLAGS = @BUILD_WITH_LIBPQ_CPPFLAGS@
 BUILD_WITH_LIBPQ_LDFLAGS = @BUILD_WITH_LIBPQ_LDFLAGS@
 BUILD_WITH_LIBPROTOBUF_CPPFLAGS = @BUILD_WITH_LIBPROTOBUF_CPPFLAGS@
@@ -630,6 +635,8 @@ LIBADD_DL = @LIBADD_DL@
 LIBADD_DLD_LINK = @LIBADD_DLD_LINK@
 LIBADD_DLOPEN = @LIBADD_DLOPEN@
 LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
+LIBDPDK_CPPFLAGS = @LIBDPDK_CPPFLAGS@
+LIBDPDK_LDFLAGS = @LIBDPDK_LDFLAGS@
 LIBLTDL = @LIBLTDL@
 LIBLUA_PKG_CONFIG_NAME = @LIBLUA_PKG_CONFIG_NAME@
 LIBNETAPP_CPPFLAGS = @LIBNETAPP_CPPFLAGS@
@@ -668,6 +675,8 @@ LUA_CFLAGS = @LUA_CFLAGS@
 LUA_LIBS = @LUA_LIBS@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
+MICROHTTPD_CFLAGS = @MICROHTTPD_CFLAGS@
+MICROHTTPD_LIBS = @MICROHTTPD_LIBS@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -778,7 +787,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -DPREFIX='"${prefix}"' \
 # Link to these libraries..
 COMMON_LIBS = $(PTHREAD_LIBS) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7)
+	$(am__append_7) $(am__append_8)
 noinst_LTLIBRARIES = libavltree.la libcommon.la libheap.la libmetadata.la libplugin_mock.la
 libavltree_la_SOURCES = utils_avltree.c utils_avltree.h
 libcommon_la_SOURCES = common.c common.h
@@ -800,22 +809,19 @@ collectd_SOURCES = collectd.c collectd.h \
 		   utils_ignorelist.c utils_ignorelist.h \
 		   utils_llist.c utils_llist.h \
 		   utils_random.c utils_random.h \
-		   utils_tail_match.c utils_tail_match.h \
-		   utils_match.c utils_match.h \
 		   utils_subst.c utils_subst.h \
-		   utils_tail.c utils_tail.h \
 		   utils_time.c utils_time.h \
 		   types_list.c types_list.h \
 		   utils_threshold.c utils_threshold.h
 
 collectd_CPPFLAGS = $(AM_CPPFLAGS) $(LTDLINCL)
-collectd_CFLAGS = $(AM_CFLAGS) $(am__append_8)
+collectd_CFLAGS = $(AM_CFLAGS) $(am__append_9)
 collectd_LDFLAGS = -export-dynamic
 collectd_LDADD = libavltree.la libcommon.la libheap.la -lm \
-	$(COMMON_LIBS) $(am__append_9) $(am__append_10) \
-	$(am__append_12)
+	$(COMMON_LIBS) $(am__append_10) $(am__append_11) \
+	$(am__append_13)
 collectd_DEPENDENCIES = libavltree.la libcommon.la libheap.la \
-	libmetadata.la $(am__append_11)
+	libmetadata.la $(am__append_12)
 LOG_COMPILER = env VALGRIND="@VALGRIND@" $(abs_top_srcdir)/testwrapper.sh
 test_common_SOURCES = common_test.c ../testing.h
 test_common_LDADD = libplugin_mock.la
@@ -993,11 +999,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_complain.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_ignorelist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_llist.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_random.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_subst.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_tail.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_tail_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_threshold.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Plo@am__quote@
@@ -1200,34 +1203,6 @@ collectd-utils_random.obj: utils_random.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_random.obj `if test -f 'utils_random.c'; then $(CYGPATH_W) 'utils_random.c'; else $(CYGPATH_W) '$(srcdir)/utils_random.c'; fi`
 
-collectd-utils_tail_match.o: utils_tail_match.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_tail_match.o -MD -MP -MF $(DEPDIR)/collectd-utils_tail_match.Tpo -c -o collectd-utils_tail_match.o `test -f 'utils_tail_match.c' || echo '$(srcdir)/'`utils_tail_match.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_tail_match.Tpo $(DEPDIR)/collectd-utils_tail_match.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_tail_match.c' object='collectd-utils_tail_match.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_tail_match.o `test -f 'utils_tail_match.c' || echo '$(srcdir)/'`utils_tail_match.c
-
-collectd-utils_tail_match.obj: utils_tail_match.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_tail_match.obj -MD -MP -MF $(DEPDIR)/collectd-utils_tail_match.Tpo -c -o collectd-utils_tail_match.obj `if test -f 'utils_tail_match.c'; then $(CYGPATH_W) 'utils_tail_match.c'; else $(CYGPATH_W) '$(srcdir)/utils_tail_match.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_tail_match.Tpo $(DEPDIR)/collectd-utils_tail_match.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_tail_match.c' object='collectd-utils_tail_match.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_tail_match.obj `if test -f 'utils_tail_match.c'; then $(CYGPATH_W) 'utils_tail_match.c'; else $(CYGPATH_W) '$(srcdir)/utils_tail_match.c'; fi`
-
-collectd-utils_match.o: utils_match.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_match.o -MD -MP -MF $(DEPDIR)/collectd-utils_match.Tpo -c -o collectd-utils_match.o `test -f 'utils_match.c' || echo '$(srcdir)/'`utils_match.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_match.Tpo $(DEPDIR)/collectd-utils_match.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_match.c' object='collectd-utils_match.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_match.o `test -f 'utils_match.c' || echo '$(srcdir)/'`utils_match.c
-
-collectd-utils_match.obj: utils_match.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_match.obj -MD -MP -MF $(DEPDIR)/collectd-utils_match.Tpo -c -o collectd-utils_match.obj `if test -f 'utils_match.c'; then $(CYGPATH_W) 'utils_match.c'; else $(CYGPATH_W) '$(srcdir)/utils_match.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_match.Tpo $(DEPDIR)/collectd-utils_match.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_match.c' object='collectd-utils_match.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_match.obj `if test -f 'utils_match.c'; then $(CYGPATH_W) 'utils_match.c'; else $(CYGPATH_W) '$(srcdir)/utils_match.c'; fi`
-
 collectd-utils_subst.o: utils_subst.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_subst.o -MD -MP -MF $(DEPDIR)/collectd-utils_subst.Tpo -c -o collectd-utils_subst.o `test -f 'utils_subst.c' || echo '$(srcdir)/'`utils_subst.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_subst.Tpo $(DEPDIR)/collectd-utils_subst.Po
@@ -1241,20 +1216,6 @@ collectd-utils_subst.obj: utils_subst.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_subst.c' object='collectd-utils_subst.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_subst.obj `if test -f 'utils_subst.c'; then $(CYGPATH_W) 'utils_subst.c'; else $(CYGPATH_W) '$(srcdir)/utils_subst.c'; fi`
-
-collectd-utils_tail.o: utils_tail.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_tail.o -MD -MP -MF $(DEPDIR)/collectd-utils_tail.Tpo -c -o collectd-utils_tail.o `test -f 'utils_tail.c' || echo '$(srcdir)/'`utils_tail.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_tail.Tpo $(DEPDIR)/collectd-utils_tail.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_tail.c' object='collectd-utils_tail.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_tail.o `test -f 'utils_tail.c' || echo '$(srcdir)/'`utils_tail.c
-
-collectd-utils_tail.obj: utils_tail.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_tail.obj -MD -MP -MF $(DEPDIR)/collectd-utils_tail.Tpo -c -o collectd-utils_tail.obj `if test -f 'utils_tail.c'; then $(CYGPATH_W) 'utils_tail.c'; else $(CYGPATH_W) '$(srcdir)/utils_tail.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_tail.Tpo $(DEPDIR)/collectd-utils_tail.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_tail.c' object='collectd-utils_tail.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_tail.obj `if test -f 'utils_tail.c'; then $(CYGPATH_W) 'utils_tail.c'; else $(CYGPATH_W) '$(srcdir)/utils_tail.c'; fi`
 
 collectd-utils_time.o: utils_time.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_time.o -MD -MP -MF $(DEPDIR)/collectd-utils_time.Tpo -c -o collectd-utils_time.o `test -f 'utils_time.c' || echo '$(srcdir)/'`utils_time.c

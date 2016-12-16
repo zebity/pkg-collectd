@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-SNMP 5"
-.TH COLLECTD-SNMP 5 "2016-10-05" "5.5.2.41.gf8232cf" "collectd"
+.TH COLLECTD-SNMP 5 "2016-12-12" "5.7.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -329,9 +329,9 @@ degrees Celsius. The default value is, of course, \fB0.0\fR.
 This value is not applied to counter-values.
 .IP "\fBIgnore\fR \fIValue\fR [, \fIValue\fR ...]" 4
 .IX Item "Ignore Value [, Value ...]"
-The ignore values allows to ignore Instances based on their name and the patterns
-specified by the various values you've entered. The match is a glob-type shell
-matching.
+The ignore values allows one to ignore Instances based on their name and the
+patterns specified by the various values you've entered. The match is a
+glob-type shell matching.
 .IP "\fBInvertMatch\fR \fItrue|false(default)\fR" 4
 .IX Item "InvertMatch true|false(default)"
 The invertmatch value should be use in combination of the Ignore option.
