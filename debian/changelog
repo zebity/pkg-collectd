@@ -1,12 +1,3 @@
-collectd (5.7.0-3~bpo8+1) jessie-backports; urgency=medium
-
-  * Rebuild for jessie-backports.
-  * debian/control, debian/rules:
-    - Disable dpdkstat plugin, which build dependencies aren't available in
-      jessie.
-
- -- Marc Fournier <marc@bl.uem.li>  Thu, 05 Jan 2017 22:04:48 +0100
-
 collectd (5.7.0-3) unstable; urgency=medium
 
   * debian/control: Skip libdpdk-dev build dependency on non-Intel
@@ -46,18 +37,6 @@ collectd (5.7.0-1) unstable; urgency=medium
       monitoring-plugin paths for Debian. Thanks to Bas Couwenberg.
 
  -- Marc Fournier <marc@bl.uem.li>  Fri, 16 Dec 2016 22:11:21 +0100
-
-collectd (5.6.1-2~bpo8+1) jessie-backports; urgency=medium
-
-  * Rebuild for jessie-backports.
-  * debian/control:
-    - Revert mysql-related package names back to libmysqlclient-dev and
-      mysql-server.
-    - Set lua plugin build-dependency to version available in jessie.
-    - Set write_riemann plugin build-dependency to version available in
-      jessie-backports.
-
- -- Marc Fournier <marc@bl.uem.li>  Thu, 24 Nov 2016 14:22:34 +0100
 
 collectd (5.6.1-2) unstable; urgency=medium
 
@@ -147,12 +126,6 @@ collectd (5.5.2-2) unstable; urgency=low
 
  -- Marc Fournier <marc@bl.uem.li>  Wed, 21 Sep 2016 14:01:55 +0200
 
-collectd (5.5.2-1~bpo8+1) jessie-backports; urgency=medium
-
-  * Rebuild for jessie-backports.
-
- -- Marc Fournier <marc@bl.uem.li>  Sat, 06 Aug 2016 00:56:47 +0200
-
 collectd (5.5.2-1) unstable; urgency=high
 
   * New upstream release.
@@ -221,12 +194,6 @@ collectd (5.5.1-2) unstable; urgency=medium
 
  -- Sebastian Harl <tokkee@debian.org>  Sat, 02 Apr 2016 11:02:49 +0200
 
-collectd (5.5.1-1~bpo8+1) jessie-backports; urgency=medium
-
-  * Rebuild for jessie-backports.
-
- -- Marc Fournier <marc@bl.uem.li>  Fri, 29 Jan 2016 13:48:43 +0100
-
 collectd (5.5.1-1) unstable; urgency=medium
 
   * New upstream release:
@@ -253,13 +220,6 @@ collectd (5.5.0-4) unstable; urgency=medium
     - Add bts802249_varnish_41.patch (Closes: #802249)
 
  -- Marc Fournier <marc@bl.uem.li>  Mon, 16 Nov 2015 21:03:31 +0100
-
-collectd (5.5.0-3~bpo8+1) jessie-backports; urgency=medium
-
-  * Rebuild for jessie-backports.
-  * Set jessie-backports as gbp branch. 
-
- -- Bernd Zeimetz <bzed@debian.org>  Thu, 01 Oct 2015 14:39:43 +0200
 
 collectd (5.5.0-3) unstable; urgency=medium
 
