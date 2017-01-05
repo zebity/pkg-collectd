@@ -1,31 +1,11 @@
-collectd (5.7.0-3~bpo7+2) wheezy-backports-sloppy; urgency=high
+collectd (5.7.0-3~bpo8+1) jessie-backports; urgency=medium
 
-  * debian/control: Add a Package-List entry, required for source-only
-    uploads to wheezy.
-
- -- Marc Fournier <marc@bl.uem.li>  Fri, 06 Jan 2017 09:06:42 +0100
-
-collectd (5.7.0-3~bpo7+1) wheezy-backports-sloppy; urgency=high
-
-  * Rebuild for wheezy-backports-sloopy.
-  * debian/control:
-    - Revert mysql-related package names back to libmysqlclient-dev and
-      mysql-server.
-    - Set lua plugin build-dependency to version available in wheezy.
-    - Revert GCrypt's package name to version available in wheezy
-      (libgcrypt11-dev).
-    - Adjust libmosquitto package name to version available in wheezy
-      (libmosquitto0-dev)
+  * Rebuild for jessie-backports.
   * debian/control, debian/rules:
     - Disable dpdkstat plugin, which build dependencies aren't available in
-      wheezy.
-    - Disable write_riemann plugin, which build dependencies aren't available
-      in wheezy.
-  * debian/rules:
-    - Disable cpusleep plugin, which depends on a more recent libc version
-      than the one available in wheezy.
+      jessie.
 
- -- Marc Fournier <marc@bl.uem.li>  Thu, 05 Jan 2017 23:06:19 +0100
+ -- Marc Fournier <marc@bl.uem.li>  Thu, 05 Jan 2017 22:04:48 +0100
 
 collectd (5.7.0-3) unstable; urgency=medium
 
@@ -66,6 +46,18 @@ collectd (5.7.0-1) unstable; urgency=medium
       monitoring-plugin paths for Debian. Thanks to Bas Couwenberg.
 
  -- Marc Fournier <marc@bl.uem.li>  Fri, 16 Dec 2016 22:11:21 +0100
+
+collectd (5.6.1-2~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+  * debian/control:
+    - Revert mysql-related package names back to libmysqlclient-dev and
+      mysql-server.
+    - Set lua plugin build-dependency to version available in jessie.
+    - Set write_riemann plugin build-dependency to version available in
+      jessie-backports.
+
+ -- Marc Fournier <marc@bl.uem.li>  Thu, 24 Nov 2016 14:22:34 +0100
 
 collectd (5.6.1-2) unstable; urgency=medium
 
@@ -155,11 +147,11 @@ collectd (5.5.2-2) unstable; urgency=low
 
  -- Marc Fournier <marc@bl.uem.li>  Wed, 21 Sep 2016 14:01:55 +0200
 
-collectd (5.5.2-1~bpo7+1) wheezy-backports-sloppy; urgency=high
+collectd (5.5.2-1~bpo8+1) jessie-backports; urgency=medium
 
-  * Rebuild for wheezy-backports-sloopy.
+  * Rebuild for jessie-backports.
 
- -- Marc Fournier <marc@bl.uem.li>  Sat, 06 Aug 2016 00:43:12 +0200
+ -- Marc Fournier <marc@bl.uem.li>  Sat, 06 Aug 2016 00:56:47 +0200
 
 collectd (5.5.2-1) unstable; urgency=high
 
@@ -229,11 +221,11 @@ collectd (5.5.1-2) unstable; urgency=medium
 
  -- Sebastian Harl <tokkee@debian.org>  Sat, 02 Apr 2016 11:02:49 +0200
 
-collectd (5.5.1-1~bpo7+1) wheezy-backports-sloppy; urgency=medium
+collectd (5.5.1-1~bpo8+1) jessie-backports; urgency=medium
 
-  * Rebuild for wheezy-backports-sloppy.
+  * Rebuild for jessie-backports.
 
- -- Marc Fournier <marc@bl.uem.li>  Fri, 29 Jan 2016 14:18:24 +0100
+ -- Marc Fournier <marc@bl.uem.li>  Fri, 29 Jan 2016 13:48:43 +0100
 
 collectd (5.5.1-1) unstable; urgency=medium
 
@@ -262,19 +254,12 @@ collectd (5.5.0-4) unstable; urgency=medium
 
  -- Marc Fournier <marc@bl.uem.li>  Mon, 16 Nov 2015 21:03:31 +0100
 
-collectd (5.5.0-3~bpo7+1) wheezy-backports-sloppy; urgency=medium
+collectd (5.5.0-3~bpo8+1) jessie-backports; urgency=medium
 
-  * Rebuild for wheezy-backports-sloppy.
-  * debian/rules, debian/control:
-    - remove references to systemd and strip-nondeterminism, which were
-      introduced in jessie.
-    - disable building sigrok, turbostat and write_kafka plugins, as the
-      required build-dependencies aren't available in wheezy.
-    - build uuid plugin against libhal, as this lib is still available on
-      wheezy.
-    - adjust libprotobuf build-dependency name.
+  * Rebuild for jessie-backports.
+  * Set jessie-backports as gbp branch. 
 
- -- Marc Fournier <marc@bl.uem.li>  Thu, 08 Oct 2015 08:26:10 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 01 Oct 2015 14:39:43 +0200
 
 collectd (5.5.0-3) unstable; urgency=medium
 
