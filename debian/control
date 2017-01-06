@@ -3,35 +3,35 @@ Section: utils
 Priority: optional
 Maintainer: Sebastian Harl <tokkee@debian.org>
 Uploaders: Marc Fournier <marc@bl.uem.li>
-Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh-systemd (>= 1.5), dh-strip-nondeterminism, dh-autoreconf,
+Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh-autoreconf, dh-autoreconf,
  bison, flex, autotools-dev, libltdl-dev, pkg-config,
- default-libmysqlclient-dev,
  iptables-dev (>= 1.4.3.2-2) [linux-any],
  javahelper,
  kfreebsd-kernel-headers [kfreebsd-any],
  libatasmart-dev [linux-any],
- libcap-dev [linux-any],
+# libcap-dev [linux-any],
  libcurl4-gnutls-dev (>= 7.18.2-5) | libcurl4-gnutls-dev (<= 7.18.2-1) | libcurl3-gnutls-dev,
  libdevstat-dev [kfreebsd-any],
  libdbi0-dev,
- libdpdk-dev,
  libesmtp-dev,
  libganglia1-dev (>= 3) [linux-any],
  libgeom-dev [kfreebsd-any],
- libgcrypt20-dev,
+ libgcrypt11-dev,
  libglib2.0-dev,
  libgps-dev,
+ libhal-dev,
  libhiredis-dev,
  libi2c-dev,
  libkvm-dev [kfreebsd-any],
  libldap2-dev,
- liblua5.3-dev,
+ liblua5.2-dev,
  liblvm2-dev [linux-any],
  libmemcached-dev,
  libmicrohttpd-dev,
  libmodbus-dev,
- libmosquitto-dev,
+ libmosquitto0-dev,
  libmnl-dev [linux-any],
+ libmysqlclient-dev,
  libnotify-dev,
  libopenipmi-dev,
  liboping-dev (>= 0.3.3),
@@ -39,13 +39,13 @@ Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh
  libpcap0.8-dev | libpcap-dev,
  libperl-dev,
  libpq-dev,
- libprotobuf-c-dev,
+ libprotobuf-c0-dev,
  librabbitmq-dev,
- librdkafka-dev,
- libriemann-client-dev,
+# librdkafka-dev,
+# libriemann-client-dev,
  librrd-dev (>= 1.4~),
  libsensors4-dev [linux-any],
- libsigrok-dev (>= 0.2~) [linux-any],
+# libsigrok-dev (>= 0.2~),
 # libsnmp-dev (>= 5.4.2.1~dfsg-4~) | (libsnmp-dev & perl (<< 5.10.1~rc2-1~))
  libsnmp-dev (>= 5.4.2.1~dfsg-4~) | libsnmp-dev | libsnmp9-dev,
  libsnmp-dev (>= 5.4.2.1~dfsg-4~) | perl (<< 5.10.1~rc2-1~),
@@ -61,13 +61,20 @@ Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh
  linux-libc-dev (>= 2.6.25-4) [linux-any] | linux-libc-dev (<< 2.6.25-1) [linux-any],
  default-jdk [!hppa !sparc !kfreebsd-i386 !kfreebsd-amd64],
  protobuf-c-compiler,
- python-dev,
- riemann-c-client
-Build-Conflicts: libpthread-dev, libhal-dev
+ python-dev
+Build-Conflicts: libpthread-dev
 Standards-Version: 3.9.8
 Homepage: https://collectd.org/
 Vcs-Git: https://github.com/collectd/pkg-debian.git
 Vcs-Browser: https://github.com/collectd/pkg-debian.git
+Package-List:
+ collectd deb utils optional arch=any
+ collectd-core deb utils optional arch=any
+ collectd-dbg deb debug extra arch=any
+ collectd-dev deb utils optional arch=all
+ collectd-utils deb utils optional arch=any
+ libcollectdclient-dev deb libdevel optional arch=any
+ libcollectdclient1 deb libs optional arch=any
 
 Package: collectd-core
 Architecture: any
@@ -78,10 +85,9 @@ Suggests: collectd-dev,
  librrds-perl, liburi-perl, libhtml-parser-perl, libregexp-common-perl,
  libconfig-general-perl, httpd-cgi,
 # services providing data that may be collected by collectd
- apache2, apcupsd, bind9, ceph, chrony, default-mysql-server, gpsd, hddtemp,
- iptables, ipvsadm, lm-sensors, mbmon, memcached, nginx, notification-daemon,
- nut, openvpn, olsrd, pdns-server, postgresql, redis-server, slapd,
- time-daemon, varnish, zookeeper,
+ apache2, apcupsd, bind9, ceph, chrony, gpsd, hddtemp, iptables, ipvsadm, lm-sensors, mbmon,
+ memcached, mysql-server | virtual-mysql-server, nginx, notification-daemon, nut, openvpn, olsrd,
+ pdns-server, postgresql, redis-server, slapd, time-daemon, varnish, zookeeper,
  ${shlibs:Suggests}, default-jre-headless
 Replaces: collectd (<< 4.8.2-1~)
 Description: statistics collection and monitoring daemon (core system)

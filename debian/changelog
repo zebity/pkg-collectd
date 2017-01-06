@@ -1,3 +1,39 @@
+collectd (5.7.0-3~bpo7+2) wheezy-backports-sloppy; urgency=high
+
+  * debian/control: Add a Package-List entry, required for source-only
+    uploads to wheezy.
+
+ -- Marc Fournier <marc@bl.uem.li>  Fri, 06 Jan 2017 09:06:42 +0100
+
+collectd (5.7.0-3~bpo7+1) wheezy-backports-sloppy; urgency=high
+
+  * Rebuild for wheezy-backports-sloopy.
+  * debian/control:
+    - Revert mysql-related package names back to libmysqlclient-dev and
+      mysql-server.
+    - Set lua plugin build-dependency to version available in wheezy.
+    - Revert GCrypt's package name to version available in wheezy
+      (libgcrypt11-dev).
+    - Adjust libmosquitto package name to version available in wheezy
+      (libmosquitto0-dev)
+  * debian/control, debian/rules:
+    - Disable dpdkstat plugin, which build dependencies aren't available in
+      wheezy.
+    - Disable write_riemann plugin, which build dependencies aren't available
+      in wheezy.
+  * debian/rules:
+    - Disable cpusleep plugin, which depends on a more recent libc version
+      than the one available in wheezy.
+
+ -- Marc Fournier <marc@bl.uem.li>  Thu, 05 Jan 2017 23:06:19 +0100
+
+collectd (5.7.0-3) unstable; urgency=medium
+
+  * debian/control: Skip libdpdk-dev build dependency on non-Intel
+    architectures.
+
+ -- Marc Fournier <marc@bl.uem.li>  Sun, 18 Dec 2016 22:08:27 +0100
+
 collectd (5.7.0-2) unstable; urgency=medium
 
   * debian/patches: add dpdkstat-portable-format-string.patch, fixing the
@@ -119,6 +155,12 @@ collectd (5.5.2-2) unstable; urgency=low
 
  -- Marc Fournier <marc@bl.uem.li>  Wed, 21 Sep 2016 14:01:55 +0200
 
+collectd (5.5.2-1~bpo7+1) wheezy-backports-sloppy; urgency=high
+
+  * Rebuild for wheezy-backports-sloopy.
+
+ -- Marc Fournier <marc@bl.uem.li>  Sat, 06 Aug 2016 00:43:12 +0200
+
 collectd (5.5.2-1) unstable; urgency=high
 
   * New upstream release.
@@ -187,6 +229,12 @@ collectd (5.5.1-2) unstable; urgency=medium
 
  -- Sebastian Harl <tokkee@debian.org>  Sat, 02 Apr 2016 11:02:49 +0200
 
+collectd (5.5.1-1~bpo7+1) wheezy-backports-sloppy; urgency=medium
+
+  * Rebuild for wheezy-backports-sloppy.
+
+ -- Marc Fournier <marc@bl.uem.li>  Fri, 29 Jan 2016 14:18:24 +0100
+
 collectd (5.5.1-1) unstable; urgency=medium
 
   * New upstream release:
@@ -213,6 +261,20 @@ collectd (5.5.0-4) unstable; urgency=medium
     - Add bts802249_varnish_41.patch (Closes: #802249)
 
  -- Marc Fournier <marc@bl.uem.li>  Mon, 16 Nov 2015 21:03:31 +0100
+
+collectd (5.5.0-3~bpo7+1) wheezy-backports-sloppy; urgency=medium
+
+  * Rebuild for wheezy-backports-sloppy.
+  * debian/rules, debian/control:
+    - remove references to systemd and strip-nondeterminism, which were
+      introduced in jessie.
+    - disable building sigrok, turbostat and write_kafka plugins, as the
+      required build-dependencies aren't available in wheezy.
+    - build uuid plugin against libhal, as this lib is still available on
+      wheezy.
+    - adjust libprotobuf build-dependency name.
+
+ -- Marc Fournier <marc@bl.uem.li>  Thu, 08 Oct 2015 08:26:10 +0200
 
 collectd (5.5.0-3) unstable; urgency=medium
 
