@@ -329,7 +329,14 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/libltdl/config/depcomp $(dist_man_MANS) \
 	$(top_srcdir)/libltdl/config/test-driver
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/libltdl/m4/argz.m4 \
+	$(top_srcdir)/libltdl/m4/libtool.m4 \
+	$(top_srcdir)/libltdl/m4/ltdl.m4 \
+	$(top_srcdir)/libltdl/m4/ltoptions.m4 \
+	$(top_srcdir)/libltdl/m4/ltsugar.m4 \
+	$(top_srcdir)/libltdl/m4/ltversion.m4 \
+	$(top_srcdir)/libltdl/m4/lt~obsolete.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -486,7 +493,7 @@ cgroups_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(cgroups_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_CGROUPS_TRUE@am_cgroups_la_rpath = -rpath $(pkglibdir)
-chrony_la_LIBADD =
+chrony_la_DEPENDENCIES =
 am__chrony_la_SOURCES_DIST = chrony.c
 @BUILD_PLUGIN_CHRONY_TRUE@am_chrony_la_OBJECTS = chrony.lo
 chrony_la_OBJECTS = $(am_chrony_la_OBJECTS)
@@ -671,7 +678,7 @@ ethstat_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(ethstat_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_ETHSTAT_TRUE@am_ethstat_la_rpath = -rpath $(pkglibdir)
-exec_la_LIBADD =
+@BUILD_PLUGIN_EXEC_TRUE@exec_la_DEPENDENCIES = libcmds.la
 am__exec_la_SOURCES_DIST = exec.c
 @BUILD_PLUGIN_EXEC_TRUE@am_exec_la_OBJECTS = exec.lo
 exec_la_OBJECTS = $(am_exec_la_OBJECTS)
@@ -1584,7 +1591,7 @@ turbostat_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(turbostat_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_TURBOSTAT_TRUE@am_turbostat_la_rpath = -rpath \
 @BUILD_PLUGIN_TURBOSTAT_TRUE@	$(pkglibdir)
-unixsock_la_LIBADD =
+@BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_DEPENDENCIES = libcmds.la
 am__unixsock_la_SOURCES_DIST = unixsock.c
 @BUILD_PLUGIN_UNIXSOCK_TRUE@am_unixsock_la_OBJECTS = unixsock.lo
 unixsock_la_OBJECTS = $(am_unixsock_la_OBJECTS)
@@ -2866,6 +2873,7 @@ CLEANFILES = $(am__append_18) $(am__append_222) $(am__append_224)
 @BUILD_PLUGIN_CGROUPS_TRUE@cgroups_la_LIBADD = libmount.la
 @BUILD_PLUGIN_CHRONY_TRUE@chrony_la_SOURCES = chrony.c
 @BUILD_PLUGIN_CHRONY_TRUE@chrony_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+@BUILD_PLUGIN_CHRONY_TRUE@chrony_la_LIBADD = -lm
 @BUILD_PLUGIN_CONNTRACK_TRUE@conntrack_la_SOURCES = conntrack.c
 @BUILD_PLUGIN_CONNTRACK_TRUE@conntrack_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_CONTEXTSWITCH_TRUE@contextswitch_la_SOURCES = contextswitch.c
@@ -2938,7 +2946,8 @@ CLEANFILES = $(am__append_18) $(am__append_222) $(am__append_224)
 @BUILD_PLUGIN_ENTROPY_TRUE@entropy_la_SOURCES = entropy.c
 @BUILD_PLUGIN_ENTROPY_TRUE@entropy_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_EXEC_TRUE@exec_la_SOURCES = exec.c
-@BUILD_PLUGIN_EXEC_TRUE@exec_la_LDFLAGS = $(PLUGIN_LDFLAGS) libcmds.la
+@BUILD_PLUGIN_EXEC_TRUE@exec_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+@BUILD_PLUGIN_EXEC_TRUE@exec_la_LIBADD = libcmds.la
 @BUILD_PLUGIN_ETHSTAT_TRUE@ethstat_la_SOURCES = ethstat.c
 @BUILD_PLUGIN_ETHSTAT_TRUE@ethstat_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_FHCOUNT_TRUE@fhcount_la_SOURCES = fhcount.c
@@ -3269,7 +3278,8 @@ CLEANFILES = $(am__append_18) $(am__append_222) $(am__append_224)
 @BUILD_PLUGIN_TURBOSTAT_TRUE@turbostat_la_SOURCES = turbostat.c
 @BUILD_PLUGIN_TURBOSTAT_TRUE@turbostat_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_SOURCES = unixsock.c
-@BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_LDFLAGS = $(PLUGIN_LDFLAGS) libcmds.la
+@BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+@BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_LIBADD = libcmds.la
 @BUILD_PLUGIN_UPTIME_TRUE@uptime_la_SOURCES = uptime.c
 @BUILD_PLUGIN_UPTIME_TRUE@uptime_la_CFLAGS = $(AM_CFLAGS)
 @BUILD_PLUGIN_UPTIME_TRUE@uptime_la_LDFLAGS = $(PLUGIN_LDFLAGS)
