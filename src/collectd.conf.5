@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2017-01-23" "5.7.1" "collectd"
+.TH COLLECTD.CONF 5 "2017-06-06" "5.7.2" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -1384,6 +1384,8 @@ This plugin collects the \s-1CPU\s0 user/system time for each \fIcgroup\fR by re
 Select \fIcgroup\fR based on the name. Whether only matching \fIcgroups\fR are
 collected or if they are ignored is controlled by the \fBIgnoreSelected\fR option;
 see below.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 Invert the selection: If set to true, all cgroups \fIexcept\fR the ones that
@@ -2180,12 +2182,18 @@ values. Defaults to the global hostname setting.
 .IP "\fBDevice\fR \fIDevice\fR" 4
 .IX Item "Device Device"
 Select partitions based on the devicename.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBMountPoint\fR \fIDirectory\fR" 4
 .IX Item "MountPoint Directory"
 Select partitions based on the mountpoint.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBFSType\fR \fIFSType\fR" 4
 .IX Item "FSType FSType"
 Select partitions based on the filesystem type.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 Invert the selection: If set to true, all partitions \fBexcept\fR the ones that
@@ -2239,6 +2247,8 @@ is interpreted as a regular expression. Examples:
 \&  Disk "sdd"
 \&  Disk "/hda[34]/"
 .Ve
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 Sets whether selected disks, i.\ e. the ones matches by any of the \fBDisk\fR
@@ -2793,6 +2803,8 @@ than 1 sec.
 .IX Item "Interface Interface"
 Select this interface. By default these interfaces will then be collected. For
 a more detailed description see \fBIgnoreSelected\fR below.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 If no configuration if given, the \fBinterface\fR\-plugin will collect data from
@@ -2849,6 +2861,8 @@ This option is only available on Solaris.
 .IP "\fBSensor\fR \fISensor\fR" 4
 .IX Item "Sensor Sensor"
 Selects sensors to collect or to ignore, depending on \fBIgnoreSelected\fR.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 If no configuration if given, the \fBipmi\fR plugin will collect data from all
@@ -2895,6 +2909,8 @@ comment or the number.
 .IX Item "Irq Irq"
 Select this irq. By default these irqs will then be collected. For a more
 detailed description see \fBIgnoreSelected\fR below.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 If no configuration if given, the \fBirq\fR\-plugin will collect data from all
@@ -3075,6 +3091,8 @@ All reported values are of the type \f(CW\*(C`md_disks\*(C'\fR. Reported type in
 Select md devices based on device name. The \fIdevice name\fR is the basename of
 the device, i.e. the name of the block device without the leading \f(CW\*(C`/dev/\*(C'\fR.
 See \fBIgnoreSelected\fR for more details.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 Invert device selection: If set to \fBtrue\fR, all md devices \fBexcept\fR those
@@ -4107,6 +4125,8 @@ regular and exact matching are case sensitive.
 .Sp
 If no volume was specified at all for either of the three options, that data
 will be collected for all available volumes.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelectedIO\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelectedIO true|false"
 .PD 0
@@ -4281,6 +4301,8 @@ Here are some examples to help you understand the above text more easily:
 \&    Filter "ppp0" "u32\-1:0"
 \&  </Plugin>
 .Ve
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR" 4
 .IX Item "IgnoreSelected"
 The behavior is the same as with all other similar plugins: If nothing is
@@ -4733,6 +4755,8 @@ In the advanced mode the \fBSensor\fR specifies full \s-1OWFS\s0 path \- e.g.
 .Sp
 As there can be multiple devices on the bus you can list multiple sensor (use
 multiple \fBSensor\fR elements).
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 If no configuration is given, the \fBonewire\fR plugin will collect data from all
@@ -5020,10 +5044,10 @@ multiple hosts.
 .IP "\fBInterval\fR \fISeconds\fR" 4
 .IX Item "Interval Seconds"
 Sets the interval in which to send \s-1ICMP\s0 echo packets to the configured hosts.
-This is \fBnot\fR the interval in which statistics are queries from the plugin but
-the interval in which the hosts are \*(L"pinged\*(R". Therefore, the setting here
-should be smaller than or equal to the global \fBInterval\fR setting. Fractional
-times, such as \*(L"1.24\*(R" are allowed.
+This is \fBnot\fR the interval in which metrics are read from the plugin but the
+interval in which the hosts are \*(L"pinged\*(R". Therefore, the setting here should be
+smaller than or equal to the global \fBInterval\fR setting. Fractional times, such
+as \*(L"1.24\*(R" are allowed.
 .Sp
 Default: \fB1.0\fR
 .IP "\fBTimeout\fR \fISeconds\fR" 4
@@ -5680,6 +5704,8 @@ following statement:
 Whether only matched values are selected or all matched values are ignored
 depends on the \fBIgnoreSelected\fR. By default, only matched values are selected.
 If no value is configured at all, all values will be selected.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 If set to \fBtrue\fR, inverts the selection made by \fBValue\fR, i.\ e. all
@@ -6052,6 +6078,8 @@ Selects the name of the sensor which you want to collect or ignore, depending
 on the \fBIgnoreSelected\fR below. For example, the option "\fBSensor\fR
 \&\fIit8712\-isa\-0290/voltage\-in1\fR" will cause collectd to gather data for the
 voltage sensor \fIin1\fR of the \fIit8712\fR on the isa bus at the address 0290.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 If no configuration if given, the \fBsensors\fR\-plugin will collect data from all
@@ -6148,6 +6176,8 @@ is interpreted as a regular expression. Examples:
 \&  Disk "sdd"
 \&  Disk "/hda[34]/"
 .Ve
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 Sets whether selected disks, i.\ e. the ones matches by any of the \fBDisk\fR
@@ -6762,6 +6792,8 @@ plugin to use the latter. This option defaults to \fIfalse\fR.
 Selects the name of the thermal device that you want to collect or ignore,
 depending on the value of the \fBIgnoreSelected\fR option. This option may be
 used multiple times to specify a list of devices.
+.Sp
+See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 Invert the selection: If set to true, all devices \fBexcept\fR the ones that
@@ -8912,6 +8944,47 @@ be an \s-1FQDN.\s0
 \&   Target "write"
 \& </Chain>
 .Ve
+.SH "IGNORELISTS"
+.IX Header "IGNORELISTS"
+\&\fBIgnorelists\fR are a generic framework to either ignore some metrics or report
+specific metircs only. Plugins usually provide one or more options to specify
+the items (mounts points, devices, ...) and the boolean option
+\&\f(CW\*(C`IgnoreSelected\*(C'\fR.
+.IP "\fBSelect\fR \fIString\fR" 4
+.IX Item "Select String"
+Selects the item \fIString\fR. This option often has a plugin specific name, e.g.
+\&\fBSensor\fR in the \f(CW\*(C`sensors\*(C'\fR plugin. It is also plugin specific what this string
+is compared to. For example, the \f(CW\*(C`df\*(C'\fR plugin's \fBMountPoint\fR compares it to a
+mount point and the \f(CW\*(C`sensors\*(C'\fR plugin's \fBSensor\fR compares it to a sensor name.
+.Sp
+By default, this option is doing a case-sensitive full-string match. The
+following config will match \f(CW\*(C`foo\*(C'\fR, but not \f(CW\*(C`Foo\*(C'\fR:
+.Sp
+.Vb 1
+\&  Select "foo"
+.Ve
+.Sp
+If \fIString\fR starts and ends with \f(CW\*(C`/\*(C'\fR (a slash), the string is compiled as a
+\&\fIregular expression\fR. For example, so match all item starting with \f(CW\*(C`foo\*(C'\fR, use
+could use the following syntax:
+.Sp
+.Vb 1
+\&  Select "/^foo/"
+.Ve
+.Sp
+The regular expression is \fInot\fR anchored, i.e. the following config will match
+\&\f(CW\*(C`foobar\*(C'\fR, \f(CW\*(C`barfoo\*(C'\fR and \f(CW\*(C`AfooZ\*(C'\fR:
+.Sp
+.Vb 1
+\&  Select "/foo/"
+.Ve
+.Sp
+The \fBSelect\fR option may be repeated to select multiple items.
+.IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "IgnoreSelected true|false"
+If set to \fBtrue\fR, matching metrics are \fIignored\fR and all other metrics are
+collected. If set to \fBfalse\fR, matching metrics are \fIcollected\fR and all other
+metrics are ignored.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),
