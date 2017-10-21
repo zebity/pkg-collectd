@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Sebastian Harl <tokkee@debian.org>
 Uploaders: Marc Fournier <marc@bl.uem.li>
-Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh-systemd (>= 1.5), dh-strip-nondeterminism, dh-autoreconf,
+Build-Depends: debhelper (>= 9.20160709~), dpkg-dev (>= 1.14.10), po-debconf, dh-strip-nondeterminism, dh-autoreconf,
  bison, flex, autotools-dev, libltdl-dev, pkg-config,
  default-libmysqlclient-dev,
  iptables-dev (>= 1.4.3.2-2) [linux-any],
@@ -30,6 +30,7 @@ Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh
  libmemcached-dev,
  libmicrohttpd-dev,
  libmodbus-dev,
+ libmongoc-dev,
  libmosquitto-dev,
  libmnl-dev [linux-any],
  libnotify-dev,
@@ -45,7 +46,6 @@ Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh
  libriemann-client-dev (>= 1.6.0),
  librrd-dev (>= 1.4~),
  libsensors4-dev [linux-any],
- libsigrok-dev (>= 0.2~) [linux-any],
 # libsnmp-dev (>= 5.4.2.1~dfsg-4~) | (libsnmp-dev & perl (<< 5.10.1~rc2-1~))
  libsnmp-dev (>= 5.4.2.1~dfsg-4~) | libsnmp-dev | libsnmp9-dev,
  libsnmp-dev (>= 5.4.2.1~dfsg-4~) | perl (<< 5.10.1~rc2-1~),
@@ -53,7 +53,6 @@ Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh
  libtokyotyrant-dev [linux-any],
  libudev-dev [linux-any],
  libupsclient-dev | libupsclient1-dev,
- libvarnishapi-dev,
  libvirt-dev (>= 0.4.0-6) [linux-any],
  libxen-dev [amd64 arm64 armhf i386],
  libxml2-dev,
@@ -64,7 +63,7 @@ Build-Depends: debhelper (>= 9.20120909~), dpkg-dev (>= 1.14.10), po-debconf, dh
  python-dev,
  riemann-c-client
 Build-Conflicts: libpthread-dev, libhal-dev
-Standards-Version: 3.9.8
+Standards-Version: 4.1.1
 Homepage: https://collectd.org/
 Vcs-Git: https://github.com/collectd/pkg-debian.git
 Vcs-Browser: https://github.com/collectd/pkg-debian.git
@@ -81,7 +80,7 @@ Suggests: collectd-dev,
  apache2, apcupsd, bind9, ceph, chrony, default-mysql-server, gpsd, hddtemp,
  iptables, ipvsadm, lm-sensors, mbmon, memcached, nginx, notification-daemon,
  nut, openvpn, olsrd, pdns-server, postgresql, redis-server, slapd,
- time-daemon, varnish, zookeeper,
+ time-daemon, zookeeper,
  ${shlibs:Suggests}, default-jre-headless
 Replaces: collectd (<< 4.8.2-1~)
 Description: statistics collection and monitoring daemon (core system)
@@ -188,7 +187,6 @@ Description: statistics collection and monitoring daemon (core system)
    * serial port traffic: serial
    * values from SNMP enabled network devices: snmp
    * aggregate values received with the StatsD protocol: statsd
-   * sigrok-supported device measurements: sigrok
    * SMART statistics: smart
    * swap usage: swap
    * logging to syslog: syslog
@@ -206,7 +204,6 @@ Description: statistics collection and monitoring daemon (core system)
    * system uptime: uptime
    * number of users logged into the system: users
    * set the hostname to an unique identifier: uuid
-   * Varnish HTTP accelerator daemon statistics: varnish
    * CPU, disk, network statistics of guest systems: virt
    * detailed virtual memory statistics: vmem
    * system resources used by Linux-VServers: vserver
@@ -215,6 +212,7 @@ Description: statistics collection and monitoring daemon (core system)
    * send collected values to a web-server: write_http
    * send collected values to an Apache Kafka message broker: write_kafka
    * send collected values to the logging subsystem: write_log
+   * send collected values to MongoDB, a NoSQL database: write_mongodb
    * publish collected values as a Prometheus exporter: write_prometheus
    * send collected values to a Redis server: write_redis
    * send collected values to a Riemann server: write_riemann
@@ -265,7 +263,7 @@ Description: statistics collection and monitoring daemon (utilities)
 Package: collectd-dbg
 Section: debug
 Architecture: any
-Priority: extra
+Priority: optional
 Depends: collectd-core (= ${binary:Version}), ${misc:Depends}
 Recommends: collectd-utils (= ${binary:Version}),
  libcollectdclient1 (= ${binary:Version})

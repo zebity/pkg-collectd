@@ -79,9 +79,6 @@ confflags += --disable-oracle
 # librouteros is required for the routeros plugin.
 confflags += --disable-routeros
 
-# libmongoc is required for the write_mongodb plugin.
-confflags += --disable-write_mongodb
-
 # xmms1 is required for the xmms plugin.
 confflags += --disable-xmms
 
@@ -90,6 +87,14 @@ confflags += --disable-grpc
 
 # libqpos is required for the intel_rdt plugin.
 confflags += --disable-intel_rdt
+
+# libsigrok4 incompatible with the plugin.
+# Cf. https://github.com/collectd/collectd/issues/1574
+confflags += --disable-sigrok
+
+# libvarnishapi 5.2 is not yet supported by collectd
+# Cf. https://github.com/collectd/collectd/issues/2498
+confflags += --disable-varnish
 
 # These plugins are Linux-specific.
 ifneq (,$(filter kfreebsd-i386 kfreebsd-amd64, $(DEB_BUILD_ARCH)))
@@ -111,10 +116,6 @@ ifneq (,$(filter kfreebsd-i386 kfreebsd-amd64, $(DEB_BUILD_ARCH)))
 		--disable-numa \
 		--disable-sensors \
 		--disable-vserver
-	# libsigrok >= 0.2.0 is required for the sigrok plugin,
-	# only available on Linux.
-	confflags += \
-		--disable-sigrok
 endif
 
 # This plugin is FreeBSD-specific.
