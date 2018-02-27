@@ -6,6 +6,7 @@ Uploaders: Marc Fournier <marc@bl.uem.li>
 Build-Depends: debhelper (>= 9.20160709~), dpkg-dev (>= 1.14.10), po-debconf, dh-strip-nondeterminism, dh-autoreconf,
  bison, flex, autotools-dev, libltdl-dev, pkg-config,
  default-libmysqlclient-dev,
+ intel-cmt-cat,
  iptables-dev (>= 1.4.3.2-2) [linux-any],
  javahelper,
  kfreebsd-kernel-headers [kfreebsd-any],
@@ -20,9 +21,10 @@ Build-Depends: debhelper (>= 9.20160709~), dpkg-dev (>= 1.14.10), po-debconf, dh
  libgeom-dev [kfreebsd-any],
  libgcrypt20-dev,
  libglib2.0-dev,
+ libgrpc++-dev,
  libgps-dev,
  libhiredis-dev,
- libi2c-dev,
+ libi2c-dev (>= 4.0~),
  libkvm-dev [kfreebsd-any],
  libldap2-dev,
  liblua5.3-dev,
@@ -41,6 +43,7 @@ Build-Depends: debhelper (>= 9.20160709~), dpkg-dev (>= 1.14.10), po-debconf, dh
  libperl-dev,
  libpq-dev,
  libprotobuf-c-dev,
+ libprotobuf-dev,
  librabbitmq-dev,
  librdkafka-dev,
  libriemann-client-dev (>= 1.6.0),
@@ -53,6 +56,7 @@ Build-Depends: debhelper (>= 9.20160709~), dpkg-dev (>= 1.14.10), po-debconf, dh
  libtokyotyrant-dev [linux-any],
  libudev-dev [linux-any],
  libupsclient-dev | libupsclient1-dev,
+ libvarnishapi-dev,
  libvirt-dev (>= 0.4.0-6) [linux-any],
  libxen-dev [amd64 arm64 armhf i386],
  libxml2-dev,
@@ -60,6 +64,8 @@ Build-Depends: debhelper (>= 9.20160709~), dpkg-dev (>= 1.14.10), po-debconf, dh
  linux-libc-dev (>= 2.6.25-4) [linux-any] | linux-libc-dev (<< 2.6.25-1) [linux-any],
  default-jdk [!hppa !sparc !kfreebsd-i386 !kfreebsd-amd64],
  protobuf-c-compiler,
+ protobuf-compiler (>= 3.0.0),
+ protobuf-compiler-grpc,
  python-dev,
  riemann-c-client
 Build-Conflicts: libpthread-dev, libhal-dev
@@ -80,7 +86,7 @@ Suggests: collectd-dev,
  apache2, apcupsd, bind9, ceph, chrony, default-mysql-server, gpsd, hddtemp,
  iptables, ipvsadm, lm-sensors, mbmon, memcached, nginx, notification-daemon,
  nut, openvpn, olsrd, pdns-server, postgresql, redis-server, slapd,
- time-daemon, zookeeper,
+ time-daemon, varnish, zookeeper,
  ${shlibs:Suggests}, default-jre-headless
 Replaces: collectd (<< 4.8.2-1~)
 Description: statistics collection and monitoring daemon (core system)
@@ -124,6 +130,7 @@ Description: statistics collection and monitoring daemon (core system)
    * disk space usage: df
    * disk and partition throughput: disk
    * DNS traffic information: dns
+   * DPDK link status and keep alive events: dpdkevents
    * DPDK interface statistics: dpdkstat
    * Distributed Replicated Block Device status: drbd
    * E-Mail statistics (count, traffic, spam scores and checks): email
@@ -133,10 +140,12 @@ Description: statistics collection and monitoring daemon (core system)
    * count the number of files in directories: filecount
    * Linux file-system based caching framework statistics: fscache
    * Monitor gps related data through gpsd: gps
+   * Send or receive values over the network using the gRPC framework: grpc
    * query data from Java processes using JMX: GenericJMX (Java based plugin)
    * receive and interpret Ganglia multicast traffic: gmond
    * harddisk temperature: hddtemp
    * Report the number of used and free hugepages: hugepages
+   * Intel Resource Director Technology statistics: intel_rdt
    * network traffic: interface
    * IPC statistics: ipc
    * IPMI sensors information: ipmi
@@ -149,6 +158,7 @@ Description: statistics collection and monitoring daemon (core system)
    * logging in logstash's JSON event format: log_logstash
    * embedded Lua interpreter: lua
    * Logical Volume Manager usage: lvm
+   * Machine Check Exceptions notifications: mcelog
    * Atheros wireless LAN chipset statistics: madwifi
    * motherboard monitor: mbmon
    * query and parse data from a memcache daemon: memcachec
@@ -172,6 +182,8 @@ Description: statistics collection and monitoring daemon (core system)
    * OpenLDAP's cn=Monitor statistics: openldap
    * OpenVPN traffic and compression statistics: openvpn
    * OpenVZ statistics: OpenVZ (Perl based plugin)
+   * Open vSwitch link state events: ovs_events
+   * Open vSwitch bridge / interface statistics: ovs_stats
    * embedded Perl interpreter: perl
    * timing values from Pinba: pinba
    * network latency statistics: ping
@@ -186,9 +198,11 @@ Description: statistics collection and monitoring daemon (core system)
    * lm_sensors information (e.g. CPU temperature, fan speeds): sensors
    * serial port traffic: serial
    * values from SNMP enabled network devices: snmp
+   * receive and handle queries from SNMP master agent: snmp_agent
    * aggregate values received with the StatsD protocol: statsd
    * SMART statistics: smart
    * swap usage: swap
+   * Linux synproxy statistics: synproxy
    * logging to syslog: syslog
    * parse table-like structured files: table
    * incremental parsing of logfiles: tail
@@ -204,6 +218,7 @@ Description: statistics collection and monitoring daemon (core system)
    * system uptime: uptime
    * number of users logged into the system: users
    * set the hostname to an unique identifier: uuid
+   * Varnish HTTP accelerator daemon statistics: varnish
    * CPU, disk, network statistics of guest systems: virt
    * detailed virtual memory statistics: vmem
    * system resources used by Linux-VServers: vserver
@@ -278,7 +293,7 @@ Description: statistics collection and monitoring daemon (debugging symbols)
 
 Package: collectd-dev
 Architecture: all
-Depends: collectd-core (>= ${source:Version}), collectd-core (<< 5.8~),
+Depends: collectd-core (>= ${source:Version}), collectd-core (<< 5.9~),
  ${misc:Depends}
 Description: statistics collection and monitoring daemon (development files)
  collectd is a small daemon which collects system information periodically and

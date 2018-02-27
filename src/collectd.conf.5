@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2017-06-06" "5.7.2" "collectd"
+.TH COLLECTD.CONF 5 "2017-11-18" "5.8.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -1457,6 +1457,17 @@ in the un-aggregated (per-CPU, per-state) mode as well.
 .IX Item "ReportNumCpu false|true"
 When set to \fBtrue\fR, reports the number of available CPUs.
 Defaults to \fBfalse\fR.
+.IP "\fBReportGuestState\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "ReportGuestState false|true"
+When set to \fBtrue\fR, reports the \*(L"guest\*(R" and \*(L"guest_nice\*(R" \s-1CPU\s0 states.
+Defaults to \fBfalse\fR.
+.IP "\fBSubtractGuestState\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "SubtractGuestState false|true"
+This option is only considered when \fBReportGuestState\fR is set to \fBtrue\fR.
+\&\*(L"guest\*(R" and \*(L"guest_nice\*(R" are included in respectively \*(L"user\*(R" and \*(L"nice\*(R".
+If set to \fBtrue\fR, \*(L"guest\*(R" will be subtracted from \*(L"user\*(R" and \*(L"guest_nice\*(R"
+will be subtracted from \*(L"nice\*(R".
+Defaults to \fBtrue\fR.
 .ie n .SS "Plugin ""cpufreq"""
 .el .SS "Plugin \f(CWcpufreq\fP"
 .IX Subsection "Plugin cpufreq"
@@ -1564,9 +1575,10 @@ regular expressions with the received data.
 The following example will read the current value of \s-1AMD\s0 stock from Google's
 finance page and dispatch the value to collectd.
 .PP
-.Vb 11
+.Vb 12
 \&  <Plugin curl>
 \&    <Page "stock_quotes">
+\&      Plugin "quotes"
 \&      URL "http://finance.google.com/finance?q=NYSE%3AAMD"
 \&      User "foo"
 \&      Password "bar"
@@ -1596,6 +1608,10 @@ a web page and one or more \*(L"matches\*(R" to be performed on the returned dat
 string argument to the \fBPage\fR block is used as plugin instance.
 .PP
 The following options are valid within \fBPage\fR blocks:
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting values.
+Defaults to \f(CW\*(C`curl\*(C'\fR.
 .IP "\fB\s-1URL\s0\fR \fI\s-1URL\s0\fR" 4
 .IX Item "URL URL"
 \&\s-1URL\s0 of the web site to retrieve. Since a regular expression will be used to
@@ -1741,6 +1757,10 @@ The following options are valid within \fB\s-1URL\s0\fR blocks:
 .IX Item "Host Name"
 Use \fIName\fR as the host name when submitting values. Defaults to the global
 host name setting.
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting values.
+Defaults to \f(CW\*(C`curl_json\*(C'\fR.
 .IP "\fBInstance\fR \fIInstance\fR" 4
 .IX Item "Instance Instance"
 Sets the plugin instance to \fIInstance\fR.
@@ -1791,10 +1811,11 @@ Type-instance to use. Defaults to the current map key or current string array el
 The \fBcurl_xml plugin\fR uses \fBlibcurl\fR (<http://curl.haxx.se/>) and \fBlibxml2\fR
 (<http://xmlsoft.org/>) to retrieve \s-1XML\s0 data via cURL.
 .PP
-.Vb 11
+.Vb 12
 \& <Plugin "curl_xml">
 \&   <URL "http://localhost/stats.xml">
 \&     Host "my_host"
+\&     #Plugin "curl_xml"
 \&     Instance "some_instance"
 \&     User "collectd"
 \&     Password "thaiNg0I"
@@ -1808,6 +1829,7 @@ The \fBcurl_xml plugin\fR uses \fBlibcurl\fR (<http://curl.haxx.se/>) and \fBlib
 \&       Type "magic_level"
 \&       #InstancePrefix "prefix\-"
 \&       InstanceFrom "td[1]"
+\&       #PluginInstanceFrom "td[1]"
 \&       ValuesFrom "td[2]/span[@class=\e"level\e"]"
 \&     </XPath>
 \&   </URL>
@@ -1830,10 +1852,15 @@ Within the \fB\s-1URL\s0\fR block the following options are accepted:
 .IX Item "Host Name"
 Use \fIName\fR as the host name when submitting values. Defaults to the global
 host name setting.
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting values.
+Defaults to 'curl_xml'.
 .IP "\fBInstance\fR \fIInstance\fR" 4
 .IX Item "Instance Instance"
-Use \fIInstance\fR as the plugin instance when submitting values. Defaults to an
-empty string (no plugin instance).
+Use \fIInstance\fR as the plugin instance when submitting values.
+May be overridden by \fBPluginInstanceFrom\fR option inside \fBXPath\fR blocks.
+Defaults to an empty string (no plugin instance).
 .IP "\fBNamespace\fR \fIPrefix\fR \fI\s-1URL\s0\fR" 4
 .IX Item "Namespace Prefix URL"
 If an XPath expression references namespaces, they must be specified
@@ -1899,10 +1926,17 @@ This option is optional.
 Specifies a XPath expression to use for determining the \fItype instance\fR. The
 XPath expression must return exactly one element. The element's value is then
 used as \fItype instance\fR, possibly prefixed with \fIInstancePrefix\fR (see above).
+.IP "\fBPluginInstanceFrom\fR \fIPluginInstanceFrom\fR" 4
+.IX Item "PluginInstanceFrom PluginInstanceFrom"
+Specifies a XPath expression to use for determining the \fIplugin instance\fR. The
+XPath expression must return exactly one element. The element's value is then
+used as \fIplugin instance\fR.
+.RE
+.RS 4
 .Sp
-This value is required. As a special exception, if the \*(L"base XPath expression\*(R"
-(the argument to the \fBXPath\fR block) returns exactly one argument, then this
-option may be omitted.
+If the \*(L"base XPath expression\*(R" (the argument to the \fBXPath\fR block) returns
+exactly one argument, then \fIInstanceFrom\fR and \fIPluginInstanceFrom\fR may be omitted.
+Otherwise, at least one of \fIInstanceFrom\fR or \fIPluginInstanceFrom\fR is required.
 .IP "\fBValuesFrom\fR \fIValuesFrom\fR [\fIValuesFrom\fR ...]" 4
 .IX Item "ValuesFrom ValuesFrom [ValuesFrom ...]"
 Specifies one or more XPath expression to use for reading the values. The
@@ -1910,6 +1944,7 @@ number of XPath expressions must match the number of data sources in the
 \&\fItype\fR specified with \fBType\fR (see above). Each XPath expression must return
 exactly one element. The element's value is then parsed as a number and used as
 value for the appropriate value in the value list dispatched to the daemon.
+This option is required.
 .RE
 .RS 4
 .RE
@@ -1940,6 +1975,7 @@ than those of other plugins. It usually looks something like this:
 \&      </Result>
 \&    </Query>
 \&    <Database "product_information">
+\&      #Plugin "warehouse"
 \&      Driver "mysql"
 \&      Interval 120
 \&      DriverOption "host" "localhost"
@@ -2118,6 +2154,10 @@ documentation\ \- we stick as close to the terminology used there.
 Each database needs a \*(L"name\*(R" as string argument in the starting tag of the
 block. This name will be used as \*(L"PluginInstance\*(R" in the values submitted to
 the daemon. Other than that, that name is not used.
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting query results from
+this \fBDatabase\fR. Defaults to \f(CW\*(C`dbi\*(C'\fR.
 .IP "\fBInterval\fR \fIInterval\fR" 4
 .IX Item "Interval Interval"
 Sets the interval (in seconds) in which the values will be collected from this
@@ -2286,6 +2326,108 @@ Ignore packets that originate from this address.
 .IP "\fBSelectNumericQueryTypes\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "SelectNumericQueryTypes true|false"
 Enabled by default, collects unknown (and thus presented as numeric only) query types.
+.ie n .SS "Plugin ""dpdkevents"""
+.el .SS "Plugin \f(CWdpdkevents\fP"
+.IX Subsection "Plugin dpdkevents"
+The \fIdpdkevents plugin\fR collects events from \s-1DPDK\s0 such as link status of
+network ports and Keep Alive status of \s-1DPDK\s0 logical cores.
+In order to get Keep Alive events following requirements must be met:
+\&\- \s-1DPDK \s0>= 16.07
+\&\- support for Keep Alive implemented in \s-1DPDK\s0 application. More details can
+be found here: http://dpdk.org/doc/guides/sample_app_ug/keep_alive.html
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 10
+\& <Plugin "dpdkevents">
+\&   <EAL>
+\&     Coremask "0x1"
+\&     MemoryChannels "4"
+\&     FilePrefix "rte"
+\&   </EAL>
+\&   <Event "link_status">
+\&     SendEventsOnUpdate true
+\&     EnabledPortMask 0xffff
+\&     PortName "interface1"
+\&     PortName "interface2"
+\&     SendNotification false
+\&   </Event>
+\&   <Event "keep_alive">
+\&     SendEventsOnUpdate true
+\&     LCoreMask "0xf"
+\&     KeepAliveShmName "/dpdk_keepalive_shm_name"
+\&     SendNotification false
+\&   </Event>
+\& </Plugin>
+.Ve
+.PP
+\&\fBOptions:\fR
+.PP
+\fIThe \s-1EAL\s0 block\fR
+.IX Subsection "The EAL block"
+.IP "\fBCoremask\fR \fIMask\fR" 4
+.IX Item "Coremask Mask"
+.PD 0
+.IP "\fBMemorychannels\fR \fIChannels\fR" 4
+.IX Item "Memorychannels Channels"
+.PD
+Number of memory channels per processor socket.
+.IP "\fBFilePrefix\fR \fIFile\fR" 4
+.IX Item "FilePrefix File"
+The prefix text used for hugepage filenames. The filename will be set to
+/var/run/.<prefix>_config where prefix is what is passed in by the user.
+.PP
+\fIThe Event block\fR
+.IX Subsection "The Event block"
+.PP
+The \fBEvent\fR block defines configuration for specific event. It accepts a
+single argument which specifies the name of the event.
+.PP
+Link Status event
+.IX Subsection "Link Status event"
+.IP "\fBSendEventOnUpdate\fR \fItrue|false\fR" 4
+.IX Item "SendEventOnUpdate true|false"
+If set to true link status value will be dispatched only when it is
+different from previously read value. This is an optional argument \- default
+value is true.
+.IP "\fBEnabledPortMask\fR \fIMask\fR" 4
+.IX Item "EnabledPortMask Mask"
+A hexidecimal bit mask of the \s-1DPDK\s0 ports which should be enabled. A mask
+of 0x0 means that all ports will be disabled. A bitmask of all F's means
+that all ports will be enabled. This is an optional argument \- by default
+all ports are enabled.
+.IP "\fBPortName\fR \fIName\fR" 4
+.IX Item "PortName Name"
+A string containing an optional name for the enabled \s-1DPDK\s0 ports. Each PortName
+option should contain only one port name; specify as many PortName options as
+desired. Default naming convention will be used if PortName is blank. If there
+are less PortName options than there are enabled ports, the default naming
+convention will be used for the additional ports.
+.IP "\fBSendNotification\fR \fItrue|false\fR" 4
+.IX Item "SendNotification true|false"
+If set to true, link status notifications are sent, instead of link status
+being collected as a statistic. This is an optional argument \- default
+value is false.
+.PP
+Keep Alive event
+.IX Subsection "Keep Alive event"
+.IP "\fBSendEventOnUpdate\fR \fItrue|false\fR" 4
+.IX Item "SendEventOnUpdate true|false"
+If set to true keep alive value will be dispatched only when it is
+different from previously read value. This is an optional argument \- default
+value is true.
+.IP "\fBLCoreMask\fR \fIMask\fR" 4
+.IX Item "LCoreMask Mask"
+An hexadecimal bit mask of the logical cores to monitor keep alive state.
+.IP "\fBKeepAliveShmName\fR \fIName\fR" 4
+.IX Item "KeepAliveShmName Name"
+Shared memory name identifier that is used by secondary process to monitor
+the keep alive cores state.
+.IP "\fBSendNotification\fR \fItrue|false\fR" 4
+.IX Item "SendNotification true|false"
+If set to true, keep alive notifications are sent, instead of keep alive
+information being collected as a statistic. This is an optional
+argument \- default value is false.
 .ie n .SS "Plugin ""dpdkstat"""
 .el .SS "Plugin \f(CWdpdkstat\fP"
 .IX Subsection "Plugin dpdkstat"
@@ -2294,19 +2436,27 @@ extended \s-1NIC\s0 stats \s-1API\s0 in \s-1DPDK.\s0
 .PP
 \&\fBSynopsis:\fR
 .PP
-.Vb 9
+.Vb 10
 \& <Plugin "dpdkstat">
-\&    Coremask "0x4"
-\&    MemoryChannels "4"
-\&    ProcessType "secondary"
-\&    FilePrefix "rte"
-\&    EnabledPortMask 0xffff
-\&    PortName "interface1"
-\&    PortName "interface2"
+\&   <EAL>
+\&     Coremask "0x4"
+\&     MemoryChannels "4"
+\&     FilePrefix "rte"
+\&     SocketMemory "1024"
+\&     LogLevel "7"
+\&     RteDriverLibPath "/usr/lib/dpdk\-pmd"
+\&   </EAL>
+\&   SharedMemObj "dpdk_collectd_stats_0"
+\&   EnabledPortMask 0xffff
+\&   PortName "interface1"
+\&   PortName "interface2"
 \& </Plugin>
 .Ve
 .PP
 \&\fBOptions:\fR
+.PP
+\fIThe \s-1EAL\s0 block\fR
+.IX Subsection "The EAL block"
 .IP "\fBCoremask\fR \fIMask\fR" 4
 .IX Item "Coremask Mask"
 A string containing an hexadecimal bit mask of the cores to run on. Note that
@@ -2314,9 +2464,6 @@ core numbering can change between platforms and should be determined beforehand.
 .IP "\fBMemorychannels\fR \fIChannels\fR" 4
 .IX Item "Memorychannels Channels"
 A string containing a number of memory channels per processor socket.
-.IP "\fBProcessType\fR \fItype\fR" 4
-.IX Item "ProcessType type"
-A string containing the type of \s-1DPDK\s0 process instance.
 .IP "\fBFilePrefix\fR \fIFile\fR" 4
 .IX Item "FilePrefix File"
 The prefix text used for hugepage filenames. The filename will be set to
@@ -2324,14 +2471,31 @@ The prefix text used for hugepage filenames. The filename will be set to
 .IP "\fBSocketMemory\fR \fI\s-1MB\s0\fR" 4
 .IX Item "SocketMemory MB"
 A string containing amount of Memory to allocate from hugepages on specific
-sockets in \s-1MB\s0
-.IP "\fBEnabledPortMask\fR \fIMask\fR" 4
+sockets in \s-1MB.\s0 This is an optional value.
+.IP "\fBLogLevel\fR \fILogLevel_number\fR" 4
+.IX Item "LogLevel LogLevel_number"
+A string containing log level number. This parameter is optional.
+If parameter is not present then default value \*(L"7\*(R" \- (\s-1INFO\s0) is used.
+Value \*(L"8\*(R" \- (\s-1DEBUG\s0) can be set to enable debug traces.
+.IP "\fBRteDriverLibPath\fR \fIPath\fR" 4
+.IX Item "RteDriverLibPath Path"
+A string containing path to shared pmd driver lib or path to directory,
+where shared pmd driver libs are available. This parameter is optional.
+This parameter enable loading of shared pmd driver libs from defined path.
+E.g.: \*(L"/usr/lib/dpdk\-pmd/librte_pmd_i40e.so\*(R"
+or    \*(L"/usr/lib/dpdk\-pmd\*(R"
+.IP "\fBSharedMemObj\fR \fIMask\fR" 3
+.IX Item "SharedMemObj Mask"
+A string containing the name of the shared memory object that should be used to
+share stats from the \s-1DPDK\s0 secondary process to the collectd dpdkstat plugin.
+Defaults to dpdk_collectd_stats if no other value is configured.
+.IP "\fBEnabledPortMask\fR \fIMask\fR" 3
 .IX Item "EnabledPortMask Mask"
 A hexidecimal bit mask of the \s-1DPDK\s0 ports which should be enabled. A mask
 of 0x0 means that all ports will be disabled. A bitmask of all Fs means
 that all ports will be enabled. This is an optional argument \- default
 is all ports enabled.
-.IP "\fBPortName\fR \fIName\fR" 4
+.IP "\fBPortName\fR \fIName\fR" 3
 .IX Item "PortName Name"
 A string containing an optional name for the enabled \s-1DPDK\s0 ports. Each PortName
 option should contain only one port name; specify as many PortName options as
@@ -2465,12 +2629,15 @@ classified into \*(L"local\*(R" and \*(L"remote\*(R".
 As you can see, the configuration consists of one or more \f(CW\*(C`Directory\*(C'\fR blocks,
 each of which specifies a directory in which to count the files. Within those
 blocks, the following options are recognized:
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting values.
+Defaults to \fBfilecount\fR.
 .IP "\fBInstance\fR \fIInstance\fR" 4
 .IX Item "Instance Instance"
-Sets the plugin instance to \fIInstance\fR. That instance name must be unique, but
-it's your responsibility, the plugin doesn't check for that. If not given, the
-instance is set to the directory name with all slashes replaced by underscores
-and all leading underscores removed.
+Sets the plugin instance to \fIInstance\fR. If not given, the instance is set to
+the directory name with all slashes replaced by underscores and all leading
+underscores removed. Empty value is allowed.
 .IP "\fBName\fR \fIPattern\fR" 4
 .IX Item "Name Pattern"
 Only count files that match \fIPattern\fR, where \fIPattern\fR is a shell-like
@@ -2510,6 +2677,22 @@ Controls whether or not to recurse into subdirectories. Enabled by default.
 Controls whether or not to include \*(L"hidden\*(R" files and directories in the count.
 \&\*(L"Hidden\*(R" files and directories are those, whose name begins with a dot.
 Defaults to \fIfalse\fR, i.e. by default hidden files and directories are ignored.
+.IP "\fBRegularOnly\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "RegularOnly true|false"
+Controls whether or not to include only regular files in the count.
+Defaults to \fItrue\fR, i.e. by default non regular files are ignored.
+.IP "\fBFilesSizeType\fR \fIType\fR" 4
+.IX Item "FilesSizeType Type"
+Sets the type used to dispatch files combined size. Empty value ("") disables
+reporting. Defaults to \fBbytes\fR.
+.IP "\fBFilesCountType\fR \fIType\fR" 4
+.IX Item "FilesCountType Type"
+Sets the type used to dispatch number of files. Empty value ("") disables
+reporting. Defaults to \fBfiles\fR.
+.IP "\fBTypeInstance\fR \fIInstance\fR" 4
+.IX Item "TypeInstance Instance"
+Sets the \fItype instance\fR used to dispatch values. Defaults to an empty string
+(no plugin instance).
 .ie n .SS "Plugin ""GenericJMX"""
 .el .SS "Plugin \f(CWGenericJMX\fP"
 .IX Subsection "Plugin GenericJMX"
@@ -2746,6 +2929,85 @@ Defaults to \fBfalse\fR.
 .IX Item "ValuesPercentage false|true"
 Whether to report hugepages metrics as percentage.
 Defaults to \fBfalse\fR.
+.ie n .SS "Plugin ""intel_pmu"""
+.el .SS "Plugin \f(CWintel_pmu\fP"
+.IX Subsection "Plugin intel_pmu"
+The \fIintel_pmu\fR plugin collects performance counters data on Intel CPUs using
+Linux perf interface. All events are reported on a per core basis.
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 7
+\&  <Plugin intel_pmu>
+\&    ReportHardwareCacheEvents true
+\&    ReportKernelPMUEvents true
+\&    ReportSoftwareEvents true
+\&    EventList "/var/cache/pmu/GenuineIntel\-6\-2D\-core.json"
+\&    HardwareEvents "L2_RQSTS.CODE_RD_HIT,L2_RQSTS.CODE_RD_MISS" "L2_RQSTS.ALL_CODE_RD"
+\&  </Plugin>
+.Ve
+.PP
+\&\fBOptions:\fR
+.IP "\fBReportHardwareCacheEvents\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "ReportHardwareCacheEvents false|true"
+Enable or disable measuring of hardware \s-1CPU\s0 cache events:
+  \- L1\-dcache\-loads
+  \- L1\-dcache\-load\-misses
+  \- L1\-dcache\-stores
+  \- L1\-dcache\-store\-misses
+  \- L1\-dcache\-prefetches
+  \- L1\-dcache\-prefetch\-misses
+  \- L1\-icache\-loads
+  \- L1\-icache\-load\-misses
+  \- L1\-icache\-prefetches
+  \- L1\-icache\-prefetch\-misses
+  \- LLC-loads
+  \- LLC-load-misses
+  \- LLC-stores
+  \- LLC-store-misses
+  \- LLC-prefetches
+  \- LLC-prefetch-misses
+  \- dTLB-loads
+  \- dTLB-load-misses
+  \- dTLB-stores
+  \- dTLB-store-misses
+  \- dTLB-prefetches
+  \- dTLB-prefetch-misses
+  \- iTLB-loads
+  \- iTLB-load-misses
+  \- branch-loads
+  \- branch-load-misses
+.IP "\fBReportKernelPMUEvents\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "ReportKernelPMUEvents false|true"
+Enable or disable measuring of the following events:
+  \- cpu-cycles
+  \- instructions
+  \- cache-references
+  \- cache-misses
+  \- branches
+  \- branch-misses
+  \- bus-cycles
+.IP "\fBReportSoftwareEvents\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "ReportSoftwareEvents false|true"
+Enable or disable measuring of software events provided by kernel:
+  \- cpu-clock
+  \- task-clock
+  \- context-switches
+  \- cpu-migrations
+  \- page-faults
+  \- minor-faults
+  \- major-faults
+  \- alignment-faults
+  \- emulation-faults
+.IP "\fBEventList\fR \fIfilename\fR" 4
+.IX Item "EventList filename"
+\&\s-1JSON\s0 performance counter event list file name. To be able to monitor all Intel
+\&\s-1CPU\s0 specific events \s-1JSON\s0 event list file should be downloaded. Use the pmu-tools
+event_download.py script to download event list for current \s-1CPU.\s0
+.IP "\fBHardwareEvents\fR \fIevents\fR" 4
+.IX Item "HardwareEvents events"
+This field is a list of event names or groups of comma separated event names.
+This option requires \fBEventList\fR option to be configured.
 .ie n .SS "Plugin ""intel_rdt"""
 .el .SS "Plugin \f(CWintel_rdt\fP"
 .IX Subsection "Plugin intel_rdt"
@@ -2760,6 +3022,10 @@ reports the bandwidth of accessing the remote socket. Also this technology
 allows to monitor instructions per clock (\s-1IPC\s0).
 Monitor events are hardware dependant. Monitoring capabilities are detected on
 plugin initialization and only supported events are monitored.
+.PP
+\&\fBNote:\fR \fIintel_rdt\fR plugin is using model-specific registers (MSRs), which
+require an additional capability to be enabled if collectd is run as a service.
+Please refer to \fIcontrib/systemd.collectd.service\fR file for more details.
 .PP
 \&\fBSynopsis:\fR
 .PP
@@ -2807,7 +3073,7 @@ a more detailed description see \fBIgnoreSelected\fR below.
 See \fI/\*(L"\s-1IGNORELISTS\*(R"\s0\fR for details.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
-If no configuration if given, the \fBinterface\fR\-plugin will collect data from
+If no configuration is given, the \fBinterface\fR\-plugin will collect data from
 all interfaces. This may not be practical, especially for loopback\- and
 similar interfaces. Thus, you can use the \fBInterface\fR\-option to pick the
 interfaces you're interested in. Sometimes, however, it's easier/preferred
@@ -2858,6 +3124,38 @@ This option is only available on Solaris.
 .ie n .SS "Plugin ""ipmi"""
 .el .SS "Plugin \f(CWipmi\fP"
 .IX Subsection "Plugin ipmi"
+The \fBipmi plugin\fR allows to monitor server platform status using the Intelligent
+Platform Management Interface (\s-1IPMI\s0). Local and remote interfaces are supported.
+.PP
+The plugin configuration consists of one or more \fBInstance\fR blocks which
+specify one \fIipmi\fR connection each. Each block requires one unique string
+argument as the instance name. If instances are not configured, an instance with
+the default option values will be created.
+.PP
+For backwards compatibility, any option other than \fBInstance\fR block will trigger
+legacy config handling and it will be treated as an option within \fBInstance\fR
+block. This support will go away in the next major version of Collectd.
+.PP
+Within the \fBInstance\fR blocks, the following options are allowed:
+.IP "\fBAddress\fR \fIAddress\fR" 4
+.IX Item "Address Address"
+Hostname or \s-1IP\s0 to connect to. If not specified, plugin will try to connect to
+local management controller (\s-1BMC\s0).
+.IP "\fBUsername\fR \fIUsername\fR" 4
+.IX Item "Username Username"
+.PD 0
+.IP "\fBPassword\fR \fIPassword\fR" 4
+.IX Item "Password Password"
+.PD
+The username and the password to use for the connection to remote \s-1BMC.\s0
+.IP "\fBAuthType\fR \fI\s-1MD5\s0\fR|\fIrmcp+\fR" 4
+.IX Item "AuthType MD5|rmcp+"
+Forces the authentication type to use for the connection to remote \s-1BMC.\s0
+By default most secure type is seleted.
+.IP "\fBHost\fR \fIHostname\fR" 4
+.IX Item "Host Hostname"
+Sets the \fBhost\fR field of dispatched values. Defaults to the global hostname
+setting.
 .IP "\fBSensor\fR \fISensor\fR" 4
 .IX Item "Sensor Sensor"
 Selects sensors to collect or to ignore, depending on \fBIgnoreSelected\fR.
@@ -2881,6 +3179,21 @@ If a sensor disappears a notification is sent.
 .IX Item "NotifySensorNotPresent true|false"
 If you have for example dual power supply and one of them is (un)plugged then
 a notification is sent.
+.IP "\fBNotifyIPMIConnectionState\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "NotifyIPMIConnectionState true|false"
+If a \s-1IPMI\s0 connection state changes after initialization time of a minute
+a notification is sent. Defaults to \fBfalse\fR.
+.IP "\fBSELEnabled\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "SELEnabled true|false"
+If system event log (\s-1SEL\s0) is enabled, plugin will listen for sensor threshold
+and discrete events. When event is received the notification is sent.
+Defaults to \fBfalse\fR.
+.IP "\fBSELClearEvent\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "SELClearEvent true|false"
+If \s-1SEL\s0 clear event is enabled, plugin will delete event from \s-1SEL\s0 list after
+it is received and successfully handled. In this case other tools that are
+subscribed for \s-1SEL\s0 events will receive an empty event.
+Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""iptables"""
 .el .SS "Plugin \f(CWiptables\fP"
 .IX Subsection "Plugin iptables"
@@ -3078,6 +3391,36 @@ Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB411\fR.
+.ie n .SS "Plugin ""mcelog"""
+.el .SS "Plugin \f(CWmcelog\fP"
+.IX Subsection "Plugin mcelog"
+The \f(CW\*(C`mcelog plugin\*(C'\fR uses mcelog to retrieve machine check exceptions.
+.PP
+By default the plugin connects to \fB\*(L"/var/run/mcelog\-client\*(R"\fR to check if the
+mcelog server is running. When the server is running, the plugin will tail the
+specified logfile to retrieve machine check exception information and send a
+notification with the details from the logfile. The plugin will use the mcelog
+client protocol to retrieve memory related machine check exceptions. Note that
+for memory exceptions, notifications are only sent when there is a change in
+the number of corrected/uncorrected memory errors.
+.PP
+\fIThe Memory block\fR
+.IX Subsection "The Memory block"
+.PP
+Note: these options cannot be used in conjunction with the logfile options, they are mutually
+exclusive.
+.ie n .IP "\fBMcelogClientSocket\fR \fIPath\fR Connect to the mcelog client socket using the \s-1UNIX\s0 domain socket at \fIPath\fR. Defaults to \fB""/var/run/mcelog\-client""\fR." 3
+.el .IP "\fBMcelogClientSocket\fR \fIPath\fR Connect to the mcelog client socket using the \s-1UNIX\s0 domain socket at \fIPath\fR. Defaults to \fB``/var/run/mcelog\-client''\fR." 3
+.IX Item "McelogClientSocket Path Connect to the mcelog client socket using the UNIX domain socket at Path. Defaults to /var/run/mcelog-client."
+.PD 0
+.IP "\fBPersistentNotification\fR \fBtrue\fR|\fBfalse\fR Override default configuration to only send notifications when sent when there is a change in the number of corrected/uncorrected memory errors. When set to true notifications will be sent for every read cycle. Default is false. Does not affect the stats being dispatched." 3
+.IX Item "PersistentNotification true|false Override default configuration to only send notifications when sent when there is a change in the number of corrected/uncorrected memory errors. When set to true notifications will be sent for every read cycle. Default is false. Does not affect the stats being dispatched."
+.IP "\fBMcelogLogfile\fR \fIPath\fR" 4
+.IX Item "McelogLogfile Path"
+.PD
+The mcelog file to parse. Defaults to \fB\*(L"/var/log/mcelog\*(R"\fR. Note: this option
+cannot be used in conjunction with the memory block options, they are mutually
+exclusive.
 .ie n .SS "Plugin ""md"""
 .el .SS "Plugin \f(CWmd\fP"
 .IX Subsection "Plugin md"
@@ -3113,11 +3456,12 @@ libmemcache (notice the missing `d'), which is not applicable.
 .PP
 Synopsis of the configuration:
 .PP
-.Vb 12
+.Vb 10
 \& <Plugin "memcachec">
 \&   <Page "plugin_instance">
 \&     Server "localhost"
 \&     Key "page_key"
+\&     Plugin "plugin_name"
 \&     <Match>
 \&       Regex "(\e\ed+) bytes sent"
 \&       DSType CounterAdd
@@ -3140,6 +3484,10 @@ Sets the server address to connect to when querying the page. Must be inside a
 .IP "\fBKey\fR \fIKey\fR" 4
 .IX Item "Key Key"
 When connected to the memcached server, asks for the page \fIKey\fR.
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting values.
+Defaults to \f(CW\*(C`memcachec\*(C'\fR.
 .IP "<\fBMatch\fR>" 4
 .IX Item "<Match>"
 Match blocks define which strings to look for and how matches substrings are
@@ -3573,27 +3921,29 @@ the \fBcollectd\fR branch.
 Path to the PEM-encoded \s-1CA\s0 certificate file. Setting this option enables \s-1TLS\s0
 communication with the \s-1MQTT\s0 broker, and as such, \fBPort\fR should be the TLS-enabled
 port of the \s-1MQTT\s0 broker.
-A valid \s-1TLS\s0 configuration requires \fBCACert\fR, \fBCertificateFile\fR and \fBCertificateKeyFile\fR.
+This option enables the use of \s-1TLS.\s0
 .IP "\fBCertificateFile\fR \fIfile\fR" 4
 .IX Item "CertificateFile file"
 Path to the PEM-encoded certificate file to use as client certificate when
 connecting to the \s-1MQTT\s0 broker.
-A valid \s-1TLS\s0 configuration requires \fBCACert\fR, \fBCertificateFile\fR and \fBCertificateKeyFile\fR.
+Only valid if \fBCACert\fR and \fBCertificateKeyFile\fR are also set.
 .IP "\fBCertificateKeyFile\fR \fIfile\fR" 4
 .IX Item "CertificateKeyFile file"
 Path to the unencrypted PEM-encoded key file corresponding to \fBCertificateFile\fR.
-A valid \s-1TLS\s0 configuration requires \fBCACert\fR, \fBCertificateFile\fR and \fBCertificateKeyFile\fR.
+Only valid if \fBCACert\fR and \fBCertificateFile\fR are also set.
 .IP "\fBTLSProtocol\fR \fIprotocol\fR" 4
 .IX Item "TLSProtocol protocol"
 If configured, this specifies the string protocol version (e.g. \f(CW\*(C`tlsv1\*(C'\fR,
 \&\f(CW\*(C`tlsv1.2\*(C'\fR) to use for the \s-1TLS\s0 connection to the broker. If not set a default
 version is used which depends on the version of OpenSSL the Mosquitto library
 was linked against.
+Only valid if \fBCACert\fR is set.
 .IP "\fBCipherSuite\fR \fIciphersuite\fR" 4
 .IX Item "CipherSuite ciphersuite"
 A string describing the ciphers available for use. See \fIciphers\fR\|(1) and the
 \&\f(CW\*(C`openssl ciphers\*(C'\fR utility for more information. If unset, the default ciphers
 will be used.
+Only valid if \fBCACert\fR is set.
 .ie n .SS "Plugin ""mysql"""
 .el .SS "Plugin \f(CWmysql\fP"
 .IX Subsection "Plugin mysql"
@@ -4485,6 +4835,23 @@ statistics about itself. Collectd data included the number of received and
 sent octets and packets, the length of the receive queue and the number of
 values handled. When set to \fBtrue\fR, the \fINetwork plugin\fR will make these
 statistics available. Defaults to \fBfalse\fR.
+.ie n .SS "Plugin ""nfs"""
+.el .SS "Plugin \f(CWnfs\fP"
+.IX Subsection "Plugin nfs"
+The \fInfs plugin\fR collects information about the usage of the Network File
+System (\s-1NFS\s0). It counts the number of procedure calls for each procedure,
+grouped by version and whether the system runs as server or client.
+.PP
+It is possibly to omit metrics for a specific \s-1NFS\s0 version by setting one or
+more of the following options to \fBfalse\fR (all of them default to \fBtrue\fR).
+.IP "\fBReportV2\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportV2 true|false"
+.PD 0
+.IP "\fBReportV3\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportV3 true|false"
+.IP "\fBReportV4\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportV4 true|false"
+.PD
 .ie n .SS "Plugin ""nginx"""
 .el .SS "Plugin \f(CWnginx\fP"
 .IX Subsection "Plugin nginx"
@@ -4646,6 +5013,36 @@ making it through.
 .IX Item "UPS upsname@hostname[:port]"
 Add a \s-1UPS\s0 to collect data from. The format is identical to the one accepted by
 \&\fIupsc\fR\|(8).
+.IP "\fBForceSSL\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ForceSSL true|false"
+Stops connections from falling back to unsecured if an \s-1SSL\s0 connection
+cannot be established. Defaults to false if undeclared.
+.IP "\fBVerifyPeer\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "VerifyPeer true|false"
+If set to true, requires a CAPath be provided. Will use the CAPath to find
+certificates to use as Trusted Certificates to validate a upsd server certificate.
+If validation of the upsd server certificate fails, the connection will not be
+established. If ForceSSL is undeclared or set to false, setting VerifyPeer to true
+will override and set ForceSSL to true.
+.IP "\fBCAPath\fR I/path/to/certs/folder" 4
+.IX Item "CAPath I/path/to/certs/folder"
+If VerifyPeer is set to true, this is required. Otherwise this is ignored.
+The folder pointed at must contain certificate(s) named according to their hash.
+Ex: \s-1XXXXXXXX.Y\s0 where X is the hash value of a cert and Y is 0. If name collisions
+occur because two different certs have the same hash value, Y can be  incremented
+in order to avoid conflict. To create a symbolic link to a certificate the following
+command can be used from within the directory where the cert resides:
+.Sp
+\&\f(CW\*(C`ln \-s some.crt ./$(openssl x509 \-hash \-noout \-in some.crt).0\*(C'\fR
+.Sp
+Alternatively, the package openssl-perl provides a command \f(CW\*(C`c_rehash\*(C'\fR that will
+generate links like the one described above for \s-1ALL\s0 certs in a given folder.
+Example usage:
+\&\f(CW\*(C`c_rehash /path/to/certs/folder\*(C'\fR
+.IP "\fBConnectTimeout\fR \fIMilliseconds\fR" 4
+.IX Item "ConnectTimeout Milliseconds"
+The \fBConnectTimeout\fR option sets the connect timeout, in milliseconds.
+By default, the configured \fBInterval\fR is used to set the timeout.
 .ie n .SS "Plugin ""olsrd"""
 .el .SS "Plugin \f(CWolsrd\fP"
 .IX Subsection "Plugin olsrd"
@@ -4855,16 +5252,13 @@ The OpenVPN plugin reads a status file maintained by OpenVPN and gathers
 traffic statistics about connected clients.
 .PP
 To set up OpenVPN to write to the status file periodically, use the
-\&\fB\-\-status\fR option of OpenVPN. Since OpenVPN can write two different formats,
-you need to set the required format, too. This is done by setting
-\&\fB\-\-status\-version\fR to \fB2\fR.
+\&\fB\-\-status\fR option of OpenVPN.
 .PP
 So, in a nutshell you need:
 .PP
-.Vb 3
+.Vb 2
 \&  openvpn $OTHER_OPTIONS \e
-\&    \-\-status "/var/run/openvpn\-status" 10 \e
-\&    \-\-status\-version 2
+\&    \-\-status "/var/run/openvpn\-status" 10
 .Ve
 .PP
 Available options:
@@ -4912,6 +5306,7 @@ plugin's documentation above for details.
 \&      </Result>
 \&    </Query>
 \&    <Database "product_information">
+\&      #Plugin "warehouse"
 \&      ConnectID "db01"
 \&      Username "oracle"
 \&      Password "secret"
@@ -4934,6 +5329,10 @@ Database blocks define a connection to a database and which queries should be
 sent to that database. Each database needs a \*(L"name\*(R" as string argument in the
 starting tag of the block. This name will be used as \*(L"PluginInstance\*(R" in the
 values submitted to the daemon. Other than that, that name is not used.
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting query results from
+this \fBDatabase\fR. Defaults to \f(CW\*(C`oracle\*(C'\fR.
 .IP "\fBConnectID\fR \fI\s-1ID\s0\fR" 4
 .IX Item "ConnectID ID"
 Defines the \*(L"database alias\*(R" or \*(L"service name\*(R" to connect to. Usually, these
@@ -4954,6 +5353,109 @@ Associates the query named \fIQueryName\fR with this database connection. The
 query needs to be defined \fIbefore\fR this statement, i.\ e. all query
 blocks you want to refer to must be placed above the database block you want to
 refer to them from.
+.ie n .SS "Plugin ""ovs_events"""
+.el .SS "Plugin \f(CWovs_events\fP"
+.IX Subsection "Plugin ovs_events"
+The \fIovs_events\fR plugin monitors the link status of \fIOpen vSwitch\fR (\s-1OVS\s0)
+connected interfaces, dispatches the values to collectd and sends the
+notification whenever the link state change occurs. This plugin uses \s-1OVS\s0
+database to get a link state change notification.
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 8
+\& <Plugin "ovs_events">
+\&   Port 6640
+\&   Address "127.0.0.1"
+\&   Socket "/var/run/openvswitch/db.sock"
+\&   Interfaces "br0" "veth0"
+\&   SendNotification true
+\&   DispatchValues false
+\& </Plugin>
+.Ve
+.PP
+The plugin provides the following configuration options:
+.IP "\fBAddress\fR \fInode\fR" 4
+.IX Item "Address node"
+The address of the \s-1OVS DB\s0 server JSON-RPC interface used by the plugin. To
+enable the interface, \s-1OVS DB\s0 daemon should be running with \f(CW\*(C`\-\-remote=ptcp:\*(C'\fR
+option. See \fIovsdb\-server\fR\|(1) for more details. The option may be either
+network hostname, IPv4 numbers-and-dots notation or IPv6 hexadecimal string
+format. Defaults to \f(CW\*(C`localhost\*(C'\fR.
+.IP "\fBPort\fR \fIservice\fR" 4
+.IX Item "Port service"
+TCP-port to connect to. Either a service name or a port number may be given.
+Defaults to \fB6640\fR.
+.IP "\fBSocket\fR \fIpath\fR" 4
+.IX Item "Socket path"
+The \s-1UNIX\s0 domain socket path of \s-1OVS DB\s0 server JSON-RPC interface used by the
+plugin. To enable the interface, the \s-1OVS DB\s0 daemon should be running with
+\&\f(CW\*(C`\-\-remote=punix:\*(C'\fR option. See \fIovsdb\-server\fR\|(1) for more details. If this
+option is set, \fBAddress\fR and \fBPort\fR options are ignored.
+.IP "\fBInterfaces\fR [\fIifname\fR ...]" 4
+.IX Item "Interfaces [ifname ...]"
+List of interface names to be monitored by this plugin. If this option is not
+specified or is empty then all \s-1OVS\s0 connected interfaces on all bridges are
+monitored.
+.Sp
+Default: empty (all interfaces on all bridges are monitored)
+.IP "\fBSendNotification\fR \fItrue|false\fR" 4
+.IX Item "SendNotification true|false"
+If set to true, \s-1OVS\s0 link notifications (interface status and \s-1OVS DB\s0 connection
+terminate) are sent to collectd. Default value is true.
+.IP "\fBDispatchValues\fR \fItrue|false\fR" 4
+.IX Item "DispatchValues true|false"
+Dispatch the \s-1OVS DB\s0 interface link status value with configured plugin interval.
+Defaults to false. Please note, if \fBSendNotification\fR and \fBDispatchValues\fR
+options are false, no \s-1OVS\s0 information will be provided by the plugin.
+.PP
+\&\fBNote:\fR By default, the global interval setting is used within which to
+retrieve the \s-1OVS\s0 link status. To configure a plugin-specific interval, please
+use \fBInterval\fR option of the \s-1OVS \s0\fBLoadPlugin\fR block settings. For milliseconds
+simple divide the time by 1000 for example if the desired interval is 50ms, set
+interval to 0.05.
+.ie n .SS "Plugin ""ovs_stats"""
+.el .SS "Plugin \f(CWovs_stats\fP"
+.IX Subsection "Plugin ovs_stats"
+The \fIovs_stats\fR plugin collects statistics of \s-1OVS\s0 connected interfaces.
+This plugin uses \s-1OVSDB\s0 management protocol (\s-1RFC7047\s0) monitor mechanism to get
+statistics from \s-1OVSDB\s0
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 6
+\& <Plugin "ovs_stats">
+\&   Port 6640
+\&   Address "127.0.0.1"
+\&   Socket "/var/run/openvswitch/db.sock"
+\&   Bridges "br0" "br_ext"
+\& </Plugin>
+.Ve
+.PP
+The plugin provides the following configuration options:
+.IP "\fBAddress\fR \fInode\fR" 4
+.IX Item "Address node"
+The address of the \s-1OVS DB\s0 server JSON-RPC interface used by the plugin. To
+enable the interface, \s-1OVS DB\s0 daemon should be running with \f(CW\*(C`\-\-remote=ptcp:\*(C'\fR
+option. See \fIovsdb\-server\fR\|(1) for more details. The option may be either
+network hostname, IPv4 numbers-and-dots notation or IPv6 hexadecimal string
+format. Defaults to \f(CW\*(C`localhost\*(C'\fR.
+.IP "\fBPort\fR \fIservice\fR" 4
+.IX Item "Port service"
+TCP-port to connect to. Either a service name or a port number may be given.
+Defaults to \fB6640\fR.
+.IP "\fBSocket\fR \fIpath\fR" 4
+.IX Item "Socket path"
+The \s-1UNIX\s0 domain socket path of \s-1OVS DB\s0 server JSON-RPC interface used by the
+plugin. To enable the interface, the \s-1OVS DB\s0 daemon should be running with
+\&\f(CW\*(C`\-\-remote=punix:\*(C'\fR option. See \fIovsdb\-server\fR\|(1) for more details. If this
+option is set, \fBAddress\fR and \fBPort\fR options are ignored.
+.IP "\fBBridges\fR [\fIbrname\fR ...]" 4
+.IX Item "Bridges [brname ...]"
+List of \s-1OVS\s0 bridge names to be monitored by this plugin. If this option is
+omitted or is empty then all \s-1OVS\s0 bridges will be monitored.
+.Sp
+Default: empty (monitor all bridges)
 .ie n .SS "Plugin ""perl"""
 .el .SS "Plugin \f(CWperl\fP"
 .IX Subsection "Plugin perl"
@@ -5145,6 +5647,7 @@ The \fBPostgreSQL Documentation\fR manual can be found at
 \&    </Writer>
 \&
 \&    <Database foo>
+\&      Plugin "kingdom"
 \&      Host "hostname"
 \&      Port "5432"
 \&      User "username"
@@ -5157,7 +5660,7 @@ The \fBPostgreSQL Documentation\fR manual can be found at
 \&    <Database bar>
 \&      Interval 300
 \&      Service "service_name"
-\&      Query backend # predefined
+\&      Query backends # predefined
 \&      Query rt36_tickets
 \&    </Database>
 \&
@@ -5427,6 +5930,10 @@ transaction generates a fair amount of overhead which can, thus, be reduced by
 activating this option. The draw-back is, that data covering the specified
 amount of time will be lost, for example, if a single statement within the
 transaction fails or if the database server crashes.
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting query results from
+this \fBDatabase\fR. Defaults to \f(CW\*(C`postgresql\*(C'\fR.
 .IP "\fBInstance\fR \fIname\fR" 4
 .IX Item "Instance name"
 Specify the plugin instance name that should be used instead of the database
@@ -5659,26 +6166,73 @@ this local name to \fIPath\fR using the \fBLocalSocket\fR option. The default is
 .ie n .SS "Plugin ""processes"""
 .el .SS "Plugin \f(CWprocesses\fP"
 .IX Subsection "Plugin processes"
+Collects information about processes of local system.
+.PP
+By default, with no process matches configured, only general statistics is
+collected: the number of processes in each state and fork rate.
+.PP
+Process matches can be configured by \fBProcess\fR and \fBProcessMatch\fR options.
+These may also be a block in which further options may be specified.
+.PP
+The statistics collected for matched processes are:
+ \- size of the resident segment size (\s-1RSS\s0)
+ \- user\- and system-time used
+ \- number of processes
+ \- number of threads
+ \- number of open files (under Linux)
+ \- number of memory mapped files (under Linux)
+ \- io data (where available)
+ \- context switches (under Linux)
+ \- minor and major pagefaults.
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 10
+\& <Plugin processes>
+\&   CollectFileDescriptor true
+\&   CollectContextSwitch true
+\&   Process "name"
+\&   ProcessMatch "name" "regex"
+\&   <Process "collectd">
+\&     CollectFileDescriptor false
+\&     CollectContextSwitch false
+\&   </Process>
+\&   <ProcessMatch "name" "regex">
+\&     CollectFileDescriptor false
+\&     CollectContextSwitch true
+\&   </Process>
+\& </Plugin>
+.Ve
 .IP "\fBProcess\fR \fIName\fR" 4
 .IX Item "Process Name"
-Select more detailed statistics of processes matching this name. The statistics
-collected for these selected processes are size of the resident segment size
-(\s-1RSS\s0), user\- and system-time used, number of processes and number of threads,
-io data (where available) and minor and major pagefaults.
+Select more detailed statistics of processes matching this name.
 .Sp
-Some platforms have a limit on the length of process names. \fIName\fR must stay
-below this limit.
+Some platforms have a limit on the length of process names.
+\&\fIName\fR must stay below this limit.
 .IP "\fBProcessMatch\fR \fIname\fR \fIregex\fR" 4
 .IX Item "ProcessMatch name regex"
-Similar to the \fBProcess\fR option this allows one to select more detailed
-statistics of processes matching the specified \fIregex\fR (see \fIregex\fR\|(7) for
-details). The statistics of all matching processes are summed up and
-dispatched to the daemon using the specified \fIname\fR as an identifier. This
-allows one to \*(L"group\*(R" several processes together. \fIname\fR must not contain
-slashes.
+Select more detailed statistics of processes matching the specified \fIregex\fR
+(see \fIregex\fR\|(7) for details). The statistics of all matching processes are
+summed up and dispatched to the daemon using the specified \fIname\fR as an
+identifier. This allows one to \*(L"group\*(R" several processes together.
+\&\fIname\fR must not contain slashes.
 .IP "\fBCollectContextSwitch\fR \fIBoolean\fR" 4
 .IX Item "CollectContextSwitch Boolean"
-Collect context switch of the process.
+Collect the number of context switches for matched processes.
+Disabled by default.
+.IP "\fBCollectFileDescriptor\fR \fIBoolean\fR" 4
+.IX Item "CollectFileDescriptor Boolean"
+Collect number of file descriptors of matched processes.
+Disabled by default.
+.IP "\fBCollectMemoryMaps\fR \fIBoolean\fR" 4
+.IX Item "CollectMemoryMaps Boolean"
+Collect the number of memory mapped files of the process.
+The limit for this number is configured via \fI/proc/sys/vm/max_map_count\fR in
+the Linux kernel.
+.PP
+Options \fBCollectContextSwitch\fR and \fBCollectFileDescriptor\fR may be used inside
+\&\fBProcess\fR and \fBProcessMatch\fR blocks \- then they affect corresponding match
+only. Otherwise they set the default value for subsequent matches.
 .ie n .SS "Plugin ""protocols"""
 .el .SS "Plugin \f(CWprotocols\fP"
 .IX Subsection "Plugin protocols"
@@ -6013,14 +6567,20 @@ one (exclusive).
 .IX Item "CacheFlush Seconds"
 When the \f(CW\*(C`rrdtool\*(C'\fR plugin uses a cache (by setting \fBCacheTimeout\fR, see below)
 it writes all values for a certain RRD-file if the oldest value is older than
-(or equal to) the number of seconds specified. If some RRD-file is not updated
+(or equal to) the number of seconds specified by \fBCacheTimeout\fR.
+That check happens on new values arriwal. If some RRD-file is not updated
 anymore for some reason (the computer was shut down, the network is broken,
-etc.) some values may still be in the cache. If \fBCacheFlush\fR is set, then the
-entire cache is searched for entries older than \fBCacheTimeout\fR seconds and
-written to disk every \fISeconds\fR seconds. Since this is kind of expensive and
-does nothing under normal circumstances, this value should not be too small.
-900 seconds might be a good value, though setting this to 7200 seconds doesn't
-normally do much harm either.
+etc.) some values may still be in the cache. If \fBCacheFlush\fR is set, then
+every \fISeconds\fR seconds the entire cache is searched for entries older than
+\&\fBCacheTimeout\fR + \fBRandomTimeout\fR seconds. The entries found are written to
+disk. Since scanning the entire cache is kind of expensive and does nothing
+under normal circumstances, this value should not be too small. 900 seconds
+might be a good value, though setting this to 7200 seconds doesn't normally
+do much harm either.
+.Sp
+Defaults to 10x \fBCacheTimeout\fR.
+\&\fBCacheFlush\fR must be larger than or equal to \fBCacheTimeout\fR, otherwise the
+above default is used.
 .IP "\fBCacheTimeout\fR \fISeconds\fR" 4
 .IX Item "CacheTimeout Seconds"
 If this option is set to a value greater than zero, the \f(CW\*(C`rrdtool plugin\*(C'\fR will
@@ -6206,6 +6766,108 @@ even if the kernel name changes.
 Since the configuration of the \f(CW\*(C`snmp plugin\*(C'\fR is a little more complicated than
 other plugins, its documentation has been moved to an own manpage,
 \&\fIcollectd\-snmp\fR\|(5). Please see there for details.
+.ie n .SS "Plugin ""snmp_agent"""
+.el .SS "Plugin \f(CWsnmp_agent\fP"
+.IX Subsection "Plugin snmp_agent"
+The \fIsnmp_agent\fR plugin is an AgentX subagent that receives and handles queries
+from \s-1SNMP\s0 master agent and returns the data collected by read plugins.
+The \fIsnmp_agent\fR plugin handles requests only for OIDs specified in
+configuration file. To handle \s-1SNMP\s0 queries the plugin gets data from collectd
+and translates requested values from collectd's internal format to \s-1SNMP\s0 format.
+This plugin is a generic plugin and cannot work without configuration.
+For more details on AgentX subagent see
+<http://www.net\-snmp.org/tutorial/tutorial\-5/toolkit/demon/>
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 10
+\&  <Plugin snmp_agent>
+\&    <Data "memAvailReal">
+\&      Plugin "memory"
+\&      #PluginInstance "some"
+\&      Type "memory"
+\&      TypeInstance "free"
+\&      OIDs "1.3.6.1.4.1.2021.4.6.0"
+\&    </Data>
+\&    <Table "ifTable">
+\&      IndexOID "IF\-MIB::ifIndex"
+\&      SizeOID "IF\-MIB::ifNumber"
+\&      <Data "ifDescr">
+\&        Instance true
+\&        Plugin "interface"
+\&        OIDs "IF\-MIB::ifDescr"
+\&      </Data>
+\&      <Data "ifOctets">
+\&        Plugin "interface"
+\&        Type "if_octets"
+\&        TypeInstance ""
+\&        OIDs "IF\-MIB::ifInOctets" "IF\-MIB::ifOutOctets"
+\&      </Data>
+\&    </Table>
+\&  </Plugin>
+.Ve
+.PP
+There are two types of blocks that can be contained in the
+\&\f(CW\*(C`<Plugin\  snmp_agent>\*(C'\fR block: \fBData\fR and \fBTable\fR:
+.PP
+\fIThe \f(BIData\fI block\fR
+.IX Subsection "The Data block"
+.PP
+The \fBData\fR block defines a list OIDs that are to be handled. This block can
+define scalar or table OIDs. If \fBData\fR block is defined inside of \fBTable\fR
+block it reperesents table OIDs.
+The following options can be set:
+.IP "\fBInstance\fR \fItrue|false\fR" 4
+.IX Item "Instance true|false"
+When \fBInstance\fR is set to \fBtrue\fR, the value for requested \s-1OID\s0 is copied from
+plugin instance field of corresponding collectd value. If \fBData\fR block defines
+scalar data type \fBInstance\fR has no effect and can be omitted.
+.IP "\fBPlugin\fR \fIString\fR" 4
+.IX Item "Plugin String"
+Read plugin name whose collected data will be mapped to specified OIDs.
+.IP "\fBPluginInstance\fR \fIString\fR" 4
+.IX Item "PluginInstance String"
+Read plugin instance whose collected data will be mapped to specified OIDs.
+The field is optional and by default there is no plugin instance check.
+Allowed only if \fBData\fR block defines scalar data type.
+.IP "\fBType\fR \fIString\fR" 4
+.IX Item "Type String"
+Collectd's type that is to be used for specified \s-1OID,\s0 e.\ g. \*(L"if_octets\*(R"
+for example. The types are read from the \fBTypesDB\fR (see \fIcollectd.conf\fR\|(5)).
+.IP "\fBTypeInstance\fR \fIString\fR" 4
+.IX Item "TypeInstance String"
+Collectd's type-instance that is to be used for specified \s-1OID.\s0
+.IP "\fBOIDs\fR \fI\s-1OID\s0\fR [\fI\s-1OID\s0\fR ...]" 4
+.IX Item "OIDs OID [OID ...]"
+Configures the OIDs to be handled by \fIsnmp_agent\fR plugin. Values for these OIDs
+are taken from collectd data type specified by \fBPlugin\fR, \fBPluginInstance\fR,
+\&\fBType\fR, \fBTypeInstance\fR fields of this \fBData\fR block. Number of the OIDs
+configured should correspond to number of values in specified \fBType\fR.
+For example two OIDs \*(L"IF\-MIB::ifInOctets\*(R" \*(L"IF\-MIB::ifOutOctets\*(R" can be mapped to
+\&\*(L"rx\*(R" and \*(L"tx\*(R" values of \*(L"if_octets\*(R" type.
+.IP "\fBScale\fR \fIValue\fR" 4
+.IX Item "Scale Value"
+The values taken from collectd are multiplied by \fIValue\fR. The field is optional
+and the default is \fB1.0\fR.
+.IP "\fBShift\fR \fIValue\fR" 4
+.IX Item "Shift Value"
+\&\fIValue\fR is added to values from collectd after they have been multiplied by
+\&\fBScale\fR value. The field is optional and the default value is \fB0.0\fR.
+.PP
+\fIThe \f(BITable\fI block\fR
+.IX Subsection "The Table block"
+.PP
+The \fBTable\fR block defines a collection of \fBData\fR blocks that belong to one
+snmp table. In addition to multiple \fBData\fR blocks the following options can be
+set:
+.IP "\fBIndexOID\fR \fI\s-1OID\s0\fR" 4
+.IX Item "IndexOID OID"
+\&\s-1OID\s0 that is handled by the plugin and is mapped to numerical index value that is
+generated by the plugin for each table record.
+.IP "\fBSizeOID\fR \fI\s-1OID\s0\fR" 4
+.IX Item "SizeOID OID"
+\&\s-1OID\s0 that is handled by the plugin. Returned value is the number of records in
+the table. The field is optional.
 .ie n .SS "Plugin ""statsd"""
 .el .SS "Plugin \f(CWstatsd\fP"
 .IX Subsection "Plugin statsd"
@@ -6268,6 +6930,8 @@ If none are specified, no percentiles are calculated / dispatched.
 Calculate and dispatch various values out of \fITimer\fR metrics received during
 an interval. If set to \fBFalse\fR, the default, these values aren't calculated /
 dispatched.
+.Sp
+Please note what reported timer values less than 0.001 are ignored in all \fBTimer*\fR reports.
 .ie n .SS "Plugin ""swap"""
 .el .SS "Plugin \f(CWswap\fP"
 .IX Subsection "Plugin swap"
@@ -6297,6 +6961,12 @@ available and free. Defaults to \fBfalse\fR.
 .Sp
 This is useful for deploying \fIcollectd\fR in a heterogeneous environment, where
 swap sizes differ and you want to specify generic thresholds or similar.
+.IP "\fBReportIO\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportIO true|false"
+Enables or disables reporting swap \s-1IO.\s0 Defaults to \fBtrue\fR.
+.Sp
+This is useful for the cases when swap \s-1IO\s0 is not neccessary, is not available,
+or is not reliable.
 .ie n .SS "Plugin ""syslog"""
 .el .SS "Plugin \f(CWsyslog\fP"
 .IX Subsection "Plugin syslog"
@@ -6327,6 +6997,7 @@ filesystem or \s-1CSV \s0(comma separated values) files.
 .Vb 10
 \&  <Plugin table>
 \&    <Table "/proc/slabinfo">
+\&      #Plugin "slab"
 \&      Instance "slabinfo"
 \&      Separator " "
 \&      <Result>
@@ -6351,10 +7022,13 @@ more \fBResult\fR blocks, which configure which data to select and how to
 interpret it.
 .PP
 The following options are available inside a \fBTable\fR block:
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+If specified, \fIPlugin\fR is used as the plugin name when submitting values.
+Defaults to \fBtable\fR.
 .IP "\fBInstance\fR \fIinstance\fR" 4
 .IX Item "Instance instance"
-If specified, \fIinstance\fR is used as the plugin instance. So, in the above
-example, the plugin name \f(CW\*(C`table\-slabinfo\*(C'\fR would be used. If omitted, the
+If specified, \fIinstance\fR is used as the plugin instance. If omitted, the
 filename of the table is used instead, with all special characters replaced
 with an underscore (\f(CW\*(C`_\*(C'\fR).
 .IP "\fBSeparator\fR \fIstring\fR" 4
@@ -6414,6 +7088,7 @@ user using (extended) regular expressions, as described in \fIregex\fR\|(7).
 .Vb 10
 \&  <Plugin "tail">
 \&    <File "/var/log/exim4/mainlog">
+\&      Plugin "mail"
 \&      Instance "exim"
 \&      Interval 60
 \&      <Match>
@@ -6434,6 +7109,7 @@ user using (extended) regular expressions, as described in \fIregex\fR\|(7).
 \&        <DSType "Distribution">
 \&          Percentile 99
 \&          Bucket 0 100
+\&          #BucketType "bucket"
 \&        </DSType>
 \&        Type "latency"
 \&        Instance "foo"
@@ -6446,11 +7122,13 @@ The config consists of one or more \fBFile\fR blocks, each of which configures o
 logfile to parse. Within each \fBFile\fR block, there are one or more \fBMatch\fR
 blocks, which configure a regular expression to search for.
 .PP
-The \fBInstance\fR option in the \fBFile\fR block may be used to set the plugin
-instance. So in the above example the plugin name \f(CW\*(C`tail\-foo\*(C'\fR would be used.
-This plugin instance is for all \fBMatch\fR blocks that \fBfollow\fR it, until the
-next \fBInstance\fR option. This way you can extract several plugin instances from
-one logfile, handy when parsing syslog and the like.
+The \fBPlugin\fR and \fBInstance\fR options in the \fBFile\fR block may be used to set
+the plugin name and instance respectively. So in the above example the plugin name
+\&\f(CW\*(C`mail\-exim\*(C'\fR would be used.
+.PP
+These options are applied for all \fBMatch\fR blocks that \fBfollow\fR it, until the
+next \fBPlugin\fR or \fBInstance\fR option. This way you can extract several plugin
+instances from one logfile, handy when parsing syslog and the like.
 .PP
 The \fBInterval\fR option allows you to define the length of time between reads. If
 this is not set, the default Interval will be used.
@@ -6546,10 +7224,11 @@ options.
 .Sp
 \&\fBSynopsis:\fR
 .Sp
-.Vb 4
+.Vb 5
 \&  <DSType "Distribution">
 \&    Percentile 99
 \&    Bucket 0 100
+\&    BucketType "bucket"
 \&  </DSType>
 .Ve
 .RS 4
@@ -6586,10 +7265,15 @@ the following schema:
 \&  Bucket  50   0
 .Ve
 .Sp
-Metrics are reported with the \fItype\fR \f(CW\*(C`bucket\*(C'\fR and the \fItype instance\fR
+Metrics are reported with the \fItype\fR set by \fBBucketType\fR option (\f(CW\*(C`bucket\*(C'\fR 
+by default) and the \fItype instance\fR
 \&\f(CW\*(C`<Type>[\-<Instance>]\-<lower_bound>_<upper_bound>\*(C'\fR.
 .Sp
 This option may be repeated to calculate more than one rate.
+.IP "\fBBucketType\fR \fIType\fR" 4
+.IX Item "BucketType Type"
+Sets the type used to dispatch \fBBucket\fR metrics.
+Optional, by default \f(CW\*(C`bucket\*(C'\fR will be used.
 .RE
 .RS 4
 .RE
@@ -6618,7 +7302,7 @@ written by \fISnort\fR.
 .PP
 \&\fBSynopsis:\fR
 .PP
-.Vb 12
+.Vb 10
 \& <Plugin "tail_csv">
 \&   <Metric "snort\-dropped">
 \&       Type "percent"
@@ -6626,7 +7310,8 @@ written by \fISnort\fR.
 \&       Index 1
 \&   </Metric>
 \&   <File "/var/log/snort/snort.stats">
-\&       Instance "snort\-eth0"
+\&       Plugin "snortstats"
+\&       Instance "eth0"
 \&       Interval 600
 \&       Collect "snort\-dropped"
 \&   </File>
@@ -6670,6 +7355,10 @@ the \fBType\fR setting, see above.
 Each \fBFile\fR block represents one \s-1CSV\s0 file to read. There must be at least one
 \&\fIFile\fR block but there can be multiple if you have multiple \s-1CSV\s0 files.
 .RS 4
+.IP "\fBPlugin\fR \fIPlugin\fR" 4
+.IX Item "Plugin Plugin"
+Use \fIPlugin\fR as the plugin name when submitting values.
+Defaults to \f(CW\*(C`tail_csv\*(C'\fR.
 .IP "\fBInstance\fR \fIPluginInstance\fR" 4
 .IX Item "Instance PluginInstance"
 Sets the \fIplugin instance\fR used when dispatching the values.
@@ -6895,9 +7584,9 @@ collections. The different bits of this bit mask accepted by this plugin are:
 .PD
 Boolean enabling the use of logical core numbering for per core statistics.
 When enabled, \f(CW\*(C`cpu<n>\*(C'\fR is used as plugin instance, where \fIn\fR is a
-sequential number assigned by the kernel. Otherwise, \f(CW\*(C`core<n>\*(C'\fR is used
-where \fIn\fR is the n\-th core of the socket, causing name conflicts when there is
-more than one socket.
+dynamic number assigned by the kernel. Otherwise, \f(CW\*(C`core<n>\*(C'\fR is used
+if there is only one package and \f(CW\*(C`pkg<n>\-core<m>\*(C'\fR if there is
+more than one, where \fIn\fR is the n\-th core of package \fIm\fR.
 .ie n .SS "Plugin ""unixsock"""
 .el .SS "Plugin \f(CWunixsock\fP"
 .IX Subsection "Plugin unixsock"
@@ -6978,6 +7667,12 @@ Synopsis:
 \&     CollectVCL         false
 \&     CollectVSM         false
 \&     CollectWorkers     false
+\&     CollectLock        false
+\&     CollectMempool     false
+\&     CollectManagement  false
+\&     CollectSMF         false
+\&     CollectVBE         false
+\&     CollectMSE         false
 \&   </Instance>
 \& </Plugin>
 .Ve
@@ -7039,15 +7734,17 @@ log messages which is flushed to disk when full. True by default.
 .IP "\fBCollectSMA\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "CollectSMA true|false"
 malloc or umem (umem_alloc(3MALLOC) based) storage statistics. The umem storage
-component is Solaris specific. Only available with Varnish 2.x. False by
-default.
+component is Solaris specific. Note: \s-1SMA, SMF\s0 and \s-1MSE\s0 share counters, enable
+only the one used by the Varnish instance. Only available with Varnish 2.x.
+False by default.
 .IP "\fBCollectSMS\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "CollectSMS true|false"
 synth (synthetic content) storage statistics. This storage
 component is used internally only. False by default.
 .IP "\fBCollectSM\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "CollectSM true|false"
-file (memory mapped file) storage statistics. Only available with Varnish 2.x.
+file (memory mapped file) storage statistics. Only available with Varnish 2.x.,
+in varnish 4.x. use CollectSMF.
 False by default.
 .IP "\fBCollectStruct\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "CollectStruct true|false"
@@ -7071,14 +7768,37 @@ statistics subsystems). Only available with Varnish 4.x. False by default.
 .IP "\fBCollectWorkers\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "CollectWorkers true|false"
 Collect statistics about worker threads. False by default.
+.IP "\fBCollectVBE\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectVBE true|false"
+Backend counters. Only available with Varnish 4.x. False by default.
+.IP "\fBCollectSMF\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectSMF true|false"
+file (memory mapped file) storage statistics. Only available with Varnish 4.x.
+Note: \s-1SMA, SMF\s0 and \s-1MSE\s0 share counters, enable only the one used by the Varnish
+instance. Used to be called \s-1SM\s0 in Varnish 2.x. False by default.
+.IP "\fBCollectManagement\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectManagement true|false"
+Management process counters. Only available with Varnish 4.x. False by default.
+.IP "\fBCollectLock\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectLock true|false"
+Lock counters. Only available with Varnish 4.x. False by default.
+.IP "\fBCollectMempool\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectMempool true|false"
+Memory pool counters. Only available with Varnish 4.x. False by default.
+.IP "\fBCollectMSE\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectMSE true|false"
+Varnish Massive Storage Engine 2.0 (\s-1MSE2\s0) is an improved storage backend for
+Varnish, replacing the traditional malloc and file storages. Only available
+with Varnish-Plus 4.x. Note: \s-1SMA, SMF\s0 and \s-1MSE\s0 share counters, enable only the
+one used by the Varnish instance. False by default.
 .ie n .SS "Plugin ""virt"""
 .el .SS "Plugin \f(CWvirt\fP"
 .IX Subsection "Plugin virt"
-This plugin allows \s-1CPU,\s0 disk and network load to be collected for virtualized
-guests on the machine. This means that these metrics can be collected for guest
-systems without installing any software on them \- \fIcollectd\fR only runs on the
-host system. The statistics are collected through libvirt
-(<http://libvirt.org/>).
+This plugin allows \s-1CPU,\s0 disk, network load and other metrics to be collected for
+virtualized guests on the machine. The statistics are collected through libvirt
+\&\s-1API \s0(<http://libvirt.org/>). Majority of metrics can be gathered without
+installing any additional software on guests, especially \fIcollectd\fR, which runs
+only on the host system.
 .PP
 Only \fIConnection\fR is required.
 .IP "\fBConnection\fR \fIuri\fR" 4
@@ -7134,7 +7854,7 @@ will be collected.
 .IP "\fBBlockDeviceFormat\fR \fBtarget\fR|\fBsource\fR" 4
 .IX Item "BlockDeviceFormat target|source"
 If \fIBlockDeviceFormat\fR is set to \fBtarget\fR, the default, then the device name
-seen by the guest will be used for reporting metrics. 
+seen by the guest will be used for reporting metrics.
 This corresponds to the \f(CW\*(C`<target>\*(C'\fR node in the \s-1XML\s0 definition of the
 domain.
 .Sp
@@ -7213,6 +7933,45 @@ data according to this setting. The default is to not set the plugin_instance.
 You can also specify combinations of the \fBname\fR and \fBuuid\fR fields.
 For example \fBname uuid\fR means to concatenate the guest name and \s-1UUID
 \&\s0(with a literal colon character between, thus \fI\*(L"foo:1234\-1234\-1234\-1234\*(R"\fR).
+.IP "\fBInstances\fR \fBinteger\fR" 4
+.IX Item "Instances integer"
+How many read instances you want to use for this plugin. The default is one,
+and the sensible setting is a multiple of the \fBReadThreads\fR value.
+If you are not sure, just use the default setting.
+.IP "\fBExtraStats\fR \fBstring\fR" 4
+.IX Item "ExtraStats string"
+Report additional extra statistics. The default is no extra statistics, preserving
+the previous behaviour of the plugin. If unsure, leave the default. If enabled,
+allows the plugin to reported more detailed statistics about the behaviour of
+Virtual Machines. The argument is a space-separated list of selectors.
+.Sp
+Currently supported selectors are:
+.RS 4
+.IP "\fBcpu_util\fR: report \s-1CPU\s0 utilization per domain in percentage." 4
+.IX Item "cpu_util: report CPU utilization per domain in percentage."
+.PD 0
+.IP "\fBdisk\fR: report extra statistics like number of flush operations and total service time for read, write and flush operations. Requires libvirt \s-1API\s0 version \fI0.9.5\fR or later." 4
+.IX Item "disk: report extra statistics like number of flush operations and total service time for read, write and flush operations. Requires libvirt API version 0.9.5 or later."
+.IP "\fBdisk_err\fR: report disk errors if any occured. Requires libvirt \s-1API\s0 version \fI0.9.10\fR or later." 4
+.IX Item "disk_err: report disk errors if any occured. Requires libvirt API version 0.9.10 or later."
+.IP "\fBdomain_state\fR: report domain state and reason in human-readable format as a notification. If libvirt \s-1API\s0 version \fI0.9.2\fR or later is available, domain reason will be included in notification." 4
+.IX Item "domain_state: report domain state and reason in human-readable format as a notification. If libvirt API version 0.9.2 or later is available, domain reason will be included in notification."
+.IP "\fBfs_info\fR: report file system information as a notification. Requires libvirt \s-1API\s0 version \fI1.2.11\fR or later. Can be collected only if \fIGuest Agent\fR is installed and configured inside \s-1VM.\s0 Make sure that installed \fIGuest Agent\fR version supports retrieving  file system information." 4
+.IX Item "fs_info: report file system information as a notification. Requires libvirt API version 1.2.11 or later. Can be collected only if Guest Agent is installed and configured inside VM. Make sure that installed Guest Agent version supports retrieving file system information."
+.IP "\fBjob_stats_background\fR: report statistics about progress of a background job on a domain. Only one type of job statistics can be collected at the same time. Requires libvirt \s-1API\s0 version \fI1.2.9\fR or later." 4
+.IX Item "job_stats_background: report statistics about progress of a background job on a domain. Only one type of job statistics can be collected at the same time. Requires libvirt API version 1.2.9 or later."
+.IP "\fBjob_stats_completed\fR: report statistics about a recently completed job on a domain. Only one type of job statistics can be collected at the same time. Requires libvirt \s-1API\s0 version \fI1.2.9\fR or later." 4
+.IX Item "job_stats_completed: report statistics about a recently completed job on a domain. Only one type of job statistics can be collected at the same time. Requires libvirt API version 1.2.9 or later."
+.IP "\fBpcpu\fR: report the physical user/system cpu time consumed by the hypervisor, per-vm. Requires libvirt \s-1API\s0 version \fI0.9.11\fR or later." 4
+.IX Item "pcpu: report the physical user/system cpu time consumed by the hypervisor, per-vm. Requires libvirt API version 0.9.11 or later."
+.IP "\fBperf\fR: report performance monitoring events. To collect performance metrics they must be enabled for domain and supported by the platform. Requires libvirt \s-1API\s0 version \fI1.3.3\fR or later. \fBNote\fR: \fIperf\fR metrics can't be collected if \fIintel_rdt\fR plugin is enabled." 4
+.IX Item "perf: report performance monitoring events. To collect performance metrics they must be enabled for domain and supported by the platform. Requires libvirt API version 1.3.3 or later. Note: perf metrics can't be collected if intel_rdt plugin is enabled."
+.IP "\fBvcpupin\fR: report pinning of domain VCPUs to host physical CPUs." 4
+.IX Item "vcpupin: report pinning of domain VCPUs to host physical CPUs."
+.RE
+.RS 4
+.RE
+.PD
 .ie n .SS "Plugin ""vmem"""
 .el .SS "Plugin \f(CWvmem\fP"
 .IX Subsection "Plugin vmem"
@@ -7358,8 +8117,10 @@ packets.
 .PP
 Synopsis:
 .PP
-.Vb 7
+.Vb 9
 \& <Plugin write_tsdb>
+\&   ResolveInterval 60
+\&   ResolveJitter 60
 \&   <Node "example">
 \&     Host "tsd\-1.my.domain"
 \&     Port "4242"
@@ -7369,7 +8130,33 @@ Synopsis:
 .Ve
 .PP
 The configuration consists of one or more <\fBNode\fR\ \fIName\fR>
-blocks. Inside the \fBNode\fR blocks, the following options are recognized:
+blocks and global directives.
+.PP
+Global directives are:
+.IP "\fBResolveInterval\fR \fIseconds\fR" 4
+.IX Item "ResolveInterval seconds"
+.PD 0
+.IP "\fBResolveJitter\fR \fIseconds\fR" 4
+.IX Item "ResolveJitter seconds"
+.PD
+When \fIcollectd\fR connects to a \s-1TSDB\s0 node, it will request the hostname from
+\&\s-1DNS.\s0 This can become a problem if the \s-1TSDB\s0 node is unavailable or badly
+configured because collectd will request \s-1DNS\s0 in order to reconnect for every
+metric, which can flood your \s-1DNS.\s0 So you can cache the last value for
+\&\fIResolveInterval\fR seconds.
+Defaults to the \fIInterval\fR of the \fIwrite_tsdb plugin\fR, e.g. 10\ seconds.
+.Sp
+You can also define a jitter, a random interval to wait in addition to
+\&\fIResolveInterval\fR. This prevents all your collectd servers to resolve the
+hostname at the same time when the connection fails.
+Defaults to the \fIInterval\fR of the \fIwrite_tsdb plugin\fR, e.g. 10\ seconds.
+.Sp
+\&\fBNote:\fR If the \s-1DNS\s0 resolution has already been successful when the socket
+closes, the plugin will try to reconnect immediately with the cached
+information. \s-1DNS\s0 is queried only when the socket is closed for a longer than
+\&\fIResolveInterval\fR + \fIResolveJitter\fR seconds.
+.PP
+Inside the \fBNode\fR blocks, the following options are recognized:
 .IP "\fBHost\fR \fIAddress\fR" 4
 .IX Item "Host Address"
 Hostname or address to connect to. Defaults to \f(CW\*(C`localhost\*(C'\fR.
@@ -7553,6 +8340,26 @@ create output in the \fIJavaScript Object Notation\fR (\s-1JSON\s0). When set to
 ,\s0 will create output in the KairosDB format.
 .Sp
 Defaults to \fBCommand\fR.
+.IP "\fBAttribute\fR \fIString\fR \fIString\fR" 4
+.IX Item "Attribute String String"
+Only available for the \s-1KAIROSDB\s0 output format.
+.Sp
+Consider the two given strings to be the key and value of an additional tag for
+each metric being sent out.
+.Sp
+You can add multiple \fBAttribute\fR.
+.IP "\fB\s-1TTL\s0\fR \fIInt\fR" 4
+.IX Item "TTL Int"
+Only available for the \s-1KAIROSDB\s0 output format.
+.Sp
+Sets the Cassandra ttl for the data points.
+.Sp
+Please refer to <http://kairosdb.github.io/docs/build/html/restapi/AddDataPoints.html?highlight=ttl>
+.IP "\fBPrefix\fR \fIString\fR" 4
+.IX Item "Prefix String"
+Only available for the \s-1KAIROSDB\s0 output format.
+.Sp
+Sets the metrics prefix \fIstring\fR. Defaults to \fIcollectd\fR.
 .IP "\fBMetrics\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "Metrics true|false"
 Controls whether \fImetrics\fR are POSTed to this location. Defaults to \fBtrue\fR.
@@ -7703,7 +8510,7 @@ The \fIwrite_redis plugin\fR submits values to \fIRedis\fR, a data structure ser
 .PP
 Synopsis:
 .PP
-.Vb 11
+.Vb 12
 \&  <Plugin "write_redis">
 \&    <Node "example">
 \&        Host "localhost"
@@ -7712,6 +8519,7 @@ Synopsis:
 \&        Prefix "collectd/"
 \&        Database 1
 \&        MaxSetSize \-1
+\&        MaxSetDuration \-1
 \&        StoreRates true
 \&    </Node>
 \&  </Plugin>
@@ -7765,6 +8573,11 @@ to \f(CW0\fR.
 .IX Item "MaxSetSize Items"
 The \fBMaxSetSize\fR option limits the number of items that the \fISorted Sets\fR can
 hold. Negative values for \fIItems\fR sets no limit, which is the default behavior.
+.IP "\fBMaxSetDuration\fR \fISeconds\fR" 4
+.IX Item "MaxSetDuration Seconds"
+The \fBMaxSetDuration\fR option limits the duration of items that the
+\&\fISorted Sets\fR can hold. Negative values for \fIItems\fR sets no duration, which
+is the default behavior.
 .IP "\fBStoreRates\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "StoreRates true|false"
 If set to \fBtrue\fR (the default), convert counter values to rates. If set to

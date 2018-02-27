@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-SNMP 5"
-.TH COLLECTD-SNMP 5 "2017-06-06" "5.7.2" "collectd"
+.TH COLLECTD-SNMP 5 "2017-11-18" "5.8.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -173,6 +173,8 @@ collectd\-snmp \- Documentation of collectd's "snmp plugin"
 \&      Community "community_string"
 \&      Collect "std_traffic"
 \&      Interval 120
+\&      Timeout 10
+\&      Retries 1
 \&    </Host>
 \&    <Host "some.server.mydomain.org">
 \&      Address "192.168.0.42"
@@ -181,7 +183,7 @@ collectd\-snmp \- Documentation of collectd's "snmp plugin"
 \&      Collect "std_traffic" "hr_users"
 \&    </Host>
 \&    <Host "secure.router.mydomain.org">
-\&      Address "192.168.0.7"
+\&      Address "192.168.0.7:165"
 \&      Version 3
 \&      SecurityLevel "authPriv"
 \&      Username "cosmo"
@@ -192,11 +194,13 @@ collectd\-snmp \- Documentation of collectd's "snmp plugin"
 \&      Collect "std_traffic"
 \&    </Host>
 \&    <Host "some.ups.mydomain.org">
-\&      Address "192.168.0.3"
+\&      Address "tcp:192.168.0.3"
 \&      Version 1
 \&      Community "more_communities"
 \&      Collect "powerplus_voltge_input"
 \&      Interval 300
+\&      Timeout 5
+\&      Retries 5
 \&    </Host>
 \&  </Plugin>
 .Ve
@@ -214,7 +218,7 @@ and ten threads are used.
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
 Since the aim of the \f(CW\*(C`snmp plugin\*(C'\fR is to provide a generic interface to \s-1SNMP,\s0
-it's configuration is not trivial and may take some time.
+its configuration is not trivial and may take some time.
 .PP
 Since the \f(CW\*(C`Net\-SNMP\*(C'\fR library is used you can use all the environment variables
 that are interpreted by that package. See \fIsnmpcmd\fR\|(1) for more details.
@@ -346,7 +350,8 @@ The argument passed to the \fBHost\fR block is used as the hostname in the data
 stored by collectd.
 .IP "\fBAddress\fR \fIIP-Address\fR|\fIHostname\fR" 4
 .IX Item "Address IP-Address|Hostname"
-Set the address to connect to.
+Set the address to connect to. Address may include transport specifier and/or
+port number.
 .IP "\fBVersion\fR \fB1\fR|\fB2\fR|\fB3\fR" 4
 .IX Item "Version 1|2|3"
 Set the \s-1SNMP\s0 version to use. When giving \fB2\fR version \f(CW\*(C`2c\*(C'\fR is actually used.
@@ -386,6 +391,13 @@ devices with not much \s-1CPU\s0 power, e.\ g. network equipment such as
 switches, embedded devices, rack monitoring systems and so on. Since the
 \&\fBStep\fR of generated \s-1RRD\s0 files depends on this setting it's wise to select a
 reasonable value once and never change it.
+.IP "\fBTimeout\fR \fISeconds\fR" 4
+.IX Item "Timeout Seconds"
+How long to wait for a response. The \f(CW\*(C`Net\-SNMP\*(C'\fR library default is 1 second.
+.IP "\fBRetries\fR \fIInteger\fR" 4
+.IX Item "Retries Integer"
+The number of times that a query should be retried after the Timeout expires.
+The \f(CW\*(C`Net\-SNMP\*(C'\fR library default is 5.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),

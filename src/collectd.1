@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD 1"
-.TH COLLECTD 1 "2017-06-06" "5.7.2" "collectd"
+.TH COLLECTD 1 "2017-11-18" "5.8.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -168,10 +168,15 @@ Test the plugin read callbacks only. The program immediately exits after invokin
 the read callbacks once. A return code not equal to zero indicates an error.
 .IP "\fB\-P\fR \fI<pid\-file>\fR" 4
 .IX Item "-P <pid-file>"
-Specify an alternative pid file. This overwrites any settings in the config 
+Specify an alternative pid file. This overwrites any settings in the config
 file. This is thought for init-scripts that require the PID-file in a certain
 directory to work correctly. For everyday-usage use the \fBPIDFile\fR
 config-option.
+.IP "\fB\-B\fR" 4
+.IX Item "-B"
+If set, collectd will \fInot\fR try to create its base directory. If the base
+directory does not exist, it will exit rather than trying to create the
+directory.
 .IP "\fB\-f\fR" 4
 .IX Item "-f"
 Don't fork to the background. \fIcollectd\fR will also \fBnot\fR close standard file
