@@ -706,10 +706,8 @@ static int value_list2hv(pTHX_ value_list_t *vl, data_set_t *ds, HV *hash) {
 
 static int notification_meta2av(pTHX_ notification_meta_t *meta, AV *array) {
   int meta_num = 0;
-
-  while (meta) {
+  for (notification_meta_t *m = meta; m != NULL; m = m->next) {
     ++meta_num;
-    meta = meta->next;
   }
 
   av_extend(array, meta_num);
@@ -1644,23 +1642,23 @@ static void _plugin_register_generic_userdata(pTHX, int type,
  */
 
 static XS(Collectd_plugin_register_read) {
-  return _plugin_register_generic_userdata(aTHX, PLUGIN_READ, "read");
+  _plugin_register_generic_userdata(aTHX, PLUGIN_READ, "read");
 }
 
 static XS(Collectd_plugin_register_write) {
-  return _plugin_register_generic_userdata(aTHX, PLUGIN_WRITE, "write");
+  _plugin_register_generic_userdata(aTHX, PLUGIN_WRITE, "write");
 }
 
 static XS(Collectd_plugin_register_log) {
-  return _plugin_register_generic_userdata(aTHX, PLUGIN_LOG, "log");
+  _plugin_register_generic_userdata(aTHX, PLUGIN_LOG, "log");
 }
 
 static XS(Collectd_plugin_register_notification) {
-  return _plugin_register_generic_userdata(aTHX, PLUGIN_NOTIF, "notification");
+  _plugin_register_generic_userdata(aTHX, PLUGIN_NOTIF, "notification");
 }
 
 static XS(Collectd_plugin_register_flush) {
-  return _plugin_register_generic_userdata(aTHX, PLUGIN_FLUSH, "flush");
+  _plugin_register_generic_userdata(aTHX, PLUGIN_FLUSH, "flush");
 }
 
 typedef int perl_unregister_function_t(const char *name);
@@ -1687,8 +1685,6 @@ static void _plugin_unregister_generic(pTHX, perl_unregister_function_t *unreg,
   unreg(SvPV_nolen(ST(0)));
 
   XSRETURN_EMPTY;
-
-  return;
 } /* static void _plugin_unregister_generic ( ... ) */
 
 /*
@@ -1702,24 +1698,24 @@ static void _plugin_unregister_generic(pTHX, perl_unregister_function_t *unreg,
  */
 
 static XS(Collectd_plugin_unregister_read) {
-  return _plugin_unregister_generic(aTHX, plugin_unregister_read, "read");
+  _plugin_unregister_generic(aTHX, plugin_unregister_read, "read");
 }
 
 static XS(Collectd_plugin_unregister_write) {
-  return _plugin_unregister_generic(aTHX, plugin_unregister_write, "write");
+  _plugin_unregister_generic(aTHX, plugin_unregister_write, "write");
 }
 
 static XS(Collectd_plugin_unregister_log) {
-  return _plugin_unregister_generic(aTHX, plugin_unregister_log, "log");
+  _plugin_unregister_generic(aTHX, plugin_unregister_log, "log");
 }
 
 static XS(Collectd_plugin_unregister_notification) {
-  return _plugin_unregister_generic(aTHX, plugin_unregister_notification,
-                                    "notification");
+  _plugin_unregister_generic(aTHX, plugin_unregister_notification,
+                             "notification");
 }
 
 static XS(Collectd_plugin_unregister_flush) {
-  return _plugin_unregister_generic(aTHX, plugin_unregister_flush, "flush");
+  _plugin_unregister_generic(aTHX, plugin_unregister_flush, "flush");
 }
 
 /*

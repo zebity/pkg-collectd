@@ -1460,8 +1460,7 @@
 /* True if program is to be compiled for a Solaris kernel */
 #undef KERNEL_SOLARIS
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Define if NAN is defined by default and can initialize static variables. */

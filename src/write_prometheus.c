@@ -764,6 +764,16 @@ static int prom_open_socket(int addrfamily) {
     if (fd == -1)
       continue;
 
+    int tmp = 1;
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &tmp, sizeof(tmp)) != 0) {
+      char errbuf[1024];
+      WARNING("write_prometheus: setsockopt(SO_REUSEADDR) failed: %s",
+              sstrerror(errno, errbuf, sizeof(errbuf)));
+      close(fd);
+      fd = -1;
+      continue;
+    }
+
     if (bind(fd, ai->ai_addr, ai->ai_addrlen) != 0) {
       close(fd);
       fd = -1;
@@ -794,8 +804,13 @@ static struct MHD_Daemon *prom_start_daemon() {
     return NULL;
   }
 
+  unsigned int flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG;
+#if MHD_VERSION >= 0x00095300
+  flags |= MHD_USE_INTERNAL_POLLING_THREAD;
+#endif
+
   struct MHD_Daemon *d = MHD_start_daemon(
-      MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG, httpd_port,
+      flags, httpd_port,
       /* MHD_AcceptPolicyCallback = */ NULL,
       /* MHD_AcceptPolicyCallback arg = */ NULL, http_handler, NULL,
       MHD_OPTION_LISTEN_SOCKET, fd, MHD_OPTION_EXTERNAL_LOGGER, prom_logger,
