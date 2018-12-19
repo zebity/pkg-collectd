@@ -96,6 +96,10 @@ confflags += --disable-varnish
 # migrating to testing.
 confflags += --disable-mqtt
 
+# disable lvm plugin, liblvm2app is deprecated upstream, #915692
+# Cf. https://github.com/collectd/collectd/issues/2647
+confflags += --disable-lvm
+
 # These plugins are Linux-specific.
 ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
 	confflags += \
@@ -109,7 +113,6 @@ ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
 		--disable-ipc \
 		--disable-iptables \
 		--disable-ipvs \
-		--disable-lvm \
 		--disable-madwifi \
 		--disable-md \
 		--disable-netlink \

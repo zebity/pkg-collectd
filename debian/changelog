@@ -1,3 +1,15 @@
+collectd (5.8.1-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Stop building lvm plugin and remove dependency from liblvm2-dev,
+    which is deprecated.
+    (Closes: #915692)
+  * Backport dpdk_configure_check.patch from the upstream 5.8 release
+    branch to fix build with DPDK 18.11.
+    (Closes: #915419)
+
+ -- Luca Boccassi <bluca@debian.org>  Wed, 19 Dec 2018 15:52:36 +0100
+
 collectd (5.8.1-1) unstable; urgency=medium
 
   * New upstream release.
