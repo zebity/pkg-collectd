@@ -1,3 +1,12 @@
+collectd (5.8.1-1.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Backport removed_checks_for_upper_limit_of_SENSORS_API.patch from
+    the upstream 5.8 release branch to fix build with libsensors5.
+    (Closes: #917202)
+
+ -- Luca Boccassi <bluca@debian.org>  Tue, 25 Dec 2018 12:08:23 +0100
+
 collectd (5.8.1-1.1) unstable; urgency=medium
 
   * Non-maintainer upload.
