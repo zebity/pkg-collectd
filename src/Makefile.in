@@ -37,7 +37,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@BUILD_MODULE_PING_TRUE@am__append_1 = liboping
+@BUILD_WITH_OWN_LIBOPING_TRUE@am__append_1 = liboping
 sbin_PROGRAMS = collectd$(EXEEXT)
 @BUILD_FEATURE_DAEMON_TRUE@am__append_2 = -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
 @BUILD_FEATURE_DEBUG_TRUE@am__append_3 = -DLOGFILE='"${localstatedir}/log/${PACKAGE_NAME}/collectd.log"'
@@ -47,34 +47,42 @@ sbin_PROGRAMS = collectd$(EXEEXT)
 @BUILD_WITH_LIBRESOLV_TRUE@am__append_7 = -lresolv
 @BUILD_WITH_LIBKSTAT_TRUE@am__append_8 = -lkstat
 @BUILD_WITH_LIBDEVINFO_TRUE@am__append_9 = -ldevinfo
-@BUILD_MODULE_APACHE_TRUE@am__append_10 = apache.la
-@BUILD_MODULE_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_11 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_MODULE_APACHE_TRUE@am__append_12 = "-dlopen" apache.la
+@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_10 = -lkvm
+@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_11 = -ldevstat
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_12 = -lstatgrab
 @BUILD_MODULE_APACHE_TRUE@am__append_13 = apache.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_14 = apple_sensors.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_15 = -lIOKit
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_16 = "-dlopen" apple_sensors.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_17 = apple_sensors.la
-@BUILD_MODULE_BATTERY_TRUE@am__append_18 = battery.la
-@BUILD_MODULE_BATTERY_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_19 = -lIOKit
-@BUILD_MODULE_BATTERY_TRUE@am__append_20 = "-dlopen" battery.la
-@BUILD_MODULE_BATTERY_TRUE@am__append_21 = battery.la
-@BUILD_MODULE_CPU_TRUE@am__append_22 = cpu.la
-@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_23 = -lkstat
-@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_24 = -ldevinfo
-@BUILD_MODULE_CPU_TRUE@am__append_25 = "-dlopen" cpu.la
-@BUILD_MODULE_CPU_TRUE@am__append_26 = cpu.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__append_27 = cpufreq.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__append_28 = "-dlopen" cpufreq.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__append_29 = cpufreq.la
-@BUILD_MODULE_DF_TRUE@am__append_30 = df.la
-@BUILD_MODULE_DF_TRUE@am__append_31 = "-dlopen" df.la
-@BUILD_MODULE_DF_TRUE@am__append_32 = df.la
-@BUILD_MODULE_DISK_TRUE@am__append_33 = disk.la
-@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_34 = -lkstat
-@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_35 = -ldevinfo
-@BUILD_MODULE_DISK_TRUE@am__append_36 = "-dlopen" disk.la
-@BUILD_MODULE_DISK_TRUE@am__append_37 = disk.la
+@BUILD_MODULE_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_14 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_MODULE_APACHE_TRUE@am__append_15 = "-dlopen" apache.la
+@BUILD_MODULE_APACHE_TRUE@am__append_16 = apache.la
+@BUILD_MODULE_APCUPS_TRUE@am__append_17 = apcups.la
+@BUILD_MODULE_APCUPS_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_18 = -lsocket
+@BUILD_MODULE_APCUPS_TRUE@am__append_19 = "-dlopen" apcups.la
+@BUILD_MODULE_APCUPS_TRUE@am__append_20 = apcups.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_21 = apple_sensors.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_22 = -lIOKit
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_23 = "-dlopen" apple_sensors.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_24 = apple_sensors.la
+@BUILD_MODULE_BATTERY_TRUE@am__append_25 = battery.la
+@BUILD_MODULE_BATTERY_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_26 = -lIOKit
+@BUILD_MODULE_BATTERY_TRUE@am__append_27 = "-dlopen" battery.la
+@BUILD_MODULE_BATTERY_TRUE@am__append_28 = battery.la
+@BUILD_MODULE_CPU_TRUE@am__append_29 = cpu.la
+@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_30 = -lkstat
+@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_31 = -ldevinfo
+@BUILD_MODULE_CPU_TRUE@am__append_32 = "-dlopen" cpu.la
+@BUILD_MODULE_CPU_TRUE@am__append_33 = cpu.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__append_34 = cpufreq.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__append_35 = "-dlopen" cpufreq.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__append_36 = cpufreq.la
+@BUILD_MODULE_DF_TRUE@am__append_37 = df.la
+@BUILD_MODULE_DF_TRUE@am__append_38 = "-dlopen" df.la
+@BUILD_MODULE_DF_TRUE@am__append_39 = df.la
+@BUILD_MODULE_DISK_TRUE@am__append_40 = disk.la
+@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_41 = -lkstat
+@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_42 = -ldevinfo
+@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_43 = -lIOKit
+@BUILD_MODULE_DISK_TRUE@am__append_44 = "-dlopen" disk.la
+@BUILD_MODULE_DISK_TRUE@am__append_45 = disk.la
 
 #if BUILD_MODULE_QUOTA
 #pkglib_LTLIBRARIES += quota.la
@@ -86,64 +94,82 @@ sbin_PROGRAMS = collectd$(EXEEXT)
 #collectd_LDADD += "-dlopen" quota.la
 #collectd_DEPENDENCIES += quota.la
 #endif
-@BUILD_MODULE_HDDTEMP_TRUE@am__append_38 = hddtemp.la
-@BUILD_MODULE_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_39 = -lsocket
-@BUILD_MODULE_HDDTEMP_TRUE@am__append_40 = "-dlopen" hddtemp.la
-@BUILD_MODULE_HDDTEMP_TRUE@am__append_41 = hddtemp.la
-@BUILD_MODULE_LOAD_TRUE@am__append_42 = load.la
-@BUILD_MODULE_LOAD_TRUE@am__append_43 = "-dlopen" load.la
-@BUILD_MODULE_LOAD_TRUE@am__append_44 = load.la
-@BUILD_MODULE_MEMORY_TRUE@am__append_45 = memory.la
-@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_46 = -lkstat
-@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_47 = -ldevinfo
-@BUILD_MODULE_MEMORY_TRUE@am__append_48 = "-dlopen" memory.la
-@BUILD_MODULE_MEMORY_TRUE@am__append_49 = memory.la
-@BUILD_MODULE_MYSQL_TRUE@am__append_50 = mysql.la
-@BUILD_MODULE_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_51 = -lmysqlclient
-@BUILD_MODULE_MYSQL_TRUE@am__append_52 = "-dlopen" mysql.la
-@BUILD_MODULE_MYSQL_TRUE@am__append_53 = mysql.la
-@BUILD_MODULE_NFS_TRUE@am__append_54 = nfs.la
-@BUILD_MODULE_NFS_TRUE@am__append_55 = "-dlopen" nfs.la
-@BUILD_MODULE_NFS_TRUE@am__append_56 = nfs.la
-@BUILD_MODULE_PING_TRUE@am__append_57 = ping.la
-@BUILD_MODULE_PING_TRUE@am__append_58 = "-dlopen" ping.la
-@BUILD_MODULE_PING_TRUE@am__append_59 = ping.la
-@BUILD_MODULE_PROCESSES_TRUE@am__append_60 = processes.la
-@BUILD_MODULE_PROCESSES_TRUE@am__append_61 = "-dlopen" processes.la
-@BUILD_MODULE_PROCESSES_TRUE@am__append_62 = processes.la
-@BUILD_MODULE_SENSORS_TRUE@am__append_63 = sensors.la
-@BUILD_MODULE_SENSORS_TRUE@@BUILD_WITH_LM_SENSORS_TRUE@am__append_64 = -lsensors
-@BUILD_MODULE_SENSORS_TRUE@am__append_65 = "-dlopen" sensors.la
-@BUILD_MODULE_SENSORS_TRUE@am__append_66 = sensors.la
-@BUILD_MODULE_SERIAL_TRUE@am__append_67 = serial.la
-@BUILD_MODULE_SERIAL_TRUE@am__append_68 = "-dlopen" serial.la
-@BUILD_MODULE_SERIAL_TRUE@am__append_69 = serial.la
-@BUILD_MODULE_SWAP_TRUE@am__append_70 = swap.la
-@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_71 = -lkstat
-@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_72 = -ldevinfo
-@BUILD_MODULE_SWAP_TRUE@am__append_73 = "-dlopen" swap.la
-@BUILD_MODULE_SWAP_TRUE@am__append_74 = swap.la
-@BUILD_MODULE_TAPE_TRUE@am__append_75 = tape.la
-@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_76 = -lkstat
-@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_77 = -ldevinfo
-@BUILD_MODULE_TAPE_TRUE@am__append_78 = "-dlopen" tape.la
-@BUILD_MODULE_TAPE_TRUE@am__append_79 = tape.la
-@BUILD_MODULE_TRAFFIC_TRUE@am__append_80 = traffic.la
-@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_81 = -lkstat
-@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_82 = -ldevinfo
-@BUILD_MODULE_TRAFFIC_TRUE@am__append_83 = "-dlopen" traffic.la
-@BUILD_MODULE_TRAFFIC_TRUE@am__append_84 = traffic.la
-@BUILD_MODULE_USERS_TRUE@am__append_85 = users.la
-@BUILD_MODULE_USERS_TRUE@am__append_86 = "-dlopen" users.la
-@BUILD_MODULE_USERS_TRUE@am__append_87 = users.la
-@BUILD_MODULE_VSERVER_TRUE@am__append_88 = vserver.la
-@BUILD_MODULE_VSERVER_TRUE@am__append_89 = "-dlopen" vserver.la
-@BUILD_MODULE_VSERVER_TRUE@am__append_90 = vserver.la
-@BUILD_MODULE_WIRELESS_TRUE@am__append_91 = wireless.la
-@BUILD_MODULE_WIRELESS_TRUE@am__append_92 = "-dlopen" wireless.la
-@BUILD_MODULE_WIRELESS_TRUE@am__append_93 = wireless.la
+@BUILD_MODULE_HDDTEMP_TRUE@am__append_46 = hddtemp.la
+@BUILD_MODULE_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_47 = -lsocket
+@BUILD_MODULE_HDDTEMP_TRUE@am__append_48 = "-dlopen" hddtemp.la
+@BUILD_MODULE_HDDTEMP_TRUE@am__append_49 = hddtemp.la
+@BUILD_MODULE_LOAD_TRUE@am__append_50 = load.la
+@BUILD_MODULE_LOAD_TRUE@am__append_51 = "-dlopen" load.la
+@BUILD_MODULE_LOAD_TRUE@am__append_52 = load.la
+@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_53 = -lkvm
+@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_54 = -ldevstat
+@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_55 = -lstatgrab
+@BUILD_MODULE_MEMORY_TRUE@am__append_56 = memory.la
+@BUILD_MODULE_MEMORY_TRUE@am__append_57 = "-dlopen" memory.la
+@BUILD_MODULE_MEMORY_TRUE@am__append_58 = memory.la
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_59 = -lkstat
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_60 = -ldevinfo
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_61 = -lkvm
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_62 = -ldevstat
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_63 = -lstatgrab
+@BUILD_MODULE_MYSQL_TRUE@am__append_64 = mysql.la
+@BUILD_MODULE_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_65 = -lmysqlclient
+@BUILD_MODULE_MYSQL_TRUE@am__append_66 = "-dlopen" mysql.la
+@BUILD_MODULE_MYSQL_TRUE@am__append_67 = mysql.la
+@BUILD_MODULE_NFS_TRUE@am__append_68 = nfs.la
+@BUILD_MODULE_NFS_TRUE@am__append_69 = "-dlopen" nfs.la
+@BUILD_MODULE_NFS_TRUE@am__append_70 = nfs.la
+@BUILD_MODULE_NTPD_TRUE@am__append_71 = ntpd.la
+@BUILD_MODULE_NTPD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_72 = -lsocket
+@BUILD_MODULE_NTPD_TRUE@am__append_73 = "-dlopen" ntpd.la
+@BUILD_MODULE_NTPD_TRUE@am__append_74 = ntpd.la
+@BUILD_MODULE_PING_TRUE@am__append_75 = ping.la
+@BUILD_MODULE_PING_TRUE@@BUILD_WITH_LIBOPING_TRUE@@BUILD_WITH_OWN_LIBOPING_FALSE@am__append_76 = -loping
+@BUILD_MODULE_PING_TRUE@am__append_77 = "-dlopen" ping.la
+@BUILD_MODULE_PING_TRUE@am__append_78 = ping.la
+@BUILD_MODULE_PROCESSES_TRUE@am__append_79 = processes.la
+@BUILD_MODULE_PROCESSES_TRUE@am__append_80 = "-dlopen" processes.la
+@BUILD_MODULE_PROCESSES_TRUE@am__append_81 = processes.la
+@BUILD_MODULE_SENSORS_TRUE@am__append_82 = sensors.la
+@BUILD_MODULE_SENSORS_TRUE@@BUILD_WITH_LM_SENSORS_TRUE@am__append_83 = -lsensors
+@BUILD_MODULE_SENSORS_TRUE@am__append_84 = "-dlopen" sensors.la
+@BUILD_MODULE_SENSORS_TRUE@am__append_85 = sensors.la
+@BUILD_MODULE_SERIAL_TRUE@am__append_86 = serial.la
+@BUILD_MODULE_SERIAL_TRUE@am__append_87 = "-dlopen" serial.la
+@BUILD_MODULE_SERIAL_TRUE@am__append_88 = serial.la
+@BUILD_MODULE_SWAP_TRUE@am__append_89 = swap.la
+@BUILD_MODULE_SWAP_TRUE@am__append_90 = "-dlopen" swap.la
+@BUILD_MODULE_SWAP_TRUE@am__append_91 = swap.la
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_92 = -lkstat
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_93 = -ldevinfo
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBKVM_TRUE@am__append_94 = -lkvm
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_95 = -ldevstat
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_96 = -lstatgrab
+@BUILD_MODULE_TAPE_TRUE@am__append_97 = tape.la
+@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_98 = -lkstat
+@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_99 = -ldevinfo
+@BUILD_MODULE_TAPE_TRUE@am__append_100 = "-dlopen" tape.la
+@BUILD_MODULE_TAPE_TRUE@am__append_101 = tape.la
+@BUILD_MODULE_TRAFFIC_TRUE@am__append_102 = traffic.la
+@BUILD_MODULE_TRAFFIC_TRUE@am__append_103 = "-dlopen" traffic.la
+@BUILD_MODULE_TRAFFIC_TRUE@am__append_104 = traffic.la
+@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_105 = -lkstat
+@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_106 = -ldevinfo
+@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_107 = -lkvm
+@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_108 = -ldevstat
+@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_109 = -lstatgrab
+@BUILD_MODULE_USERS_TRUE@am__append_110 = users.la
+@BUILD_MODULE_USERS_TRUE@am__append_111 = "-dlopen" users.la
+@BUILD_MODULE_USERS_TRUE@am__append_112 = users.la
+@BUILD_MODULE_VSERVER_TRUE@am__append_113 = vserver.la
+@BUILD_MODULE_VSERVER_TRUE@am__append_114 = "-dlopen" vserver.la
+@BUILD_MODULE_VSERVER_TRUE@am__append_115 = vserver.la
+@BUILD_MODULE_WIRELESS_TRUE@am__append_116 = wireless.la
+@BUILD_MODULE_WIRELESS_TRUE@am__append_117 = "-dlopen" wireless.la
+@BUILD_MODULE_WIRELESS_TRUE@am__append_118 = wireless.la
 subdir = src
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in $(srcdir)/collectd.conf.in \
 	$(srcdir)/config.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
@@ -151,7 +177,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = collectd.conf
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -167,6 +193,11 @@ am__apache_la_SOURCES_DIST = apache.c
 @BUILD_MODULE_APACHE_TRUE@am_apache_la_OBJECTS = apache.lo
 apache_la_OBJECTS = $(am_apache_la_OBJECTS)
 @BUILD_MODULE_APACHE_TRUE@am_apache_la_rpath = -rpath $(pkglibdir)
+apcups_la_LIBADD =
+am__apcups_la_SOURCES_DIST = apcups.c
+@BUILD_MODULE_APCUPS_TRUE@am_apcups_la_OBJECTS = apcups.lo
+apcups_la_OBJECTS = $(am_apcups_la_OBJECTS)
+@BUILD_MODULE_APCUPS_TRUE@am_apcups_la_rpath = -rpath $(pkglibdir)
 apple_sensors_la_LIBADD =
 am__apple_sensors_la_SOURCES_DIST = apple_sensors.c
 @BUILD_MODULE_APPLE_SENSORS_TRUE@am_apple_sensors_la_OBJECTS =  \
@@ -224,6 +255,11 @@ am__nfs_la_SOURCES_DIST = nfs.c
 @BUILD_MODULE_NFS_TRUE@am_nfs_la_OBJECTS = nfs.lo
 nfs_la_OBJECTS = $(am_nfs_la_OBJECTS)
 @BUILD_MODULE_NFS_TRUE@am_nfs_la_rpath = -rpath $(pkglibdir)
+ntpd_la_LIBADD =
+am__ntpd_la_SOURCES_DIST = ntpd.c
+@BUILD_MODULE_NTPD_TRUE@am_ntpd_la_OBJECTS = ntpd.lo
+ntpd_la_OBJECTS = $(am_ntpd_la_OBJECTS)
+@BUILD_MODULE_NTPD_TRUE@am_ntpd_la_rpath = -rpath $(pkglibdir)
 am__ping_la_SOURCES_DIST = ping.c
 @BUILD_MODULE_PING_TRUE@am_ping_la_OBJECTS = ping.lo
 ping_la_OBJECTS = $(am_ping_la_OBJECTS)
@@ -283,29 +319,31 @@ am_collectd_OBJECTS = collectd-collectd.$(OBJEXT) \
 collectd_OBJECTS = $(am_collectd_OBJECTS)
 am__DEPENDENCIES_1 =
 @BUILD_MODULE_APACHE_TRUE@am__DEPENDENCIES_2 = "-dlopen" apache.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__DEPENDENCIES_3 = "-dlopen" \
+@BUILD_MODULE_APCUPS_TRUE@am__DEPENDENCIES_3 = "-dlopen" apcups.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__DEPENDENCIES_4 = "-dlopen" \
 @BUILD_MODULE_APPLE_SENSORS_TRUE@	apple_sensors.la
-@BUILD_MODULE_BATTERY_TRUE@am__DEPENDENCIES_4 = "-dlopen" battery.la
-@BUILD_MODULE_CPU_TRUE@am__DEPENDENCIES_5 = "-dlopen" cpu.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__DEPENDENCIES_6 = "-dlopen" cpufreq.la
-@BUILD_MODULE_DF_TRUE@am__DEPENDENCIES_7 = "-dlopen" df.la
-@BUILD_MODULE_DISK_TRUE@am__DEPENDENCIES_8 = "-dlopen" disk.la
-@BUILD_MODULE_HDDTEMP_TRUE@am__DEPENDENCIES_9 = "-dlopen" hddtemp.la
-@BUILD_MODULE_LOAD_TRUE@am__DEPENDENCIES_10 = "-dlopen" load.la
-@BUILD_MODULE_MEMORY_TRUE@am__DEPENDENCIES_11 = "-dlopen" memory.la
-@BUILD_MODULE_MYSQL_TRUE@am__DEPENDENCIES_12 = "-dlopen" mysql.la
-@BUILD_MODULE_NFS_TRUE@am__DEPENDENCIES_13 = "-dlopen" nfs.la
-@BUILD_MODULE_PING_TRUE@am__DEPENDENCIES_14 = "-dlopen" ping.la
-@BUILD_MODULE_PROCESSES_TRUE@am__DEPENDENCIES_15 = "-dlopen" \
+@BUILD_MODULE_BATTERY_TRUE@am__DEPENDENCIES_5 = "-dlopen" battery.la
+@BUILD_MODULE_CPU_TRUE@am__DEPENDENCIES_6 = "-dlopen" cpu.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__DEPENDENCIES_7 = "-dlopen" cpufreq.la
+@BUILD_MODULE_DF_TRUE@am__DEPENDENCIES_8 = "-dlopen" df.la
+@BUILD_MODULE_DISK_TRUE@am__DEPENDENCIES_9 = "-dlopen" disk.la
+@BUILD_MODULE_HDDTEMP_TRUE@am__DEPENDENCIES_10 = "-dlopen" hddtemp.la
+@BUILD_MODULE_LOAD_TRUE@am__DEPENDENCIES_11 = "-dlopen" load.la
+@BUILD_MODULE_MEMORY_TRUE@am__DEPENDENCIES_12 = "-dlopen" memory.la
+@BUILD_MODULE_MYSQL_TRUE@am__DEPENDENCIES_13 = "-dlopen" mysql.la
+@BUILD_MODULE_NFS_TRUE@am__DEPENDENCIES_14 = "-dlopen" nfs.la
+@BUILD_MODULE_NTPD_TRUE@am__DEPENDENCIES_15 = "-dlopen" ntpd.la
+@BUILD_MODULE_PING_TRUE@am__DEPENDENCIES_16 = "-dlopen" ping.la
+@BUILD_MODULE_PROCESSES_TRUE@am__DEPENDENCIES_17 = "-dlopen" \
 @BUILD_MODULE_PROCESSES_TRUE@	processes.la
-@BUILD_MODULE_SENSORS_TRUE@am__DEPENDENCIES_16 = "-dlopen" sensors.la
-@BUILD_MODULE_SERIAL_TRUE@am__DEPENDENCIES_17 = "-dlopen" serial.la
-@BUILD_MODULE_SWAP_TRUE@am__DEPENDENCIES_18 = "-dlopen" swap.la
-@BUILD_MODULE_TAPE_TRUE@am__DEPENDENCIES_19 = "-dlopen" tape.la
-@BUILD_MODULE_TRAFFIC_TRUE@am__DEPENDENCIES_20 = "-dlopen" traffic.la
-@BUILD_MODULE_USERS_TRUE@am__DEPENDENCIES_21 = "-dlopen" users.la
-@BUILD_MODULE_VSERVER_TRUE@am__DEPENDENCIES_22 = "-dlopen" vserver.la
-@BUILD_MODULE_WIRELESS_TRUE@am__DEPENDENCIES_23 = "-dlopen" \
+@BUILD_MODULE_SENSORS_TRUE@am__DEPENDENCIES_18 = "-dlopen" sensors.la
+@BUILD_MODULE_SERIAL_TRUE@am__DEPENDENCIES_19 = "-dlopen" serial.la
+@BUILD_MODULE_SWAP_TRUE@am__DEPENDENCIES_20 = "-dlopen" swap.la
+@BUILD_MODULE_TAPE_TRUE@am__DEPENDENCIES_21 = "-dlopen" tape.la
+@BUILD_MODULE_TRAFFIC_TRUE@am__DEPENDENCIES_22 = "-dlopen" traffic.la
+@BUILD_MODULE_USERS_TRUE@am__DEPENDENCIES_23 = "-dlopen" users.la
+@BUILD_MODULE_VSERVER_TRUE@am__DEPENDENCIES_24 = "-dlopen" vserver.la
+@BUILD_MODULE_WIRELESS_TRUE@am__DEPENDENCIES_25 = "-dlopen" \
 @BUILD_MODULE_WIRELESS_TRUE@	wireless.la
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -318,23 +356,26 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(apache_la_SOURCES) $(apple_sensors_la_SOURCES) \
-	$(battery_la_SOURCES) $(cpu_la_SOURCES) $(cpufreq_la_SOURCES) \
-	$(df_la_SOURCES) $(disk_la_SOURCES) $(hddtemp_la_SOURCES) \
-	$(load_la_SOURCES) $(memory_la_SOURCES) $(mysql_la_SOURCES) \
-	$(nfs_la_SOURCES) $(ping_la_SOURCES) $(processes_la_SOURCES) \
+SOURCES = $(apache_la_SOURCES) $(apcups_la_SOURCES) \
+	$(apple_sensors_la_SOURCES) $(battery_la_SOURCES) \
+	$(cpu_la_SOURCES) $(cpufreq_la_SOURCES) $(df_la_SOURCES) \
+	$(disk_la_SOURCES) $(hddtemp_la_SOURCES) $(load_la_SOURCES) \
+	$(memory_la_SOURCES) $(mysql_la_SOURCES) $(nfs_la_SOURCES) \
+	$(ntpd_la_SOURCES) $(ping_la_SOURCES) $(processes_la_SOURCES) \
 	$(sensors_la_SOURCES) $(serial_la_SOURCES) $(swap_la_SOURCES) \
 	$(tape_la_SOURCES) $(traffic_la_SOURCES) $(users_la_SOURCES) \
 	$(vserver_la_SOURCES) $(wireless_la_SOURCES) \
 	$(collectd_SOURCES)
 DIST_SOURCES = $(am__apache_la_SOURCES_DIST) \
+	$(am__apcups_la_SOURCES_DIST) \
 	$(am__apple_sensors_la_SOURCES_DIST) \
 	$(am__battery_la_SOURCES_DIST) $(am__cpu_la_SOURCES_DIST) \
 	$(am__cpufreq_la_SOURCES_DIST) $(am__df_la_SOURCES_DIST) \
 	$(am__disk_la_SOURCES_DIST) $(am__hddtemp_la_SOURCES_DIST) \
 	$(am__load_la_SOURCES_DIST) $(am__memory_la_SOURCES_DIST) \
 	$(am__mysql_la_SOURCES_DIST) $(am__nfs_la_SOURCES_DIST) \
-	$(am__ping_la_SOURCES_DIST) $(am__processes_la_SOURCES_DIST) \
+	$(am__ntpd_la_SOURCES_DIST) $(am__ping_la_SOURCES_DIST) \
+	$(am__processes_la_SOURCES_DIST) \
 	$(am__sensors_la_SOURCES_DIST) $(am__serial_la_SOURCES_DIST) \
 	$(am__swap_la_SOURCES_DIST) $(am__tape_la_SOURCES_DIST) \
 	$(am__traffic_la_SOURCES_DIST) $(am__users_la_SOURCES_DIST) \
@@ -349,7 +390,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
 NROFF = nroff
-MANS = $(man_MANS)
+MANS = $(dist_man_MANS)
 ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = libconfig liboping
@@ -367,8 +408,12 @@ BUILD_FEATURE_DAEMON_FALSE = @BUILD_FEATURE_DAEMON_FALSE@
 BUILD_FEATURE_DAEMON_TRUE = @BUILD_FEATURE_DAEMON_TRUE@
 BUILD_FEATURE_DEBUG_FALSE = @BUILD_FEATURE_DEBUG_FALSE@
 BUILD_FEATURE_DEBUG_TRUE = @BUILD_FEATURE_DEBUG_TRUE@
+BUILD_FEATURE_GETIFADDRS_FALSE = @BUILD_FEATURE_GETIFADDRS_FALSE@
+BUILD_FEATURE_GETIFADDRS_TRUE = @BUILD_FEATURE_GETIFADDRS_TRUE@
 BUILD_MODULE_APACHE_FALSE = @BUILD_MODULE_APACHE_FALSE@
 BUILD_MODULE_APACHE_TRUE = @BUILD_MODULE_APACHE_TRUE@
+BUILD_MODULE_APCUPS_FALSE = @BUILD_MODULE_APCUPS_FALSE@
+BUILD_MODULE_APCUPS_TRUE = @BUILD_MODULE_APCUPS_TRUE@
 BUILD_MODULE_APPLE_SENSORS_FALSE = @BUILD_MODULE_APPLE_SENSORS_FALSE@
 BUILD_MODULE_APPLE_SENSORS_TRUE = @BUILD_MODULE_APPLE_SENSORS_TRUE@
 BUILD_MODULE_BATTERY_FALSE = @BUILD_MODULE_BATTERY_FALSE@
@@ -391,6 +436,8 @@ BUILD_MODULE_MYSQL_FALSE = @BUILD_MODULE_MYSQL_FALSE@
 BUILD_MODULE_MYSQL_TRUE = @BUILD_MODULE_MYSQL_TRUE@
 BUILD_MODULE_NFS_FALSE = @BUILD_MODULE_NFS_FALSE@
 BUILD_MODULE_NFS_TRUE = @BUILD_MODULE_NFS_TRUE@
+BUILD_MODULE_NTPD_FALSE = @BUILD_MODULE_NTPD_FALSE@
+BUILD_MODULE_NTPD_TRUE = @BUILD_MODULE_NTPD_TRUE@
 BUILD_MODULE_PING_FALSE = @BUILD_MODULE_PING_FALSE@
 BUILD_MODULE_PING_TRUE = @BUILD_MODULE_PING_TRUE@
 BUILD_MODULE_PROCESSES_FALSE = @BUILD_MODULE_PROCESSES_FALSE@
@@ -418,12 +465,18 @@ BUILD_WITH_LIBCURL_LIBS = @BUILD_WITH_LIBCURL_LIBS@
 BUILD_WITH_LIBCURL_TRUE = @BUILD_WITH_LIBCURL_TRUE@
 BUILD_WITH_LIBDEVINFO_FALSE = @BUILD_WITH_LIBDEVINFO_FALSE@
 BUILD_WITH_LIBDEVINFO_TRUE = @BUILD_WITH_LIBDEVINFO_TRUE@
+BUILD_WITH_LIBDEVSTAT_FALSE = @BUILD_WITH_LIBDEVSTAT_FALSE@
+BUILD_WITH_LIBDEVSTAT_TRUE = @BUILD_WITH_LIBDEVSTAT_TRUE@
 BUILD_WITH_LIBIOKIT_FALSE = @BUILD_WITH_LIBIOKIT_FALSE@
 BUILD_WITH_LIBIOKIT_TRUE = @BUILD_WITH_LIBIOKIT_TRUE@
 BUILD_WITH_LIBKSTAT_FALSE = @BUILD_WITH_LIBKSTAT_FALSE@
 BUILD_WITH_LIBKSTAT_TRUE = @BUILD_WITH_LIBKSTAT_TRUE@
+BUILD_WITH_LIBKVM_FALSE = @BUILD_WITH_LIBKVM_FALSE@
+BUILD_WITH_LIBKVM_TRUE = @BUILD_WITH_LIBKVM_TRUE@
 BUILD_WITH_LIBMYSQL_FALSE = @BUILD_WITH_LIBMYSQL_FALSE@
 BUILD_WITH_LIBMYSQL_TRUE = @BUILD_WITH_LIBMYSQL_TRUE@
+BUILD_WITH_LIBOPING_FALSE = @BUILD_WITH_LIBOPING_FALSE@
+BUILD_WITH_LIBOPING_TRUE = @BUILD_WITH_LIBOPING_TRUE@
 BUILD_WITH_LIBRESOLV_FALSE = @BUILD_WITH_LIBRESOLV_FALSE@
 BUILD_WITH_LIBRESOLV_TRUE = @BUILD_WITH_LIBRESOLV_TRUE@
 BUILD_WITH_LIBRT_FALSE = @BUILD_WITH_LIBRT_FALSE@
@@ -434,6 +487,8 @@ BUILD_WITH_LIBSTATGRAB_FALSE = @BUILD_WITH_LIBSTATGRAB_FALSE@
 BUILD_WITH_LIBSTATGRAB_TRUE = @BUILD_WITH_LIBSTATGRAB_TRUE@
 BUILD_WITH_LM_SENSORS_FALSE = @BUILD_WITH_LM_SENSORS_FALSE@
 BUILD_WITH_LM_SENSORS_TRUE = @BUILD_WITH_LM_SENSORS_TRUE@
+BUILD_WITH_OWN_LIBOPING_FALSE = @BUILD_WITH_OWN_LIBOPING_FALSE@
+BUILD_WITH_OWN_LIBOPING_TRUE = @BUILD_WITH_OWN_LIBOPING_TRUE@
 BUILD_WITH_RRDTOOL_FALSE = @BUILD_WITH_RRDTOOL_FALSE@
 BUILD_WITH_RRDTOOL_TRUE = @BUILD_WITH_RRDTOOL_TRUE@
 CC = @CC@
@@ -551,95 +606,111 @@ collectd_CPPFLAGS = $(LTDLINCL) \
 # Link to these libraries..
 collectd_LDFLAGS = -export-dynamic $(am__append_4) $(am__append_5) \
 	$(am__append_6) $(am__append_7) $(am__append_8) \
-	$(am__append_9)
+	$(am__append_9) $(am__append_10) $(am__append_11) \
+	$(am__append_12)
 collectd_LDADD = $(LIBLTDL) libconfig/libconfig.la "-dlopen" self \
-	$(am__append_12) $(am__append_16) $(am__append_20) \
-	$(am__append_25) $(am__append_28) $(am__append_31) \
-	$(am__append_36) $(am__append_40) $(am__append_43) \
-	$(am__append_48) $(am__append_52) $(am__append_55) \
-	$(am__append_58) $(am__append_61) $(am__append_65) \
-	$(am__append_68) $(am__append_73) $(am__append_78) \
-	$(am__append_83) $(am__append_86) $(am__append_89) \
-	$(am__append_92)
+	$(am__append_15) $(am__append_19) $(am__append_23) \
+	$(am__append_27) $(am__append_32) $(am__append_35) \
+	$(am__append_38) $(am__append_44) $(am__append_48) \
+	$(am__append_51) $(am__append_57) $(am__append_66) \
+	$(am__append_69) $(am__append_73) $(am__append_77) \
+	$(am__append_80) $(am__append_84) $(am__append_87) \
+	$(am__append_90) $(am__append_100) $(am__append_103) \
+	$(am__append_111) $(am__append_114) $(am__append_117)
 collectd_DEPENDENCIES = $(LIBLTDL) libconfig/libconfig.la \
-	$(am__append_13) $(am__append_17) $(am__append_21) \
-	$(am__append_26) $(am__append_29) $(am__append_32) \
-	$(am__append_37) $(am__append_41) $(am__append_44) \
-	$(am__append_49) $(am__append_53) $(am__append_56) \
-	$(am__append_59) $(am__append_62) $(am__append_66) \
-	$(am__append_69) $(am__append_74) $(am__append_79) \
-	$(am__append_84) $(am__append_87) $(am__append_90) \
-	$(am__append_93)
-pkglib_LTLIBRARIES = $(am__append_10) $(am__append_14) \
-	$(am__append_18) $(am__append_22) $(am__append_27) \
-	$(am__append_30) $(am__append_33) $(am__append_38) \
-	$(am__append_42) $(am__append_45) $(am__append_50) \
-	$(am__append_54) $(am__append_57) $(am__append_60) \
-	$(am__append_63) $(am__append_67) $(am__append_70) \
-	$(am__append_75) $(am__append_80) $(am__append_85) \
-	$(am__append_88) $(am__append_91)
+	$(am__append_16) $(am__append_20) $(am__append_24) \
+	$(am__append_28) $(am__append_33) $(am__append_36) \
+	$(am__append_39) $(am__append_45) $(am__append_49) \
+	$(am__append_52) $(am__append_58) $(am__append_67) \
+	$(am__append_70) $(am__append_74) $(am__append_78) \
+	$(am__append_81) $(am__append_85) $(am__append_88) \
+	$(am__append_91) $(am__append_101) $(am__append_104) \
+	$(am__append_112) $(am__append_115) $(am__append_118)
+pkglib_LTLIBRARIES = $(am__append_13) $(am__append_17) \
+	$(am__append_21) $(am__append_25) $(am__append_29) \
+	$(am__append_34) $(am__append_37) $(am__append_40) \
+	$(am__append_46) $(am__append_50) $(am__append_56) \
+	$(am__append_64) $(am__append_68) $(am__append_71) \
+	$(am__append_75) $(am__append_79) $(am__append_82) \
+	$(am__append_86) $(am__append_89) $(am__append_97) \
+	$(am__append_102) $(am__append_110) $(am__append_113) \
+	$(am__append_116)
 @BUILD_MODULE_APACHE_TRUE@apache_la_SOURCES = apache.c
 @BUILD_MODULE_APACHE_TRUE@apache_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_APACHE_TRUE@	$(am__append_11)
+@BUILD_MODULE_APACHE_TRUE@	$(am__append_14)
+@BUILD_MODULE_APCUPS_TRUE@apcups_la_SOURCES = apcups.c
+@BUILD_MODULE_APCUPS_TRUE@apcups_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_APCUPS_TRUE@	$(am__append_18)
 @BUILD_MODULE_APPLE_SENSORS_TRUE@apple_sensors_la_SOURCES = apple_sensors.c
 @BUILD_MODULE_APPLE_SENSORS_TRUE@apple_sensors_la_LDFLAGS = -module \
 @BUILD_MODULE_APPLE_SENSORS_TRUE@	-avoid-version \
-@BUILD_MODULE_APPLE_SENSORS_TRUE@	$(am__append_15)
+@BUILD_MODULE_APPLE_SENSORS_TRUE@	$(am__append_22)
 @BUILD_MODULE_BATTERY_TRUE@battery_la_SOURCES = battery.c
 @BUILD_MODULE_BATTERY_TRUE@battery_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_BATTERY_TRUE@	$(am__append_19)
+@BUILD_MODULE_BATTERY_TRUE@	$(am__append_26)
 @BUILD_MODULE_CPU_TRUE@cpu_la_SOURCES = cpu.c
 @BUILD_MODULE_CPU_TRUE@cpu_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_CPU_TRUE@	$(am__append_23) $(am__append_24)
+@BUILD_MODULE_CPU_TRUE@	$(am__append_30) $(am__append_31)
 @BUILD_MODULE_CPUFREQ_TRUE@cpufreq_la_SOURCES = cpufreq.c
 @BUILD_MODULE_CPUFREQ_TRUE@cpufreq_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_DF_TRUE@df_la_SOURCES = df.c
 @BUILD_MODULE_DF_TRUE@df_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_DISK_TRUE@disk_la_SOURCES = disk.c
 @BUILD_MODULE_DISK_TRUE@disk_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_DISK_TRUE@	$(am__append_34) $(am__append_35)
+@BUILD_MODULE_DISK_TRUE@	$(am__append_41) $(am__append_42) \
+@BUILD_MODULE_DISK_TRUE@	$(am__append_43)
 @BUILD_MODULE_HDDTEMP_TRUE@hddtemp_la_SOURCES = hddtemp.c
 @BUILD_MODULE_HDDTEMP_TRUE@hddtemp_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_HDDTEMP_TRUE@	$(am__append_39)
+@BUILD_MODULE_HDDTEMP_TRUE@	$(am__append_47)
 @BUILD_MODULE_LOAD_TRUE@load_la_SOURCES = load.c
-@BUILD_MODULE_LOAD_TRUE@load_la_LDFLAGS = -module -avoid-version
+@BUILD_MODULE_LOAD_TRUE@load_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_LOAD_TRUE@	$(am__append_53) $(am__append_54) \
+@BUILD_MODULE_LOAD_TRUE@	$(am__append_55)
 @BUILD_MODULE_MEMORY_TRUE@memory_la_SOURCES = memory.c
 @BUILD_MODULE_MEMORY_TRUE@memory_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_MEMORY_TRUE@	$(am__append_46) $(am__append_47)
+@BUILD_MODULE_MEMORY_TRUE@	$(am__append_59) $(am__append_60) \
+@BUILD_MODULE_MEMORY_TRUE@	$(am__append_61) $(am__append_62) \
+@BUILD_MODULE_MEMORY_TRUE@	$(am__append_63)
 @BUILD_MODULE_MYSQL_TRUE@mysql_la_SOURCES = mysql.c
 @BUILD_MODULE_MYSQL_TRUE@mysql_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_MYSQL_TRUE@	$(am__append_51)
+@BUILD_MODULE_MYSQL_TRUE@	$(am__append_65)
 @BUILD_MODULE_NFS_TRUE@nfs_la_SOURCES = nfs.c
 @BUILD_MODULE_NFS_TRUE@nfs_la_LDFLAGS = -module -avoid-version
+@BUILD_MODULE_NTPD_TRUE@ntpd_la_SOURCES = ntpd.c
+@BUILD_MODULE_NTPD_TRUE@ntpd_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_NTPD_TRUE@	$(am__append_72)
 @BUILD_MODULE_PING_TRUE@ping_la_SOURCES = ping.c
-@BUILD_MODULE_PING_TRUE@ping_la_LDFLAGS = -module -avoid-version
-@BUILD_MODULE_PING_TRUE@ping_la_LIBADD = liboping/liboping.la
-@BUILD_MODULE_PING_TRUE@ping_la_DEPENDENCIES = liboping/liboping.la
+@BUILD_MODULE_PING_TRUE@ping_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_PING_TRUE@	$(am__append_76)
+@BUILD_MODULE_PING_TRUE@@BUILD_WITH_LIBOPING_TRUE@@BUILD_WITH_OWN_LIBOPING_TRUE@ping_la_LIBADD = liboping/liboping.la
+@BUILD_MODULE_PING_TRUE@@BUILD_WITH_LIBOPING_TRUE@@BUILD_WITH_OWN_LIBOPING_TRUE@ping_la_DEPENDENCIES = liboping/liboping.la
 @BUILD_MODULE_PROCESSES_TRUE@processes_la_SOURCES = processes.c
 @BUILD_MODULE_PROCESSES_TRUE@processes_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_SENSORS_TRUE@sensors_la_SOURCES = sensors.c
 @BUILD_MODULE_SENSORS_TRUE@sensors_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_SENSORS_TRUE@	$(am__append_64)
+@BUILD_MODULE_SENSORS_TRUE@	$(am__append_83)
 @BUILD_MODULE_SERIAL_TRUE@serial_la_SOURCES = serial.c
 @BUILD_MODULE_SERIAL_TRUE@serial_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_SWAP_TRUE@swap_la_SOURCES = swap.c
 @BUILD_MODULE_SWAP_TRUE@swap_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_SWAP_TRUE@	$(am__append_71) $(am__append_72)
+@BUILD_MODULE_SWAP_TRUE@	$(am__append_92) $(am__append_93) \
+@BUILD_MODULE_SWAP_TRUE@	$(am__append_94) $(am__append_95) \
+@BUILD_MODULE_SWAP_TRUE@	$(am__append_96)
 @BUILD_MODULE_TAPE_TRUE@tape_la_SOURCES = tape.c
 @BUILD_MODULE_TAPE_TRUE@tape_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_TAPE_TRUE@	$(am__append_76) $(am__append_77)
+@BUILD_MODULE_TAPE_TRUE@	$(am__append_98) $(am__append_99)
 @BUILD_MODULE_TRAFFIC_TRUE@traffic_la_SOURCES = traffic.c
 @BUILD_MODULE_TRAFFIC_TRUE@traffic_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_TRAFFIC_TRUE@	$(am__append_81) $(am__append_82)
+@BUILD_MODULE_TRAFFIC_TRUE@	$(am__append_105) $(am__append_106) \
+@BUILD_MODULE_TRAFFIC_TRUE@	$(am__append_107) $(am__append_108) \
+@BUILD_MODULE_TRAFFIC_TRUE@	$(am__append_109)
 @BUILD_MODULE_USERS_TRUE@users_la_SOURCES = users.c
 @BUILD_MODULE_USERS_TRUE@users_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_VSERVER_TRUE@vserver_la_SOURCES = vserver.c
 @BUILD_MODULE_VSERVER_TRUE@vserver_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_WIRELESS_TRUE@wireless_la_SOURCES = wireless.c
 @BUILD_MODULE_WIRELESS_TRUE@wireless_la_LDFLAGS = -module -avoid-version
-man_MANS = collectd.1 collectd.conf.5
-#collectd_1_SOURCES = collectd.pod
-EXTRA_DIST = $(man_MANS)
+dist_man_MANS = collectd.1 collectd.conf.5
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -691,6 +762,8 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+collectd.conf: $(top_builddir)/config.status $(srcdir)/collectd.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-pkglibLTLIBRARIES: $(pkglib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(pkglibdir)" || $(mkdir_p) "$(DESTDIR)$(pkglibdir)"
@@ -720,6 +793,8 @@ clean-pkglibLTLIBRARIES:
 	done
 apache.la: $(apache_la_OBJECTS) $(apache_la_DEPENDENCIES) 
 	$(LINK) $(am_apache_la_rpath) $(apache_la_LDFLAGS) $(apache_la_OBJECTS) $(apache_la_LIBADD) $(LIBS)
+apcups.la: $(apcups_la_OBJECTS) $(apcups_la_DEPENDENCIES) 
+	$(LINK) $(am_apcups_la_rpath) $(apcups_la_LDFLAGS) $(apcups_la_OBJECTS) $(apcups_la_LIBADD) $(LIBS)
 apple_sensors.la: $(apple_sensors_la_OBJECTS) $(apple_sensors_la_DEPENDENCIES) 
 	$(LINK) $(am_apple_sensors_la_rpath) $(apple_sensors_la_LDFLAGS) $(apple_sensors_la_OBJECTS) $(apple_sensors_la_LIBADD) $(LIBS)
 battery.la: $(battery_la_OBJECTS) $(battery_la_DEPENDENCIES) 
@@ -742,6 +817,8 @@ mysql.la: $(mysql_la_OBJECTS) $(mysql_la_DEPENDENCIES)
 	$(LINK) $(am_mysql_la_rpath) $(mysql_la_LDFLAGS) $(mysql_la_OBJECTS) $(mysql_la_LIBADD) $(LIBS)
 nfs.la: $(nfs_la_OBJECTS) $(nfs_la_DEPENDENCIES) 
 	$(LINK) $(am_nfs_la_rpath) $(nfs_la_LDFLAGS) $(nfs_la_OBJECTS) $(nfs_la_LIBADD) $(LIBS)
+ntpd.la: $(ntpd_la_OBJECTS) $(ntpd_la_DEPENDENCIES) 
+	$(LINK) $(am_ntpd_la_rpath) $(ntpd_la_LDFLAGS) $(ntpd_la_OBJECTS) $(ntpd_la_LIBADD) $(LIBS)
 ping.la: $(ping_la_OBJECTS) $(ping_la_DEPENDENCIES) 
 	$(LINK) $(am_ping_la_rpath) $(ping_la_LDFLAGS) $(ping_la_OBJECTS) $(ping_la_LIBADD) $(LIBS)
 processes.la: $(processes_la_OBJECTS) $(processes_la_DEPENDENCIES) 
@@ -801,6 +878,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apache.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apcups.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apple_sensors.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/battery.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-collectd.Po@am__quote@
@@ -819,6 +897,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mysql.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nfs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ping.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/processes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sensors.Plo@am__quote@
@@ -1279,6 +1358,8 @@ info-am:
 install-data-am: install-man
 
 install-exec-am: install-pkglibLTLIBRARIES install-sbinPROGRAMS
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 
 install-info: install-info-recursive
 
@@ -1318,22 +1399,35 @@ uninstall-man: uninstall-man1 uninstall-man5
 	distclean-libtool distclean-recursive distclean-tags distdir \
 	dvi dvi-am html html-am info info-am install install-am \
 	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-man install-man1 \
-	install-man5 install-pkglibLTLIBRARIES install-sbinPROGRAMS \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
-	maintainer-clean-recursive mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool mostlyclean-recursive \
-	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
-	uninstall-info-am uninstall-man uninstall-man1 uninstall-man5 \
+	install-exec-hook install-info install-info-am install-man \
+	install-man1 install-man5 install-pkglibLTLIBRARIES \
+	install-sbinPROGRAMS install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic maintainer-clean-recursive \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
+	tags tags-recursive uninstall uninstall-am uninstall-info-am \
+	uninstall-man uninstall-man1 uninstall-man5 \
 	uninstall-pkglibLTLIBRARIES uninstall-sbinPROGRAMS
 
+#collectd_1_SOURCES = collectd.pod
+
+#EXTRA_DIST = $(man_MANS)
 
 .pod.1:
 	pod2man --release=$(VERSION) --center=$(PACKAGE) $< >$@
 
 .pod.5:
 	pod2man --section=5 --release=$(VERSION) --center=$(PACKAGE) $< >$@
+
+install-exec-hook:
+	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
+	if test -e $(DESTDIR)$(sysconfdir)/collectd.conf; \
+	then \
+		$(INSTALL_DATA) collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.pkg-orig; \
+	else \
+		$(INSTALL_DATA) collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
+	fi
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

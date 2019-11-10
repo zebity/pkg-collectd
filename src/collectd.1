@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD 1"
-.TH COLLECTD 1 "2006-06-25" "3.9.4" "collectd"
+.TH COLLECTD 1 "2006-07-09" "3.10.0" "collectd"
 .SH "NAME"
 collectd \- System statistics collection daemon
 .SH "SYNOPSIS"
@@ -323,237 +323,286 @@ have calculate resolution and timespan yourself.
 .Ve
 .PP
 The \s-1DS\s0'es depend on the module creating the \s-1RRD\s0 files:
+.IP "Apache traffic (\fIapache/apache_bytes.rrd\fR)" 4
+.IX Item "Apache traffic (apache/apache_bytes.rrd)"
+.Vb 1
+\&  DS:count:COUNTER:HEARTBEAT:0:134217728
+.Ve
+.IP "Apache requests (\fIapache/apache_requests.rrd\fR)" 4
+.IX Item "Apache requests (apache/apache_requests.rrd)"
+.Vb 1
+\&  DS:count:COUNTER:HEARTBEAT:0:1048576
+.Ve
+.IP "Apache scoreboard (\fIapache/apache_scoreboard\-\fI<name>\fI.rrd\fR)" 4
+.IX Item "Apache scoreboard (apache/apache_scoreboard-<name>.rrd)"
+.Vb 1
+\&  DS:count:GAUGE:HEARTBEAT:0:U
+.Ve
+.IP "Apple temperature sensor (\fIapple_sensors/temperature\-\fI<name>\fI.rrd\fR)" 4
+.IX Item "Apple temperature sensor (apple_sensors/temperature-<name>.rrd)"
+.Vb 1
+\&  DS:value:GAUGE:HEARTBEAT:U:U
+.Ve
+.IP "Apple fanspeed sensor (\fIapple_sensors/fanspeed\-\fI<name>\fI.rrd\fR)" 4
+.IX Item "Apple fanspeed sensor (apple_sensors/fanspeed-<name>.rrd)"
+.Vb 1
+\&  DS:value:GAUGE:HEARTBEAT:U:U
+.Ve
 .IP "Battery charge (\fIbattery\-\fI<name>\fI/charge.rrd\fR)" 4
 .IX Item "Battery charge (battery-<name>/charge.rrd)"
 .Vb 1
-\&  DS:charge:GAUGE:25:0:U
+\&  DS:charge:GAUGE:HEARTBEAT:0:U
 .Ve
 .IP "Battery current (\fIbattery\-\fI<name>\fI/current.rrd\fR)" 4
 .IX Item "Battery current (battery-<name>/current.rrd)"
 .Vb 1
-\&  DS:current:GAUGE:25:U:U
+\&  DS:current:GAUGE:HEARTBEAT:U:U
 .Ve
 .IP "Battery voltage (\fIbattery\-\fI<name>\fI/voltage.rrd\fR)" 4
 .IX Item "Battery voltage (battery-<name>/voltage.rrd)"
 .Vb 1
-\&  DS:voltage:GAUGE:25:U:U
+\&  DS:voltage:GAUGE:HEARTBEAT:U:U
 .Ve
 .IP "\s-1CPU\s0 (\fIcpu\-\fI<num>\fI.rrd\fR)" 4
 .IX Item "CPU (cpu-<num>.rrd)"
 .Vb 5
-\&  DS:user:COUNTER:25:0:100
-\&  DS:nice:COUNTER:25:0:100
-\&  DS:syst:COUNTER:25:0:100
-\&  DS:idle:COUNTER:25:0:100
-\&  DS:wait:COUNTER:25:0:100
+\&  DS:user:COUNTER:HEARTBEAT:0:100
+\&  DS:nice:COUNTER:HEARTBEAT:0:100
+\&  DS:syst:COUNTER:HEARTBEAT:0:100
+\&  DS:idle:COUNTER:HEARTBEAT:0:100
+\&  DS:wait:COUNTER:HEARTBEAT:0:100
+.Ve
+.IP "\s-1CPU\s0 frequency (\fIcpufreq\-\fI<num>\fI.rrd\fR)" 4
+.IX Item "CPU frequency (cpufreq-<num>.rrd)"
+.Vb 1
+\&  DS:value:GAUGE:HEARTBEAT:0:U
 .Ve
 .IP "Mountpoints (\fIdf\-\fI<path>\fI.rrd\fR)" 4
 .IX Item "Mountpoints (df-<path>.rrd)"
 .Vb 2
-\&  DS:used:GAUGE:25:0:U
-\&  DS:free:GAUGE:25:0:U
+\&  DS:used:GAUGE:HEARTBEAT:0:U
+\&  DS:free:GAUGE:HEARTBEAT:0:U
 .Ve
 .IP "Diskstats (\fIdisk\-\fI<major>\fI\-\fI<minor>\fI.rrd\fR)" 4
 .IX Item "Diskstats (disk-<major>-<minor>.rrd)"
 .Vb 8
-\&  DS:rcount:COUNTER:25:0:U
-\&  DS:rmerged:COUNTER:25:0:U
-\&  DS:rbytes:COUNTER:25:0:U
-\&  DS:rtime:COUNTER:25:0:U
-\&  DS:wcount:COUNTER:25:0:U
-\&  DS:wmerged:COUNTER:25:0:U
-\&  DS:wbytes:COUNTER:25:0:U
-\&  DS:wtime:COUNTER:25:0:U
+\&  DS:rcount:COUNTER:HEARTBEAT:0:U
+\&  DS:rmerged:COUNTER:HEARTBEAT:0:U
+\&  DS:rbytes:COUNTER:HEARTBEAT:0:U
+\&  DS:rtime:COUNTER:HEARTBEAT:0:U
+\&  DS:wcount:COUNTER:HEARTBEAT:0:U
+\&  DS:wmerged:COUNTER:HEARTBEAT:0:U
+\&  DS:wbytes:COUNTER:HEARTBEAT:0:U
+\&  DS:wtime:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "Diskstats (\fIpartition\-\fI<major>\fI\-\fI<minor>\fI.rrd\fR)" 4
 .IX Item "Diskstats (partition-<major>-<minor>.rrd)"
 .Vb 4
-\&  DS:rcount:COUNTER:25:0:U
-\&  DS:rbytes:COUNTER:25:0:U
-\&  DS:wcount:COUNTER:25:0:U
-\&  DS:wbytes:COUNTER:25:0:U
+\&  DS:rcount:COUNTER:HEARTBEAT:0:U
+\&  DS:rbytes:COUNTER:HEARTBEAT:0:U
+\&  DS:wcount:COUNTER:HEARTBEAT:0:U
+\&  DS:wbytes:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "\s-1HDD\s0 Temperature (\fIhddtemp\-\fI<major>\fI\-\fI<minor>\fI.rrd\fR)" 4
 .IX Item "HDD Temperature (hddtemp-<major>-<minor>.rrd)"
 .Vb 1
-\&  DS:value:GAUGE:25:U:U
+\&  DS:value:GAUGE:HEARTBEAT:U:U
 .Ve
 .IP "System load (\fIload.rrd\fR)" 4
 .IX Item "System load (load.rrd)"
 .Vb 3
-\&  DS:shortterm:GAUGE:25:0:100
-\&  DS:midterm:GAUGE:25:0:100
-\&  DS:longterm:GAUGE:25:0:100
+\&  DS:shortterm:GAUGE:HEARTBEAT:0:100
+\&  DS:midterm:GAUGE:HEARTBEAT:0:100
+\&  DS:longterm:GAUGE:HEARTBEAT:0:100
 .Ve
 .IP "Memory usage (\fImemory.rrd\fR)" 4
 .IX Item "Memory usage (memory.rrd)"
 .Vb 4
-\&  DS:used:GAUGE:25:0:9223372036854775807
-\&  DS:free:GAUGE:25:0:9223372036854775807
-\&  DS:buffers:GAUGE:25:0:9223372036854775807
-\&  DS:cached:GAUGE:25:0:9223372036854775807
+\&  DS:used:GAUGE:HEARTBEAT:0:9223372036854775807
+\&  DS:free:GAUGE:HEARTBEAT:0:9223372036854775807
+\&  DS:buffers:GAUGE:HEARTBEAT:0:9223372036854775807
+\&  DS:cached:GAUGE:HEARTBEAT:0:9223372036854775807
 .Ve
 .IP "MySQL commands and handlers (\fImysql_commands\-\fI<command>\fI.rrd\fR and \fImysql_handler\-\fI<handler>\fI.rrd\fR)" 4
 .IX Item "MySQL commands and handlers (mysql_commands-<command>.rrd and mysql_handler-<handler>.rrd)"
 .Vb 1
-\&  DS:value:COUNTER:25:0:U
+\&  DS:value:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "MySQL query cache (\fImysql_qcache.rrd\fR)" 4
 .IX Item "MySQL query cache (mysql_qcache.rrd)"
 .Vb 5
-\&  DS:hits:COUNTER:25:0:U
-\&  DS:inserts:COUNTER:25:0:U
-\&  DS:not_cached:COUNTER:25:0:U
-\&  DS:lowmem_prunes:COUNTER:25:0:U
-\&  DS:queries_in_cache:GAUGE:25:0:U
+\&  DS:hits:COUNTER:HEARTBEAT:0:U
+\&  DS:inserts:COUNTER:HEARTBEAT:0:U
+\&  DS:not_cached:COUNTER:HEARTBEAT:0:U
+\&  DS:lowmem_prunes:COUNTER:HEARTBEAT:0:U
+\&  DS:queries_in_cache:GAUGE:HEARTBEAT:0:U
 .Ve
 .IP "MySQL threads (\fImysql_threads.rrd\fR)" 4
 .IX Item "MySQL threads (mysql_threads.rrd)"
 .Vb 4
-\&  DS:running:GAUGE:25:0:U
-\&  DS:connected:GAUGE:25:0:U
-\&  DS:cached:GAUGE:25:0:U
-\&  DS:created:COUNTER:25:0:U
+\&  DS:running:GAUGE:HEARTBEAT:0:U
+\&  DS:connected:GAUGE:HEARTBEAT:0:U
+\&  DS:cached:GAUGE:HEARTBEAT:0:U
+\&  DS:created:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "NFSv2 Procedures (\fInfs2_procedures\-\fI(client|server)\fI.rrd\fR)" 4
 .IX Item "NFSv2 Procedures (nfs2_procedures-(client|server).rrd)"
 .Vb 18
-\&  DS:null:COUNTER:25:0:U
-\&  DS:getattr:COUNTER:25:0:U
-\&  DS:setattr:COUNTER:25:0:U
-\&  DS:root:COUNTER:25:0:U
-\&  DS:lookup:COUNTER:25:0:U
-\&  DS:readlink:COUNTER:25:0:U
-\&  DS:read:COUNTER:25:0:U
-\&  DS:wrcache:COUNTER:25:0:U
-\&  DS:write:COUNTER:25:0:U
-\&  DS:create:COUNTER:25:0:U
-\&  DS:remove:COUNTER:25:0:U
-\&  DS:rename:COUNTER:25:0:U
-\&  DS:link:COUNTER:25:0:U
-\&  DS:symlink:COUNTER:25:0:U
-\&  DS:mkdir:COUNTER:25:0:U
-\&  DS:rmdir:COUNTER:25:0:U
-\&  DS:readdir:COUNTER:25:0:U
-\&  DS:fsstat:COUNTER:25:0:U
+\&  DS:null:COUNTER:HEARTBEAT:0:U
+\&  DS:getattr:COUNTER:HEARTBEAT:0:U
+\&  DS:setattr:COUNTER:HEARTBEAT:0:U
+\&  DS:root:COUNTER:HEARTBEAT:0:U
+\&  DS:lookup:COUNTER:HEARTBEAT:0:U
+\&  DS:readlink:COUNTER:HEARTBEAT:0:U
+\&  DS:read:COUNTER:HEARTBEAT:0:U
+\&  DS:wrcache:COUNTER:HEARTBEAT:0:U
+\&  DS:write:COUNTER:HEARTBEAT:0:U
+\&  DS:create:COUNTER:HEARTBEAT:0:U
+\&  DS:remove:COUNTER:HEARTBEAT:0:U
+\&  DS:rename:COUNTER:HEARTBEAT:0:U
+\&  DS:link:COUNTER:HEARTBEAT:0:U
+\&  DS:symlink:COUNTER:HEARTBEAT:0:U
+\&  DS:mkdir:COUNTER:HEARTBEAT:0:U
+\&  DS:rmdir:COUNTER:HEARTBEAT:0:U
+\&  DS:readdir:COUNTER:HEARTBEAT:0:U
+\&  DS:fsstat:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "NFSv3 Procedures (\fInfs3_procedures\-\fI(client|server)\fI.rrd\fR)" 4
 .IX Item "NFSv3 Procedures (nfs3_procedures-(client|server).rrd)"
 .Vb 22
-\&  DS:null:COUNTER:25:0:U
-\&  DS:getattr:COUNTER:25:0:U
-\&  DS:setattr:COUNTER:25:0:U
-\&  DS:lookup:COUNTER:25:0:U
-\&  DS:access:COUNTER:25:0:U
-\&  DS:readlink:COUNTER:25:0:U
-\&  DS:read:COUNTER:25:0:U
-\&  DS:write:COUNTER:25:0:U
-\&  DS:create:COUNTER:25:0:U
-\&  DS:mkdir:COUNTER:25:0:U
-\&  DS:symlink:COUNTER:25:0:U
-\&  DS:mknod:COUNTER:25:0:U
-\&  DS:remove:COUNTER:25:0:U
-\&  DS:rmdir:COUNTER:25:0:U
-\&  DS:rename:COUNTER:25:0:U
-\&  DS:link:COUNTER:25:0:U
-\&  DS:readdir:COUNTER:25:0:U
-\&  DS:readdirplus:COUNTER:25:0:U
-\&  DS:fsstat:COUNTER:25:0:U
-\&  DS:fsinfo:COUNTER:25:0:U
-\&  DS:pathconf:COUNTER:25:0:U
-\&  DS:commit:COUNTER:25:0:U
+\&  DS:null:COUNTER:HEARTBEAT:0:U
+\&  DS:getattr:COUNTER:HEARTBEAT:0:U
+\&  DS:setattr:COUNTER:HEARTBEAT:0:U
+\&  DS:lookup:COUNTER:HEARTBEAT:0:U
+\&  DS:access:COUNTER:HEARTBEAT:0:U
+\&  DS:readlink:COUNTER:HEARTBEAT:0:U
+\&  DS:read:COUNTER:HEARTBEAT:0:U
+\&  DS:write:COUNTER:HEARTBEAT:0:U
+\&  DS:create:COUNTER:HEARTBEAT:0:U
+\&  DS:mkdir:COUNTER:HEARTBEAT:0:U
+\&  DS:symlink:COUNTER:HEARTBEAT:0:U
+\&  DS:mknod:COUNTER:HEARTBEAT:0:U
+\&  DS:remove:COUNTER:HEARTBEAT:0:U
+\&  DS:rmdir:COUNTER:HEARTBEAT:0:U
+\&  DS:rename:COUNTER:HEARTBEAT:0:U
+\&  DS:link:COUNTER:HEARTBEAT:0:U
+\&  DS:readdir:COUNTER:HEARTBEAT:0:U
+\&  DS:readdirplus:COUNTER:HEARTBEAT:0:U
+\&  DS:fsstat:COUNTER:HEARTBEAT:0:U
+\&  DS:fsinfo:COUNTER:HEARTBEAT:0:U
+\&  DS:pathconf:COUNTER:HEARTBEAT:0:U
+\&  DS:commit:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "Network latency / Ping (\fIping\-\fI<hostname>\fI.rrd\fR)" 4
 .IX Item "Network latency / Ping (ping-<hostname>.rrd)"
 .Vb 1
-\&  DS:ping:GAUGE:25:0:65535
+\&  DS:ping:GAUGE:HEARTBEAT:0:65535
 .Ve
 .IP "Processes (\fIprocesses.rrd\fR)" 4
 .IX Item "Processes (processes.rrd)"
 .Vb 6
-\&  DS:running:GAUGE:25:0:65535
-\&  DS:sleeping:GAUGE:25:0:65535
-\&  DS:zombies:GAUGE:25:0:65535
-\&  DS:stopped:GAUGE:25:0:65535
-\&  DS:paging:GAUGE:25:0:65535
-\&  DS:blocked:GAUGE:25:0:65535
+\&  DS:running:GAUGE:HEARTBEAT:0:65535
+\&  DS:sleeping:GAUGE:HEARTBEAT:0:65535
+\&  DS:zombies:GAUGE:HEARTBEAT:0:65535
+\&  DS:stopped:GAUGE:HEARTBEAT:0:65535
+\&  DS:paging:GAUGE:HEARTBEAT:0:65535
+\&  DS:blocked:GAUGE:HEARTBEAT:0:65535
 .Ve
 .IP "lm_sensors (\fIsensors\-\fI<chip>\fI\-\fI<feature>\fI.rrd\fR)" 4
 .IX Item "lm_sensors (sensors-<chip>-<feature>.rrd)"
 .Vb 1
-\&  DS:value:GAUGE:25:U:U
+\&  DS:value:GAUGE:HEARTBEAT:U:U
 .Ve
 .IP "Serial port traffic (\fIserial\-\fI<num>\fI.rrd\fR)" 4
 .IX Item "Serial port traffic (serial-<num>.rrd)"
 .Vb 2
-\&  DS:incoming:COUNTER:25:0:U
-\&  DS:outgoing:COUNTER:25:0:U
+\&  DS:incoming:COUNTER:HEARTBEAT:0:U
+\&  DS:outgoing:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "Swap usage (\fIswap.rrd\fR)" 4
 .IX Item "Swap usage (swap.rrd)"
 .Vb 4
-\&  DS:used:GAUGE:25:0:1099511627776
-\&  DS:free:GAUGE:25:0:1099511627776
-\&  DS:cached:GAUGE:25:0:1099511627776
-\&  DS:resv:GAUGE:25:0:1099511627776
+\&  DS:used:GAUGE:HEARTBEAT:0:1099511627776
+\&  DS:free:GAUGE:HEARTBEAT:0:1099511627776
+\&  DS:cached:GAUGE:HEARTBEAT:0:1099511627776
+\&  DS:resv:GAUGE:HEARTBEAT:0:1099511627776
 .Ve
 .IP "Tape drive usage (\fItape\-\fI<name>\fI.rrd\fR)" 4
 .IX Item "Tape drive usage (tape-<name>.rrd)"
 .Vb 8
-\&  DS:rcount:COUNTER:25:0:
-\&  DS:rmerged:COUNTER:25:0:U
-\&  DS:rbytes:COUNTER:25:0:U
-\&  DS:rtime:COUNTER:25:0:U
-\&  DS:wcount:COUNTER:25:0:U
-\&  DS:wmerged:COUNTER:25:0:U
-\&  DS:wbytes:COUNTER:25:0:U
-\&  DS:wtime:COUNTER:25:0:U
+\&  DS:rcount:COUNTER:HEARTBEAT:0:
+\&  DS:rmerged:COUNTER:HEARTBEAT:0:U
+\&  DS:rbytes:COUNTER:HEARTBEAT:0:U
+\&  DS:rtime:COUNTER:HEARTBEAT:0:U
+\&  DS:wcount:COUNTER:HEARTBEAT:0:U
+\&  DS:wmerged:COUNTER:HEARTBEAT:0:U
+\&  DS:wbytes:COUNTER:HEARTBEAT:0:U
+\&  DS:wtime:COUNTER:HEARTBEAT:0:U
 .Ve
-.IP "Network traffic (\fItraffic\-\fI<name>\fI.rrd\fR)" 4
-.IX Item "Network traffic (traffic-<name>.rrd)"
+.IP "Network traffic (\fItraffic\-\fI<interface>\fI.rrd\fR)" 4
+.IX Item "Network traffic (traffic-<interface>.rrd)"
 .Vb 2
-\&  DS:incoming:COUNTER:25:0:U
-\&  DS:outgoing:COUNTER:25:0:U
+\&  DS:incoming:COUNTER:HEARTBEAT:0:U
+\&  DS:outgoing:COUNTER:HEARTBEAT:0:U
+.Ve
+.IP "Interface packets (\fIif_packets\-\fI<interface>\fI.rrd\fR)" 4
+.IX Item "Interface packets (if_packets-<interface>.rrd)"
+.Vb 2
+\&  DS:rx:COUNTER:HEARTBEAT:0:U
+\&  DS:tx:COUNTER:HEARTBEAT:0:U
+.Ve
+.IP "Interface errors (\fIif_errors\-\fI<interface>\fI.rrd\fR)" 4
+.IX Item "Interface errors (if_errors-<interface>.rrd)"
+.Vb 2
+\&  DS:rx:COUNTER:HEARTBEAT:0:U
+\&  DS:tx:COUNTER:HEARTBEAT:0:U
 .Ve
 .IP "Users (\fIusers.rrd\fR)" 4
 .IX Item "Users (users.rrd)"
 .Vb 1
-\&  DS:users:GAUGE:25:0:65535
+\&  DS:users:GAUGE:HEARTBEAT:0:65535
 .Ve
 .IP "VServer load (\fIvserver\-\fI<xid>\fI/load.rrd\fR)" 4
 .IX Item "VServer load (vserver-<xid>/load.rrd)"
 .Vb 3
-\&  DS:shortterm:GAUGE:25:0:100
-\&  DS:midterm:GAUGE:25:0:100
-\&  DS:longterm:GAUGE:25:0:100
+\&  DS:shortterm:GAUGE:HEARTBEAT:0:100
+\&  DS:midterm:GAUGE:HEARTBEAT:0:100
+\&  DS:longterm:GAUGE:HEARTBEAT:0:100
 .Ve
 .IP "VServer threads (\fIvserver\-\fI<xid>\fI/threads.rrd\fR)" 4
 .IX Item "VServer threads (vserver-<xid>/threads.rrd)"
 .Vb 4
-\&  DS:total:GAUGE:25:0:65535
-\&  DS:running:GAUGE:25:0:65535
-\&  DS:uninterruptible:GAUGE:25:0:65535
-\&  DS:onhold:GAUGE:25:0:65535
+\&  DS:total:GAUGE:HEARTBEAT:0:65535
+\&  DS:running:GAUGE:HEARTBEAT:0:65535
+\&  DS:uninterruptible:GAUGE:HEARTBEAT:0:65535
+\&  DS:onhold:GAUGE:HEARTBEAT:0:65535
 .Ve
 .IP "VServer network traffic (\fIvserver\-\fI<xid>\fI/traffic\-\fI<name>\fI.rrd\fR)" 4
 .IX Item "VServer network traffic (vserver-<xid>/traffic-<name>.rrd)"
 .Vb 3
-\&  DS:incoming:COUNTER:25:0:9223372036854775807
-\&  DS:outgoing:COUNTER:25:0:9223372036854775807
-\&  DS:failed:COUNTER:25:0:9223372036854775807
+\&  DS:incoming:COUNTER:HEARTBEAT:0:9223372036854775807
+\&  DS:outgoing:COUNTER:HEARTBEAT:0:9223372036854775807
+\&  DS:failed:COUNTER:HEARTBEAT:0:9223372036854775807
 .Ve
 .IP "VServer processes (\fIvserver\-\fI<xid>\fI/vs_processes.rrd\fR)" 4
 .IX Item "VServer processes (vserver-<xid>/vs_processes.rrd)"
 .Vb 1
-\&  DS:total:GAUGE:25:0:65535
+\&  DS:total:GAUGE:HEARTBEAT:0:65535
 .Ve
 .IP "VServer memory usage (\fIvserver\-\fI<xid>\fI/vs_memory.rrd\fR)" 4
 .IX Item "VServer memory usage (vserver-<xid>/vs_memory.rrd)"
 .Vb 4
-\&  DS:vm:GAUGE:25:0:9223372036854775807
-\&  DS:vml:GAUGE:25:0:9223372036854775807
-\&  DS:rss:GAUGE:25:0:9223372036854775807
-\&  DS:anon:GAUGE:25:0:9223372036854775807
+\&  DS:vm:GAUGE:HEARTBEAT:0:9223372036854775807
+\&  DS:vml:GAUGE:HEARTBEAT:0:9223372036854775807
+\&  DS:rss:GAUGE:HEARTBEAT:0:9223372036854775807
+\&  DS:anon:GAUGE:HEARTBEAT:0:9223372036854775807
+.Ve
+.IP "Wireless link quality (\fIwireless\-\fI<interface>\fI.rrd\fR)" 4
+.IX Item "Wireless link quality (wireless-<interface>.rrd)"
+.Vb 3
+\&  DS:quality:GAUGE:HEARTBEAT:0:U
+\&  DS:power:GAUGE:HEARTBEAT:U:0
+\&  DS:noise:GAUGE:HEARTBEAT:U:0
 .Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"

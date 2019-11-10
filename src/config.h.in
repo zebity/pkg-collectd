@@ -9,6 +9,9 @@
 /* wether or not to enable module Apache httpd statistics */
 #undef COLLECT_APACHE
 
+/* wether or not to enable module Statistics of UPSes by APC */
+#undef COLLECT_APCUPS
+
 /* wether or not to enable module Apple's hardware sensors */
 #undef COLLECT_APPLE_SENSORS
 
@@ -32,6 +35,9 @@
 
 /* wether or not to enable module disk/partition statistics */
 #undef COLLECT_DISK
+
+/* wether or not to enable feature getifaddrs under Linux */
+#undef COLLECT_GETIFADDRS
 
 /* wether or not to enable module hdd temperature statistics */
 #undef COLLECT_HDDTEMP
@@ -62,6 +68,9 @@
 
 /* wether or not to enable module nfs statistics */
 #undef COLLECT_NFS
+
+/* wether or not to enable module nfs statistics */
+#undef COLLECT_NTPD
 
 /* wether or not to enable module ping statistics */
 #undef COLLECT_PING
@@ -197,6 +206,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the <IOKit/IOBSD.h> header file. */
+#undef HAVE_IOKIT_IOBSD_H
+
 /* Define to 1 if you have the <IOKit/IOKitLib.h> header file. */
 #undef HAVE_IOKIT_IOKITLIB_H
 
@@ -209,8 +221,15 @@
 /* Define to 1 if you have the <IOKit/ps/IOPSKeys.h> header file. */
 #undef HAVE_IOKIT_PS_IOPSKEYS_H
 
+/* Define to 1 if you have the <IOKit/storage/IOBlockStorageDriver.h> header
+   file. */
+#undef HAVE_IOKIT_STORAGE_IOBLOCKSTORAGEDRIVER_H
+
 /* Define to 1 if you have the <kstat.h> header file. */
 #undef HAVE_KSTAT_H
+
+/* Define to 1 if you have the <kvm.h> header file. */
+#undef HAVE_KVM_H
 
 /* Define to 1 if you have the 'curl' library (-lcurl). */
 #undef HAVE_LIBCURL
@@ -218,13 +237,10 @@
 /* Define to 1 if you have the `devinfo' library (-ldevinfo). */
 #undef HAVE_LIBDEVINFO
 
-/* Define to 1 if you have the `devstat' library (-ldevstat). */
-#undef HAVE_LIBDEVSTAT
-
 /* Define to 1 if you have the `kstat' library (-lkstat). */
 #undef HAVE_LIBKSTAT
 
-/* Define to 1 if you have the `kvm' library (-lkvm). */
+/* Define to 1 if you have the 'kvm' library (-lkvm) */
 #undef HAVE_LIBKVM
 
 /* Define to 1 if you have the `m' library (-lm). */
@@ -241,9 +257,6 @@
 
 /* Define to 1 if you have the sensors library (-lsensors). */
 #undef HAVE_LIBSENSORS
-
-/* Define to 1 if you have the `statgrab' library (-lstatgrab). */
-#undef HAVE_LIBSTATGRAB
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -455,8 +468,11 @@
 /* Define to 1 if `ifi_ibytes' is member of `struct if_data'. */
 #undef HAVE_STRUCT_IF_DATA_IFI_IBYTES
 
-/* Define to 1 if `ifi_obytes' is member of `struct if_data'. */
-#undef HAVE_STRUCT_IF_DATA_IFI_OBYTES
+/* Define to 1 if `ifi_ierrors' is member of `struct if_data'. */
+#undef HAVE_STRUCT_IF_DATA_IFI_IERRORS
+
+/* Define to 1 if `ifi_opackets' is member of `struct if_data'. */
+#undef HAVE_STRUCT_IF_DATA_IFI_OPACKETS
 
 /* Define if struct net_device_stats exists and is usable. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS
@@ -464,8 +480,11 @@
 /* Define to 1 if `rx_bytes' is member of `struct net_device_stats'. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS_RX_BYTES
 
-/* Define to 1 if `tx_bytes' is member of `struct net_device_stats'. */
-#undef HAVE_STRUCT_NET_DEVICE_STATS_TX_BYTES
+/* Define to 1 if `rx_errors' is member of `struct net_device_stats'. */
+#undef HAVE_STRUCT_NET_DEVICE_STATS_RX_ERRORS
+
+/* Define to 1 if `tx_packets' is member of `struct net_device_stats'. */
+#undef HAVE_STRUCT_NET_DEVICE_STATS_TX_PACKETS
 
 /* Define if the function getmntent exists. It's the version from libsun. */
 #undef HAVE_SUN_GETMNTENT
@@ -510,6 +529,9 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#undef HAVE_SYS_POLL_H
 
 /* Define to 1 if you have the <sys/quota.h> header file. */
 #undef HAVE_SYS_QUOTA_H

@@ -24,16 +24,25 @@
 #include "common.h"
 #include "plugin.h"
 
+#if HAVE_SYS_SWAP_H
+# include <sys/swap.h>
+#endif
+#if HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#endif
+#if HAVE_SYS_SYSCTL_H
+#  include <sys/sysctl.h>
+#endif
+#if HAVE_KVM_H
+#  include <kvm.h>
+#endif
+
 #define MODULE_NAME "swap"
 
-#if defined(KERNEL_LINUX) || defined(KERNEL_SOLARIS) || defined(HAVE_LIBSTATGRAB)
+#if KERNEL_LINUX || HAVE_LIBKSTAT || defined(VM_SWAPUSAGE) || HAVE_LIBKVM || HAVE_LIBSTATGRAB
 # define SWAP_HAVE_READ 1
 #else
 # define SWAP_HAVE_READ 0
-#endif
-
-#if HAVE_SYS_SWAP_H
-# include <sys/swap.h>
 #endif
 
 #undef  MAX
@@ -52,19 +61,69 @@ static char *ds_def[] =
 };
 static int ds_num = 4;
 
-#ifdef KERNEL_SOLARIS
+#if KERNEL_LINUX
+/* No global variables */
+/* #endif KERNEL_LINUX */
+
+#elif HAVE_LIBKSTAT
 static unsigned long long pagesize;
 static kstat_t *ksp;
-#endif /* KERNEL_SOLARIS */
+/* #endif HAVE_LIBKSTAT */
+
+#elif defined(VM_SWAPUSAGE)
+/* No global variables */
+/* #endif defined(VM_SWAPUSAGE) */
+
+#elif HAVE_LIBKVM
+static kvm_t *kvm_obj = NULL;
+int kvm_pagesize;
+/* #endif HAVE_LIBKVM */
+
+#elif HAVE_LIBSTATGRAB
+/* No global variables */
+#endif /* HAVE_LIBSTATGRAB */
 
 static void swap_init (void)
 {
-#ifdef KERNEL_SOLARIS
+#if KERNEL_LINUX
+	/* No init stuff */
+/* #endif KERNEL_LINUX */
+
+#elif HAVE_LIBKSTAT
 	/* getpagesize(3C) tells me this does not fail.. */
 	pagesize = (unsigned long long) getpagesize ();
 	if (get_kstat (&ksp, "unix", 0, "system_pages"))
 		ksp = NULL;
-#endif /* KERNEL_SOLARIS */
+/* #endif HAVE_LIBKSTAT */
+
+#elif defined(VM_SWAPUSAGE)
+	/* No init stuff */
+/* #endif defined(VM_SWAPUSAGE) */
+
+#elif HAVE_LIBKVM
+	if (kvm_obj != NULL)
+	{
+		kvm_close (kvm_obj);
+		kvm_obj = NULL;
+	}
+
+	kvm_pagesize = getpagesize ();
+
+	if ((kvm_obj = kvm_open (NULL, /* execfile */
+					NULL, /* corefile */
+					NULL, /* swapfile */
+					O_RDONLY, /* flags */
+					NULL)) /* errstr */
+			== NULL)
+	{
+		syslog (LOG_ERR, "swap plugin: kvm_open failed.");
+		return;
+	}
+/* #endif HAVE_LIBKVM */
+
+#elif HAVE_LIBSTATGRAB
+	/* No init stuff */
+#endif /* HAVE_LIBSTATGRAB */
 
 	return;
 }
@@ -91,7 +150,7 @@ static void swap_submit (unsigned long long swap_used,
 
 static void swap_read (void)
 {
-#ifdef KERNEL_LINUX
+#if KERNEL_LINUX
 	FILE *fh;
 	char buffer[1024];
 	
@@ -139,9 +198,9 @@ static void swap_read (void)
 	swap_used = swap_total - (swap_free + swap_cached);
 
 	swap_submit (swap_used, swap_free, swap_cached, -1LL);
-/* #endif defined(KERNEL_LINUX) */
+/* #endif KERNEL_LINUX */
 
-#elif defined(KERNEL_SOLARIS)
+#elif HAVE_LIBKSTAT
 	unsigned long long swap_alloc;
 	unsigned long long swap_resv;
 	unsigned long long swap_avail;
@@ -183,10 +242,57 @@ static void swap_read (void)
 	swap_avail  = ai.ani_max - ai.ani_resv;
 	swap_avail *= pagesize;
 
-	swap_submit (swap_alloc, swap_avail, -1LL, swap_resv);
-/* #endif defined(KERNEL_SOLARIS) */
+	swap_submit (swap_alloc, swap_avail, -1LL, swap_resv - swap_alloc);
+/* #endif HAVE_LIBKSTAT */
 
-#elif defined(HAVE_LIBSTATGRAB)
+#elif defined(VM_SWAPUSAGE)
+	int              mib[3];
+	size_t           mib_len;
+	struct xsw_usage sw_usage;
+	size_t           sw_usage_len;
+	int              status;
+
+	mib_len = 2;
+	mib[0]  = CTL_VM;
+	mib[1]  = VM_SWAPUSAGE;
+
+	sw_usage_len = sizeof (struct xsw_usage);
+
+	if (sysctl (mib, mib_len, &sw_usage, &sw_usage_len, NULL, 0) != 0)
+		return;
+
+	/* The returned values are bytes. */
+	swap_submit (sw_usage.xsu_used, sw_usage.xsu_avail, -1LL, -1LL);
+/* #endif VM_SWAPUSAGE */
+
+#elif HAVE_LIBKVM
+	struct kvm_swap data_s;
+	int             status;
+
+	unsigned long long used;
+	unsigned long long free;
+	unsigned long long total;
+
+	if (kvm_obj == NULL)
+		return;
+
+	/* only one structure => only get the grand total, no details */
+	status = kvm_getswapinfo (kvm_obj, &data_s, 1, 0);
+	if (status == -1)
+		return;
+
+	total = (unsigned long long) data_s.ksw_total;
+	used  = (unsigned long long) data_s.ksw_used;
+
+	total *= (unsigned long long) kvm_pagesize;
+	used  *= (unsigned long long) kvm_pagesize;
+
+	free = total - used;
+
+	swap_submit (used, free, -1LL, -1LL);
+/* #endif HAVE_LIBKVM */
+
+#elif HAVE_LIBSTATGRAB
 	sg_swap_stats *swap;
 
 	if ((swap = sg_get_swap_stats ()) != NULL)

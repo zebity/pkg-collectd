@@ -1,5 +1,5 @@
 SUBDIRS = libconfig
-if BUILD_MODULE_PING
+if BUILD_WITH_OWN_LIBOPING
 SUBDIRS += liboping
 endif
 
@@ -48,6 +48,17 @@ if BUILD_WITH_LIBDEVINFO
 collectd_LDFLAGS += -ldevinfo
 endif
 
+if BUILD_WITH_LIBSTATGRAB
+if BUILD_WITH_LIBKVM
+collectd_LDFLAGS += -lkvm
+endif
+if BUILD_WITH_LIBDEVSTAT
+collectd_LDFLAGS += -ldevstat
+endif
+collectd_LDFLAGS += -lstatgrab
+endif
+
+
 collectd_LDADD = $(LIBLTDL) libconfig/libconfig.la "-dlopen" self
 collectd_DEPENDENCIES = $(LIBLTDL) libconfig/libconfig.la
 
@@ -62,6 +73,17 @@ apache_la_LDFLAGS += $(BUILD_WITH_LIBCURL_LIBS)
 endif
 collectd_LDADD += "-dlopen" apache.la
 collectd_DEPENDENCIES += apache.la
+endif
+
+if BUILD_MODULE_APCUPS
+pkglib_LTLIBRARIES += apcups.la
+apcups_la_SOURCES = apcups.c
+apcups_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_LIBSOCKET
+apcups_la_LDFLAGS += -lsocket
+endif
+collectd_LDADD += "-dlopen" apcups.la
+collectd_DEPENDENCIES += apcups.la
 endif
 
 if BUILD_MODULE_APPLE_SENSORS
@@ -126,6 +148,9 @@ endif
 if BUILD_WITH_LIBDEVINFO
 disk_la_LDFLAGS += -ldevinfo
 endif
+if BUILD_WITH_LIBIOKIT
+disk_la_LDFLAGS += -lIOKit
+endif
 collectd_LDADD += "-dlopen" disk.la
 collectd_DEPENDENCIES += disk.la
 endif
@@ -158,20 +183,38 @@ load_la_SOURCES = load.c
 load_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" load.la
 collectd_DEPENDENCIES += load.la
+if BUILD_WITH_LIBSTATGRAB
+if BUILD_WITH_LIBKVM
+load_la_LDFLAGS += -lkvm
+endif
+if BUILD_WITH_LIBDEVSTAT
+load_la_LDFLAGS += -ldevstat
+endif
+load_la_LDFLAGS += -lstatgrab
+endif
 endif
 
 if BUILD_MODULE_MEMORY
 pkglib_LTLIBRARIES += memory.la
 memory_la_SOURCES = memory.c
 memory_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" memory.la
+collectd_DEPENDENCIES += memory.la
 if BUILD_WITH_LIBKSTAT
 memory_la_LDFLAGS += -lkstat
 endif
 if BUILD_WITH_LIBDEVINFO
 memory_la_LDFLAGS += -ldevinfo
 endif
-collectd_LDADD += "-dlopen" memory.la
-collectd_DEPENDENCIES += memory.la
+if BUILD_WITH_LIBSTATGRAB
+if BUILD_WITH_LIBKVM
+memory_la_LDFLAGS += -lkvm
+endif
+if BUILD_WITH_LIBDEVSTAT
+memory_la_LDFLAGS += -ldevstat
+endif
+memory_la_LDFLAGS += -lstatgrab
+endif
 endif
 
 if BUILD_MODULE_MYSQL
@@ -193,12 +236,29 @@ collectd_LDADD += "-dlopen" nfs.la
 collectd_DEPENDENCIES += nfs.la
 endif
 
+if BUILD_MODULE_NTPD
+pkglib_LTLIBRARIES += ntpd.la
+ntpd_la_SOURCES = ntpd.c
+ntpd_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_LIBSOCKET
+ntpd_la_LDFLAGS += -lsocket
+endif
+collectd_LDADD += "-dlopen" ntpd.la
+collectd_DEPENDENCIES += ntpd.la
+endif
+
 if BUILD_MODULE_PING
 pkglib_LTLIBRARIES += ping.la
 ping_la_SOURCES = ping.c
 ping_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_LIBOPING
+if BUILD_WITH_OWN_LIBOPING
 ping_la_LIBADD  = liboping/liboping.la
 ping_la_DEPENDENCIES = liboping/liboping.la
+else
+ping_la_LDFLAGS += -loping
+endif
+endif
 collectd_LDADD += "-dlopen" ping.la
 collectd_DEPENDENCIES += ping.la
 endif
@@ -234,14 +294,23 @@ if BUILD_MODULE_SWAP
 pkglib_LTLIBRARIES += swap.la
 swap_la_SOURCES = swap.c
 swap_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" swap.la
+collectd_DEPENDENCIES += swap.la
 if BUILD_WITH_LIBKSTAT
 swap_la_LDFLAGS += -lkstat
 endif
 if BUILD_WITH_LIBDEVINFO
 swap_la_LDFLAGS += -ldevinfo
 endif
-collectd_LDADD += "-dlopen" swap.la
-collectd_DEPENDENCIES += swap.la
+if BUILD_WITH_LIBKVM
+swap_la_LDFLAGS += -lkvm
+endif
+if BUILD_WITH_LIBSTATGRAB
+if BUILD_WITH_LIBDEVSTAT
+swap_la_LDFLAGS += -ldevstat
+endif
+swap_la_LDFLAGS += -lstatgrab
+endif
 endif
 
 if BUILD_MODULE_TAPE
@@ -262,14 +331,23 @@ if BUILD_MODULE_TRAFFIC
 pkglib_LTLIBRARIES += traffic.la
 traffic_la_SOURCES = traffic.c
 traffic_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" traffic.la
+collectd_DEPENDENCIES += traffic.la
 if BUILD_WITH_LIBKSTAT
 traffic_la_LDFLAGS += -lkstat
 endif
 if BUILD_WITH_LIBDEVINFO
 traffic_la_LDFLAGS += -ldevinfo
 endif
-collectd_LDADD += "-dlopen" traffic.la
-collectd_DEPENDENCIES += traffic.la
+if BUILD_WITH_LIBSTATGRAB
+if BUILD_WITH_LIBKVM
+traffic_la_LDFLAGS += -lkvm
+endif
+if BUILD_WITH_LIBDEVSTAT
+traffic_la_LDFLAGS += -ldevstat
+endif
+traffic_la_LDFLAGS += -lstatgrab
+endif
 endif
 
 if BUILD_MODULE_USERS
@@ -296,13 +374,22 @@ collectd_LDADD += "-dlopen" wireless.la
 collectd_DEPENDENCIES += wireless.la
 endif
 
-man_MANS = collectd.1 collectd.conf.5
+dist_man_MANS = collectd.1 collectd.conf.5
 #collectd_1_SOURCES = collectd.pod
 
-EXTRA_DIST = $(man_MANS)
+#EXTRA_DIST = $(man_MANS)
 
 .pod.1:
 	pod2man --release=$(VERSION) --center=$(PACKAGE) $< >$@
 
 .pod.5:
 	pod2man --section=5 --release=$(VERSION) --center=$(PACKAGE) $< >$@
+
+install-exec-hook:
+	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
+	if test -e $(DESTDIR)$(sysconfdir)/collectd.conf; \
+	then \
+		$(INSTALL_DATA) collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.pkg-orig; \
+	else \
+		$(INSTALL_DATA) collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
+	fi

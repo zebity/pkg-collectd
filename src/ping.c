@@ -29,7 +29,7 @@
 #define MODULE_NAME "ping"
 
 #include <netinet/in.h>
-#include "liboping/liboping.h"
+#include "liboping/oping.h"
 
 static pingobj_t *pingobj = NULL;
 
@@ -61,7 +61,8 @@ static int ping_config (char *key, char *value)
 	{
 		if ((pingobj = ping_construct ()) == NULL)
 		{
-			syslog (LOG_ERR, "ping: `ping_construct' failed.\n");
+			syslog (LOG_ERR, "ping: `ping_construct' failed: %s",
+				       	ping_get_error (pingobj));
 			return (1);
 		}
 	}
@@ -70,7 +71,8 @@ static int ping_config (char *key, char *value)
 	{
 		if (ping_host_add (pingobj, value) < 0)
 		{
-			syslog (LOG_WARNING, "ping: `ping_host_add' failed.");
+			syslog (LOG_WARNING, "ping: `ping_host_add' failed: %s",
+				       	ping_get_error (pingobj));
 			return (1);
 		}
 	}
@@ -121,33 +123,36 @@ static void ping_read (void)
 {
 	pingobj_iter_t *iter;
 
-	char   *host;
-	double  latency;
+	char   host[512];
+	double latency;
+	size_t buf_len;
 
 	if (pingobj == NULL)
 		return;
 
 	if (ping_send (pingobj) < 0)
 	{
-		syslog (LOG_ERR, "ping: `ping_send' failed.");
+		syslog (LOG_ERR, "ping: `ping_send' failed: %s",
+				ping_get_error (pingobj));
 		return;
 	}
 
-	for (iter = ping_iterator_get (pingobj); iter != NULL; iter = ping_iterator_next (iter))
+	for (iter = ping_iterator_get (pingobj);
+			iter != NULL;
+			iter = ping_iterator_next (iter))
 	{
-		const char *tmp;
-
-		if ((tmp = ping_iterator_get_host (iter)) == NULL)
-			continue;
-		if ((host = strdup (tmp)) == NULL)
+		buf_len = sizeof (host);
+		if (ping_iterator_get_info (iter, PING_INFO_HOSTNAME,
+					host, &buf_len))
 			continue;
 
-		latency = ping_iterator_get_latency (iter);
+		buf_len = sizeof (latency);
+		if (ping_iterator_get_info (iter, PING_INFO_LATENCY,
+					&latency, &buf_len))
+			continue;
 
 		DBG ("host = %s, latency = %f", host, latency);
 		ping_submit (host, latency);
-
-		free (host); host = NULL;
 	}
 }
 

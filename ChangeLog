@@ -1,3 +1,14 @@
+2006-07-09, Version 3.10.0
+	* The `disk' plugin has been ported to Darwin.
+	* The `battery' plugin should work on many Apple computers now.
+	* The `traffic' plugin can now ignore certain interfaces. Also,
+	  statistics for sent/received packets and errors have been added.
+	* A plugin to monitor APC UPSes using `apcupsd' has been added. Thanks
+	  to Anthony Gialluca for contributing this plugin and providing me
+	  with a test environment :)
+	* A plugin for moniroting an NTP instance and the local clock drift
+	  has been added.
+
 2006-06-25, Version 3.9.4
 	* The Solaris code in the `swap' plugin has been changed to reflect
 	  the numbers returned by `swap -s'. Thanks to Christophe Kalt for
@@ -18,6 +29,11 @@
 	  sequence checking the `ping' plugin stopped working after
 	  approximately 7.6 days.
 
+2006-05-09, Version 3.8.5
+	* Applied a patch to the `liboping' library. Due to a bug in the
+	  sequence checking the `ping' plugin stopped working after
+	  approximately 7.6 days.
+
 2006-04-21, Version 3.9.1
 	* Build issues with Solaris and possible other architectures have been
 	  resolved.
@@ -25,7 +41,7 @@
 	  been resolved.
 	* A bug in the `ping' plugin has been fixed. Sorry folks.
 
-2006-04-15, Version 3.9.0
+2006-04-02, Version 3.9.0
 	* A plugin to monitor the Apache webserver has been added.
 	  <http://httpd.apache.org/>
 	* A plugin to collect statistics about virtual servers using VServer.

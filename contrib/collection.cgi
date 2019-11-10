@@ -106,6 +106,18 @@ our $GraphDefs;
 			'GPRINT:max:MAX:%5.1lf%sAh Max,',
 			'GPRINT:avg:LAST:%5.1lf%sAh Last\l'
 		],
+		charge_percent => [
+			'DEF:avg={file}:percent:AVERAGE',
+			'DEF:min={file}:percent:MIN',
+			'DEF:max={file}:percent:MAX',
+			"AREA:max#$HalfBlue",
+			"AREA:min#$Canvas",
+			"LINE1:avg#$FullBlue:Charge",
+			'GPRINT:min:MIN:%5.1lf%s%% Min,',
+			'GPRINT:avg:AVERAGE:%5.1lf%s%% Avg,',
+			'GPRINT:max:MAX:%5.1lf%s%% Max,',
+			'GPRINT:avg:LAST:%5.1lf%s%% Last\l'
+		],
 		cpu => ['DEF:user_avg={file}:user:AVERAGE',
 			'DEF:user_min={file}:user:MIN',
 			'DEF:user_max={file}:user:MAX',
@@ -235,6 +247,30 @@ our $GraphDefs;
 			'GPRINT:total_max_ms:MAX:%5.1lf%s Max,',
 			'GPRINT:total_avg_ms:LAST:%5.1lf%s Last'
 		],
+		fanspeed => [
+			'DEF:temp_avg={file}:value:AVERAGE',
+			'DEF:temp_min={file}:value:MIN',
+			'DEF:temp_max={file}:value:MAX',
+			"AREA:temp_max#$HalfBlue",
+			"AREA:temp_min#$Canvas",
+			"LINE1:temp_avg#$FullBlue:RPM",
+			'GPRINT:temp_min:MIN:%4.1lf Min,',
+			'GPRINT:temp_avg:AVERAGE:%4.1lf Avg,',
+			'GPRINT:temp_max:MAX:%4.1lf Max,',
+			'GPRINT:temp_avg:LAST:%4.1lf Last\l'
+		],
+		frequency_offset => [ # NTPd
+			'DEF:ppm_avg={file}:ppm:AVERAGE',
+			'DEF:ppm_min={file}:ppm:MIN',
+			'DEF:ppm_max={file}:ppm:MAX',
+			"AREA:ppm_max#$HalfBlue",
+			"AREA:ppm_min#$Canvas",
+			"LINE1:ppm_avg#$FullBlue:{inst}",
+			'GPRINT:ppm_min:MIN:%5.2lf Min,',
+			'GPRINT:ppm_avg:AVERAGE:%5.2lf Avg,',
+			'GPRINT:ppm_max:MAX:%5.2lf Max,',
+			'GPRINT:ppm_avg:LAST:%5.2lf Last'
+		],
 		hddtemp => [
 			'DEF:temp_avg={file}:value:AVERAGE',
 			'DEF:temp_min={file}:value:MIN',
@@ -246,6 +282,35 @@ our $GraphDefs;
 			'GPRINT:temp_avg:AVERAGE:%4.1lf Avg,',
 			'GPRINT:temp_max:MAX:%4.1lf Max,',
 			'GPRINT:temp_avg:LAST:%4.1lf Last\l'
+		],
+		if_packets => ['DEF:tx_min={file}:tx:MIN',
+			'DEF:tx_avg={file}:tx:AVERAGE',
+			'DEF:tx_max={file}:tx:MAX',
+			'DEF:rx_min={file}:rx:MIN',
+			'DEF:rx_avg={file}:rx:AVERAGE',
+			'DEF:rx_max={file}:rx:MAX',
+			'CDEF:overlap=tx_avg,rx_avg,GT,rx_avg,tx_avg,IF',
+			'CDEF:mytime=tx_avg,TIME,TIME,IF',
+			'CDEF:sample_len_raw=mytime,PREV(mytime),-',
+			'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
+			'CDEF:tx_avg_sample=tx_avg,UN,0,tx_avg,IF,sample_len,*',
+			'CDEF:tx_avg_sum=PREV,UN,0,PREV,IF,tx_avg_sample,+',
+			'CDEF:rx_avg_sample=rx_avg,UN,0,rx_avg,IF,sample_len,*',
+			'CDEF:rx_avg_sum=PREV,UN,0,PREV,IF,rx_avg_sample,+',
+			"AREA:tx_avg#$HalfGreen",
+			"AREA:rx_avg#$HalfBlue",
+			"AREA:overlap#$HalfBlueGreen",
+			"LINE1:tx_avg#$FullGreen:TX",
+			'GPRINT:tx_avg:AVERAGE:%5.1lf%s Avg,',
+			'GPRINT:tx_max:MAX:%5.1lf%s Max,',
+			'GPRINT:tx_avg:LAST:%5.1lf%s Last',
+			'GPRINT:tx_avg_sum:LAST:(ca. %.0lf Total)\l',
+			"LINE1:rx_avg#$FullBlue:RX",
+			#'GPRINT:rx_min:MIN:%5.1lf %s Min,',
+			'GPRINT:rx_avg:AVERAGE:%5.1lf%s Avg,',
+			'GPRINT:rx_max:MAX:%5.1lf%s Max,',
+			'GPRINT:rx_avg:LAST:%5.1lf%s Last',
+			'GPRINT:rx_avg_sum:LAST:(ca. %.0lf Total)\l'
 		],
 		load => ['DEF:s_avg={file}:shortterm:AVERAGE',
 			'DEF:s_min={file}:shortterm:MIN',
@@ -273,6 +338,18 @@ our $GraphDefs;
 			'GPRINT:l_avg:AVERAGE:%4.2lf Avg,',
 			'GPRINT:l_max:MAX:%4.2lf Max,',
 			'GPRINT:l_avg:LAST:%4.2lf Last'
+		],
+		load_percent => [
+			'DEF:avg={file}:percent:AVERAGE',
+			'DEF:min={file}:percent:MIN',
+			'DEF:max={file}:percent:MAX',
+			"AREA:max#$HalfBlue",
+			"AREA:min#$Canvas",
+			"LINE1:avg#$FullBlue:Load",
+			'GPRINT:min:MIN:%5.1lf%s%% Min,',
+			'GPRINT:avg:AVERAGE:%5.1lf%s%% Avg,',
+			'GPRINT:max:MAX:%5.1lf%s%% Max,',
+			'GPRINT:avg:LAST:%5.1lf%s%% Last\l'
 		],
 		mails => ['DEF:rawgood={file}:good:AVERAGE',
 			'DEF:rawspam={file}:spam:AVERAGE',
@@ -635,18 +712,6 @@ our $GraphDefs;
 			'GPRINT:sleeping_max:MAX:%5.1lf Max,',
 			'GPRINT:sleeping_avg:LAST:%5.1lf Last\l'
 		],
-		sensors => [
-			'DEF:temp_avg={file}:value:AVERAGE',
-			'DEF:temp_min={file}:value:MIN',
-			'DEF:temp_max={file}:value:MAX',
-			"AREA:temp_max#$HalfBlue",
-			"AREA:temp_min#$Canvas",
-			"LINE1:temp_avg#$FullBlue:Value",
-			'GPRINT:temp_min:MIN:%4.1lf Min,',
-			'GPRINT:temp_avg:AVERAGE:%4.1lf Avg,',
-			'GPRINT:temp_max:MAX:%4.1lf Max,',
-			'GPRINT:temp_avg:LAST:%4.1lf Last\l'
-		],
 		swap => [
 			'DEF:used_avg={file}:used:AVERAGE',
 			'DEF:used_min={file}:used:MIN',
@@ -690,6 +755,42 @@ our $GraphDefs;
 			'GPRINT:used_avg:AVERAGE:%5.1lf%s Avg,',
 			'GPRINT:used_max:MAX:%5.1lf%s Max,',
 			'GPRINT:used_avg:LAST:%5.1lf%s Last\l'
+		],
+		temperature => [
+			'DEF:temp_avg={file}:value:AVERAGE',
+			'DEF:temp_min={file}:value:MIN',
+			'DEF:temp_max={file}:value:MAX',
+			"AREA:temp_max#$HalfBlue",
+			"AREA:temp_min#$Canvas",
+			"LINE1:temp_avg#$FullBlue:Value",
+			'GPRINT:temp_min:MIN:%4.1lf Min,',
+			'GPRINT:temp_avg:AVERAGE:%4.1lf Avg,',
+			'GPRINT:temp_max:MAX:%4.1lf Max,',
+			'GPRINT:temp_avg:LAST:%4.1lf Last\l'
+		],
+		timeleft => [
+			'DEF:avg={file}:timeleft:AVERAGE',
+			'DEF:min={file}:timeleft:MIN',
+			'DEF:max={file}:timeleft:MAX',
+			"AREA:max#$HalfBlue",
+			"AREA:min#$Canvas",
+			"LINE1:avg#$FullBlue:Time left [min]",
+			'GPRINT:min:MIN:%5.1lf%s Min,',
+			'GPRINT:avg:AVERAGE:%5.1lf%s Avg,',
+			'GPRINT:max:MAX:%5.1lf%s Max,',
+			'GPRINT:avg:LAST:%5.1lf%s Last\l'
+		],
+		time_offset => [ # NTPd
+			'DEF:s_avg={file}:seconds:AVERAGE',
+			'DEF:s_min={file}:seconds:MIN',
+			'DEF:s_max={file}:seconds:MAX',
+			"AREA:s_max#$HalfBlue",
+			"AREA:s_min#$Canvas",
+			"LINE1:s_avg#$FullBlue:{inst}",
+			'GPRINT:s_min:MIN:%7.3lf%s Min,',
+			'GPRINT:s_avg:AVERAGE:%7.3lf%s Avg,',
+			'GPRINT:s_max:MAX:%7.3lf%s Max,',
+			'GPRINT:s_avg:LAST:%7.3lf%s Last'
 		],
 		traffic => ['DEF:out_min_raw={file}:outgoing:MIN',
 			'DEF:out_avg_raw={file}:outgoing:AVERAGE',
@@ -762,7 +863,7 @@ our $GraphDefs;
 			'GPRINT:max:MAX:%5.1lf%sV Max,',
 			'GPRINT:avg:LAST:%5.1lf%sV Last\l'
 		],
-		threads => [
+		vs_threads => [
 			"DEF:total_avg={file}:total:AVERAGE",
 			"DEF:total_min={file}:total:MIN",
 			"DEF:total_max={file}:total:MAX",
@@ -844,7 +945,12 @@ our $GraphDefs;
 		],
 	};
 	$GraphDefs->{'disk'} = $GraphDefs->{'partition'};
+	$GraphDefs->{'if_errors'} = $GraphDefs->{'if_packets'};
 	$GraphDefs->{'meminfo'} = $GraphDefs->{'memory'};
+	$GraphDefs->{'sensors'} = $GraphDefs->{'temperature'};
+
+	$GraphDefs->{'delay'}           = $GraphDefs->{'time_offset'};
+	$GraphDefs->{'time_dispersion'} = $GraphDefs->{'time_offset'};
 }
 
 our $GraphArgs =
@@ -853,14 +959,21 @@ our $GraphArgs =
 	apache_requests => ['-t', 'apache requests', '-v', 'Requests/s'],
 	apache_scoreboard => ['-t', 'apache scoreboard {inst}', '-v', 'Processes'],
 	charge => ['-t', '{host} charge', '-v', 'Ampere hours'],
+	charge_percent => ['-t', '{host} charge', '-v', 'Percent'],
 	cpu => ['-t', '{host} cpu{inst} usage', '-v', 'Percent', '-l', '0'],
 	cpufreq => ['-t', '{host} cpu{inst} usage', '-v', 'Mhz'],
 	current => ['-t', '{host} current', '-v', 'Ampere'],
 	#disk => ['-t', '{host} disk {inst} IO wait', '-v', 'Seconds'],
+	delay => ['-t', 'NTPd peer delay ({inst})', '-v', 'Seconds'],
 	df => ['-t', '{host}:{inst} usage', '-v', 'Percent', '-l', '0'],
 	disk => ['-t', '{host} disk {inst} usage', '-v', 'Byte/s'],
+	fanspeed => ['-t', '{host} fanspeed {inst}', '-v', 'rpm'],
+	frequency_offset => ['-t', 'NTPd frequency offset ({inst})', '-v', 'Parts per million'],
 	hddtemp => ['-t', '{host} hdd temperature {inst}', '-v', '°Celsius'],
+	if_errors => ['-t', '{host} {inst} errors', '-v', 'Errors/s'],
+	if_packets => ['-t', '{host} {inst} packets', '-v', 'Packets/s'],
 	load => ['-t', '{host} load average', '-v', 'System load', '-X', '0'],
+	load_percent => ['-t', '{host} load', '-v', 'Percent'],
 	mails   => ['-t', '{host} mail count', '-v', 'Amount', '-X', '0'],
 	memory => ['-t', '{host} memory usage', '-v', 'Bytes', '-b', '1024', '-l', '0'],
 	mysql_commands => ['-t', 'mysql command {inst}', '-v', 'Issues/s' ],
@@ -873,10 +986,14 @@ our $GraphArgs =
 	processes => ['-t', '{host} processes', '-v', 'Processes'],
 	sensors => ['-t', '{host} sensor {inst}', '-v', '°Celsius'],
 	swap => ['-t', '{host} swap usage', '-v', 'Bytes', '-b', '1024', '-l', '0'],
+	temperature => ['-t', '{host} temperature {inst}', '-v', '°Celsius'],
+	timeleft => ['-t', '{host} UPS time left', '-v', 'Time [min]'],
+	time_offset => ['-t', 'NTPd time offset ({inst})', '-v', 'Seconds'],
+	time_dispersion => ['-t', 'NTPd time dispersion ({inst})', '-v', 'Seconds'],
 	traffic => ['-t', '{host} {inst} traffic', '-v', 'Bit/s'],
 	users => ['-t', '{host} users', '-v', 'Users'],
 	voltage => ['-t', '{host} voltage', '-v', 'Volts'],
-	threads => ['-t', '{host} threads', '-v', 'Threads'],
+	vs_threads => ['-t', '{host} threads', '-v', 'Threads'],
 	vs_memory => ['-t', '{host} memory usage', '-v', 'Bytes'],
 	vs_processes => ['-t', '{host} processes', '-v', 'Processes'],
 };
