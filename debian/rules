@@ -93,6 +93,11 @@ confflags += --disable-xmms
 # Cf. https://github.com/collectd/collectd/issues/1574
 confflags += --disable-sigrok
 
+# disable lvm plugin, liblvm2app is deprecated upstream, #915692
+# Cf. https://github.com/collectd/collectd/issues/2647
+confflags += --disable-lvm
+
+
 # temporarily disable mqtt plugin, as #911265, #911266 blocks collectd from
 # migrating to testing.
 confflags += --disable-mqtt
@@ -110,7 +115,6 @@ ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
 		--disable-ipc \
 		--disable-iptables \
 		--disable-ipvs \
-		--disable-lvm \
 		--disable-madwifi \
 		--disable-md \
 		--disable-netlink \
