@@ -177,6 +177,12 @@ ifeq (,$(filter amd64 i386, $(DEB_HOST_ARCH)))
 		--disable-turbostat
 endif
 
+# the pcie_errors plugin does not work on all kinds of hardware
+ifeq (,$(filter amd64 arm64 armel armhf i386 mips64el mipsel ppc64el, $(DEB_HOST_ARCH)))
+	confflags += \
+		--disable-pcie_errors
+endif
+
 # This plugin is x86 and arm specific.
 ifeq (,$(filter amd64 arm64 armhf i386, $(DEB_HOST_ARCH)))
 	confflags += \
