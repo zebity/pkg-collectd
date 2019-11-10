@@ -23,16 +23,8 @@
 #include "common.h"
 #include "plugin.h"
 
-#if HAVE_PTHREAD_H
-# include <pthread.h>
-#endif
-
-#if HAVE_UPSCLIENT_H
-# include <upsclient.h>
-# define NUT_HAVE_READ 1
-#else
-# define NUT_HAVE_READ 0
-#endif
+#include <pthread.h>
+#include <upsclient.h>
 
 #if HAVE_UPSCONN_T
 typedef UPSCONN_t collectd_upsconn_t;
@@ -42,8 +34,6 @@ typedef UPSCONN collectd_upsconn_t;
 # error "Unable to determine the UPS connection type."
 #endif
 
-
-#if NUT_HAVE_READ
 struct nut_ups_s;
 typedef struct nut_ups_s nut_ups_t;
 struct nut_ups_s
@@ -295,15 +285,12 @@ static int nut_shutdown (void)
 
   return (0);
 } /* int nut_shutdown */
-#endif /* NUT_HAVE_READ */
 
 void module_register (void)
 {
-#if NUT_HAVE_READ
   plugin_register_config ("nut", nut_config, config_keys, config_keys_num);
   plugin_register_read ("nut", nut_read);
   plugin_register_shutdown ("nut", nut_shutdown);
-#endif
 } /* void module_register */
 
 /* vim: set sw=2 ts=8 sts=2 tw=78 : */

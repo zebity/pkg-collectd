@@ -129,34 +129,106 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PERL 5"
-.TH COLLECTD-PERL 5 "2007-08-26" "4.0.7" "collectd"
+.TH COLLECTD-PERL 5 "2007-10-27" "4.2.0" "collectd"
 .SH "NAME"
 collectd\-perl \- Documentation of collectd's \f(CW\*(C`perl plugin\*(C'\fR
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 8
-\&  # See collectd.conf(5)
 \&  LoadPlugin perl
 \&  # ...
 \&  <Plugin perl>
 \&    IncludeDir "/path/to/perl/plugins"
 \&    BaseName "Collectd::Plugin"
+\&    EnableDebugger ""
 \&    LoadPlugin "FooBar"
 \&  </Plugin>
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-The \f(CW\*(C`perl plugin\*(C'\fR includes a Perl-interpreter in collectd and provides
-Perl-equivalents of the plugin\-functions. This makes it possible to write
-plugins for collectd in Perl. This is a lot more efficient than executing a
+The \f(CW\*(C`perl plugin\*(C'\fR embeds a Perl-interpreter into collectd and provides an
+interface to collectd's plugin system. This makes it possible to write plugins
+for collectd in Perl. This is a lot more efficient than executing a
 Perl-script every time you want to read a value with the \f(CW\*(C`exec plugin\*(C'\fR (see
 \&\fIcollectd\-exec\fR\|(5)) and provides a lot more functionality, too.
 .PP
 Please note that this is still considered to be experimental and subject to
 change between minor releases.
+.SH "CONFIGURATION"
+.IX Header "CONFIGURATION"
+.IP "\fBLoadPlugin\fR \fIPlugin\fR" 4
+.IX Item "LoadPlugin Plugin"
+Loads the Perl plugin \fIPlugin\fR. This does basically the same as \fBuse\fR would
+do in a Perl program. As a side effect, the first occurrence of this option
+causes the Perl-interpreter to be initialized.
+.IP "\fBBaseName\fR \fIName\fR" 4
+.IX Item "BaseName Name"
+Prepends \fIName\fR\fB::\fR to all plugin names loaded after this option. This is
+provided for convenience to keep plugin names short.
+.IP "\fBEnableDebugger\fR \fIPackage\fR[=\fIoption\fR,...]" 4
+.IX Item "EnableDebugger Package[=option,...]"
+Run collectd under the control of the Perl source debugger. If \fIPackage\fR is
+not the empty string, control is passed to the debugging, profiling, or
+tracing module installed as Devel::\fIPackage\fR. A comma-separated list of
+options may be specified after the \*(L"=\*(R" character. Please note that you may not
+leave out the \fIPackage\fR option even if you specify \fB""\fR. This is the same as
+using the \fB\-d:Package\fR command line option.
+.Sp
+See perldebug for detailed documentation about debugging Perl.
+.IP "\fBIncludeDir\fR \fIDir\fR" 4
+.IX Item "IncludeDir Dir"
+Adds \fIDir\fR to the \fB@INC\fR array. This is the same as using the \fB\-IDir\fR
+command line option or \fBuse lib Dir\fR in the source code. Please note that it
+only has effect on plugins loaded after this option.
+.SH "WRITING YOUR OWN PLUGINS"
+.IX Header "WRITING YOUR OWN PLUGINS"
+Writing your own plugins is quite simply. collectd manages plugins by means of
+\&\fBdispatch functions\fR which call the appropriate \fBcallback functions\fR
+registered by the plugins. Any plugin basically consists of the implementation
+of these callback functions and initializing code which registers the
+functions with collectd. See the section \*(L"\s-1EXAMPLES\s0\*(R" below for a really basic
+example. The following types of \fBcallback functions\fR are known to collectd
+(all of these are optional):
+.IP "init functions" 4
+.IX Item "init functions"
+This type of functions is called once after loading the module and before any
+calls to the read and write functions. It should be used to initialize the
+internal state of the plugin (e.\ g. open sockets, ...). If the return
+value evaluates to \fBfalse\fR, the plugin will be disabled.
+.IP "read functions" 4
+.IX Item "read functions"
+This type of function is used to collect the actual data. It is called once
+per interval (see the \fBInterval\fR configuration option of collectd). Usually
+it will call \fBplugin_dispatch_values\fR to dispatch the values to collectd
+which will pass them on to all registered \fBwrite functions\fR. If the return
+value evaluates to \fBfalse\fR the plugin will be skipped for an increasing
+amount of time until it returns \fBtrue\fR again.
+.IP "write functions" 4
+.IX Item "write functions"
+This type of function is used to write the dispatched values. It is called
+once for each call to \fBplugin_dispatch_values\fR.
+.IP "log functions" 4
+.IX Item "log functions"
+This type of function is used to pass messages of plugins or the daemon itself
+to the user.
+.IP "shutdown functions" 4
+.IX Item "shutdown functions"
+This type of function is called once before the daemon shuts down. It should
+be used to clean up the plugin (e.g. close sockets, ...).
+.PP
+See the documentation of the \fBplugin_register\fR method in the section
+\&\*(L"\s-1METHODS\s0\*(R" below for the number and types of arguments passed to each
+\&\fBcallback function\fR. This section also explains how to register \fBcallback
+functions\fR with collectd.
+.PP
+To enable a plugin, copy it to a place where Perl can find it (i.\ e. a
+directory listed in the \fB@INC\fR array) just as any other Perl plugin and add
+an appropriate \fBLoadPlugin\fR option to the configuration file. After
+restarting collectd you're done.
 .SH "DATA TYPES"
 .IX Header "DATA TYPES"
-There are two more complex types you need to know about:
+The following complex types are used to pass values between the Perl plugin
+and collectd:
 .IP "Data-Set" 4
 .IX Item "Data-Set"
 A data-set is a list of one or more data\-sources. Each data-source defines a
@@ -165,7 +237,7 @@ structure. The general layout looks like this:
 .Sp
 .Vb 6
 \&  [{
-\&    name => 'data_source_name',
+\&    name => \(aqdata_source_name\(aq,
 \&    type => DS_TYPE_COUNTER || DS_TYPE_GAUGE
 \&    min  => value || undef,
 \&    max  => value || undef
@@ -174,26 +246,25 @@ structure. The general layout looks like this:
 .IP "Value-List" 4
 .IX Item "Value-List"
 A value-list is one structure which features an array of values and fields to
-identify the values, i. e. time and host, plugin name and plugin-instance as
-well as a type and type\-instance. Since the \*(L"type\*(R" is not included in the
-value-list but is passed as an extra argument, the general layout looks like
-this:
+identify the values, i.\ e. time and host, plugin name and
+plugin-instance as well as a type and type\-instance. Since the \*(L"type\*(R" is not
+included in the value-list but is passed as an extra argument, the general
+layout looks like this:
 .Sp
 .Vb 8
 \&  {
 \&    values => [123, 0.5],
 \&    time   => time (),
-\&    host   => 'localhost',
-\&    plugin => 'myplugin',
-\&    plugin_instance => '',
-\&    type_instance   => ''
+\&    host   => \(aqlocalhost\(aq,
+\&    plugin => \(aqmyplugin\(aq,
+\&    plugin_instance => \(aq\(aq,
+\&    type_instance   => \(aq\(aq
 \&  }
 .Ve
 .SH "METHODS"
 .IX Header "METHODS"
 The following functions provide the C\-interface to Perl\-modules. They are
-automatically exported into the module's namespace. You don't need to \f(CW\*(C`use\*(C'\fR
-any special Modules to access them.
+exported by the \*(L":plugin\*(R" export tag (see the section \*(L"\s-1EXPORTS\s0\*(R" below).
 .IP "\fBplugin_register\fR (\fItype\fR, \fIname\fR, \fIdata\fR)" 4
 .IX Item "plugin_register (type, name, data)"
 Registers a callback-function or data\-set.
@@ -225,7 +296,9 @@ argument which simply tells \fBplugin_register\fR what is being registered.)
 The last argument, \fIdata\fR, is either a function\- or an array\-reference. If
 \&\fItype\fR is \fB\s-1TYPE_DATASET\s0\fR, then the \fIdata\fR argument must be an
 array-reference which points to an array of hashes. Each hash describes one
-data\-source. For the exact layout see \fBData-Set\fR above.
+data\-source. For the exact layout see \fBData-Set\fR above. Please note that
+there is a large number of predefined data-sets available in the \fBtypes.db\fR
+file which are automatically registered with collectd.
 .Sp
 If the \fItype\fR argument is any of the other types (\fB\s-1TYPE_INIT\s0\fR, \fB\s-1TYPE_READ\s0\fR,
 \&...) then \fIdata\fR is expected to be a function reference. These functions are
@@ -268,14 +341,151 @@ registered with the daemon.
 .IX Item "plugin_log (log-level, message)"
 Submits a \fImessage\fR of level \fIlog-level\fR to collectd's logging mechanism.
 The message is passed to all log-callbacks that are registered with collectd.
+.IP "\fB\s-1ERROR\s0\fR, \fB\s-1WARNING\s0\fR, \fB\s-1NOTICE\s0\fR, \fB\s-1INFO\s0\fR, \fB\s-1DEBUG\s0\fR (\fImessage\fR)" 4
+.IX Item "ERROR, WARNING, NOTICE, INFO, DEBUG (message)"
+Wrappers around \fBplugin_log\fR, using \fB\s-1LOG_ERR\s0\fR, \fB\s-1LOG_WARNING\s0\fR,
+\&\fB\s-1LOG_NOTICE\s0\fR, \fB\s-1LOG_INFO\s0\fR and \fB\s-1LOG_DEBUG\s0\fR respectively as \fIlog-level\fR.
+.SH "EXPORTS"
+.IX Header "EXPORTS"
+By default no symbols are exported. However, the following export tags are
+available (\fB:all\fR will export all of them):
+.IP "\fB:plugin\fR" 4
+.IX Item ":plugin"
+.RS 4
+.PD 0
+.IP "\fBplugin_register\fR ()" 4
+.IX Item "plugin_register ()"
+.IP "\fBplugin_unregister\fR ()" 4
+.IX Item "plugin_unregister ()"
+.IP "\fBplugin_dispatch_values\fR ()" 4
+.IX Item "plugin_dispatch_values ()"
+.IP "\fBplugin_log\fR ()" 4
+.IX Item "plugin_log ()"
+.RE
+.RS 4
+.RE
+.IP "\fB:types\fR" 4
+.IX Item ":types"
+.RS 4
+.IP "\fB\s-1TYPE_INIT\s0\fR" 4
+.IX Item "TYPE_INIT"
+.IP "\fB\s-1TYPE_READ\s0\fR" 4
+.IX Item "TYPE_READ"
+.IP "\fB\s-1TYPE_WRITE\s0\fR" 4
+.IX Item "TYPE_WRITE"
+.IP "\fB\s-1TYPE_SHUTDOWN\s0\fR" 4
+.IX Item "TYPE_SHUTDOWN"
+.IP "\fB\s-1TYPE_LOG\s0\fR" 4
+.IX Item "TYPE_LOG"
+.RE
+.RS 4
+.RE
+.IP "\fB:ds_types\fR" 4
+.IX Item ":ds_types"
+.RS 4
+.IP "\fB\s-1DS_TYPE_COUNTER\s0\fR" 4
+.IX Item "DS_TYPE_COUNTER"
+.IP "\fB\s-1DS_TYPE_GAUGE\s0\fR" 4
+.IX Item "DS_TYPE_GAUGE"
+.RE
+.RS 4
+.RE
+.IP "\fB:log\fR" 4
+.IX Item ":log"
+.RS 4
+.IP "\fB\s-1ERROR\s0\fR ()" 4
+.IX Item "ERROR ()"
+.IP "\fB\s-1WARNING\s0\fR ()" 4
+.IX Item "WARNING ()"
+.IP "\fB\s-1NOTICE\s0\fR ()" 4
+.IX Item "NOTICE ()"
+.IP "\fB\s-1INFO\s0\fR ()" 4
+.IX Item "INFO ()"
+.IP "\fB\s-1DEBUG\s0\fR ()" 4
+.IX Item "DEBUG ()"
+.IP "\fB\s-1LOG_ERR\s0\fR" 4
+.IX Item "LOG_ERR"
+.IP "\fB\s-1LOG_WARNING\s0\fR" 4
+.IX Item "LOG_WARNING"
+.IP "\fB\s-1LOG_NOTICE\s0\fR" 4
+.IX Item "LOG_NOTICE"
+.IP "\fB\s-1LOG_INFO\s0\fR" 4
+.IX Item "LOG_INFO"
+.IP "\fB\s-1LOG_DEBUG\s0\fR" 4
+.IX Item "LOG_DEBUG"
+.RE
+.RS 4
+.RE
+.PD
+.SH "EXAMPLES"
+.IX Header "EXAMPLES"
+Any Perl plugin will start similar to:
+.PP
+.Vb 1
+\&  package Collectd::Plugins::FooBar;
+.Ve
+.PP
+.Vb 2
+\&  use strict;
+\&  use warnings;
+.Ve
+.PP
+.Vb 1
+\&  use Collectd qw( :all );
+.Ve
+.PP
+A very simple read function will look like:
+.PP
+.Vb 7
+\&  sub foobar_read
+\&  {
+\&    my $vl = { plugin => \(aqfoobar\(aq };
+\&    $vl\->{\(aqvalues\(aq} = [ rand(42) ];
+\&    plugin_dispatch_values (\(aqgauge\(aq, $vl);
+\&    return 1;
+\&  }
+.Ve
+.PP
+A very simple write function will look like:
+.PP
+.Vb 8
+\&  sub foobar_write
+\&  {
+\&    my ($type, $ds, $vl) = @_;
+\&    for (my $i = 0; $i < scalar (@$ds); ++$i) {
+\&      print "$vl\->{\(aqplugin\(aq} ($vl\->{\(aqtype\(aq}): $vl\->{\(aqvalues\(aq}\->[$i]\en";
+\&    }
+\&    return 1;
+\&  }
+.Ve
+.PP
+To register those functions with collectd:
+.PP
+.Vb 2
+\&  plugin_register (TYPE_READ, "foobar", \e&foobar_read);
+\&  plugin_register (TYPE_WRITE, "foobar", \e&foobar_write);
+.Ve
+.PP
+See the section \*(L"\s-1DATA\s0 \s-1TYPES\s0\*(R" above for a complete documentation of the data
+types used by the read and write functions.
+.SH "BUGS"
+.IX Header "BUGS"
+This plugin does not yet work correctly if collectd uses multiple threads.
+Perl does not allow multiple threads to access a single interpreter at the
+same time. As a temporary workaround you should use a single read thread only
+(see collectd's \fBReadThread\fR configuration option).
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),
 \&\fIcollectd.conf\fR\|(5),
 \&\fIcollectd\-exec\fR\|(5),
-\&\fIperl\fR\|(1)
+\&\fIperl\fR\|(1),
+\&\fIperldebug\fR\|(1)
 .SH "AUTHOR"
 .IX Header "AUTHOR"
-The \f(CW\*(C`perl plugin\*(C'\fR has been written by Sebastian Harl <sh\ at\ tokkee.org>.
+The \f(CW\*(C`perl plugin\*(C'\fR has been written by Sebastian Harl
+<sh\ at\ tokkee.org>.
 .PP
-This manpage has been written by Florian Forster <octo\ at\ verplant.org>.
+This manpage has been written by Florian Forster
+<octo\ at\ verplant.org> and Sebastian Harl
+<sh\ at\ tokkee.org>.

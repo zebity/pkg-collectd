@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-EXEC 5"
-.TH COLLECTD-EXEC 5 "2007-08-26" "4.0.7" "collectd"
+.TH COLLECTD-EXEC 5 "2007-10-27" "4.2.0" "collectd"
 .SH "NAME"
 collectd\-exec \- Documentation of collectd's \f(CW\*(C`exec plugin\*(C'\fR
 .SH "SYNOPSIS"
@@ -139,8 +139,8 @@ collectd\-exec \- Documentation of collectd's \f(CW\*(C`exec plugin\*(C'\fR
 \&  LoadPlugin exec
 \&  # ...
 \&  <Plugin exec>
-\&    Exec myuser myprog
-\&    Exec otheruser /path/to/another/binary
+\&    Exec "myuser:mygroup" "myprog"
+\&    Exec "otheruser" "/path/to/another/binary"
 \&  </Plugin>
 .Ve
 .SH "DESCRIPTION"
@@ -160,27 +160,49 @@ format is as follows:
 .IP "\(bu" 4
 Each line beginning with a \f(CW\*(C`#\*(C'\fR (hash mark) is ignored.
 .IP "\(bu" 4
-Other lines must consist of an \fIIdentifier\fR and a \fIValue-List\fR, separated by
-a space. A description of these two parts follows:
+Other lines must consist of an \fIIdentifier\fR, an optional \fIOption-List\fR and a
+\&\fIValue-List\fR, separated by a spaces. A description of these two parts follows:
 .Sp
 An \fIIdentifier\fR is of the form
 \&\f(CW\*(C`\f(CIhost\f(CW\f(CB/\f(CW\f(CIplugin\f(CW\f(CB\-\f(CW\f(CIinstance\f(CW\f(CB/\f(CW\f(CItype\f(CW\f(CB\-\f(CW\f(CIinstance\f(CW\*(C'\fR with both
 \&\fIinstance\fR\-parts being optional. If they're omitted the hyphen must be
 omitted, too.
 .Sp
-A \fIValue-List\fR is a colon-separated list of values, prepended by the time
-stamp in epoch, i.\ e. the same format RRDTool uses, see \fIrrdupdate\fR\|(1).
-As with the argument passed to RRDTool you can use \fBN\fR as the current time and
-\&\fBU\fR for undefined values. However, undefined values can only passed for
-\&\fB\s-1GAUGE\s0\fR values. When setting \fBU\fR for a \fB\s-1COUNTER\s0\fR data source the behavior is
-undefined.
+The \fIOptionList\fR is an optional list of \fIOptions\fR, where each option if a
+key\-value\-pair. A list of currently understood options can be found below, all
+other options will be ignored.
+.Sp
+\&\fIValuelist\fR is a colon-separated list of the time and the values, each either
+an integer if the data-source is a counter, of a double if the data-source if
+of type \*(L"gauge\*(R". You can submit an undefined gauge-value by using \fBU\fR. When
+submitting \fBU\fR to a counter the behavior is undefined. The time is given as
+epoch (i.\ e. standard \s-1UNIX\s0 time).
+.Sp
+You can mix options and values, but the order is important: Options only
+effect following values, so specifying an option as last field is allowed, but
+useless. Also, an option applies to \fBall\fR following values, so you don't need
+to re-set an option over and over again.
+.Sp
+The currently defined \fBOptions\fR are:
+.RS 4
+.IP "\fBinterval=\fR\fIseconds\fR" 4
+.IX Item "interval=seconds"
+Gives the interval in which the data identified by \fIIdentifier\fR is being
+collected.
+.RE
+.RS 4
+.Sp
+Please note that this is the same format as used in the \fBunixsock plugin\fR, see
+\&\fIcollectd\-unixsock\fR\|(5). There's also a bit more information on identifiers in
+case you're confused.
 .Sp
 Since examples usually let one understand a lot better, here are some:
 .Sp
 .Vb 2
 \&  leeloo/cpu\-0/cpu\-idle N:2299366
-\&  alice/interface/if_octets\-eth0 1180647081:421465:479194
+\&  alice/interface/if_octets\-eth0 interval=10 1180647081:421465:479194
 .Ve
+.RE
 .PP
 When collectd exits it sends a \fB\s-1SIGTERM\s0\fR to all still running
 child-processes upon which they have to quit.

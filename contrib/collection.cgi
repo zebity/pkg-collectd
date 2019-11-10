@@ -15,11 +15,21 @@ our $Config = "/etc/collection.conf";
 our @DataDirs = ();
 our $LibDir;
 
-our @RRDDefaultArgs = ('-w', '800');
+our $ValidTimespan =
+{
+  hour => 3600,
+  day => 86400,
+  week => 7 * 86400,
+  month => 31 * 86400,
+  year => 366 * 86400
+};
+
+our @RRDDefaultArgs = ('-w', '400');
 
 our $Args = {};
 
 our $GraphDefs;
+our $MetaGraphDefs = {};
 load_graph_definitions ();
 
 for (qw(action host plugin plugin_instance type type_instance timespan))
@@ -76,128 +86,6 @@ sub read_config
 	close ($fh);
 } # read_config
 
-#sub validate_args
-#{
-#	if (!$Args->{'host'} || ($Args->{'host'} =~ m#/#)
-#		|| !$Args->{'plugin'} || ($Args->{'plugin'} =~ m#/#)
-#		|| (defined ($Args->{'plugin_instance'}) && ($Args->{'plugin_instance'} =~ m#/#))
-#		|| !$Args->{'type'} || ($Args->{'type'} =~ m#/#)
-#		|| (defined ($Args->{'type_instance'}) && ($Args->{'type_instance'} =~ m#/#)))
-#	{
-#		delete ($Args->{'host'});
-#		delete ($Args->{'plugin'});
-#		delete ($Args->{'plugin_instance'});
-#		delete ($Args->{'type'});
-#		delete ($Args->{'type_instance'});
-#	}
-#	elsif ($Args->{'type_instance'} eq '*')
-#	{
-#		my $subdir = $Args->{'host'} . '/'
-#		. $Args->{'plugin'} . (defined ($Args->{'plugin_instance'}) ? ('-' . $Args->{'plugin_instance'}) : '');
-#		my %type_instances = ();
-#		my $regex_str = '^' . quotemeta ($Args->{'type'}) . '-(.*)\.rrd';
-#		my $regex = qr/$regex_str/;
-#		my $mtime = 0;
-#
-#		for (my $i = 0; $i < @DataDirs; $i++)
-#		{
-#			my $dh;
-#			my @files = ();
-#			opendir ($dh, $DataDirs[$i] . '/' . $subdir) or next;
-#			for (readdir ($dh))
-#			{
-#				my $file = $_;
-#				if ($file =~ $regex)
-#				{
-#					my $tmp_mtime;
-#					my $type_instance = $1;
-#					my $filename = $DataDirs[$i] . '/' . $subdir . '/' . $Args->{'type'} . '-' . $type_instance . '.rrd';
-#
-#					$type_instances{$type_instance} = [] if (!exists ($type_instances{$type_instance}));
-#					$tmp_mtime = (stat ($filename))[9];
-#					next if (!$tmp_mtime);
-#
-#					push (@{$type_instances{$type_instance}}, $filename);
-#					$mtime = $tmp_mtime if ($mtime < $tmp_mtime);
-#				}
-#			}
-#			closedir ($dh);
-#		}
-#
-#		if (!keys %type_instances)
-#		{
-#			print STDOUT header (-Status => '404 File not found', -Content_Type => 'text/plain');
-#			print STDOUT <<MSG;
-#Sorry, the requested file could not be found anywhere.
-#DataDirs = ${\join ('; ', @DataDirs)}
-#subdir   = $subdir
-#MSG
-#			exit (0);
-#		}
-#
-#		$Args->{'files'} = \%type_instances;
-#		$Args->{'mtime'} = $mtime;
-#	}
-#	else
-#	{
-#		my $filename = $Args->{'host'} . '/'
-#		. $Args->{'plugin'} . (defined ($Args->{'plugin_instance'}) ? ('-' . $Args->{'plugin_instance'}) : '') . '/'
-#		. $Args->{'type'} . (defined ($Args->{'type_instance'}) ? ('-' . $Args->{'type_instance'}) : '') . '.rrd';
-#		my @files = ();
-#		my $mtime = 0;
-#
-#		for (my $i = 0; $i < @DataDirs; $i++)
-#		{
-#			my $tmp_file;
-#			my $tmp_mtime;
-#			$tmp_file = $DataDirs[$i] . '/' . $filename;
-#			next if (!-e $tmp_file);
-#			$tmp_mtime = (stat ($tmp_file))[9];
-#			next if (!$tmp_mtime);
-#
-#			push (@files, $tmp_file);
-#			$mtime = $tmp_mtime if ($mtime < $tmp_mtime);
-#		}
-#
-#		if (!@files)
-#		{
-#			print STDOUT header (-Status => '404 File not found', -Content_Type => 'text/plain');
-#			print STDOUT <<MSG;
-#Sorry, the requested file could not be found anywhere.
-#DataDirs = ${\join ('; ', @DataDirs)}
-#filename = $filename
-#MSG
-#			exit (0);
-#		}
-#		$Args->{'files'} = \@files;
-#		$Args->{'mtime'} = $mtime;
-#	}
-#
-#	if ($Args->{'timespan'})
-#	{
-#		if ($Args->{'timespan'} =~ m/^([0-9]+)$/)
-#		{
-#			$Args->{'timespan'} = (-1) * $1;
-#		}
-#		elsif ($Args->{'timespan'} =~ m/^(hour|day|week|month|year)$/)
-#		{
-#			my %map =
-#			(
-#				hour => -3600,
-#				day => -86400,
-#				week => 7 * -86400,
-#				month => 31 * -86400,
-#				year => 366 * -86400
-#			);
-#			$Args->{'timespan'} = $map{$1};
-#		}
-#		else
-#		{
-#			$Args->{'timespan'} = -86400;
-#		}
-#	}
-#} # validate_args
-
 sub validate_args
 {
 	if ($Args->{'action'} && ($Args->{'action'} =~ m/^(overview|show_host|show_plugin|show_type|show_graph)$/))
@@ -247,24 +135,61 @@ sub validate_args
 	}
 } # validate_args
 
-sub _find_hosts
 {
-  my %hosts = ();
-
-  for (my $i = 0; $i < @DataDirs; $i++)
+  my $hosts;
+  sub _find_hosts
   {
-    my @tmp;
-    my $dh;
+    if (defined ($hosts))
+    {
+      return (keys %$hosts);
+    }
 
-    opendir ($dh, $DataDirs[$i]) or next;
-    @tmp = grep { ($_ !~ m/^\./) && (-d $DataDirs[$i] . '/' . $_) } (readdir ($dh));
-    closedir ($dh);
+    $hosts = {};
 
-    $hosts{$_} = 1 for (@tmp);
-  } # for (@DataDirs)
+    for (my $i = 0; $i < @DataDirs; $i++)
+    {
+      my @tmp;
+      my $dh;
 
-  return (keys %hosts);
-} # _find_hosts
+      opendir ($dh, $DataDirs[$i]) or next;
+      @tmp = grep { ($_ !~ m/^\./) && (-d $DataDirs[$i] . '/' . $_) } (readdir ($dh));
+      closedir ($dh);
+
+      $hosts->{$_} = 1 for (@tmp);
+    } # for (@DataDirs)
+
+    return (keys %$hosts);
+  } # _find_hosts
+}
+
+sub _get_param_host
+{
+  my %all_hosts = map { $_ => 1 } (_find_hosts ());
+  my @selected_hosts = ();
+  for (param ('host'))
+  {
+    if (defined ($all_hosts{$_}))
+    {
+      push (@selected_hosts, "$_");
+    }
+  }
+  return (@selected_hosts);
+} # _get_param_host
+
+sub _get_param_timespan
+{
+  my $timespan = param ('timespan');
+
+  $timespan ||= 'day';
+  $timespan = lc ($timespan);
+
+  if (!defined ($ValidTimespan->{$timespan}))
+  {
+    $timespan = 'day';
+  }
+
+  return ($timespan);
+} # _get_param_timespan
 
 sub _find_plugins
 {
@@ -290,7 +215,7 @@ sub _find_plugins
   } # for (@DataDirs)
 
   return (%plugins);
-} # _find_hosts
+} # _find_plugins
 
 sub _find_types
 {
@@ -322,85 +247,117 @@ sub _find_types
   return (%types);
 } # _find_types
 
-# sub _find_files_plugin
-# {
-# 	my $host = shift;
-# 	my $plugin = shift;
-# 	my $plugin_instance = shift;
-# 	my $type = shift;
-# 	my $type_instance = shift;
-# 
-# 	my @plugins = ();
-# 	my %files = ();
-# 
-# 	if (!$plugin || ($plugin eq '*'))
-# 	{
-# 	}
-# 	else
-# 	{
-# 		@plugins = ($plugin);
-# 	}
-# } # _find_files_plugin
-# 
-# sub _find_files_host
-# {
-# 	my $host = shift;
-# 	my $plugin = shift;
-# 	my $plugin_instance = shift;
-# 	my $type = shift;
-# 	my $type_instance = shift;
-# 
-# 	my @hosts = ();
-# 	my %files = ();
-# 
-# 	if (!$host || ($host eq '*'))
-# 	{
-# 		my %hosts;
-# 		for (my $i = 0; $i < @DataDirs; $i++)
-# 		{
-# 			my @tmp;
-# 			my $dh;
-# 			
-# 			opendir ($dh, $DataDirs[$i]) or next;
-# 			@tmp = grep { ($_ !~ m/^\./) && (-d $_) } (readdir ($dh));
-# 			closedir ($dh);
-# 
-# 			$hosts{$_} = 1 for (@tmp);
-# 		} # for (@DataDirs)
-# 		@hosts = keys %hosts;
-# 	}
-# 	else
-# 	{
-# 		@hosts = ($host);
-# 	}
-# 
-# 	for (my $i = 0; $i < @hosts; $i++)
-# 	{
-# 		my @files = _find_files_plugin ($hosts[$i], $plugin,
-# 			$plugin_instance, $type, $type_instance);
-# 		$files{$_} = 1 for (@files);
-# 	}
-# 
-# 	return (wantarray () ? keys %files : [keys %files]);
-# } # _find_files_host
-# 
-# sub _find_files
-# {
-#   my $host = shift;
-#   my $plugin = shift;
-#   my $plugin_instance = shift;
-#   my $type = shift;
-#   my $type_instance = shift;
-# 
-#   if ($host eq '*')
-#   {
-#     my @hosts = _find_all_hosts ();
-# 
-#   for (my $i = 0; $i < @DataDirs; $i++)
-#   {
-# 
-#   } # for (i)
-# } # _find_files
+sub _find_files_for_host
+{
+  my $host = shift;
+  my $ret = {};
+
+  my %plugins = _find_plugins ($host);
+  for (keys %plugins)
+  {
+    my $plugin = $_;
+    my $plugin_instances = $plugins{$plugin};
+
+    if (!$plugin_instances || !@$plugin_instances)
+    {
+      $plugin_instances = ['-'];
+    }
+
+    $ret->{$plugin} = {};
+
+    for (@$plugin_instances)
+    {
+      my $plugin_instance = $_;
+      my %types = _find_types ($host, $plugin,
+	($plugin_instance ne '-') ? $plugin_instance : undef);
+
+      $ret->{$plugin}{$plugin_instance} = {};
+
+      for (keys %types)
+      {
+	my $type = $_;
+	my $type_instances = $types{$type};
+
+	$ret->{$plugin}{$plugin_instance}{$type} = {};
+
+	for (@$type_instances)
+	{
+	  $ret->{$plugin}{$plugin_instance}{$type}{$_} = 1;
+	}
+
+	if (!@$type_instances)
+	{
+	  $ret->{$plugin}{$plugin_instance}{$type}{'-'} = 1;
+	}
+      } # for (keys %types)
+    } # for (@$plugin_instances)
+  } # for (keys %plugins)
+
+  return ($ret);
+} # _find_files_for_host
+
+sub _find_files_for_hosts
+{
+  my @hosts = @_;
+  my $all_plugins = {};
+
+  for (my $i = 0; $i < @hosts; $i++)
+  {
+    my $tmp = _find_files_for_host ($hosts[$i]);
+    _files_union ($all_plugins, $tmp);
+  }
+
+  return ($all_plugins);
+} # _find_files_for_hosts
+
+sub _files_union
+{
+  my $dest = shift;
+  my $src = shift;
+
+  for (keys %$src)
+  {
+    my $plugin = $_;
+    $dest->{$plugin} ||= {};
+
+    for (keys %{$src->{$plugin}})
+    {
+      my $pinst = $_;
+      $dest->{$plugin}{$pinst} ||= {};
+
+      for (keys %{$src->{$plugin}{$pinst}})
+      {
+	my $type = $_;
+	$dest->{$plugin}{$pinst}{$type} ||= {};
+
+	for (keys %{$src->{$plugin}{$pinst}{$type}})
+	{
+	  my $tinst = $_;
+	  $dest->{$plugin}{$pinst}{$type}{$tinst} = 1;
+	}
+      }
+    }
+  }
+} # _files_union
+
+sub _files_plugin_inst_count
+{
+  my $src = shift;
+  my $i = 0;
+
+  for (keys %$src)
+  {
+    if (exists ($MetaGraphDefs->{$_}))
+    {
+      $i++;
+    }
+    else
+    {
+      $i = $i + keys %{$src->{$_}};
+    }
+  }
+  return ($i);
+} # _files_plugin_count
 
 sub list_hosts
 {
@@ -418,81 +375,277 @@ sub list_hosts
   print "</ul>\n";
 } # list_hosts
 
+sub _string_to_color
+{
+  my $color = shift;
+  if ($color =~ m/([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])/)
+  {
+    return ([hex ($1) / 255.0, hex ($2) / 255.0, hex ($3) / 255.0]);
+  }
+  return;
+} # _string_to_color
+
+sub _color_to_string
+{
+  confess ("Wrong number of arguments") if (@_ != 1);
+  return (sprintf ('%02hx%02hx%02hx', map { int (255.0 * $_) } @{$_[0]}));
+} # _color_to_string
+
+sub _get_random_color
+{
+  my ($r, $g, $b) = (rand (), rand ());
+  my $min = 0.0;
+  my $max = 1.0;
+
+  if (($r + $g) < 1.0)
+  {
+    $min = 1.0 - ($r + $g);
+  }
+  else
+  {
+    $max = 2.0 - ($r + $g);
+  }
+
+  $b = $min + (rand () * ($max - $min));
+
+  return ([$r, $g, $b]);
+} # _get_random_color
+
+sub _get_faded_color
+{
+  my $fg = shift;
+  my $bg;
+  my %opts = @_;
+  my $ret = [undef, undef, undef];
+
+  $opts{'background'} ||= [1.0, 1.0, 1.0];
+  $opts{'alpha'} ||= 0.25;
+
+  if (!ref ($opts{'background'}))
+  {
+    $opts{'background'} = _string_to_color ($opts{'background'})
+      or confess ("Cannot parse background color " . $opts{'background'});
+  }
+  $bg = $opts{'background'};
+
+  for (my $i = 0; $i < 3; $i++)
+  {
+    $ret->[$i] = ($opts{'alpha'} * $fg->[$i])
+       + ((1.0 - $opts{'alpha'}) * $bg->[$i]);
+  }
+
+  return ($ret);
+} # _get_faded_color
+
+sub _custom_sort_arrayref
+{
+  my $array_ref = shift;
+  my $array_sort = shift;
+
+  my %elements = map { $_ => 1 } (@$array_ref);
+  splice (@$array_ref, 0);
+
+  for (@$array_sort)
+  {
+    next if (!exists ($elements{$_}));
+    push (@$array_ref, $_);
+    delete ($elements{$_});
+  }
+  push (@$array_ref, sort (keys %elements));
+} # _custom_sort_arrayref
+
 sub action_show_host
 {
-  my $host = shift;
-  my $host_url = uri_escape ($host);
-  my %plugins = _find_plugins ($host);
+  my @hosts = _get_param_host ();
+  @hosts = sort (@hosts);
+
+  my $timespan = _get_param_timespan ();
+  my $all_plugins = _find_files_for_hosts (@hosts);
+
+  my $url_prefix = script_name () . '?action=show_plugin'
+  . join ('', map { ';host=' . uri_escape ($_) } (@hosts))
+  . ';timespan=' . uri_escape ($timespan);
 
   print qq(    <div><a href="${\script_name ()}?action=overview">Back to list of hosts</a></div>\n);
 
-  print "<ul>\n";
-  for (sort (keys %plugins))
+  print "    <p>Available plugins:</p>\n"
+  . "    <ul>\n";
+  for (sort (keys %$all_plugins))
   {
     my $plugin = $_;
     my $plugin_html = encode_entities ($plugin);
-    my $plugin_url = uri_escape ($plugin);
-
-    for (@{$plugins{$plugin}})
-    {
-      my $instance = $_;
-      my $instance_html = encode_entities ($instance);
-      my $instance_url = uri_escape ($instance);
-
-      print qq#  <li><a href="${\script_name ()}?action=show_plugin;host=$host_url;plugin=$plugin_url;plugin_instance=$instance_url">$plugin_html ($instance_html)</a></li>\n#;
-    }
-
-    if (!@{$plugins{$plugin}})
-    {
-      print qq#  <li><a href="${\script_name ()}?action=show_plugin;host=$host_url;plugin=$plugin_url">$plugin_html</a></li>\n#;
-    }
-  } # for (%plugins)
-  print "</ul>\n";
+    my $url_plugin = $url_prefix . ';plugin=' . uri_escape ($plugin);
+    print qq(      <li><a href="$url_plugin">$plugin_html</a></li>\n);
+  }
+  print "   </ul>\n";
 } # action_show_host
 
 sub action_show_plugin
 {
-  my $host = shift;
+  my @hosts = _get_param_host ();
   my $plugin = shift;
   my $plugin_instance = shift;
+  my $timespan = _get_param_timespan ();
 
-  my $host_url = uri_escape ($host);
-  my $plugin_url = uri_escape ($plugin);
-  my $plugin_instance_url = defined ($plugin_instance) ? uri_escape ($plugin_instance) : undef;
+  my $hosts_url = join (';', map { 'host=' . uri_escape ($_) } (@hosts));
+  my $url_prefix = script_name () . "?$hosts_url";
 
-  my %types = _find_types ($host, $plugin, $plugin_instance);
+  my $all_plugins = {};
+  my $plugins_per_host = {};
+  my $selected_plugins = {};
 
-  my $url_prefix = script_name () . "?host=$host_url;plugin=$plugin_url";
-  $url_prefix .= ";plugin_instance=$plugin_instance_url" if (defined ($plugin_instance));
-
-  print qq(    <div><a href="${\script_name ()}?action=show_host;host=$host_url">Back to list of plugins</a></div>\n);
-
-  for (sort (keys %types))
+  for (my $i = 0; $i < @hosts; $i++)
   {
-    my $type = $_;
-    my $type_html = encode_entities ($type);
-    my $type_url = uri_escape ($type);
+    $plugins_per_host->{$hosts[$i]} = _find_files_for_host ($hosts[$i]);
+    _files_union ($all_plugins, $plugins_per_host->{$hosts[$i]});
+  }
 
-    if (!defined ($GraphDefs->{$type}))
+  for (param ('plugin'))
+  {
+    if (defined ($all_plugins->{$_}))
     {
-      print qq#  <div><em>Unknown type &quot;$type_html&quot;</em></div>\n#;
-      next;
-    }
-
-    for (@{$types{$type}})
-    {
-      my $instance = $_;
-      my $instance_html = encode_entities ($instance);
-      my $instance_url = uri_escape ($instance);
-
-      print qq#  <div><a href="$url_prefix;type=$type_url;type_instance=$instance_url;action=show_type"><img src="$url_prefix;type=$type_url;type_instance=$instance_url;action=show_graph" /></a></div>\n#;
-    }
-
-    if (!@{$types{$type}})
-    {
-      print qq#  <div><a href="$url_prefix;type=$type_url;action=show_type"><img src="$url_prefix;type=$type_url;action=show_graph" /></a></div>\n#;
+      $selected_plugins->{$_} = 1;
     }
   }
+
+  print qq(    <div><a href="${\script_name ()}?action=show_host;$hosts_url">Back to list of plugins</a></div>\n);
+
+  # Print table header
+  print <<HTML;
+    <table class="graphs">
+      <tr>
+        <th>Plugins</th>
+HTML
+  for (@hosts)
+  {
+    print "\t<th>", encode_entities ($_), "</th>\n";
+  }
+  print "      </tr>\n";
+
+  for (sort (keys %$selected_plugins))
+  {
+    my $plugin = $_;
+    my $plugin_html = encode_entities ($plugin);
+    my $plugin_url = "$url_prefix;plugin=" . uri_escape ($plugin);
+    my $all_pinst = $all_plugins->{$plugin};
+
+    for (sort (keys %$all_pinst))
+    {
+      my $pinst = $_;
+      my $pinst_html = '';
+      my $pinst_url = $plugin_url;
+
+      if ($pinst ne '-')
+      {
+	$pinst_html = encode_entities ($pinst);
+	$pinst_url .= ';plugin_instance=' . uri_escape ($pinst);
+      }
+
+      my $files_printed = 0;
+      my $files_num = _files_plugin_inst_count ($all_pinst->{$pinst});
+      if ($files_num < 1)
+      {
+	next;
+      }
+      my $rowspan = ($files_num == 1) ? '' : qq( rowspan="$files_num");
+
+      for (sort (keys %{$all_plugins->{$plugin}{$pinst}}))
+      {
+	my $type = $_;
+	my $type_html = encode_entities ($type);
+	my $type_url = "$pinst_url;type=" . uri_escape ($type);
+
+	if ($files_printed == 0)
+	{
+	  my $title = $plugin_html;
+	  if ($pinst ne '-')
+	  {
+	    $title .= " ($pinst_html)";
+	  }
+	  print "      <tr>\n";
+	  print "\t<td$rowspan>$title</td>\n";
+	}
+
+	if (exists ($MetaGraphDefs->{$type}))
+	{
+	  my $graph_url = script_name () . '?action=show_graph'
+	  . ';plugin=' . uri_escape ($plugin)
+	  . ';type=' . uri_escape ($type)
+	  . ';timespan=' . uri_escape ($timespan);
+	  if ($pinst ne '-')
+	  {
+	    $graph_url .= ';plugin_instance=' . uri_escape ($pinst);
+	  }
+
+	  if ($files_printed != 0)
+	  {
+	    print "      <tr>\n";
+	  }
+
+	  for (@hosts)
+	  {
+	    my $host = $_;
+	    my $host_graph_url = $graph_url . ';host=' . uri_escape ($host);
+
+	    print "\t<td>";
+	    if (exists $plugins_per_host->{$host}{$plugin}{$pinst}{$type})
+	    {
+	      print qq(<img src="$host_graph_url" />);
+	      #print encode_entities (qq(<img src="${\script_name ()}?action=show_graph;host=$host_esc;$param_plugin;$param_type;timespan=$timespan" />));
+	    }
+	    print "</td>\n";
+	  } # for (my $k = 0; $k < @hosts; $k++)
+
+	  print "      </tr>\n";
+
+	  $files_printed++;
+	  next; # pinst
+	} # if (exists ($MetaGraphDefs->{$type}))
+
+	for (sort (keys %{$all_plugins->{$plugin}{$pinst}{$type}}))
+	{
+	  my $tinst = $_;
+	  my $tinst_esc = encode_entities ($tinst);
+	  my $graph_url = script_name () . '?action=show_graph'
+	  . ';plugin=' . uri_escape ($plugin)
+	  . ';type=' . uri_escape ($type)
+	  . ';timespan=' . uri_escape ($timespan);
+	  if ($pinst ne '-')
+	  {
+	    $graph_url .= ';plugin_instance=' . uri_escape ($pinst);
+	  }
+	  if ($tinst ne '-')
+	  {
+	    $graph_url .= ';type_instance=' . uri_escape ($tinst);
+	  }
+
+	  if ($files_printed != 0)
+	  {
+	    print "      <tr>\n";
+	  }
+
+	  for (my $k = 0; $k < @hosts; $k++)
+	  {
+	    my $host = $hosts[$k];
+	    my $host_graph_url = $graph_url . ';host=' . uri_escape ($host);
+
+	    print "\t<td>";
+	    if ($plugins_per_host->{$host}{$plugin}{$pinst}{$type}{$tinst})
+	    {
+	      print qq(<img src="$host_graph_url" />);
+	      #print encode_entities (qq(<img src="${\script_name ()}?action=show_graph;host=$host_esc;$param_plugin;$param_type;timespan=$timespan" />));
+	    }
+	    print "</td>\n";
+	  } # for (my $k = 0; $k < @hosts; $k++)
+
+	  print "      </tr>\n";
+
+	  $files_printed++;
+	} # for ($tinst)
+      } # for ($type)
+    } # for ($pinst)
+  } # for ($plugin)
+  print "   </table>\n";
 } # action_show_plugin
 
 sub action_show_type
@@ -543,6 +696,13 @@ sub action_show_graph
 
   #print STDERR Data::Dumper->Dump ([$Args], ['Args']);
 
+  # FIXME
+  if (exists ($MetaGraphDefs->{$type}))
+  {
+    my %types = _find_types ($host, $plugin, $plugin_instance);
+    return $MetaGraphDefs->{$type}->($host, $plugin, $plugin_instance, $type, $types{$type});
+  }
+
   return if (!defined ($GraphDefs->{$type}));
   @rrd_args = @{$GraphDefs->{$type}};
 
@@ -554,6 +714,7 @@ sub action_show_graph
     my $file = $DataDirs[$i] . "/$title.rrd";
     next if (!-f $file);
 
+    $file =~ s/:/\\:/g;
     s/{file}/$file/ for (@rrd_args);
 
     RRDs::graph ('-', '-a', 'PNG', '-s', $start_time, '-t', $title, @RRDDefaultArgs, @rrd_args);
@@ -563,6 +724,62 @@ sub action_show_graph
     }
   }
 } # action_show_graph
+
+sub print_selector
+{
+  my @hosts = _find_hosts ();
+  @hosts = sort (@hosts);
+
+  my %selected_hosts = map { $_ => 1 } (_get_param_host ());
+  my $timespan_selected = _get_param_timespan ();
+
+  print <<HTML;
+    <form action="${\script_name ()}" method="get">
+      <fieldset>
+	<legend>Selector</legend>
+	<select name="host" multiple="multiple" size="10">
+HTML
+  for (my $i = 0; $i < @hosts; $i++)
+  {
+    my $host = encode_entities ($hosts[$i]);
+    my $selected = defined ($selected_hosts{$hosts[$i]}) ? ' selected="selected"' : '';
+    print qq(\t  <option value="$host"$selected>$host</option>\n);
+  }
+  print "\t</select>\n";
+
+  if (keys %selected_hosts)
+  {
+    my $all_plugins = _find_files_for_hosts (keys %selected_hosts);
+    my %selected_plugins = map { $_ => 1 } (param ('plugin'));
+
+    print qq(\t<select name="plugin" multiple="multiple" size="10">\n);
+    for (sort (keys %$all_plugins))
+    {
+      my $plugin = $_;
+      my $plugin_html = encode_entities ($plugin);
+      my $selected = (defined ($selected_plugins{$plugin})
+	? ' selected="selected"' : '');
+      print qq(\t  <option value="$plugin_html"$selected>$plugin</option>\n);
+    }
+    print "</select>\n";
+  } # if (keys %selected_hosts)
+
+  print qq(\t<select name="timespan">\n);
+  for (qw(Hour Day Week Month Year))
+  {
+    my $timespan_uc = $_;
+    my $timespan_lc = lc ($_);
+    my $selected = ($timespan_selected eq $timespan_lc)
+      ? ' selected="selected"' : '';
+    print qq(\t  <option value="$timespan_lc"$selected>$timespan_uc</option>\n);
+  }
+  print <<HTML;
+	</select>
+	<input type="submit" name="button" value="Ok" />
+      </fieldset>
+    </form>
+HTML
+}
 
 sub print_header
 {
@@ -582,11 +799,22 @@ Cache-Control: no-cache
       {
 	border: none;
       }
+      table.graphs
+      {
+	border-collapse: collapse;
+      }
+      table.graphs td,
+      table.graphs th
+      {
+	border: 1px solid black;
+	empty-cells: hide;
+      }
     </style>
   </head>
 
   <body>
 HEAD
+  print_selector ();
 } # print_header
 
 sub print_footer
@@ -627,8 +855,7 @@ sub main
 	}
 	elsif (!$Args->{'type'})
 	{
-	  action_show_plugin ($Args->{'host'},
-	    $Args->{'plugin'}, $Args->{'plugin_instance'});
+	  action_show_plugin ($Args->{'plugin'}, $Args->{'plugin_instance'});
 	}
 	else
 	{
@@ -705,10 +932,22 @@ sub load_graph_definitions
     'GPRINT:max:MAX:%6.2lf Max,',
     'GPRINT:avg:LAST:%6.2lf Last'
     ],
-    charge => [
-    'DEF:avg={file}:charge:AVERAGE',
-    'DEF:min={file}:charge:MIN',
-    'DEF:max={file}:charge:MAX',
+    bitrate => ['-v', 'Bits/s',
+    'DEF:avg={file}:value:AVERAGE',
+    'DEF:min={file}:value:MIN',
+    'DEF:max={file}:value:MAX',
+    "AREA:max#$HalfBlue",
+    "AREA:min#$Canvas",
+    "LINE1:avg#$FullBlue:Bits/s",
+    'GPRINT:min:MIN:%5.1lf%s Min,',
+    'GPRINT:avg:AVERAGE:%5.1lf%s Average,',
+    'GPRINT:max:MAX:%5.1lf%s Max,',
+    'GPRINT:avg:LAST:%5.1lf%s Last\l'
+    ],
+    charge => ['-v', 'Ah',
+    'DEF:avg={file}:value:AVERAGE',
+    'DEF:min={file}:value:MIN',
+    'DEF:max={file}:value:MAX',
     "AREA:max#$HalfBlue",
     "AREA:min#$Canvas",
     "LINE1:avg#$FullBlue:Charge",
@@ -716,18 +955,6 @@ sub load_graph_definitions
     'GPRINT:avg:AVERAGE:%5.1lf%sAh Avg,',
     'GPRINT:max:MAX:%5.1lf%sAh Max,',
     'GPRINT:avg:LAST:%5.1lf%sAh Last\l'
-    ],
-    charge_percent => [
-    'DEF:avg={file}:percent:AVERAGE',
-    'DEF:min={file}:percent:MIN',
-    'DEF:max={file}:percent:MAX',
-    "AREA:max#$HalfBlue",
-    "AREA:min#$Canvas",
-    "LINE1:avg#$FullBlue:Charge",
-    'GPRINT:min:MIN:%5.1lf%s%% Min,',
-    'GPRINT:avg:AVERAGE:%5.1lf%s%% Avg,',
-    'GPRINT:max:MAX:%5.1lf%s%% Max,',
-    'GPRINT:avg:LAST:%5.1lf%s%% Last\l'
     ],
     cpu => ['-v', 'CPU load',
     'DEF:avg={file}:value:AVERAGE',
@@ -741,10 +968,10 @@ sub load_graph_definitions
     'GPRINT:max:MAX:%6.2lf%% Max,',
     'GPRINT:avg:LAST:%6.2lf%% Last\l'
     ],
-    current => [
-    'DEF:avg={file}:current:AVERAGE',
-    'DEF:min={file}:current:MIN',
-    'DEF:max={file}:current:MAX',
+    current => ['-v', 'Ampere',
+    'DEF:avg={file}:value:AVERAGE',
+    'DEF:min={file}:value:MIN',
+    'DEF:max={file}:value:MAX',
     "AREA:max#$HalfBlue",
     "AREA:min#$Canvas",
     "LINE1:avg#$FullBlue:Current",
@@ -753,7 +980,7 @@ sub load_graph_definitions
     'GPRINT:max:MAX:%5.1lf%sA Max,',
     'GPRINT:avg:LAST:%5.1lf%sA Last\l'
     ],
-    df => ['-v', 'Percent',
+    df => ['-v', 'Percent', '-l', '0',
     'DEF:free_avg={file}:free:AVERAGE',
     'DEF:free_min={file}:free:MIN',
     'DEF:free_max={file}:free:MAX',
@@ -942,10 +1169,10 @@ sub load_graph_definitions
     'GPRINT:qry_avg:LAST:%5.1lf%s Last',
     'GPRINT:qry_avg_sum:LAST:(ca. %5.1lf%sB Total)\l'
     ],
-    email => [
-    'DEF:avg={file}:count:AVERAGE',
-    'DEF:min={file}:count:MIN',
-    'DEF:max={file}:count:MAX',
+    email_count => ['-v', 'Mails',
+    'DEF:avg={file}:value:AVERAGE',
+    'DEF:min={file}:value:MIN',
+    'DEF:max={file}:value:MAX',
     "AREA:max#$HalfMagenta",
     "AREA:min#$Canvas",
     "LINE1:avg#$FullMagenta:Count ",
@@ -954,10 +1181,10 @@ sub load_graph_definitions
     'GPRINT:max:MAX:%4.1lf Max,',
     'GPRINT:avg:LAST:%4.1lf Last\l'
     ],
-    email_size => [
-    'DEF:avg={file}:size:AVERAGE',
-    'DEF:min={file}:size:MIN',
-    'DEF:max={file}:size:MAX',
+    email_size => ['-v', 'Bytes',
+    'DEF:avg={file}:value:AVERAGE',
+    'DEF:min={file}:value:MIN',
+    'DEF:max={file}:value:MAX',
     "AREA:max#$HalfMagenta",
     "AREA:min#$Canvas",
     "LINE1:avg#$FullMagenta:Count ",
@@ -990,7 +1217,8 @@ sub load_graph_definitions
     'GPRINT:max:MAX:%4.1lf Max,',
     'GPRINT:avg:LAST:%4.1lf Last\l'
     ],
-    entropy => ['DEF:avg={file}:entropy:AVERAGE',
+    entropy => ['-v', 'Bits',
+    'DEF:avg={file}:entropy:AVERAGE',
     'DEF:min={file}:entropy:MIN',
     'DEF:max={file}:entropy:MAX',
     "AREA:max#$HalfBlue",
@@ -1091,6 +1319,51 @@ sub load_graph_definitions
     'GPRINT:rx_avg:LAST:%5.1lf%s Last',
     'GPRINT:rx_avg_sum:LAST:(ca. %4.0lf%s Total)\l'
     ],
+    if_collisions => ['-v', 'Collisions/s',
+    'DEF:min_raw={file}:value:MIN',
+    'DEF:avg_raw={file}:value:AVERAGE',
+    'DEF:max_raw={file}:value:MAX',
+    'CDEF:min=min_raw,8,*',
+    'CDEF:avg=avg_raw,8,*',
+    'CDEF:max=max_raw,8,*',
+    "AREA:max#$HalfBlue",
+    "AREA:min#$Canvas",
+    "LINE1:avg#$FullBlue:Collisions/s",
+    'GPRINT:min:MIN:%5.1lf %s Min,',
+    'GPRINT:avg:AVERAGE:%5.1lf%s Avg,',
+    'GPRINT:max:MAX:%5.1lf%s Max,',
+    'GPRINT:avg:LAST:%5.1lf%s Last\l'
+    ],
+    if_dropped => ['-v', 'Packets/s',
+    'DEF:tx_min={file}:tx:MIN',
+    'DEF:tx_avg={file}:tx:AVERAGE',
+    'DEF:tx_max={file}:tx:MAX',
+    'DEF:rx_min={file}:rx:MIN',
+    'DEF:rx_avg={file}:rx:AVERAGE',
+    'DEF:rx_max={file}:rx:MAX',
+    'CDEF:overlap=tx_avg,rx_avg,GT,rx_avg,tx_avg,IF',
+    'CDEF:mytime=tx_avg,TIME,TIME,IF',
+    'CDEF:sample_len_raw=mytime,PREV(mytime),-',
+    'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
+    'CDEF:tx_avg_sample=tx_avg,UN,0,tx_avg,IF,sample_len,*',
+    'CDEF:tx_avg_sum=PREV,UN,0,PREV,IF,tx_avg_sample,+',
+    'CDEF:rx_avg_sample=rx_avg,UN,0,rx_avg,IF,sample_len,*',
+    'CDEF:rx_avg_sum=PREV,UN,0,PREV,IF,rx_avg_sample,+',
+    "AREA:tx_avg#$HalfGreen",
+    "AREA:rx_avg#$HalfBlue",
+    "AREA:overlap#$HalfBlueGreen",
+    "LINE1:tx_avg#$FullGreen:TX",
+    'GPRINT:tx_avg:AVERAGE:%5.1lf%s Avg,',
+    'GPRINT:tx_max:MAX:%5.1lf%s Max,',
+    'GPRINT:tx_avg:LAST:%5.1lf%s Last',
+    'GPRINT:tx_avg_sum:LAST:(ca. %4.0lf%s Total)\l',
+    "LINE1:rx_avg#$FullBlue:RX",
+    #'GPRINT:rx_min:MIN:%5.1lf %s Min,',
+    'GPRINT:rx_avg:AVERAGE:%5.1lf%s Avg,',
+    'GPRINT:rx_max:MAX:%5.1lf%s Max,',
+    'GPRINT:rx_avg:LAST:%5.1lf%s Last',
+    'GPRINT:rx_avg_sum:LAST:(ca. %4.0lf%s Total)\l'
+    ],
     if_packets => ['-v', 'Packets/s',
     'DEF:tx_min={file}:tx:MIN',
     'DEF:tx_avg={file}:tx:AVERAGE',
@@ -1120,6 +1393,22 @@ sub load_graph_definitions
     'GPRINT:rx_max:MAX:%5.1lf%s Max,',
     'GPRINT:rx_avg:LAST:%5.1lf%s Last',
     'GPRINT:rx_avg_sum:LAST:(ca. %4.0lf%s Total)\l'
+    ],
+    if_rx_errors => ['-v', 'Errors/s',
+    'DEF:min={file}:value:MIN',
+    'DEF:avg={file}:value:AVERAGE',
+    'DEF:max={file}:value:MAX',
+    'CDEF:mytime=avg,TIME,TIME,IF',
+    'CDEF:sample_len_raw=mytime,PREV(mytime),-',
+    'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
+    'CDEF:avg_sample=avg,UN,0,avg,IF,sample_len,*',
+    'CDEF:avg_sum=PREV,UN,0,PREV,IF,avg_sample,+',
+    "AREA:avg#$HalfBlue",
+    "LINE1:avg#$FullBlue:Errors/s",
+    'GPRINT:avg:AVERAGE:%3.1lf%s Avg,',
+    'GPRINT:max:MAX:%3.1lf%s Max,',
+    'GPRINT:avg:LAST:%3.1lf%s Last',
+    'GPRINT:avg_sum:LAST:(ca. %2.0lf%s Total)\l'
     ],
     ipt_bytes => ['-v', 'Bits/s',
     'DEF:min_raw={file}:value:MIN',
@@ -1169,7 +1458,8 @@ sub load_graph_definitions
     'GPRINT:max:MAX:%6.2lf Max,',
     'GPRINT:avg:LAST:%6.2lf Last\l'
     ],
-    load => ['DEF:s_avg={file}:shortterm:AVERAGE',
+    load => ['-v', 'System load',
+    'DEF:s_avg={file}:shortterm:AVERAGE',
     'DEF:s_min={file}:shortterm:MIN',
     'DEF:s_max={file}:shortterm:MAX',
     'DEF:m_avg={file}:midterm:AVERAGE',
@@ -1286,7 +1576,7 @@ sub load_graph_definitions
     "DEF:val_max={file}:value:MAX",
     "AREA:val_max#$HalfBlue",
     "AREA:val_min#$Canvas",
-    "LINE1:val_avg#$FullBlue:{inst}",
+    "LINE1:val_avg#$FullBlue:Issues/s",
     'GPRINT:val_min:MIN:%5.2lf Min,',
     'GPRINT:val_avg:AVERAGE:%5.2lf Avg,',
     'GPRINT:val_max:MAX:%5.2lf Max,',
@@ -1298,20 +1588,19 @@ sub load_graph_definitions
     "DEF:val_max={file}:value:MAX",
     "AREA:val_max#$HalfBlue",
     "AREA:val_min#$Canvas",
-    "LINE1:val_avg#$FullBlue:{inst}",
+    "LINE1:val_avg#$FullBlue:Issues/s",
     'GPRINT:val_min:MIN:%5.2lf Min,',
     'GPRINT:val_avg:AVERAGE:%5.2lf Avg,',
     'GPRINT:val_max:MAX:%5.2lf Max,',
     'GPRINT:val_avg:LAST:%5.2lf Last'
     ],
-    mysql_octets => ['-v', 'Bytes/s',
+    mysql_octets => ['-v', 'Bits/s',
     'DEF:out_min={file}:tx:MIN',
     'DEF:out_avg={file}:tx:AVERAGE',
     'DEF:out_max={file}:tx:MAX',
     'DEF:inc_min={file}:rx:MIN',
     'DEF:inc_avg={file}:rx:AVERAGE',
     'DEF:inc_max={file}:rx:MAX',
-    'CDEF:overlap=out_avg,inc_avg,GT,inc_avg,out_avg,IF',
     'CDEF:mytime=out_avg,TIME,TIME,IF',
     'CDEF:sample_len_raw=mytime,PREV(mytime),-',
     'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
@@ -1319,18 +1608,25 @@ sub load_graph_definitions
     'CDEF:out_avg_sum=PREV,UN,0,PREV,IF,out_avg_sample,+',
     'CDEF:inc_avg_sample=inc_avg,UN,0,inc_avg,IF,sample_len,*',
     'CDEF:inc_avg_sum=PREV,UN,0,PREV,IF,inc_avg_sample,+',
-    "AREA:out_avg#$HalfGreen",
-    "AREA:inc_avg#$HalfBlue",
+    'CDEF:out_bit_min=out_min,8,*',
+    'CDEF:out_bit_avg=out_avg,8,*',
+    'CDEF:out_bit_max=out_max,8,*',
+    'CDEF:inc_bit_min=inc_min,8,*',
+    'CDEF:inc_bit_avg=inc_avg,8,*',
+    'CDEF:inc_bit_max=inc_max,8,*',
+    'CDEF:overlap=out_bit_avg,inc_bit_avg,GT,inc_bit_avg,out_bit_avg,IF',
+    "AREA:out_bit_avg#$HalfGreen",
+    "AREA:inc_bit_avg#$HalfBlue",
     "AREA:overlap#$HalfBlueGreen",
-    "LINE1:out_avg#$FullGreen:Written",
-    'GPRINT:out_avg:AVERAGE:%5.1lf%s Avg,',
-    'GPRINT:out_max:MAX:%5.1lf%s Max,',
-    'GPRINT:out_avg:LAST:%5.1lf%s Last',
+    "LINE1:out_bit_avg#$FullGreen:Written",
+    'GPRINT:out_bit_avg:AVERAGE:%5.1lf%s Avg,',
+    'GPRINT:out_bit_max:MAX:%5.1lf%s Max,',
+    'GPRINT:out_bit_avg:LAST:%5.1lf%s Last',
     'GPRINT:out_avg_sum:LAST:(ca. %5.1lf%sB Total)\l',
-    "LINE1:inc_avg#$FullBlue:Read   ",
-    'GPRINT:inc_avg:AVERAGE:%5.1lf%s Avg,',
-    'GPRINT:inc_max:MAX:%5.1lf%s Max,',
-    'GPRINT:inc_avg:LAST:%5.1lf%s Last',
+    "LINE1:inc_bit_avg#$FullBlue:Read   ",
+    'GPRINT:inc_bit_avg:AVERAGE:%5.1lf%s Avg,',
+    'GPRINT:inc_bit_max:MAX:%5.1lf%s Max,',
+    'GPRINT:inc_bit_avg:LAST:%5.1lf%s Last',
     'GPRINT:inc_avg_sum:LAST:(ca. %5.1lf%sB Total)\l'
     ],
     mysql_qcache => ['-v', 'Queries/s',
@@ -1774,7 +2070,7 @@ sub load_graph_definitions
     'GPRINT:max:MAX:%6.2lf%sByte Max,',
     'GPRINT:avg:LAST:%6.2lf%sByte Last\l'
     ],
-    ols_swap => [
+    old_swap => [
     'DEF:used_avg={file}:used:AVERAGE',
     'DEF:used_min={file}:used:MIN',
     'DEF:used_max={file}:used:MAX',
@@ -1818,10 +2114,23 @@ sub load_graph_definitions
     'GPRINT:used_max:MAX:%5.1lf%s Max,',
     'GPRINT:used_avg:LAST:%5.1lf%s Last\l'
     ],
+    tcp_connections => ['-v', 'Connections',
+    'DEF:avg={file}:value:AVERAGE',
+    'DEF:min={file}:value:MIN',
+    'DEF:max={file}:value:MAX',
+    "AREA:max#$HalfBlue",
+    "AREA:min#$Canvas",
+    "LINE1:avg#$FullBlue:Connections",
+    'GPRINT:min:MIN:%4.1lf Min,',
+    'GPRINT:avg:AVERAGE:%4.1lf Avg,',
+    'GPRINT:max:MAX:%4.1lf Max,',
+    'GPRINT:avg:LAST:%4.1lf Last\l'
+    ],
     temperature => ['-v', 'Celsius',
     'DEF:temp_avg={file}:value:AVERAGE',
     'DEF:temp_min={file}:value:MIN',
     'DEF:temp_max={file}:value:MAX',
+    'CDEF:average=temp_avg,0.2,*,PREV,UN,temp_avg,PREV,IF,0.8,*,+',
     "AREA:temp_max#$HalfRed",
     "AREA:temp_min#$Canvas",
     "LINE1:temp_avg#$FullRed:Temperature",
@@ -1854,7 +2163,7 @@ sub load_graph_definitions
     'GPRINT:s_max:MAX:%7.3lf%s Max,',
     'GPRINT:s_avg:LAST:%7.3lf%s Last'
     ],
-    if_octets => ['-v', 'Bits/s',
+    if_octets => ['-v', 'Bits/s', '-l', '0',
     'DEF:out_min_raw={file}:tx:MIN',
     'DEF:out_avg_raw={file}:tx:AVERAGE',
     'DEF:out_max_raw={file}:tx:MAX',
@@ -2019,5 +2328,556 @@ sub load_graph_definitions
     'GPRINT:proc_avg:LAST:%4.1lf Last\l'
     ],
   };
+  $GraphDefs->{'if_multicast'} = $GraphDefs->{'ipt_packets'};
+  $GraphDefs->{'if_tx_errors'} = $GraphDefs->{'if_rx_errors'};
+
+  $MetaGraphDefs->{'cpu'} = \&meta_graph_cpu;
+  $MetaGraphDefs->{'if_rx_errors'} = \&meta_graph_if_rx_errors;
+  $MetaGraphDefs->{'if_tx_errors'} = \&meta_graph_if_rx_errors;
+  $MetaGraphDefs->{'memory'} = \&meta_graph_memory;
+  $MetaGraphDefs->{'nfs_procedure'} = \&meta_graph_nfs_procedure;
+  $MetaGraphDefs->{'ps_state'} = \&meta_graph_ps_state;
+  $MetaGraphDefs->{'swap'} = \&meta_graph_swap;
+  $MetaGraphDefs->{'mysql_commands'} = \&meta_graph_mysql_commands;
+  $MetaGraphDefs->{'mysql_handler'} = \&meta_graph_mysql_commands;
+  $MetaGraphDefs->{'tcp_connections'} = \&meta_graph_tcp_connections;
 } # load_graph_definitions
+
+sub meta_graph_generic_stack
+{
+  confess ("Wrong number of arguments") if (@_ != 2);
+
+  my $opts = shift;
+  my $sources = shift;
+  my $i;
+
+  my $timespan_str = _get_param_timespan ();
+  my $timespan_int = (-1) * $ValidTimespan->{$timespan_str};
+
+  $opts->{'title'} ||= 'Unknown title';
+  $opts->{'rrd_opts'} ||= [];
+  $opts->{'colors'} ||= {};
+
+  my @cmd = ('-', '-a', 'PNG', '-s', $timespan_int,
+    '-t', $opts->{'title'} || 'Unknown title',
+    @RRDDefaultArgs, @{$opts->{'rrd_opts'}});
+
+  my $max_inst_name = 0;
+
+  for ($i = 0; $i < @$sources; $i++)
+  {
+    my $inst_data = $sources->[$i];
+    my $inst_name = $inst_data->{'name'} || confess;
+    my $file = $inst_data->{'file'} || confess;
+
+    if (length ($inst_name) > $max_inst_name)
+    {
+      $max_inst_name = length ($inst_name);
+    }
+
+    confess ("No such file: $file") if (!-e $file);
+
+    push (@cmd,
+      qq#DEF:${inst_name}_min=$file:value:MIN#,
+      qq#DEF:${inst_name}_avg=$file:value:AVERAGE#,
+      qq#DEF:${inst_name}_max=$file:value:MAX#,
+      qq#CDEF:${inst_name}_nnl=${inst_name}_avg,UN,0,${inst_name}_avg,IF#);
+  }
+
+  {
+    my $inst_data = $sources->[@$sources - 1];
+    my $inst_name = $inst_data->{'name'};
+
+    push (@cmd, qq#CDEF:${inst_name}_stk=${inst_name}_nnl#);
+  }
+  for (my $i = 1; $i < @$sources; $i++)
+  {
+    my $inst_data0 = $sources->[@$sources - ($i + 1)];
+    my $inst_data1 = $sources->[@$sources - $i];
+
+    my $inst_name0 = $inst_data0->{'name'};
+    my $inst_name1 = $inst_data1->{'name'};
+
+    push (@cmd, qq#CDEF:${inst_name0}_stk=${inst_name0}_nnl,${inst_name1}_stk,+#);
+  }
+
+  for (my $i = 0; $i < @$sources; $i++)
+  {
+    my $inst_data = $sources->[$i];
+    my $inst_name = $inst_data->{'name'};
+
+    my $legend = sprintf ('%-*s', $max_inst_name, $inst_name);
+
+    my $line_color;
+    my $area_color;
+
+    my $number_format = $opts->{'number_format'} || '%6.1lf';
+
+    if (exists ($opts->{'colors'}{$inst_name}))
+    {
+      $line_color = $opts->{'colors'}{$inst_name};
+      $area_color = _string_to_color ($line_color);
+    }
+    else
+    {
+      $area_color = _get_random_color ();
+      $line_color = _color_to_string ($area_color);
+    }
+    $area_color = _color_to_string (_get_faded_color ($area_color));
+
+    push (@cmd, qq(AREA:${inst_name}_stk#$area_color),
+      qq(LINE1:${inst_name}_stk#$line_color:$legend),
+      qq(GPRINT:${inst_name}_min:MIN:$number_format Min,),
+      qq(GPRINT:${inst_name}_avg:AVERAGE:$number_format Avg,),
+      qq(GPRINT:${inst_name}_max:MAX:$number_format Max,),
+      qq(GPRINT:${inst_name}_avg:LAST:$number_format Last\\l),
+    );
+  }
+
+  RRDs::graph (@cmd);
+  if (my $errmsg = RRDs::error ())
+  {
+    confess ("RRDs::graph: $errmsg");
+  }
+} # meta_graph_generic_stack
+
+sub meta_graph_cpu
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+
+  my @files = ();
+
+  $opts->{'colors'} =
+  {
+    'idle'      => 'ffffff',
+    'nice'      => '00e000',
+    'user'      => '0000ff',
+    'wait'      => 'ffb000',
+    'system'    => 'ff0000',
+    'softirq'   => 'ff00ff',
+    'interrupt' => 'a000a0',
+    'steal'     => '000000'
+  };
+
+  _custom_sort_arrayref ($type_instances,
+    [qw(idle nice user wait system softirq interrupt steal)]);
+
+  for (@$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => $inst,
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_cpu
+
+sub meta_graph_memory
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+  $opts->{'number_format'} = '%5.1lf%s';
+
+  $opts->{'rrd_opts'} = ['-b', '1024', '-v', 'Bytes'];
+
+  my @files = ();
+
+  $opts->{'colors'} =
+  {
+    'free'     => '00e000',
+    'cached'   => '0000ff',
+    'buffered' => 'ffb000',
+    'used'     => 'ff0000'
+  };
+
+  _custom_sort_arrayref ($type_instances,
+    [qw(free cached buffered used)]);
+
+  for (@$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => $inst,
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_cpu
+
+sub meta_graph_if_rx_errors
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+  $opts->{'number_format'} = '%5.2lf';
+  $opts->{'rrd_opts'} = ['-v', 'Errors/s'];
+
+  my @files = ();
+
+  for (sort @$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => $inst,
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_if_rx_errors
+
+sub meta_graph_mysql_commands
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+  $opts->{'number_format'} = '%5.2lf';
+
+  my @files = ();
+
+  for (sort @$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => $inst,
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_mysql_commands
+
+sub meta_graph_nfs_procedure
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+  $opts->{'number_format'} = '%5.1lf%s';
+
+  my @files = ();
+
+  for (sort @$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => $inst,
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_nfs_procedure
+
+sub meta_graph_ps_state
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+
+  my @files = ();
+
+  $opts->{'colors'} =
+  {
+    'Running'      => '00e000',
+    'Sleeping'  => '0000ff',
+    'Paging'      => 'ffb000',
+    'Zombies'   => 'ff0000',
+    'Blocked'   => 'ff00ff',
+    'Stopped' => 'a000a0'
+  };
+
+  _custom_sort_arrayref ($type_instances,
+    [qw(paging blocked zombies stopped running sleeping)]);
+
+  for (@$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => ucfirst ($inst),
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_ps_state
+
+sub meta_graph_swap
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+  $opts->{'number_format'} = '%5.1lf%s';
+
+  my @files = ();
+
+  $opts->{'colors'} =
+  {
+    'Free'     => '00e000',
+    'Cached'   => '0000ff',
+    'Reserved' => 'ffb000',
+    'Used'     => 'ff0000'
+  };
+
+  _custom_sort_arrayref ($type_instances,
+    [qw(free cached reserved used)]);
+
+  for (@$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => ucfirst ($inst),
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_swap
+
+sub meta_graph_tcp_connections
+{
+  confess ("Wrong number of arguments") if (@_ != 5);
+
+  my $host = shift;
+  my $plugin = shift;
+  my $plugin_instance = shift;
+  my $type = shift;
+  my $type_instances = shift;
+
+  my $opts = {};
+  my $sources = [];
+
+  $opts->{'title'} = "$host/$plugin"
+  . (defined ($plugin_instance) ? "-$plugin_instance" : '') . "/$type";
+  $opts->{'number_format'} = '%6.2lf';
+
+  $opts->{'rrd_opts'} = ['-v', 'Connections'];
+
+  my @files = ();
+
+  $opts->{'colors'} =
+  {
+    ESTABLISHED	  => '00e000',
+    SYN_SENT	  => '00e0ff',
+    SYN_RECV	  => '00e0a0',
+    FIN_WAIT1	  => 'f000f0',
+    FIN_WAIT2	  => 'f000a0',
+    TIME_WAIT	  => 'ffb000',
+    CLOSE	  => '0000f0',
+    CLOSE_WAIT	  => '0000a0',
+    LAST_ACK	  => '000080',
+    LISTEN	  => 'ff0000',
+    CLOSING	  => '000000'
+  };
+
+  _custom_sort_arrayref ($type_instances,
+    [qw(ESTABLISHED SYN_SENT SYN_RECV FIN_WAIT1 FIN_WAIT2 TIME_WAIT CLOSE
+    CLOSE_WAIT LAST_ACK CLOSING LISTEN)]);
+
+  for (@$type_instances)
+  {
+    my $inst = $_;
+    my $file = '';
+    my $title = $opts->{'title'};
+
+    for (@DataDirs)
+    {
+      if (-e "$_/$title-$inst.rrd")
+      {
+	$file = "$_/$title-$inst.rrd";
+	last;
+      }
+    }
+    confess ("No file found for $title") if ($file eq '');
+
+    push (@$sources,
+      {
+	name => $inst,
+	file => $file
+      }
+    );
+  } # for (@$type_instances)
+
+  return (meta_graph_generic_stack ($opts, $sources));
+} # meta_graph_tcp_connections
 # vim: shiftwidth=2:softtabstop=2:tabstop=8

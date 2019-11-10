@@ -153,9 +153,6 @@
 # include <kstat.h>
 #endif
 
-#if HAVE_RRD_H
-# include <rrd.h>
-#endif
 #if HAVE_PTH_H
 # include <pth.h>
 #endif
@@ -180,6 +177,10 @@
 
 #ifndef CONFIGFILE
 #define CONFIGFILE SYSCONFDIR"/collectd.conf"
+#endif
+
+#ifndef LOCALSTATEDIR
+#define LOCALSTATEDIR PREFIX "/var"
 #endif
 
 #ifndef PKGLOCALSTATEDIR

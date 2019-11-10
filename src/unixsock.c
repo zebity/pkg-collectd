@@ -23,6 +23,7 @@
 #include "common.h"
 #include "plugin.h"
 #include "configfile.h"
+#include "utils_cmd_putval.h"
 
 /* Folks without pthread will need to disable this plugin. */
 #include <pthread.h>
@@ -36,7 +37,7 @@
 # define UNIX_PATH_MAX sizeof (((struct sockaddr_un *)0)->sun_path)
 #endif
 
-#define US_DEFAULT_PATH PREFIX"/var/run/"PACKAGE_NAME"-unixsock"
+#define US_DEFAULT_PATH LOCALSTATEDIR"/run/"PACKAGE_NAME"-unixsock"
 
 /*
  * Private data structures
@@ -329,7 +330,7 @@ static void cache_flush (int max_age)
 	} /* while (this != NULL) */
 
 	pthread_mutex_unlock (&cache_lock);
-} /* int cache_flush */
+} /* void cache_flush */
 
 static int us_open_socket (void)
 {
@@ -351,12 +352,13 @@ static int us_open_socket (void)
 			sizeof (sa.sun_path) - 1);
 	/* unlink (sa.sun_path); */
 
+	DEBUG ("unixsock plugin: socket path = %s", sa.sun_path);
+
 	status = bind (sock_fd, (struct sockaddr *) &sa, sizeof (sa));
 	if (status != 0)
 	{
 		char errbuf[1024];
 		sstrerror (errno, errbuf, sizeof (errbuf));
-		DEBUG ("bind failed: %s; sa.sun_path = %s", errbuf, sa.sun_path);
 		ERROR ("unixsock plugin: bind failed: %s", errbuf);
 		close (sock_fd);
 		sock_fd = -1;
@@ -487,148 +489,55 @@ static int us_handle_getval (FILE *fh, char **fields, int fields_num)
 	return (0);
 } /* int us_handle_getval */
 
-static int us_handle_putval (FILE *fh, char **fields, int fields_num)
+static int us_handle_listval (FILE *fh, char **fields, int fields_num)
 {
-	char *hostname;
-	char *plugin;
-	char *plugin_instance;
-	char *type;
-	char *type_instance;
-	int   status;
-	int   i;
+	char buffer[1024];
+	char **value_list = NULL;
+	int value_list_len = 0;
+	value_cache_t *entry;
+	int i;
 
-	const data_set_t *ds;
-	value_list_t vl = VALUE_LIST_INIT;
-
-	char **value_ptr;
-
-	if (fields_num != 3)
+	if (fields_num != 1)
 	{
-		DEBUG ("unixsock plugin: Wrong number of fields: %i", fields_num);
-		fprintf (fh, "-1 Wrong number of fields: Got %i, expected 3.\n",
+		DEBUG ("unixsock plugin: us_handle_listval: "
+				"Wrong number of fields: %i", fields_num);
+		fprintf (fh, "-1 Wrong number of fields: Got %i, expected 1.\n",
 				fields_num);
 		fflush (fh);
 		return (-1);
 	}
 
-	status = parse_identifier (fields[1], &hostname,
-			&plugin, &plugin_instance,
-			&type, &type_instance);
-	if (status != 0)
+	pthread_mutex_lock (&cache_lock);
+
+	for (entry = cache_head; entry != NULL; entry = entry->next)
 	{
-		DEBUG ("unixsock plugin: Cannot parse `%s'", fields[1]);
-		fprintf (fh, "-1 Cannot parse identifier.\n");
-		fflush (fh);
-		return (-1);
-	}
+		char **tmp;
 
-	if ((strlen (hostname) >= sizeof (vl.host))
-			|| (strlen (plugin) >= sizeof (vl.plugin))
-			|| ((plugin_instance != NULL)
-				&& (strlen (plugin_instance) >= sizeof (vl.plugin_instance)))
-			|| ((type_instance != NULL)
-				&& (strlen (type_instance) >= sizeof (vl.type_instance))))
-	{
-		fprintf (fh, "-1 Identifier too long.");
-		return (-1);
-	}
+		snprintf (buffer, sizeof (buffer), "%u %s\n",
+				(unsigned int) entry->time, entry->name);
+		buffer[sizeof (buffer) - 1] = '\0';
+		
+		tmp = realloc (value_list, sizeof (char *) * (value_list_len + 1));
+		if (tmp == NULL)
+			continue;
+		value_list = tmp;
 
-	strcpy (vl.host, hostname);
-	strcpy (vl.plugin, plugin);
-	if (plugin_instance != NULL)
-		strcpy (vl.plugin_instance, plugin_instance);
-	if (type_instance != NULL)
-		strcpy (vl.type_instance, type_instance);
+		value_list[value_list_len] = strdup (buffer);
 
-	{ /* parse the time */
-		char *t = fields[2];
-		char *v = strchr (t, ':');
-		if (v == NULL)
-		{
-			fprintf (fh, "-1 No time found.");
-			return (-1);
-		}
-		*v = '\0'; v++;
+		if (value_list[value_list_len] != NULL)
+			value_list_len++;
+	} /* for (entry) */
 
-		vl.time = (time_t) atoi (t);
-		if (vl.time == 0)
-			vl.time = time (NULL);
+	pthread_mutex_unlock (&cache_lock);
 
-		fields[2] = v;
-	}
-
-	ds = plugin_get_ds (type);
-	if (ds == NULL)
-		return (-1);
-
-	value_ptr = (char **) calloc (ds->ds_num, sizeof (char *));
-	if (value_ptr == NULL)
-	{
-		fprintf (fh, "-1 calloc failed.");
-		return (-1);
-	}
-
-	{ /* parse the value-list. It's colon-separated. */
-		char *dummy;
-		char *ptr;
-		char *saveptr;
-
-		i = 0;
-		dummy = fields[2];
-		saveptr = NULL;
-		while ((ptr = strtok_r (dummy, ":", &saveptr)) != NULL)
-		{
-			dummy = NULL;
-			if (i >= ds->ds_num)
-			{
-				i = ds->ds_num + 1;
-				break;
-			}
-			value_ptr[i] = ptr;
-			i++;
-		}
-
-		if (i != ds->ds_num)
-		{
-			sfree (value_ptr);
-			fprintf (fh, "-1 Number of values incorrect: Got %i, "
-					"expected %i.", i, ds->ds_num);
-			return (-1);
-		}
-	} /* done parsing the value-list */
-
-	vl.values_len = ds->ds_num;
-	vl.values = (value_t *) malloc (vl.values_len * sizeof (value_t));
-	if (vl.values == NULL)
-	{
-		sfree (value_ptr);
-		fprintf (fh, "-1 malloc failed.");
-		return (-1);
-	}
-	DEBUG ("value_ptr = 0x%p; vl.values = 0x%p;", (void *) value_ptr, (void *) vl.values);
-
-	for (i = 0; i < ds->ds_num; i++)
-	{
-		if (strcmp (value_ptr[i], "U") == 0)
-			vl.values[i].gauge = NAN;
-		else if (ds->ds[i].type == DS_TYPE_COUNTER)
-			vl.values[i].counter = atoll (value_ptr[i]);
-		else if (ds->ds[i].type == DS_TYPE_GAUGE)
-			vl.values[i].gauge = atof (value_ptr[i]);
-	} /* for (i = 2 .. fields_num) */
-
-	plugin_dispatch_values (type, &vl);
-
-	DEBUG ("value_ptr = 0x%p; vl.values = 0x%p;", (void *) value_ptr, (void *) vl.values);
-
-	sfree (value_ptr);
-	sfree (vl.values); 
-
-	fprintf (fh, "0 Success\n");
+	DEBUG ("unixsock plugin: us_handle_listval: value_list_len = %i", value_list_len);
+	fprintf (fh, "%i Values found\n", value_list_len);
+	for (i = 0; i < value_list_len; i++)
+		fputs (value_list[i], fh);
 	fflush (fh);
 
 	return (0);
-} /* int us_handle_putval */
+} /* int us_handle_listval */
 
 static void *us_handle_client (void *arg)
 {
@@ -683,7 +592,11 @@ static void *us_handle_client (void *arg)
 		}
 		else if (strcasecmp (fields[0], "putval") == 0)
 		{
-			us_handle_putval (fh, fields, fields_num);
+			handle_putval (fh, fields, fields_num);
+		}
+		else if (strcasecmp (fields[0], "listval") == 0)
+		{
+			us_handle_listval (fh, fields, fields_num);
 		}
 		else
 		{
@@ -710,7 +623,7 @@ static void *us_server_thread (void *arg)
 
 	while (loop != 0)
 	{
-		DEBUG ("Calling accept..");
+		DEBUG ("unixsock plugin: Calling accept..");
 		status = accept (sock_fd, NULL, NULL);
 		if (status < 0)
 		{

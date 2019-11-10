@@ -69,6 +69,11 @@ Features
       Iptables' counters: Number of bytes that were matched by a certain
       iptables rule.
 
+    - ipvs
+      IPVS connection statistics (number of connections, octets and packets
+      for each service and destination).
+      See http://www.linuxvirtualserver.org/software/index.html.
+
     - irq
       IRQ counters: Frequency in which certain interrupts occur.
 
@@ -78,6 +83,10 @@ Features
     - mbmon
       Motherboard sensors: temperature, fanspeed and voltage information,
       using mbmon(1).
+
+    - memcached
+      Statistics of the memcached distributed caching system.
+      <http://www.danga.com/memcached/>
 
     - memory
       Memory utilization: Memory occupied by running processes, page cache,
@@ -91,6 +100,11 @@ Features
       MySQL server statistics: Commands issued, handlers triggered, thread
       usage, query cache utilization and traffic/octets sent and received.
 
+    - netlink
+      Very detailed Linux network interface and routing statistics. You can get
+      (detailed) information on interfaces, qdiscs, classes, and, if you can
+      make use of it, filters.
+
     - network
       Receive values that were collected by other hosts. Large setups will
       want to collect the data on one dedicated machine, and this is the
@@ -99,6 +113,10 @@ Features
     - nfs
       NFS Procedures: Which NFS command were called how often. Only NFSv2 and
       NFSv3 right now.
+
+    - nginx
+      Collects statistics from `nginx' (speak: engine X), a HTTP and mail
+      server/proxy.
 
     - ntp
       NTP daemon statistics: Local clock drift, offset to peers, etc.
@@ -129,11 +147,19 @@ Features
     - serial
       RX and TX of serial interfaces. Linux only; needs root privileges.
 
+    - snmp
+      Read values from SNMP (Simple Network Management Protocol) enabled
+      network devices such as switches, routers, thermometers, rack monitoring
+      servers, etc. See collectd-snmp(5).
+
     - swap
       Pages swapped out onto harddisk or whatever is called `swap' by the OS..
 
     - tape
       Bytes and operations read and written on tape devices. Solaris only.
+
+    - tcpconns
+      Number of TCP connections to specific local and remote ports.
 
     - users
       Users currently logged in.
@@ -144,6 +170,9 @@ Features
 
     - wireless
       Link quality of wireless cards. Linux only.
+
+    - xmms
+      Bitrate and frequency of music played with XMMS.
 
   * Output can be written or send to various destinations by the following
     plugins:
@@ -205,8 +234,8 @@ Operation
   * When the `csv' or `rrdtool' plugins are loaded they'll write the values to
     files. The usual place for these files is beneath `/var/lib/collectd'.
 
-  * When using some of the plugins, collectd needs to run as user root, since only
-    root can do certain things, such as craft ICMP packages needed to ping
+  * When using some of the plugins, collectd needs to run as user root, since
+    only root can do certain things, such as craft ICMP packages needed to ping
     other hosts. collectd should NOT be installed setuid root since it can be
     used to overwrite valuable files!
 
@@ -223,6 +252,17 @@ Operation
     the values and read the rrdtool(1) manpage thoroughly.
 
 
+collectd and chkrootkit
+-----------------------
+
+  If you are using the `dns' plugin chkrootkit(1) will report collectd as a
+  packet sniffer ("<iface>: PACKET SNIFFER(/usr/sbin/collectd[<pid>])"). The
+  plugin captures all UDP packets on port 53 to analyze the DNS traffic. In
+  this case, collectd is a legitimate sniffer and the report should be
+  considered to be a false positive. However, you might want to check that
+  this really is collectd and not some other, illegitimate sniffer.
+
+
 Prerequisites
 -------------
 
@@ -237,12 +277,19 @@ Prerequisites
     platforms.
 
   * libcurl (optional)
-    If you want to use the `apache' plugin
+    If you want to use the `apache' and/or `nginx' plugins.
 
   * libiptc (optional)
     For querying iptables counters.
 
   * libmysqlclient (optional)
+    Unsurprisingly used by the `mysql' plugin.
+
+  * libnetlink (optional)
+    Used, obviously, for the `netlink' plugin.
+
+  * libnetsnmp (optional)
+    For the `snmp' plugin.
 
   * liboping (optional, if not found a version shipped with this distribution
     can be used)
@@ -258,7 +305,7 @@ Prerequisites
     instead.
 
   * libsensors (optional)
-    To read from `lm_sensors'.
+    To read from `lm_sensors', see the `sensors' plugin.
 
   * libstatgrab may be used to collect statistics on systems other than Linux
     and/or Solaris. Note that CPU- and disk-statistics, while being provided
@@ -268,6 +315,8 @@ Prerequisites
   * libupsclient/nut (optional)
     For the `nut' plugin which queries nut's `upsd'.
 
+  * libxmms (optional)
+
   * librt, libsocket, libkstat, libdevinfo
     Various standard Solaris libraries which provide system functions.
 
@@ -276,23 +325,46 @@ Prerequisites
     particular.
 
 
+Configuring / Compiling / Installing
+------------------------------------
+
+  To configure, build and install collectd with the default settings, run
+  `./configure && make && make install'.  For detailed, generic instructions
+  see INSTALL. For a complete list of configure options and their description,
+  run `./configure --help'.
+  
+  By default, the configure script will check for all build dependencies and
+  disable all plugins whose requirements cannot be fulfilled (any other plugin
+  will be enabled). To enable a plugin, install missing dependencies (see
+  section `Prerequisites' above) and rerun `configure'. If you specify the
+  `--enable-<plugin>' configure option, you can force the plugin to be built.
+  This will most likely fail though unless you're working in a very unusual
+  setup and you really know what you're doing.
+
+  By default, collectd will be installed into `/opt/collectd'. You can adjust
+  this setting by specifying the `--prefix' configure option - see INSTALL for
+  details. If you pass DESTDIR=<path> to `make install', <path> will be
+  prefixed to all installation directories. This might be useful when creating
+  packages for collectd.
+
+
 Crosscompiling
 --------------
 
-    To compile correctly collectd needs to be able to initialize static
-    variables to NAN (Not A Number). Some C libraries, especially the GNU
-    libc, have a problem with that.
+  To compile correctly collectd needs to be able to initialize static
+  variables to NAN (Not A Number). Some C libraries, especially the GNU
+  libc, have a problem with that.
 
-    Luckily, with GCC it's possible to work around that problem: One can define
-    NAN as being (0.0 / 0.0) and `isnan' as `f != f'. However, to test this
-    ``implementation'' the configure script needs to compile and run a short
-    test program. Obviously running a test program when doing a cross-
-    compilation is, well, challenging.
+  Luckily, with GCC it's possible to work around that problem: One can define
+  NAN as being (0.0 / 0.0) and `isnan' as `f != f'. However, to test this
+  ``implementation'' the configure script needs to compile and run a short
+  test program. Obviously running a test program when doing a cross-
+  compilation is, well, challenging.
 
-    If you run into this problem, you can use the `--with-nan-emulation'
-    configure option to force the use of this implementation. We can't promise
-    that the compiled binary actually behaves as it should, but since NANs
-    are likely never passed to the libm you have a good chance to be lucky.
+  If you run into this problem, you can use the `--with-nan-emulation'
+  configure option to force the use of this implementation. We can't promise
+  that the compiled binary actually behaves as it should, but since NANs
+  are likely never passed to the libm you have a good chance to be lucky.
 
 
 Contact

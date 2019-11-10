@@ -1,64 +1,13 @@
 /* src/config.h.in.  Generated from configure.in by autoheader.  */
 
-/* wether or not to enable module Apache httpd statistics */
-#undef COLLECT_APACHE
-
-/* wether or not to enable module Statistics of UPSes by APC */
-#undef COLLECT_APCUPS
-
-/* wether or not to enable module Apple's hardware sensors */
-#undef COLLECT_APPLE_SENSORS
-
-/* wether or not to enable module battery statistics */
-#undef COLLECT_BATTERY
-
-/* wether or not to enable module cpu usage statistics */
-#undef COLLECT_CPU
-
-/* wether or not to enable module system cpu frequency statistics */
-#undef COLLECT_CPUFREQ
-
-/* wether or not to enable module csv output plugin */
-#undef COLLECT_CSV
-
 /* wether or not to enable feature daemon mode */
 #undef COLLECT_DAEMON
 
 /* wether or not to enable feature debugging */
 #undef COLLECT_DEBUG
 
-/* wether or not to enable module df statistics */
-#undef COLLECT_DF
-
-/* wether or not to enable module disk/partition statistics */
-#undef COLLECT_DISK
-
-/* wether or not to enable module dns statistics */
-#undef COLLECT_DNS
-
-/* wether or not to enable module email statistics */
-#undef COLLECT_EMAIL
-
-/* wether or not to enable module entropy statistics */
-#undef COLLECT_ENTROPY
-
-/* wether or not to enable module exec of external programs */
-#undef COLLECT_EXEC
-
 /* wether or not to enable feature getifaddrs under Linux */
 #undef COLLECT_GETIFADDRS
-
-/* wether or not to enable module hdd temperature statistics */
-#undef COLLECT_HDDTEMP
-
-/* wether or not to enable module interface statistics */
-#undef COLLECT_INTERFACE
-
-/* wether or not to enable module IPtables statistics */
-#undef COLLECT_IPTABLES
-
-/* wether or not to enable module irq statistics */
-#undef COLLECT_IRQ
 
 /* Wether or not to use the IOKit library */
 #undef COLLECT_LIBIOKIT
@@ -68,78 +17,6 @@
 
 /* Wether or not to use statgrab library */
 #undef COLLECT_LIBSTATGRAB
-
-/* Wether or not to use sensors library */
-#undef COLLECT_LM_SENSORS
-
-/* wether or not to enable module system load statistics */
-#undef COLLECT_LOAD
-
-/* wether or not to enable module logfile log facility */
-#undef COLLECT_LOGFILE
-
-/* wether or not to enable module motherboard monitor statistics */
-#undef COLLECT_MBMON
-
-/* wether or not to enable module memory statistics */
-#undef COLLECT_MEMORY
-
-/* wether or not to enable module multimeter statistics */
-#undef COLLECT_MULTIMETER
-
-/* wether or not to enable module mysql statistics */
-#undef COLLECT_MYSQL
-
-/* wether or not to enable module network functionality */
-#undef COLLECT_NETWORK
-
-/* wether or not to enable module nfs statistics */
-#undef COLLECT_NFS
-
-/* wether or not to enable module ntpd statistics */
-#undef COLLECT_NTPD
-
-/* wether or not to enable module network UPS tools statistics */
-#undef COLLECT_NUT
-
-/* wether or not to enable module embedded perl interpreter */
-#undef COLLECT_PERL
-
-/* wether or not to enable module ping statistics */
-#undef COLLECT_PING
-
-/* wether or not to enable module processes statistics */
-#undef COLLECT_PROCESSES
-
-/* Wether or not to use rrdtool library */
-#undef COLLECT_RRDTOOL
-
-/* wether or not to enable module lm_sensors statistics */
-#undef COLLECT_SENSORS
-
-/* wether or not to enable module serial statistics */
-#undef COLLECT_SERIAL
-
-/* wether or not to enable module swap statistics */
-#undef COLLECT_SWAP
-
-/* wether or not to enable module syslog log facility */
-#undef COLLECT_SYSLOG
-
-/* wether or not to enable module tape statistics */
-#undef COLLECT_TAPE
-
-/* wether or not to enable module UNIX socket plugin */
-#undef COLLECT_UNIXSOCK
-
-/* wether or not to enable module user count statistics */
-#undef COLLECT_USERS
-
-/* wether or not to enable module vserver statistics */
-#undef COLLECT_VSERVER
-
-/* wether or not to enable module wireless link statistics */
-#undef COLLECT_WIRELESS
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
@@ -165,6 +42,10 @@
 
 /* Define to 1 if you have the <curl/curl.h> header file. */
 #undef HAVE_CURL_CURL_H
+
+/* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRERROR_R
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -227,6 +108,9 @@
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
 
+/* Define to 1 if you have the `host_statistics' function. */
+#undef HAVE_HOST_STATISTICS
+
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
@@ -252,6 +136,12 @@
    file. */
 #undef HAVE_IOKIT_STORAGE_IOBLOCKSTORAGEDRIVER_H
 
+/* Define to 1 if you have the <iproute/libnetlink.h> header file. */
+#undef HAVE_IPROUTE_LIBNETLINK_H
+
+/* Define to 1 if you have the <ip_vs.h> header file. */
+#undef HAVE_IP_VS_H
+
 /* Define to 1 if you have the <kstat.h> header file. */
 #undef HAVE_KSTAT_H
 
@@ -270,9 +160,6 @@
 /* Define to 1 if you have the <kvm.h> header file. */
 #undef HAVE_KVM_H
 
-/* Define to 1 if you have the curl library. */
-#undef HAVE_LIBCURL
-
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
@@ -288,11 +175,8 @@
 /* Define to 1 if you have the 'kvm' library (-lkvm) */
 #undef HAVE_LIBKVM
 
-/* Define to 1 if you have the `m' library (-lm). */
-#undef HAVE_LIBM
-
-/* Define to 1 if you have the mysqlclient library. */
-#undef HAVE_LIBMYSQLCLIENT
+/* Define to 1 if you have the <libnetlink.h> header file. */
+#undef HAVE_LIBNETLINK_H
 
 /* Define to 1 if you have the pcap library (-lpcap). */
 #undef HAVE_LIBPCAP
@@ -306,14 +190,11 @@
 /* Define to 1 if you have the 'resolv' library (-lresolv). */
 #undef HAVE_LIBRESOLV
 
-/* Define to 1 if you have the rrd library (-lrrd). */
-#undef HAVE_LIBRRD
-
 /* Define to 1 if you have the sensors library (-lsensors). */
 #undef HAVE_LIBSENSORS
 
-/* Define to 1 if you have the upsclient library (-lupsclient). */
-#undef HAVE_LIBUPSCLIENT
+/* Define to 1 if you have the 'xmms' library (-lxmms). */
+#undef HAVE_LIBXMMS
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -321,14 +202,23 @@
 /* Define to 1 if you have the <linux/config.h> header file. */
 #undef HAVE_LINUX_CONFIG_H
 
+/* Define to 1 if you have the <linux/gen_stats.h> header file. */
+#undef HAVE_LINUX_GEN_STATS_H
+
 /* Define to 1 if you have the <linux/if.h> header file. */
 #undef HAVE_LINUX_IF_H
+
+/* Define to 1 if you have the <linux/libnetlink.h> header file. */
+#undef HAVE_LINUX_LIBNETLINK_H
 
 /* Define to 1 if you have the <linux/major.h> header file. */
 #undef HAVE_LINUX_MAJOR_H
 
 /* Define to 1 if you have the <linux/netdevice.h> header file. */
 #undef HAVE_LINUX_NETDEVICE_H
+
+/* Define to 1 if you have the <linux/pkt_sched.h> header file. */
+#undef HAVE_LINUX_PKT_SCHED_H
 
 /* Define to 1 if you have the <linux/un.h> header file. */
 #undef HAVE_LINUX_UN_H
@@ -453,8 +343,14 @@
 /* Define to 1 if you have the <net/if_ppp.h> header file. */
 #undef HAVE_NET_IF_PPP_H
 
+/* Define to 1 if you have the <net/ip_vs.h> header file. */
+#undef HAVE_NET_IP_VS_H
+
 /* Define to 1 if you have the <net/ppp_defs.h> header file. */
 #undef HAVE_NET_PPP_DEFS_H
+
+/* Define to 1 if you have the <net-snmp/net-snmp-config.h> header file. */
+#undef HAVE_NET_SNMP_NET_SNMP_CONFIG_H
 
 /* Define if the function getmntent exists and takes one argument. */
 #undef HAVE_ONE_GETMNTENT
@@ -468,8 +364,152 @@
 /* Define to 1 if you have the <pcap.h> header file. */
 #undef HAVE_PCAP_H
 
+/* Define to 1 if the apache plugin is enabled. */
+#undef HAVE_PLUGIN_APACHE
+
+/* Define to 1 if the apcups plugin is enabled. */
+#undef HAVE_PLUGIN_APCUPS
+
+/* Define to 1 if the apple_sensors plugin is enabled. */
+#undef HAVE_PLUGIN_APPLE_SENSORS
+
+/* Define to 1 if the battery plugin is enabled. */
+#undef HAVE_PLUGIN_BATTERY
+
+/* Define to 1 if the cpu plugin is enabled. */
+#undef HAVE_PLUGIN_CPU
+
+/* Define to 1 if the cpufreq plugin is enabled. */
+#undef HAVE_PLUGIN_CPUFREQ
+
+/* Define to 1 if the csv plugin is enabled. */
+#undef HAVE_PLUGIN_CSV
+
+/* Define to 1 if the df plugin is enabled. */
+#undef HAVE_PLUGIN_DF
+
+/* Define to 1 if the disk plugin is enabled. */
+#undef HAVE_PLUGIN_DISK
+
+/* Define to 1 if the dns plugin is enabled. */
+#undef HAVE_PLUGIN_DNS
+
+/* Define to 1 if the email plugin is enabled. */
+#undef HAVE_PLUGIN_EMAIL
+
+/* Define to 1 if the entropy plugin is enabled. */
+#undef HAVE_PLUGIN_ENTROPY
+
+/* Define to 1 if the exec plugin is enabled. */
+#undef HAVE_PLUGIN_EXEC
+
+/* Define to 1 if the hddtemp plugin is enabled. */
+#undef HAVE_PLUGIN_HDDTEMP
+
+/* Define to 1 if the interface plugin is enabled. */
+#undef HAVE_PLUGIN_INTERFACE
+
+/* Define to 1 if the iptables plugin is enabled. */
+#undef HAVE_PLUGIN_IPTABLES
+
+/* Define to 1 if the ipvs plugin is enabled. */
+#undef HAVE_PLUGIN_IPVS
+
+/* Define to 1 if the irq plugin is enabled. */
+#undef HAVE_PLUGIN_IRQ
+
+/* Define to 1 if the load plugin is enabled. */
+#undef HAVE_PLUGIN_LOAD
+
+/* Define to 1 if the logfile plugin is enabled. */
+#undef HAVE_PLUGIN_LOGFILE
+
+/* Define to 1 if the mbmon plugin is enabled. */
+#undef HAVE_PLUGIN_MBMON
+
+/* Define to 1 if the memcached plugin is enabled. */
+#undef HAVE_PLUGIN_MEMCACHED
+
+/* Define to 1 if the memory plugin is enabled. */
+#undef HAVE_PLUGIN_MEMORY
+
+/* Define to 1 if the multimeter plugin is enabled. */
+#undef HAVE_PLUGIN_MULTIMETER
+
+/* Define to 1 if the mysql plugin is enabled. */
+#undef HAVE_PLUGIN_MYSQL
+
+/* Define to 1 if the netlink plugin is enabled. */
+#undef HAVE_PLUGIN_NETLINK
+
+/* Define to 1 if the network plugin is enabled. */
+#undef HAVE_PLUGIN_NETWORK
+
+/* Define to 1 if the nfs plugin is enabled. */
+#undef HAVE_PLUGIN_NFS
+
+/* Define to 1 if the nginx plugin is enabled. */
+#undef HAVE_PLUGIN_NGINX
+
+/* Define to 1 if the ntpd plugin is enabled. */
+#undef HAVE_PLUGIN_NTPD
+
+/* Define to 1 if the nut plugin is enabled. */
+#undef HAVE_PLUGIN_NUT
+
+/* Define to 1 if the perl plugin is enabled. */
+#undef HAVE_PLUGIN_PERL
+
+/* Define to 1 if the ping plugin is enabled. */
+#undef HAVE_PLUGIN_PING
+
+/* Define to 1 if the processes plugin is enabled. */
+#undef HAVE_PLUGIN_PROCESSES
+
+/* Define to 1 if the rrdtool plugin is enabled. */
+#undef HAVE_PLUGIN_RRDTOOL
+
+/* Define to 1 if the sensors plugin is enabled. */
+#undef HAVE_PLUGIN_SENSORS
+
+/* Define to 1 if the serial plugin is enabled. */
+#undef HAVE_PLUGIN_SERIAL
+
+/* Define to 1 if the snmp plugin is enabled. */
+#undef HAVE_PLUGIN_SNMP
+
+/* Define to 1 if the swap plugin is enabled. */
+#undef HAVE_PLUGIN_SWAP
+
+/* Define to 1 if the syslog plugin is enabled. */
+#undef HAVE_PLUGIN_SYSLOG
+
+/* Define to 1 if the tape plugin is enabled. */
+#undef HAVE_PLUGIN_TAPE
+
+/* Define to 1 if the tcpconns plugin is enabled. */
+#undef HAVE_PLUGIN_TCPCONNS
+
+/* Define to 1 if the unixsock plugin is enabled. */
+#undef HAVE_PLUGIN_UNIXSOCK
+
+/* Define to 1 if the users plugin is enabled. */
+#undef HAVE_PLUGIN_USERS
+
+/* Define to 1 if the vserver plugin is enabled. */
+#undef HAVE_PLUGIN_VSERVER
+
+/* Define to 1 if the wireless plugin is enabled. */
+#undef HAVE_PLUGIN_WIRELESS
+
+/* Define to 1 if the xmms plugin is enabled. */
+#undef HAVE_PLUGIN_XMMS
+
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
+
+/* Define to 1 if you have the `processor_info' function. */
+#undef HAVE_PROCESSOR_INFO
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
@@ -542,6 +582,9 @@
 
 /* Define to 1 if you have the `strdup' function. */
 #undef HAVE_STRDUP
+
+/* Define to 1 if you have the `strerror_r' function. */
+#undef HAVE_STRERROR_R
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -695,8 +738,17 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* True if the enum-member TCA_STATS exists */
+#undef HAVE_TCA_STATS
+
+/* True if the enum-member TCA_STATS2 exists */
+#undef HAVE_TCA_STATS2
+
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
+
+/* Define to 1 if you have the threadsafe rrd library (-lrrd_th). */
+#undef HAVE_THREADSAFE_LIBRRD
 
 /* Define to 1 if you have the `thread_info' function. */
 #undef HAVE_THREAD_INFO
@@ -761,6 +813,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define to 1 if strerror_r returns char *. */
+#undef STRERROR_R_CHAR_P
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME

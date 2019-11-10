@@ -2,7 +2,9 @@ apache_bytes		count:COUNTER:0:134217728
 apache_connections	count:GAUGE:0:65535
 apache_requests		count:COUNTER:0:134217728
 apache_scoreboard	count:GAUGE:0:65535
+bitrate			value:GAUGE:0:4294967295
 charge			value:GAUGE:0:U
+connections		value:COUNTER:0:U
 counter			value:COUNTER:U:U
 cpu			value:COUNTER:0:4294967295
 cpufreq			value:GAUGE:0:U
@@ -26,9 +28,14 @@ frequency		frequency:GAUGE:0:U
 frequency_offset	ppm:GAUGE:-1000000:1000000
 gauge			value:GAUGE:U:U
 humitidy		value:GAUGE:0:100
+if_collisions		value:COUNTER:0:4294967295
+if_dropped		rx:COUNTER:0:4294967295, tx:COUNTER:0:4294967295
 if_errors		rx:COUNTER:0:4294967295, tx:COUNTER:0:4294967295
+if_multicast		value:COUNTER:0:4294967295
 if_octets		rx:COUNTER:0:4294967295, tx:COUNTER:0:4294967295
 if_packets		rx:COUNTER:0:4294967295, tx:COUNTER:0:4294967295
+if_rx_errors		value:COUNTER:0:4294967295
+if_tx_errors		value:COUNTER:0:4294967295
 ipt_bytes		value:COUNTER:0:134217728
 ipt_packets		value:COUNTER:0:134217728
 irq			value:COUNTER:U:65535
@@ -41,15 +48,23 @@ mysql_octets		rx:COUNTER:0:4294967295, tx:COUNTER:0:4294967295
 mysql_qcache		hits:COUNTER:0:U, inserts:COUNTER:0:U, not_cached:COUNTER:0:U, lowmem_prunes:COUNTER:0:U, queries_in_cache:GAUGE:0:U
 mysql_threads		running:GAUGE:0:U, connected:GAUGE:0:U, cached:GAUGE:0:U, created:COUNTER:0:U
 nfs_procedure		value:COUNTER:0:4294967295
+memcached_command	value:COUNTER:0:U
+memcached_connections	value:GAUGE:0:U
+memcached_items		value:GAUGE:0:U
+memcached_octets	rx:COUNTER:0:4294967295, tx:COUNTER:0:4294967295
+memcached_ops		value:COUNTER:0:134217728
+nginx_connections	value:GAUGE:0:U
+nginx_requests		value:COUNTER:0:134217728
 percent			percent:GAUGE:0:100.1
 ping			ping:GAUGE:0:65535
 power			value:GAUGE:0:U
 ps_count		processes:GAUGE:0:1000000, threads:GAUGE:0:1000000
-ps_cputime		user:COUNTER:0:1000000, syst:COUNTER:0:1000000
+ps_cputime		user:COUNTER:0:16000000, syst:COUNTER:0:16000000
 ps_pagefaults		minflt:COUNTER:0:9223372036854775807, majflt:COUNTER:0:9223372036854775807
 ps_rss			value:GAUGE:0:9223372036854775807
 ps_state		value:GAUGE:0:65535
 spam_score		value:GAUGE:U:U
+tcp_connections		value:GAUGE:0:4294967295
 temperature		value:GAUGE:-273.15:U
 time_dispersion		seconds:GAUGE:-1000000:1000000
 time_offset		seconds:GAUGE:-1000000:1000000

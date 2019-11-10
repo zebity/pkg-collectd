@@ -48,6 +48,10 @@ extern kstat_ctl_t *kc;
 static pthread_mutex_t getpwnam_r_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+#if !HAVE_STRERROR_R
+static pthread_mutex_t strerror_r_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 void sstrncpy (char *d, const char *s, int len)
 {
 	strncpy (d, s, len);
@@ -70,12 +74,51 @@ char *sstrdup (const char *s)
 	return (r);
 }
 
-/* Don't use the return value of `strerror_r', because the GNU-people got
- * inventive there.. -octo */
+/* Even though Posix requires "strerror_r" to return an "int",
+ * some systems (e.g. the GNU libc) return a "char *" _and_
+ * ignore the second argument ... -tokkee */
 char *sstrerror (int errnum, char *buf, size_t buflen)
 {
 	buf[0] = '\0';
-	strerror_r (errnum, buf, buflen);
+
+#if !HAVE_STRERROR_R
+	{
+		char *temp;
+
+		pthread_mutex_lock (&strerror_r_lock);
+
+		temp = strerror (errnum);
+		strncpy (buf, temp, buflen);
+
+		pthread_mutex_unlock (&strerror_r_lock);
+	}
+/* #endif !HAVE_STRERROR_R */
+
+#elif STRERROR_R_CHAR_P
+	{
+		char *temp;
+		temp = strerror_r (errnum, buf, buflen);
+		if (buf[0] == '\0')
+		{
+			if ((temp != NULL) && (temp != buf) && (temp[0] != '\0'))
+				strncpy (buf, temp, buflen);
+			else
+				strncpy (buf, "strerror_r did not return "
+						"an error message", buflen);
+		}
+	}
+/* #endif STRERROR_R_CHAR_P */
+
+#else
+	if (strerror_r (errnum, buf, buflen) != 0)
+	{
+		snprintf (buf, buflen, "Error #%i; "
+				"Additionally, strerror_r failed.",
+				errnum);
+	}
+#endif /* STRERROR_R_CHAR_P */
+
+	buf[buflen - 1] = '\0';
 	return (buf);
 } /* char *sstrerror */
 
@@ -398,7 +441,7 @@ int check_create_dir (const char *file_orig)
 				if (mkdir (dir, 0755) == -1)
 				{
 					char errbuf[1024];
-					ERROR ("mkdir (%s): %s", dir,
+					ERROR ("check_create_dir: mkdir (%s): %s", dir,
 							sstrerror (errno,
 								errbuf, sizeof (errbuf)));
 					return (-1);
@@ -421,7 +464,7 @@ int check_create_dir (const char *file_orig)
 	}
 
 	return (0);
-}
+} /* check_create_dir */
 
 #ifdef HAVE_LIBKSTAT
 int get_kstat (kstat_t **ksp_ptr, char *module, int instance, char *name)

@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2007-08-26" "4.0.7" "collectd"
+.TH COLLECTD.CONF 5 "2007-10-27" "4.2.0" "collectd"
 .SH "NAME"
 collectd.conf \- Configuration for the system statistics collection daemon \fBcollectd\fR
 .SH "SYNOPSIS"
@@ -159,7 +159,7 @@ This config file controls how the system statistics collection daemon
 controls which plugins to load. These plugins ultimately define collectd's
 behavior.
 .PP
-The syntax of this config file is similar to the config file of the famos
+The syntax of this config file is similar to the config file of the famous
 \&\fBApache Webserver\fR. Each line contains either a key-value-pair or a
 section-start or \-end. Empty lines and everything after the hash-symbol `#' is
 ignored. Values are either string, enclosed in double\-quotes,
@@ -177,11 +177,19 @@ directory for the daemon.
 .IX Item "LoadPlugin Plugin"
 Loads the plugin \fIPlugin\fR. There must be at least one such line or \fBcollectd\fR
 will be mostly useless.
+.IP "\fBInclude\fR \fIFile\fR" 4
+.IX Item "Include File"
+Includes the file \fIFile\fR as if it was copy and pasted here. To prevent loops
+and shooting yourself in the foot in interesting ways the nesting is limited to
+a depth of 8\ levels, which should be sufficient for most uses.
+.Sp
+It is no problem to have a block like \f(CW\*(C`<Plugin foo>\*(C'\fR in more than one
+file, but you cannot include files from within blocks.
 .IP "\fBPIDFile\fR \fIFile\fR" 4
 .IX Item "PIDFile File"
 Sets where to write the \s-1PID\s0 file to. This file is overwritten when it exists
-and deleted when the program ist stopped. Some init-scripts might override this
-setting using the \fB\-P\fR commandline option.
+and deleted when the program is stopped. Some init-scripts might override this
+setting using the \fB\-P\fR command-line option.
 .IP "\fBPluginDir\fR \fIDirectory\fR" 4
 .IX Item "PluginDir Directory"
 Path to the plugins (shared objects) of collectd.
@@ -201,7 +209,7 @@ long time to read. Mostly those are plugin that do network\-IO. Setting this to
 a value higher than the number of plugins you've loaded is totally useless.
 .SH "PLUGIN OPTIONS"
 .IX Header "PLUGIN OPTIONS"
-Some Plugins may register own options. These options must be enclosed in a
+Some plugins may register own options. These options must be enclosed in a
 \&\f(CW\*(C`Plugin\*(C'\fR\-Section. Which options exist depends on the plugin used. Some plugins
 require external configuration, too. The \f(CW\*(C`apache plugin\*(C'\fR, for example,
 required \f(CW\*(C`mod_status\*(C'\fR to be configured in the webserver you're going to
@@ -273,7 +281,7 @@ installed and an \*(L"cpu governor\*(R" (that's a kernel module) is loaded.
 .IX Subsection "Plugin csv"
 .IP "\fBDataDir\fR \fIDirectory\fR" 4
 .IX Item "DataDir Directory"
-Set the directory to store RRD-files under. Per default RRD-files are generated
+Set the directory to store CSV-files under. Per default CSV-files are generated
 beneath the daemon's working directory, i.\ e. the \fBBaseDir\fR.
 .ie n .Sh "Plugin ""df"""
 .el .Sh "Plugin \f(CWdf\fP"
@@ -308,6 +316,9 @@ Ignore packets that originate from this address.
 .ie n .Sh "Plugin ""email"""
 .el .Sh "Plugin \f(CWemail\fP"
 .IX Subsection "Plugin email"
+.IP "\fBSocketFile\fR \fIPath\fR" 4
+.IX Item "SocketFile Path"
+Sets the socket-file which is to be created.
 .IP "\fBSocketGroup\fR \fIGroup\fR" 4
 .IX Item "SocketGroup Group"
 If running as root change the group of the UNIX-socket after it has been 
@@ -329,9 +340,18 @@ at most \fB16384\fR to prevent typos and dumb mistakes.
 Please make sure to read \fIcollectd\-exec\fR\|(5) before using this plugin. It
 contains valuable information on when the executable is executed and the
 output that is expected from it.
-.IP "\fBExec\fR \fIUser\fR \fIExecutable\fR" 4
-.IX Item "Exec User Executable"
-Execute the executable \fIExecutable\fR as user \fIUser\fR.
+.IP "\fBExec\fR \fIUser\fR[:[\fIGroup\fR]] \fIExecutable\fR" 4
+.IX Item "Exec User[:[Group]] Executable"
+Execute the executable \fIExecutable\fR as user \fIUser\fR. If the user name is
+followed by a colon and a group name, the effective group is set to that group.
+The real group and saved-set group will be set to the default group of that
+user. If no group is given the effective group \s-1ID\s0 will be the same as the real
+group \s-1ID\s0.
+.Sp
+Please note that in order to change the user and/or group the daemon needs
+superuser privileges. If the daemon is run as an unprivileged user you must
+specify the same user/group here. If the daemon is run with superuser
+privileges, you must supply a non-root user here.
 .ie n .Sh "Plugin ""hddtemp"""
 .el .Sh "Plugin \f(CWhddtemp\fP"
 .IX Subsection "Plugin hddtemp"
@@ -410,6 +430,9 @@ Sets the file to write log messages to. The special strings \fBstdout\fR and
 \&\fBstderr\fR can be used to write to the standard output and standard error
 channels, respectively. This, of course, only makes much sense when collectd is
 running in foreground\- or non\-daemon\-mode.
+.IP "\fBTimestamp\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "Timestamp true|false"
+Prefix all lines printed by the current time. Defaults to \fBtrue\fR.
 .ie n .Sh "Plugin ""mbmon"""
 .el .Sh "Plugin \f(CWmbmon\fP"
 .IX Subsection "Plugin mbmon"
@@ -429,13 +452,25 @@ Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB411\fR.
+.ie n .Sh "Plugin ""memcached"""
+.el .Sh "Plugin \f(CWmemcached\fP"
+.IX Subsection "Plugin memcached"
+The \f(CW\*(C`memcached plugin\*(C'\fR connects to a memcached server and queries statistics
+about cache utilization, memory and bandwidth used.
+<http://www.danga.com/memcached/>
+.IP "\fBHost\fR \fIHostname\fR" 4
+.IX Item "Host Hostname"
+Hostname to connect to. Defaults to \fB127.0.0.1\fR.
+.IP "\fBPort\fR \fIPort\fR" 4
+.IX Item "Port Port"
+TCP-Port to connect to. Defaults to \fB11211\fR.
 .ie n .Sh "Plugin ""mysql"""
 .el .Sh "Plugin \f(CWmysql\fP"
 .IX Subsection "Plugin mysql"
 The \f(CW\*(C`mysql plugin\*(C'\fR requires \fBmysqlclient\fR to be installed. It connects to the
 database when started and keeps the connection up as long as possible. When the
 connection is interrupted for whatever reason it will try to re\-connect. The
-plugin logs loud complaints in case anything goes wrong.
+plugin will complaint loudly in case anything goes wrong.
 .PP
 This plugin issues \f(CW\*(C`SHOW STATUS\*(C'\fR and evaluates \f(CW\*(C`Bytes_{received,sent}\*(C'\fR,
 \&\f(CW\*(C`Com_*\*(C'\fR and \f(CW\*(C`Handler_*\*(C'\fR which correspond to \fImysql_octets.rrd\fR,
@@ -458,6 +493,84 @@ Password needed to log into the database.
 .IX Item "Database Database"
 Select this database. Defaults to \fIno database\fR which is a perfectly reasonable
 option for what this plugin does.
+.ie n .Sh "Plugin ""netlink"""
+.el .Sh "Plugin \f(CWnetlink\fP"
+.IX Subsection "Plugin netlink"
+The \f(CW\*(C`netlink\*(C'\fR plugin uses a netlink socket to query the Linux kernel about
+statistics of various interface and routing aspects.
+.IP "\fBInterface\fR \fIInterface\fR" 4
+.IX Item "Interface Interface"
+.PD 0
+.IP "\fBVerboseInterface\fR \fIInterface\fR" 4
+.IX Item "VerboseInterface Interface"
+.PD
+Instruct the plugin to collect interface statistics. This is basically the same
+as the statistics provided by the \f(CW\*(C`interface\*(C'\fR plugin (see above) but
+potentially much more detailed.
+.Sp
+When configuring with \fBInterface\fR only the basic statistics will be collected,
+namely octets, packets, and errors. These statistics are collected by
+the \f(CW\*(C`interface\*(C'\fR plugin, too, so using both at the same time is no benefit.
+.Sp
+When configured with \fBVerboseInterface\fR all counters \fBexcept\fR the basic ones,
+so that no data needs to be collected twice if you use the \f(CW\*(C`interface\*(C'\fR plugin.
+This includes dropped packets, received multicast packets, collisions and a
+whole zoo of differentiated \s-1RX\s0 and \s-1TX\s0 errors. You can try the following command
+to get an idea of what awaits you:
+.Sp
+.Vb 1
+\&  ip \-s \-s link list
+.Ve
+.Sp
+If \fIInterface\fR is \fBAll\fR, all interfaces will be selected.
+.IP "\fBQDisc\fR \fIInterface\fR [\fIQDisc\fR]" 4
+.IX Item "QDisc Interface [QDisc]"
+.PD 0
+.IP "\fBClass\fR \fIInterface\fR [\fIClass\fR]" 4
+.IX Item "Class Interface [Class]"
+.IP "\fBFilter\fR \fIInterface\fR [\fIFilter\fR]" 4
+.IX Item "Filter Interface [Filter]"
+.PD
+Collect the octets and packets that pass a certain qdisc, class or filter.
+.Sp
+QDiscs and classes are identified by their type and handle (or classid).
+Filters don't necessarily have a handle, therefore the parent's handle is used.
+The notation used in collectd differs from that used in \fItc\fR\|(1) in that it
+doesn't skip the major or minor number if it's zero and doesn't print special
+ids by their name.  So, for example, a qdisc may be identified by
+\&\f(CW\*(C`pfifo_fast\-1:0\*(C'\fR even though the minor number of \fBall\fR qdiscs is zero and
+thus not displayed by \fItc\fR\|(1).
+.Sp
+If \fBQDisc\fR, \fBClass\fR, or \fBFilter\fR is given without the second argument,
+i.\ .e. without an identifier, all qdiscs, classes, or filters that are
+associated with that interface will be collected.
+.Sp
+Since a filter itself doesn't necessarily have a handle, the parent's handle is
+used. This may lead to problems when more than one filter is attached to a
+qdisc or class. This isn't nice, but we don't know how this could be done any
+better. If you have a idea, please don't hesitate to tell us.
+.Sp
+As with the \fBInterface\fR option you can specify \fBAll\fR as the interface,
+meaning all interfaces.
+.Sp
+Here are some examples to help you understand the above text more easily:
+.Sp
+.Vb 7
+\&  <Plugin netlink>
+\&    VerboseInterface "All"
+\&    QDisc "eth0" "pfifo_fast\-1:0"
+\&    QDisc "ppp0"
+\&    Class "ppp0" "htb\-1:10"
+\&    Filter "ppp0" "u32\-1:0"
+\&  </Plugin>
+.Ve
+.IP "\fBIgnoreSelected\fR" 4
+.IX Item "IgnoreSelected"
+The behaviour is the same as with all other similar plugins: If nothing is
+selected at all, everything is collected. If some things are selected using the
+options described above, only these statistics are collected. If you set
+\&\fBIgnoreSelected\fR to \fBtrue\fR, this behavior is inversed, i.\ e. the
+specified statistics will not be collected.
 .ie n .Sh "Plugin ""network"""
 .el .Sh "Plugin \f(CWnetwork\fP"
 .IX Subsection "Plugin network"
@@ -510,6 +623,31 @@ freeing the unused memory again. Since this process is somewhat expensive and
 normally doesn't do much, this value should not be too small. The default is
 1800 seconds, but setting this to 86400 seconds (one day) will not do much harm
 either.
+.ie n .Sh "Plugin ""nginx"""
+.el .Sh "Plugin \f(CWnginx\fP"
+.IX Subsection "Plugin nginx"
+This plugin collects the number of connections and requests handled by the
+\&\f(CW\*(C`nginx daemon\*(C'\fR (speak: engine\ X), a \s-1HTTP\s0 and mail server/proxy. It
+queries the page provided by the \f(CW\*(C`ngx_http_stub_status_module\*(C'\fR module, which
+isn't compiled by default. Please refer to
+<http://wiki.codemongers.com/NginxStubStatusModule> for more information on
+how to compile and configure nginx and this module.
+.PP
+The following options are accepted by the \f(CW\*(C`nginx plugin\*(C'\fR:
+.IP "\fB\s-1URL\s0\fR \fIhttp://host/nginx_status\fR" 4
+.IX Item "URL http://host/nginx_status"
+Sets the \s-1URL\s0 of the \f(CW\*(C`ngx_http_stub_status_module\*(C'\fR output.
+.IP "\fBUser\fR \fIUsername\fR" 4
+.IX Item "User Username"
+Optional user name needed for authentication.
+.IP "\fBPassword\fR \fIPassword\fR" 4
+.IX Item "Password Password"
+Optional password needed for authentication.
+.IP "\fBCACert\fR \fIFile\fR" 4
+.IX Item "CACert File"
+File that holds one or more \s-1SSL\s0 certificates. If you want to use \s-1HTTPS\s0 you will
+possibly need this option. What \s-1CA\s0 certificates come bundled with \f(CW\*(C`libcurl\*(C'\fR
+and are checked by default depends on the distribution you use.
 .ie n .Sh "Plugin ""ntpd"""
 .el .Sh "Plugin \f(CWntpd\fP"
 .IX Subsection "Plugin ntpd"
@@ -529,18 +667,8 @@ Add a \s-1UPS\s0 to collect data from. The format is identical to the one accept
 .ie n .Sh "Plugin ""perl"""
 .el .Sh "Plugin \f(CWperl\fP"
 .IX Subsection "Plugin perl"
-.IP "\fBLoadPlugin\fR \fIPlugin\fR" 4
-.IX Item "LoadPlugin Plugin"
-Loads the Perl plugin \fIPlugin\fR. This does basically the same as \fBuse\fR would
-do in a Perl program.
-.IP "\fBBaseName\fR \fIName\fR" 4
-.IX Item "BaseName Name"
-Prepends \fIName\fR\fB::\fR to all plugin names loaded after this option. This is
-provided for convenience to keep plugin names short.
-.IP "\fBIncludeDir\fR \fIDir\fR" 4
-.IX Item "IncludeDir Dir"
-Adds \fIDir\fR to the \fB@INC\fR array. This is the same as using the \fB\-IDir\fR
-command line option or \fBuse lib Dir\fR in the source code.
+This plugin embeds a Perl-interpreter into collectd and provides an interface
+to collectd's plugin system. See \fIcollectd\-perl\fR\|(5) for its documentation.
 .ie n .Sh "Plugin ""ping"""
 .el .Sh "Plugin \f(CWping\fP"
 .IX Subsection "Plugin ping"
@@ -564,7 +692,7 @@ and minor and major pagefaults.
 .el .Sh "Plugin \f(CWrrdtool\fP"
 .IX Subsection "Plugin rrdtool"
 You can use the settings \fBStepSize\fR, \fBHeartBeat\fR, \fBRRARows\fR, and \fB\s-1XFF\s0\fR to
-finetune your RRD\-files. Please read \fIrrdcreate\fR\|(1) if you encounter problems
+fine-tune your RRD\-files. Please read \fIrrdcreate\fR\|(1) if you encounter problems
 using these settings. If you don't want to dive into the depths of RRDTool, you
 can safely ignore these settings.
 .IP "\fBDataDir\fR \fIDirectory\fR" 4
@@ -573,14 +701,17 @@ Set the directory to store RRD-files under. Per default RRD-files are generated
 beneath the daemon's working directory, i.\ e. the \fBBaseDir\fR.
 .IP "\fBStepSize\fR \fISeconds\fR" 4
 .IX Item "StepSize Seconds"
-Sets the stepsize of newly created RRD\-files. Ideally (and per default) this
-setting is identical to the global \fBInterval\fR\-option and should not be
-smaller. If unsure, don't set this option.
+\&\fBForce\fR the stepsize of newly created RRD\-files. Ideally (and per default)
+this setting is unset and the stepsize is set to the interval in which the data
+is collected. Do not use this option unless you absolutely have to for some
+reason. Setting this option may cause problems with the \f(CW\*(C`snmp plugin\*(C'\fR, the
+\&\f(CW\*(C`exec plugin\*(C'\fR or when the daemon is set up to receive data from other hosts.
 .IP "\fBHeartBeat\fR \fISeconds\fR" 4
 .IX Item "HeartBeat Seconds"
-Sets the heartbeat of newly created RRD\-files. Ideally this setting is bigger
-than the \fBInterval\fR\-setting, by default it's twice the \fBInterval\fR\-setting. If
-unsure, don't set this option.
+\&\fBForce\fR the heartbeat of newly created RRD\-files. This setting should be unset
+in which case the heartbeat is set to twice the \fBStepSize\fR which should equal
+the interval in which data is collected. Do not set this option unless you have
+a very good reason to do so.
 .IP "\fBRRARows\fR \fINumRows\fR" 4
 .IX Item "RRARows NumRows"
 The \f(CW\*(C`rrdtool plugin\*(C'\fR calculates the number of PDPs per \s-1CDP\s0 based on the
@@ -622,7 +753,7 @@ normally do much harm either.
 If this option is set to a value greater than zero, the \f(CW\*(C`rrdtool plugin\*(C'\fR will
 save values in a cache, as described above. Writing multiple values at once
 reduces IO-operations and thus lessens the load produced by updating the files.
-The tradeoff is that the graphs kind of \*(L"drag behind\*(R" and that more memory is
+The trade off is that the graphs kind of \*(L"drag behind\*(R" and that more memory is
 used.
 .ie n .Sh "Plugin ""sensors"""
 .el .Sh "Plugin \f(CWsensors\fP"
@@ -649,6 +780,12 @@ in. Sometimes, however, it's easier/preferred to collect all sensors \fIexcept\f
 few ones. This option enables you to do that: By setting \fBIgnoreSelected\fR to
 \&\fItrue\fR the effect of \fBSensor\fR is inversed: All selected sensors are ignored
 and all other sensors are collected.
+.ie n .Sh "Plugin ""snmp"""
+.el .Sh "Plugin \f(CWsnmp\fP"
+.IX Subsection "Plugin snmp"
+Since the configuration of the \f(CW\*(C`snmp plugin\*(C'\fR is a little more complicated than
+other plugins, its documentation has been moved to an own manpage,
+\&\fIcollectd\-snmp\fR\|(5). Please see there for details.
 .ie n .Sh "Plugin ""syslog"""
 .el .Sh "Plugin \f(CWsyslog\fP"
 .IX Subsection "Plugin syslog"
@@ -657,6 +794,37 @@ and all other sensors are collected.
 Sets the log\-level. If, for example, set to \fBnotice\fR, then all events with
 severity \fBnotice\fR, \fBwarning\fR, or \fBerr\fR will be submitted to the
 syslog\-daemon.
+.ie n .Sh "Plugin ""tcpconns"""
+.el .Sh "Plugin \f(CWtcpconns\fP"
+.IX Subsection "Plugin tcpconns"
+The \f(CW\*(C`tcpconns plugin\*(C'\fR counts the number of currently established \s-1TCP\s0
+connections based on the local port and/or the remote port. Since there may be
+a lot of connections the default if to count all connections with a local port,
+for which a listening socket is opened. You can use the following options to
+fine-tune the ports you are interested in:
+.IP "\fBListeningPorts\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "ListeningPorts true|false"
+If this option is set to \fItrue\fR, statistics for all local ports for which a
+listening socket exists are collected. The default depends on \fBLocalPort\fR and
+\&\fBRemotePort\fR (see below): If no port at all is specifically selected, the
+default is to collect listening ports. If specific ports (no matter if local or
+remote ports) are selected, this option defaults to \fIfalse\fR, i.\ e. only
+the selected ports will be collected unless this option is set to \fItrue\fR
+specifically.
+.IP "\fBLocalPort\fR \fIPort\fR" 4
+.IX Item "LocalPort Port"
+Count the connections to a specific local port. This can be used to see how
+many connections are handled by a specific daemon, e.\ g. the mailserver.
+You have to specify the port in numeric form, so for the mailserver example
+you'd need to set \fB25\fR.
+.IP "\fBRemotePort\fR \fIPort\fR" 4
+.IX Item "RemotePort Port"
+Count the connections to a specific remote port. This is useful to see how
+much a remote service is used. This is most useful if you want to know how many
+connections a local service has opened to remote services, e.\ g. how many
+connections a mail server or news server has to other mail or news servers, or
+how many connections a web proxy holds to web servers. You have to give the
+port in numeric form.
 .ie n .Sh "Plugin ""unixsock"""
 .el .Sh "Plugin \f(CWunixsock\fP"
 .IX Subsection "Plugin unixsock"
@@ -686,6 +854,7 @@ The \fBVServer\fR homepage can be found at <http://linux\-vserver.org/>.
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),
 \&\fIcollectd\-exec\fR\|(5),
+\&\fIcollectd\-perl\fR\|(5),
 \&\fIcollectd\-unixsock\fR\|(5),
 \&\fIhddtemp\fR\|(8),
 kstat(3KSTAT),

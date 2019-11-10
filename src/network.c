@@ -162,7 +162,7 @@ static int listen_loop = 0;
 static char         send_buffer[BUFF_SIZE];
 static char        *send_buffer_ptr;
 static int          send_buffer_fill;
-static value_list_t send_buffer_vl = VALUE_LIST_INIT;
+static value_list_t send_buffer_vl = VALUE_LIST_STATIC;
 static char         send_buffer_type[DATA_MAX_NAME_LEN];
 static pthread_mutex_t send_buffer_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -556,6 +556,13 @@ static int parse_packet (void *buffer, int buffer_len)
 			status = parse_part_number (&buffer, &buffer_len, &tmp);
 			if (status == 0)
 				vl.time = (time_t) tmp;
+		}
+		else if (ntohs (header->type) == TYPE_INTERVAL)
+		{
+			uint64_t tmp = 0;
+			status = parse_part_number (&buffer, &buffer_len, &tmp);
+			if (status == 0)
+				vl.interval = (int) tmp;
 		}
 		else if (ntohs (header->type) == TYPE_HOST)
 		{
@@ -1084,7 +1091,6 @@ static int add_to_buffer (char *buffer, int buffer_size,
 					vl->host, strlen (vl->host)) != 0)
 			return (-1);
 		strcpy (vl_def->host, vl->host);
-		DEBUG ("network plugin: add_to_buffer: host = %s", vl->host);
 	}
 
 	if (vl_def->time != vl->time)
@@ -1093,8 +1099,14 @@ static int add_to_buffer (char *buffer, int buffer_size,
 					(uint64_t) vl->time))
 			return (-1);
 		vl_def->time = vl->time;
-		DEBUG ("network plugin: add_to_buffer: time = %u",
-				(unsigned int) vl->time);
+	}
+
+	if (vl_def->interval != vl->interval)
+	{
+		if (write_part_number (&buffer, &buffer_size, TYPE_INTERVAL,
+					(uint64_t) vl->interval))
+			return (-1);
+		vl_def->interval = vl->interval;
 	}
 
 	if (strcmp (vl_def->plugin, vl->plugin) != 0)
@@ -1103,8 +1115,6 @@ static int add_to_buffer (char *buffer, int buffer_size,
 					vl->plugin, strlen (vl->plugin)) != 0)
 			return (-1);
 		strcpy (vl_def->plugin, vl->plugin);
-		DEBUG ("network plugin: add_to_buffer: plugin = %s",
-				vl->plugin);
 	}
 
 	if (strcmp (vl_def->plugin_instance, vl->plugin_instance) != 0)
@@ -1114,8 +1124,6 @@ static int add_to_buffer (char *buffer, int buffer_size,
 					strlen (vl->plugin_instance)) != 0)
 			return (-1);
 		strcpy (vl_def->plugin_instance, vl->plugin_instance);
-		DEBUG ("network plugin: add_to_buffer: plugin_instance = %s",
-				vl->plugin_instance);
 	}
 
 	if (strcmp (type_def, ds->type) != 0)
@@ -1124,7 +1132,6 @@ static int add_to_buffer (char *buffer, int buffer_size,
 					ds->type, strlen (ds->type)) != 0)
 			return (-1);
 		strcpy (type_def, ds->type);
-		DEBUG ("network plugin: add_to_buffer: type = %s", ds->type);
 	}
 
 	if (strcmp (vl_def->type_instance, vl->type_instance) != 0)
@@ -1134,8 +1141,6 @@ static int add_to_buffer (char *buffer, int buffer_size,
 					strlen (vl->type_instance)) != 0)
 			return (-1);
 		strcpy (vl_def->type_instance, vl->type_instance);
-		DEBUG ("network plugin: add_to_buffer: type_instance = %s",
-				vl->type_instance);
 	}
 	
 	if (write_part_values (&buffer, &buffer_size, ds, vl) != 0)
@@ -1277,8 +1282,6 @@ static int network_config (const char *key, const char *val)
 
 static int network_shutdown (void)
 {
-	DEBUG ("Shutting down.");
-
 	listen_loop++;
 
 	if (listen_thread != (pthread_t) 0)
@@ -1288,7 +1291,8 @@ static int network_shutdown (void)
 		listen_thread = (pthread_t) 0;
 	}
 
-	listen_thread = 0;
+	if (send_buffer_fill > 0)
+		flush_buffer ();
 
 	if (cache_tree != NULL)
 	{

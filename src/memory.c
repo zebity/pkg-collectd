@@ -43,17 +43,11 @@
 # include <mach/vm_statistics.h>
 #endif
 
-#if defined (HOST_VM_INFO) || HAVE_SYSCTLBYNAME || KERNEL_LINUX || HAVE_LIBKSTAT
-# define MEMORY_HAVE_READ 1
-#else
-# define MEMORY_HAVE_READ 0
-#endif
-
 /* vm_statistics_data_t */
-#if defined(HOST_VM_INFO)
+#if HAVE_HOST_STATISTICS
 static mach_port_t port_host;
 static vm_size_t pagesize;
-/* #endif HOST_VM_INFO */
+/* #endif HAVE_HOST_STATISTICS */
 
 #elif HAVE_SYSCTLBYNAME
 /* no global variables */
@@ -66,15 +60,18 @@ static vm_size_t pagesize;
 #elif HAVE_LIBKSTAT
 static int pagesize;
 static kstat_t *ksp;
-#endif /* HAVE_LIBKSTAT */
+/* #endif HAVE_LIBKSTAT */
 
-#if MEMORY_HAVE_READ
+#else
+# error "No applicable input method."
+#endif
+
 static int memory_init (void)
 {
-#if defined(HOST_VM_INFO)
+#if HAVE_HOST_STATISTICS
 	port_host = mach_host_self ();
 	host_page_size (port_host, &pagesize);
-/* #endif HOST_VM_INFO */
+/* #endif HAVE_HOST_STATISTICS */
 
 #elif HAVE_SYSCTLBYNAME
 /* no init stuff */
@@ -114,7 +111,7 @@ static void memory_submit (const char *type_instance, gauge_t value)
 
 static int memory_read (void)
 {
-#if defined(HOST_VM_INFO)
+#if HAVE_HOST_STATISTICS
 	kern_return_t status;
 	vm_statistics_data_t   vm_data;
 	mach_msg_type_number_t vm_data_len;
@@ -165,7 +162,7 @@ static int memory_read (void)
 	memory_submit ("active",   active);
 	memory_submit ("inactive", inactive);
 	memory_submit ("free",     free);
-/* #endif HOST_VM_INFO */
+/* #endif HAVE_HOST_STATISTICS */
 
 #elif HAVE_SYSCTLBYNAME
 	/*
@@ -321,12 +318,9 @@ static int memory_read (void)
 
 	return (0);
 }
-#endif /* MEMORY_HAVE_READ */
 
 void module_register (void)
 {
-#if MEMORY_HAVE_READ
 	plugin_register_init ("memory", memory_init);
 	plugin_register_read ("memory", memory_read);
-#endif /* MEMORY_HAVE_READ */
 } /* void module_register */

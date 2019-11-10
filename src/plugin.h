@@ -1,9 +1,8 @@
 #ifndef PLUGIN_H
 #define PLUGIN_H
-
 /**
  * collectd - src/plugin.h
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,6 +20,9 @@
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
  **/
+
+#include "collectd.h"
+#include "configfile.h"
 
 #define DATA_MAX_NAME_LEN 64
 
@@ -61,6 +63,7 @@ struct value_list_s
 	value_t *values;
 	int      values_len;
 	time_t   time;
+	int      interval;
 	char     host[DATA_MAX_NAME_LEN];
 	char     plugin[DATA_MAX_NAME_LEN];
 	char     plugin_instance[DATA_MAX_NAME_LEN];
@@ -68,7 +71,8 @@ struct value_list_s
 };
 typedef struct value_list_s value_list_t;
 
-#define VALUE_LIST_INIT { NULL, 0, 0, "localhost", "", "", "" }
+#define VALUE_LIST_INIT { NULL, 0, 0, interval_g, "localhost", "", "", "" }
+#define VALUE_LIST_STATIC { NULL, 0, 0, 0, "localhost", "", "", "" }
 
 struct data_source_s
 {
@@ -143,6 +147,8 @@ void plugin_shutdown_all (void);
 int plugin_register_config (const char *name,
 		int (*callback) (const char *key, const char *val),
 		const char **keys, int keys_num);
+int plugin_register_complex_config (const char *type,
+		int (*callback) (oconfig_item_t *));
 int plugin_register_init (const char *name,
 		int (*callback) (void));
 int plugin_register_read (const char *name,
@@ -156,12 +162,14 @@ int plugin_register_log (char *name,
 		void (*callback) (int, const char *));
 
 int plugin_unregister_config (const char *name);
+int plugin_unregister_complex_config (const char *name);
 int plugin_unregister_init (const char *name);
 int plugin_unregister_read (const char *name);
 int plugin_unregister_write (const char *name);
 int plugin_unregister_shutdown (const char *name);
 int plugin_unregister_data_set (const char *name);
 int plugin_unregister_log (const char *name);
+
 
 /*
  * NAME

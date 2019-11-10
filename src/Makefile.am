@@ -25,6 +25,7 @@ collectd_SOURCES = collectd.c collectd.h \
 collectd_CPPFLAGS = $(LTDLINCL)
 collectd_CPPFLAGS += -DPREFIX='"${prefix}"'
 collectd_CPPFLAGS += -DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"'
+collectd_CPPFLAGS += -DLOCALSTATEDIR='"${localstatedir}"'
 collectd_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"'
 if BUILD_FEATURE_DAEMON
 collectd_CPPFLAGS += -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
@@ -80,7 +81,7 @@ endif
 
 pkglib_LTLIBRARIES = 
 
-if BUILD_MODULE_APACHE
+if BUILD_PLUGIN_APACHE
 pkglib_LTLIBRARIES += apache.la
 apache_la_SOURCES = apache.c
 apache_la_LDFLAGS = -module -avoid-version
@@ -94,7 +95,7 @@ endif
 collectd_DEPENDENCIES += apache.la
 endif
 
-if BUILD_MODULE_APCUPS
+if BUILD_PLUGIN_APCUPS
 pkglib_LTLIBRARIES += apcups.la
 apcups_la_SOURCES = apcups.c
 apcups_la_LDFLAGS = -module -avoid-version
@@ -105,18 +106,15 @@ collectd_LDADD += "-dlopen" apcups.la
 collectd_DEPENDENCIES += apcups.la
 endif
 
-if BUILD_MODULE_APPLE_SENSORS
+if BUILD_PLUGIN_APPLE_SENSORS
 pkglib_LTLIBRARIES += apple_sensors.la
 apple_sensors_la_SOURCES = apple_sensors.c
-apple_sensors_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBIOKIT
-apple_sensors_la_LDFLAGS += -lIOKit
-endif
+apple_sensors_la_LDFLAGS = -module -avoid-version -lIOKit
 collectd_LDADD += "-dlopen" apple_sensors.la
 collectd_DEPENDENCIES += apple_sensors.la
 endif
 
-if BUILD_MODULE_BATTERY
+if BUILD_PLUGIN_BATTERY
 pkglib_LTLIBRARIES += battery.la
 battery_la_SOURCES = battery.c
 battery_la_LDFLAGS = -module -avoid-version
@@ -127,7 +125,7 @@ collectd_LDADD += "-dlopen" battery.la
 collectd_DEPENDENCIES += battery.la
 endif
 
-if BUILD_MODULE_CPU
+if BUILD_PLUGIN_CPU
 pkglib_LTLIBRARIES += cpu.la
 cpu_la_SOURCES = cpu.c
 cpu_la_LDFLAGS = -module -avoid-version
@@ -141,7 +139,7 @@ collectd_LDADD += "-dlopen" cpu.la
 collectd_DEPENDENCIES += cpu.la
 endif
 
-if BUILD_MODULE_CPUFREQ
+if BUILD_PLUGIN_CPUFREQ
 pkglib_LTLIBRARIES += cpufreq.la
 cpufreq_la_SOURCES = cpufreq.c
 cpufreq_la_LDFLAGS = -module -avoid-version
@@ -149,7 +147,7 @@ collectd_LDADD += "-dlopen" cpufreq.la
 collectd_DEPENDENCIES += cpufreq.la
 endif
 
-if BUILD_MODULE_CSV
+if BUILD_PLUGIN_CSV
 pkglib_LTLIBRARIES += csv.la
 csv_la_SOURCES = csv.c
 csv_la_LDFLAGS = -module -avoid-version
@@ -157,7 +155,7 @@ collectd_LDADD += "-dlopen" csv.la
 collectd_DEPENDENCIES += csv.la
 endif
 
-if BUILD_MODULE_DF
+if BUILD_PLUGIN_DF
 pkglib_LTLIBRARIES += df.la
 df_la_SOURCES = df.c
 df_la_LDFLAGS = -module -avoid-version
@@ -165,7 +163,7 @@ collectd_LDADD += "-dlopen" df.la
 collectd_DEPENDENCIES += df.la
 endif
 
-if BUILD_MODULE_DISK
+if BUILD_PLUGIN_DISK
 pkglib_LTLIBRARIES += disk.la
 disk_la_SOURCES = disk.c
 disk_la_LDFLAGS = -module -avoid-version
@@ -182,26 +180,15 @@ collectd_LDADD += "-dlopen" disk.la
 collectd_DEPENDENCIES += disk.la
 endif
 
-if BUILD_MODULE_DNS
+if BUILD_PLUGIN_DNS
 pkglib_LTLIBRARIES += dns.la
-dns_la_SOURCES = dns.c
-if BUILD_WITH_LIBPCAP
-if BUILD_WITH_LIBPTHREAD
-dns_la_SOURCES += utils_dns.c utils_dns.h
-endif
-endif
-dns_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBPCAP
-dns_la_LDFLAGS += -lpcap
-endif
-if BUILD_WITH_LIBPTHREAD
-dns_la_LDFLAGS += -lpthread
-endif
+dns_la_SOURCES = dns.c utils_dns.c utils_dns.h
+dns_la_LDFLAGS = -module -avoid-version -lpcap -lpthread
 collectd_LDADD += "-dlopen" dns.la
 collectd_DEPENDENCIES += dns.la
 endif
 
-if BUILD_MODULE_EMAIL
+if BUILD_PLUGIN_EMAIL
 pkglib_LTLIBRARIES += email.la
 email_la_SOURCES = email.c
 email_la_LDFLAGS = -module -avoid-version
@@ -212,7 +199,7 @@ collectd_LDADD += "-dlopen" email.la
 collectd_DEPENDENCIES += email.la
 endif
 
-if BUILD_MODULE_ENTROPY
+if BUILD_PLUGIN_ENTROPY
 pkglib_LTLIBRARIES += entropy.la
 entropy_la_SOURCES = entropy.c
 entropy_la_LDFLAGS = -module -avoid-version
@@ -220,9 +207,9 @@ collectd_LDADD += "-dlopen" entropy.la
 collectd_DEPENDENCIES += entropy.la
 endif
 
-if BUILD_MODULE_EXEC
+if BUILD_PLUGIN_EXEC
 pkglib_LTLIBRARIES += exec.la
-exec_la_SOURCES = exec.c
+exec_la_SOURCES = exec.c utils_cmd_putval.c utils_cmd_putval.h
 exec_la_LDFLAGS = -module -avoid-version
 if BUILD_WITH_LIBPTHREAD
 exec_la_LDFLAGS += -lpthread
@@ -231,7 +218,7 @@ collectd_LDADD += "-dlopen" exec.la
 collectd_DEPENDENCIES += exec.la
 endif
 
-if BUILD_MODULE_HDDTEMP
+if BUILD_PLUGIN_HDDTEMP
 pkglib_LTLIBRARIES += hddtemp.la
 hddtemp_la_SOURCES = hddtemp.c
 hddtemp_la_LDFLAGS = -module -avoid-version
@@ -242,7 +229,7 @@ collectd_LDADD += "-dlopen" hddtemp.la
 collectd_DEPENDENCIES += hddtemp.la
 endif
 
-if BUILD_MODULE_INTERFACE
+if BUILD_PLUGIN_INTERFACE
 pkglib_LTLIBRARIES += interface.la
 interface_la_SOURCES = interface.c
 interface_la_LDFLAGS = -module -avoid-version
@@ -265,18 +252,23 @@ interface_la_LDFLAGS += -lstatgrab
 endif
 endif
 
-if BUILD_MODULE_IPTABLES
+if BUILD_PLUGIN_IPTABLES
 pkglib_LTLIBRARIES += iptables.la
 iptables_la_SOURCES = iptables.c
-iptables_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBIPTC
-iptables_la_LDFLAGS += -liptc
-endif
+iptables_la_LDFLAGS = -module -avoid-version -liptc
 collectd_LDADD += "-dlopen" iptables.la
 collectd_DEPENDENCIES += iptables.la
 endif
 
-if BUILD_MODULE_IRQ
+if BUILD_PLUGIN_IPVS
+pkglib_LTLIBRARIES += ipvs.la
+ipvs_la_SOURCES = ipvs.c
+ipvs_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" ipvs.la
+collectd_DEPENDENCIES += ipvs.la
+endif
+
+if BUILD_PLUGIN_IRQ
 pkglib_LTLIBRARIES += irq.la
 irq_la_SOURCES = irq.c
 irq_la_LDFLAGS = -module -avoid-version
@@ -284,7 +276,7 @@ collectd_LDADD += "-dlopen" irq.la
 collectd_DEPENDENCIES += irq.la
 endif
 
-if BUILD_MODULE_LOAD
+if BUILD_PLUGIN_LOAD
 pkglib_LTLIBRARIES += load.la
 load_la_SOURCES = load.c
 load_la_LDFLAGS = -module -avoid-version
@@ -301,7 +293,7 @@ load_la_LDFLAGS += -lstatgrab
 endif
 endif
 
-if BUILD_MODULE_LOGFILE
+if BUILD_PLUGIN_LOGFILE
 pkglib_LTLIBRARIES += logfile.la
 logfile_la_SOURCES = logfile.c
 logfile_la_LDFLAGS = -module -avoid-version
@@ -309,7 +301,7 @@ collectd_LDADD += "-dlopen" logfile.la
 collectd_DEPENDENCIES += logfile.la
 endif
 
-if BUILD_MODULE_MBMON
+if BUILD_PLUGIN_MBMON
 pkglib_LTLIBRARIES += mbmon.la
 mbmon_la_SOURCES = mbmon.c
 mbmon_la_LDFLAGS = -module -avoid-version
@@ -320,7 +312,20 @@ collectd_LDADD += "-dlopen" mbmon.la
 collectd_DEPENDENCIES += mbmon.la
 endif
 
-if BUILD_MODULE_MEMORY
+if BUILD_PLUGIN_MEMCACHED
+pkglib_LTLIBRARIES += memcached.la
+memcached_la_SOURCES = memcached.c
+memcached_la_LDFLAGS = -module -avoid-version
+memcached_la_CFLAGS =
+memcached_la_LIBADD =
+if BUILD_WITH_LIBSOCKET
+memcached_la_LDFLAGS += -lsocket
+endif
+collectd_LDADD += "-dlopen" memcached.la
+collectd_DEPENDENCIES += memcached.la
+endif
+
+if BUILD_PLUGIN_MEMORY
 pkglib_LTLIBRARIES += memory.la
 memory_la_SOURCES = memory.c
 memory_la_LDFLAGS = -module -avoid-version
@@ -343,7 +348,7 @@ memory_la_LDFLAGS += -lstatgrab
 endif
 endif
 
-if BUILD_MODULE_MULTIMETER
+if BUILD_PLUGIN_MULTIMETER
 pkglib_LTLIBRARIES += multimeter.la
 multimeter_la_SOURCES = multimeter.c
 multimeter_la_LDFLAGS = -module -avoid-version
@@ -351,7 +356,7 @@ collectd_LDADD += "-dlopen" multimeter.la
 collectd_DEPENDENCIES += multimeter.la
 endif
 
-if BUILD_MODULE_MYSQL
+if BUILD_PLUGIN_MYSQL
 pkglib_LTLIBRARIES += mysql.la
 mysql_la_SOURCES = mysql.c
 mysql_la_LDFLAGS = -module -avoid-version
@@ -365,7 +370,17 @@ endif
 collectd_DEPENDENCIES += mysql.la
 endif
 
-if BUILD_MODULE_NETWORK
+if BUILD_PLUGIN_NETLINK
+pkglib_LTLIBRARIES += netlink.la
+netlink_la_SOURCES = netlink.c
+netlink_la_LDFLAGS = -module -avoid-version
+netlink_la_CFLAGS = $(BUILD_WITH_LIBNETLINK_CFLAGS)
+netlink_la_LIBADD = $(BUILD_WITH_LIBNETLINK_LIBS)
+collectd_LDADD += "-dlopen" netlink.la
+collectd_DEPENDENCIES += netlink.la
+endif
+
+if BUILD_PLUGIN_NETWORK
 pkglib_LTLIBRARIES += network.la
 network_la_SOURCES = network.c network.h
 network_la_LDFLAGS = -module -avoid-version
@@ -379,7 +394,7 @@ collectd_LDADD += "-dlopen" network.la
 collectd_DEPENDENCIES += network.la
 endif
 
-if BUILD_MODULE_NFS
+if BUILD_PLUGIN_NFS
 pkglib_LTLIBRARIES += nfs.la
 nfs_la_SOURCES = nfs.c
 nfs_la_LDFLAGS = -module -avoid-version
@@ -387,7 +402,18 @@ collectd_LDADD += "-dlopen" nfs.la
 collectd_DEPENDENCIES += nfs.la
 endif
 
-if BUILD_MODULE_NTPD
+if BUILD_PLUGIN_NGINX
+pkglib_LTLIBRARIES += nginx.la
+nginx_la_SOURCES = nginx.c
+nginx_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_LIBCURL
+nginx_la_LDFLAGS += $(BUILD_WITH_LIBCURL_LIBS)
+endif
+collectd_LDADD += "-dlopen" nginx.la
+collectd_DEPENDENCIES += nginx.la
+endif
+
+if BUILD_PLUGIN_NTPD
 pkglib_LTLIBRARIES += ntpd.la
 ntpd_la_SOURCES = ntpd.c
 ntpd_la_LDFLAGS = -module -avoid-version
@@ -398,22 +424,16 @@ collectd_LDADD += "-dlopen" ntpd.la
 collectd_DEPENDENCIES += ntpd.la
 endif
 
-if BUILD_MODULE_NUT
+if BUILD_PLUGIN_NUT
 pkglib_LTLIBRARIES += nut.la
 nut_la_SOURCES = nut.c
-nut_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBUPSCLIENT
-nut_la_LDFLAGS += -lupsclient
-if BUILD_WITH_LIBPTHREAD
-nut_la_LDFLAGS += -lpthread
-endif
-endif
+nut_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBUPSCLIENT_CFLAGS)
+nut_la_LDFLAGS = -module -avoid-version -lpthread $(BUILD_WITH_LIBUPSCLIENT_LIBS)
 collectd_LDADD += "-dlopen" nut.la
 collectd_DEPENDENCIES += nut.la
 endif
 
-if BUILD_WITH_LIBPERL
-if BUILD_MODULE_PERL
+if BUILD_PLUGIN_PERL
 pkglib_LTLIBRARIES += perl.la
 perl_la_SOURCES = perl.c
 perl_la_CFLAGS  = $(AM_CFLAGS) \
@@ -424,25 +444,22 @@ perl_la_LDFLAGS = -module -avoid-version \
 collectd_LDADD += "-dlopen" perl.la
 collectd_DEPENDENCIES += perl.la
 endif
-endif
 
-if BUILD_MODULE_PING
+if BUILD_PLUGIN_PING
 pkglib_LTLIBRARIES += ping.la
 ping_la_SOURCES = ping.c
 ping_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBOPING
 if BUILD_WITH_OWN_LIBOPING
 ping_la_LIBADD  = liboping/liboping.la
 ping_la_DEPENDENCIES = liboping/liboping.la
 else
 ping_la_LDFLAGS += -loping
 endif
-endif
 collectd_LDADD += "-dlopen" ping.la
 collectd_DEPENDENCIES += ping.la
 endif
 
-if BUILD_MODULE_PROCESSES
+if BUILD_PLUGIN_PROCESSES
 pkglib_LTLIBRARIES += processes.la
 processes_la_SOURCES = processes.c
 processes_la_LDFLAGS = -module -avoid-version
@@ -450,26 +467,27 @@ collectd_LDADD += "-dlopen" processes.la
 collectd_DEPENDENCIES += processes.la
 endif
 
-if BUILD_WITH_RRDTOOL
+if BUILD_PLUGIN_RRDTOOL
 pkglib_LTLIBRARIES += rrdtool.la
 rrdtool_la_SOURCES = rrdtool.c
-rrdtool_la_LDFLAGS = -module -avoid-version -lrrd
+rrdtool_la_LDFLAGS = -module -avoid-version
+rrdtool_la_CFLAGS = $(BUILD_WITH_LIBRRD_CFLAGS)
+rrdtool_la_LIBADD = $(BUILD_WITH_LIBRRD_LDFLAGS)
 collectd_LDADD += "-dlopen" rrdtool.la
 collectd_DEPENDENCIES += rrdtool.la
 endif
 
-if BUILD_MODULE_SENSORS
+if BUILD_PLUGIN_SENSORS
 pkglib_LTLIBRARIES += sensors.la
 sensors_la_SOURCES = sensors.c
-sensors_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LM_SENSORS
-sensors_la_LDFLAGS += -lsensors
-endif
+sensors_la_CFLAGS = $(BUILD_WITH_LIBSENSORS_CFLAGS)
+sensors_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBSENSORS_LDFLAGS)
+sensors_la_LIBADD = -lsensors
 collectd_LDADD += "-dlopen" sensors.la
 collectd_DEPENDENCIES += sensors.la
 endif
 
-if BUILD_MODULE_SERIAL
+if BUILD_PLUGIN_SERIAL
 pkglib_LTLIBRARIES += serial.la
 serial_la_SOURCES = serial.c
 serial_la_LDFLAGS = -module -avoid-version
@@ -477,7 +495,24 @@ collectd_LDADD += "-dlopen" serial.la
 collectd_DEPENDENCIES += serial.la
 endif
 
-if BUILD_MODULE_SWAP
+if BUILD_PLUGIN_SNMP
+pkglib_LTLIBRARIES += snmp.la
+snmp_la_SOURCES = snmp.c
+snmp_la_LDFLAGS = -module -avoid-version
+snmp_la_CFLAGS =
+snmp_la_LIBADD =
+if BUILD_WITH_LIBNETSNMP
+snmp_la_CFLAGS += $(BUILD_WITH_LIBSNMP_CFLAGS)
+snmp_la_LIBADD += $(BUILD_WITH_LIBSNMP_LIBS)
+endif
+if BUILD_WITH_LIBPTHREAD
+snmp_la_LIBADD += -lpthread
+endif
+collectd_LDADD += "-dlopen" snmp.la
+collectd_DEPENDENCIES += snmp.la
+endif
+
+if BUILD_PLUGIN_SWAP
 pkglib_LTLIBRARIES += swap.la
 swap_la_SOURCES = swap.c
 swap_la_LDFLAGS = -module -avoid-version
@@ -500,7 +535,7 @@ swap_la_LDFLAGS += -lstatgrab
 endif
 endif
 
-if BUILD_MODULE_SYSLOG
+if BUILD_PLUGIN_SYSLOG
 pkglib_LTLIBRARIES += syslog.la
 syslog_la_SOURCES = syslog.c
 syslog_la_LDFLAGS = -module -avoid-version
@@ -508,30 +543,32 @@ collectd_LDADD += "-dlopen" syslog.la
 collectd_DEPENDENCIES += syslog.la
 endif
 
-if BUILD_MODULE_TAPE
+if BUILD_PLUGIN_TAPE
 pkglib_LTLIBRARIES += tape.la
 tape_la_SOURCES = tape.c
-tape_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBKSTAT
-tape_la_LDFLAGS += -lkstat
-endif
-if BUILD_WITH_LIBDEVINFO
-tape_la_LDFLAGS += -ldevinfo
-endif
+tape_la_LDFLAGS = -module -avoid-version -lkstat -ldevinfo
 collectd_LDADD += "-dlopen" tape.la
 collectd_DEPENDENCIES += tape.la
 endif
 
-if BUILD_MODULE_UNIXSOCK
+if BUILD_PLUGIN_TCPCONNS
+pkglib_LTLIBRARIES += tcpconns.la
+tcpconns_la_SOURCES = tcpconns.c
+tcpconns_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" tcpconns.la
+collectd_DEPENDENCIES += tcpconns.la
+endif
+
+if BUILD_PLUGIN_UNIXSOCK
 pkglib_LTLIBRARIES += unixsock.la
-unixsock_la_SOURCES = unixsock.c
-unixsock_la_CPPFLAGS = -DPREFIX='"${prefix}"'
+unixsock_la_SOURCES = unixsock.c utils_cmd_putval.h utils_cmd_putval.c
+unixsock_la_CPPFLAGS = -DLOCALSTATEDIR='"${localstatedir}"'
 unixsock_la_LDFLAGS = -module -avoid-version -lpthread
 collectd_LDADD += "-dlopen" unixsock.la
 collectd_DEPENDENCIES += unixsock.la
 endif
 
-if BUILD_MODULE_USERS
+if BUILD_PLUGIN_USERS
 pkglib_LTLIBRARIES += users.la
 users_la_SOURCES = users.c
 users_la_LDFLAGS = -module -avoid-version
@@ -539,7 +576,7 @@ collectd_LDADD += "-dlopen" users.la
 collectd_DEPENDENCIES += users.la
 endif
 
-if BUILD_MODULE_VSERVER
+if BUILD_PLUGIN_VSERVER
 pkglib_LTLIBRARIES += vserver.la
 vserver_la_SOURCES = vserver.c
 vserver_la_LDFLAGS = -module -avoid-version
@@ -547,7 +584,7 @@ collectd_LDADD += "-dlopen" vserver.la
 collectd_DEPENDENCIES += vserver.la
 endif
 
-if BUILD_MODULE_WIRELESS
+if BUILD_PLUGIN_WIRELESS
 pkglib_LTLIBRARIES += wireless.la
 wireless_la_SOURCES = wireless.c
 wireless_la_LDFLAGS = -module -avoid-version
@@ -555,19 +592,33 @@ collectd_LDADD += "-dlopen" wireless.la
 collectd_DEPENDENCIES += wireless.la
 endif
 
+if BUILD_PLUGIN_XMMS
+pkglib_LTLIBRARIES += xmms.la
+xmms_la_SOURCES = xmms.c
+xmms_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBXMMS_CFLAGS)
+xmms_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBXMMS_LIBS)
+collectd_LDADD += "-dlopen" xmms.la
+collectd_DEPENDENCIES += xmms.la
+endif
+
+
 dist_man_MANS = collectd.1 collectd-nagios.1 collectd.conf.5 \
 		collectd-email.5 collectd-exec.5 collectd-perl.5 \
-		collectd-unixsock.5
+		collectd-snmp.5 collectd-unixsock.5
 
 #collectd_1_SOURCES = collectd.pod
 
 EXTRA_DIST = types.db
 
+EXTRA_DIST += collectd-email.pod collectd-exec.pod collectd-nagios.pod \
+	collectd-perl.pod collectd-snmp.pod collectd-unixsock.pod \
+	collectd.conf.pod collectd.pod
+
 .pod.1:
-	pod2man --release=$(VERSION) --center=$(PACKAGE) $< >$@
+	pod2man --release=$(VERSION) --center=$(PACKAGE) $< >.pod2man.tmp 2>/dev/null && mv -f .pod2man.tmp $@ || true
 
 .pod.5:
-	pod2man --section=5 --release=$(VERSION) --center=$(PACKAGE) $< >$@
+	pod2man --section=5 --release=$(VERSION) --center=$(PACKAGE) $< >.pod2man.tmp 2>/dev/null && mv -f .pod2man.tmp $@ || true
 
 install-exec-hook:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)

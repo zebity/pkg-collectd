@@ -24,8 +24,24 @@ several PNG files which are graphs of the RRD files found.
 
 collection.cgi
 --------------
-  Sample CGI script that creates graphs on the fly. The Perl module `RRDs' is
-needed (Debian package `librrds-perl').
+  Sample CGI script that creates graphs on the fly. The Perl modules `RRDs'
+(Debian package `librrds-perl'), `URI:Escape' (package liburi-perl),
+`HTML::Entities' (package libhtml-parser-perl) and a CGI capable web server
+(e.g. apache2 or boa) are needed. Simply install the script to a place where
+the webserver will treat it as a CGI script (/usr/lib/cgi-bin/ by default) and
+visit that page in a browser (http://localhost/cgi-bin/collection.cgi by
+default). Please refer to your webserver's documentation for more details.
+
+  Starting with version 4, collection.cgi requires a small config file, which
+should look something like this:
+
+  datadir: "/var/lib/collectd/rrd/"
+  libdir: "/usr/lib/collectd/"
+
+exec-smartctl
+-------------
+  Sample script for the exec plugin. Please refer to the documentation in the
+file - you will have to adapt it to your needs anyway.
 
 extractDS.px
 ------------
@@ -47,3 +63,12 @@ been renamed) and others have bee split up into multiple files. This script
 prints a bash-script to STDOUT which should do most of the work for you. You
 may still need to do some things by hand, read `README.migration' for more
 details.
+
+snmp-data.conf
+--------------
+  Sample configuration for the SNMP plugin. This config includes a few standard
+<Data ..> definitions that you can include in your own config using the
+`Include' statement (available since version 4.2.0). The config includes some
+data that is defined in the IF-MIB, e. g. octet or packet counters, UPS-MIB and
+whatever people have send in. If you have some more definitions please send
+them in, so others can profit from it.

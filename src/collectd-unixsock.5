@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-UNIXSOCK 5"
-.TH COLLECTD-UNIXSOCK 5 "2007-08-26" "4.0.7" "collectd"
+.TH COLLECTD-UNIXSOCK 5 "2007-10-27" "4.2.0" "collectd"
 .SH "NAME"
 collectd\-unixsock \- Documentation of collectd's \f(CW\*(C`unixsock plugin\*(C'\fR
 .SH "SYNOPSIS"
@@ -176,19 +176,65 @@ Undefined values are returned as \fBNaN\fR.
 Example:
   \-> | \s-1GETVAL\s0 myhost/cpu\-0/cpu\-user
   <\- | 1 value=1.260000e+00
-.IP "\fB\s-1PUTVAL\s0\fR \fIIdentifier\fR \fIValuelist\fR" 4
-.IX Item "PUTVAL Identifier Valuelist"
-Submits a value (identified by \fIIdentifier\fR, see below) to the daemon which
-will dispatch it to all it's write\-plugins. The \fIValuelist\fR is a
-colon-separated list of the time and the values, each either an integer if the
-data-source is a counter, of a double if the data-source if of type \*(L"gauge\*(R".
-You can submit an undefined gauge-value by using \fBU\fR. When submitting \fBU\fR to
-a counter the behavior is undefined. The time is given as epoch (i.\ e.
-standard \s-1UNIX\s0 time).
+.IP "\fB\s-1LISTVAL\s0\fR" 4
+.IX Item "LISTVAL"
+Returns a list of the values available in the value cache together with the
+time of the last update, so that querying applications can issue a \fB\s-1GETVAL\s0\fR
+command for the values that have changed.
+.Sp
+The first line's status number is the number of identifiers returned or less
+than zero if an error occurred. Each of the following lines contains the
+update time as an epoch value and the identifier, separated by a space.
 .Sp
 Example:
-  \-> | \s-1PUTVAL\s0 testhost/interface/if_octets\-test0 1179574444:123:456
+  \-> | \s-1LISTVAL\s0
+  <\- | 69 Values found
+  <\- | 1182204284 leeloo/cpu\-0/cpu\-idle
+  <\- | 1182204284 leeloo/cpu\-0/cpu\-nice
+  <\- | 1182204284 leeloo/cpu\-0/cpu\-system
+  <\- | 1182204284 leeloo/cpu\-0/cpu\-user
+  ...
+.IP "\fB\s-1PUTVAL\s0\fR \fIIdentifier\fR [\fIOptionList\fR] \fIValuelist\fR" 4
+.IX Item "PUTVAL Identifier [OptionList] Valuelist"
+Submits one or more values (identified by \fIIdentifier\fR, see below) to the
+daemon which will dispatch it to all it's write\-plugins.
+.Sp
+An \fIIdentifier\fR is of the form
+\&\f(CW\*(C`\f(CIhost\f(CW\f(CB/\f(CW\f(CIplugin\f(CW\f(CB\-\f(CW\f(CIinstance\f(CW\f(CB/\f(CW\f(CItype\f(CW\f(CB\-\f(CW\f(CIinstance\f(CW\*(C'\fR with both
+\&\fIinstance\fR\-parts being optional. If they're omitted the hyphen must be
+omitted, too.
+.Sp
+The \fIOptionList\fR is an optional list of \fIOptions\fR, where each option if a
+key\-value\-pair. A list of currently understood options can be found below, all
+other options will be ignored.
+.Sp
+\&\fIValuelist\fR is a colon-separated list of the time and the values, each either
+an integer if the data-source is a counter, of a double if the data-source if
+of type \*(L"gauge\*(R". You can submit an undefined gauge-value by using \fBU\fR. When
+submitting \fBU\fR to a counter the behavior is undefined. The time is given as
+epoch (i.\ e. standard \s-1UNIX\s0 time).
+.Sp
+You can mix options and values, but the order is important: Options only
+effect following values, so specifying an option as last field is allowed, but
+useless. Also, an option applies to \fBall\fR following values, so you don't need
+to re-set an option over and over again.
+.Sp
+The currently defined \fBOptions\fR are:
+.RS 4
+.IP "\fBinterval=\fR\fIseconds\fR" 4
+.IX Item "interval=seconds"
+Gives the interval in which the data identified by \fIIdentifier\fR is being
+collected.
+.RE
+.RS 4
+.Sp
+Please note that this is the same format as used in the \fBexec plugin\fR, see
+\&\fIcollectd\-exec\fR\|(5).
+.Sp
+Example:
+  \-> | \s-1PUTVAL\s0 testhost/interface/if_octets\-test0 interval=10 1179574444:123:456
   <\- | 0 Success
+.RE
 .Sh "Identifiers"
 .IX Subsection "Identifiers"
 Value or value-lists are identified in a uniform fashion:

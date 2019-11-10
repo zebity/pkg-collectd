@@ -1,8 +1,8 @@
-SUBDIRS = libltdl src
+SUBDIRS = libltdl src bindings
 
 INCLUDES = $(LTDLINCL)
 
-EXTRA_DIST = contrib
+EXTRA_DIST = contrib version-gen.sh
 
 dist-hook:
 	find $(distdir) -type d -name '.svn' | xargs rm -rf

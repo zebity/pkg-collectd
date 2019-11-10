@@ -1,0 +1,116 @@
+=head1 NAME
+
+collectd-exec - Documentation of collectd's C<exec plugin>
+
+=head1 SYNOPSIS
+
+  # See collectd.conf(5)
+  LoadPlugin exec
+  # ...
+  <Plugin exec>
+    Exec "myuser:mygroup" "myprog"
+    Exec "otheruser" "/path/to/another/binary"
+  </Plugin>
+
+=head1 DESCRIPTION
+
+The C<exec plugin> forks of an executable and reads back values that it writes
+to C<STDOUT>. The executable is forked in a fashion similar to L<init>: It is
+forked once and not again until it exits. If it exited, it will be forked again
+after at most I<Interval> seconds. It is perfectly legal for the executable to
+run for a long time and continuously write values to C<STDOUT>.
+
+If you want/need better performance or more functionality you should take a
+long look at the C<perl plugin>, L<collectd-perl(5)>.
+
+=head1 DATA FORMAT
+
+The forked executable is expected to print values to C<STDOUT>. The expected
+format is as follows:
+
+=over 4
+
+=item
+
+Each line beginning with a C<#> (hash mark) is ignored.
+
+=item
+
+Other lines must consist of an I<Identifier>, an optional I<Option-List> and a
+I<Value-List>, separated by a spaces. A description of these two parts follows:
+
+An I<Identifier> is of the form
+C<I<host>B</>I<plugin>B<->I<instance>B</>I<type>B<->I<instance>> with both
+I<instance>-parts being optional. If they're omitted the hyphen must be
+omitted, too.
+
+The I<OptionList> is an optional list of I<Options>, where each option if a
+key-value-pair. A list of currently understood options can be found below, all
+other options will be ignored.
+
+I<Valuelist> is a colon-separated list of the time and the values, each either
+an integer if the data-source is a counter, of a double if the data-source if
+of type "gauge". You can submit an undefined gauge-value by using B<U>. When
+submitting B<U> to a counter the behavior is undefined. The time is given as
+epoch (i.E<nbsp>e. standard UNIX time).
+
+You can mix options and values, but the order is important: Options only
+effect following values, so specifying an option as last field is allowed, but
+useless. Also, an option applies to B<all> following values, so you don't need
+to re-set an option over and over again.
+
+The currently defined B<Options> are:
+
+=over 4
+
+=item B<interval=>I<seconds>
+
+Gives the interval in which the data identified by I<Identifier> is being
+collected.
+
+=back
+
+Please note that this is the same format as used in the B<unixsock plugin>, see
+L<collectd-unixsock(5)>. There's also a bit more information on identifiers in
+case you're confused.
+
+Since examples usually let one understand a lot better, here are some:
+
+  leeloo/cpu-0/cpu-idle N:2299366
+  alice/interface/if_octets-eth0 interval=10 1180647081:421465:479194
+
+=back
+
+When collectd exits it sends a B<SIGTERM> to all still running
+child-processes upon which they have to quit.
+
+=head1 CAVEATS
+
+=over 4
+
+=item
+
+If the executable only writes one value and then exits I will be executed every
+I<Interval> seconds. If I<Interval> is short (the default is 10 seconds) this
+may result in serious system load.
+
+=item
+
+The user, the binary is executed as, may not have root privileges, i.E<nbsp>e.
+must have an UID that is non-zero.
+
+=back
+
+=head1 SEE ALSO
+
+L<collectd(1)>,
+L<collectd.conf(5)>,
+L<collectd-perl(5)>,
+L<collectd-unixsock(5)>,
+L<fork(2)>, L<exec(3)>
+
+=head1 AUTHOR
+
+Florian Forster E<lt>octo@verplant.orgE<gt>
+
+=cut

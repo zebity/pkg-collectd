@@ -133,7 +133,7 @@ static int plugin_load_file (char *file)
 		const char *error = lt_dlerror ();
 
 		ERROR ("lt_dlopen failed: %s", error);
-		DEBUG ("lt_dlopen failed: %s", error);
+		fprintf (stderr, "lt_dlopen failed: %s\n", error);
 		return (1);
 	}
 
@@ -194,7 +194,7 @@ static void *plugin_read_thread (void *args)
 					rf->wait_time = 86400;
 
 				NOTICE ("read-function of plugin `%s' "
-						"failed. Will syspend it for %i "
+						"failed. Will suspend it for %i "
 						"seconds.", le->key, rf->wait_left);
 			}
 			else
@@ -356,6 +356,10 @@ int plugin_load (const char *type)
 			ret = 0;
 			break;
 		}
+		else
+		{
+			fprintf (stderr, "Unable to load plugin %s.\n", type);
+		}
 	}
 
 	closedir (dh);
@@ -373,6 +377,12 @@ int plugin_register_config (const char *name,
 	cf_register (name, callback, keys, keys_num);
 	return (0);
 } /* int plugin_register_config */
+
+int plugin_register_complex_config (const char *type,
+		int (*callback) (oconfig_item_t *))
+{
+	return (cf_register_complex (type, callback));
+} /* int plugin_register_complex_config */
 
 int plugin_register_init (const char *name,
 		int (*callback) (void))
@@ -457,6 +467,12 @@ int plugin_unregister_config (const char *name)
 	cf_unregister (name);
 	return (0);
 } /* int plugin_unregister_config */
+
+int plugin_unregister_complex_config (const char *name)
+{
+	cf_unregister_complex (name);
+	return (0);
+} /* int plugin_unregister_complex_config */
 
 int plugin_unregister_init (const char *name)
 {
@@ -636,10 +652,12 @@ int plugin_dispatch_values (const char *name, value_list_t *vl)
 
 	ds = (data_set_t *) le->value;
 
-	DEBUG ("plugin: plugin_dispatch_values: time = %u; host = %s; "
-			"plugin = %s; plugin_instance = %s; type = %s; "
-			"type_instance = %s;",
-			(unsigned int) vl->time, vl->host,
+	DEBUG ("plugin: plugin_dispatch_values: time = %u; interval = %i; "
+			"host = %s; "
+			"plugin = %s; plugin_instance = %s; "
+			"type = %s; type_instance = %s;",
+			(unsigned int) vl->time, vl->interval,
+			vl->host,
 			vl->plugin, vl->plugin_instance,
 			ds->type, vl->type_instance);
 
