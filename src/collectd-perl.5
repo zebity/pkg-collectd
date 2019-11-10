@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PERL 5"
-.TH COLLECTD-PERL 5 "2009-07-18" "4.7.2" "collectd"
+.TH COLLECTD-PERL 5 "2009-10-04" "4.8.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -288,7 +288,7 @@ structure. The general layout looks like this:
 .Vb 6
 \&  [{
 \&    name => \*(Aqdata_source_name\*(Aq,
-\&    type => DS_TYPE_COUNTER || DS_TYPE_GAUGE,
+\&    type => DS_TYPE_COUNTER || DS_TYPE_GAUGE || DS_TYPE_DERIVE || DS_TYPE_ABSOLUTE,
 \&    min  => value || undef,
 \&    max  => value || undef
 \&  }, ...]
@@ -641,6 +641,10 @@ available (\fB:all\fR will export all of them):
 .IX Item "DS_TYPE_COUNTER"
 .IP "\fB\s-1DS_TYPE_GAUGE\s0\fR" 4
 .IX Item "DS_TYPE_GAUGE"
+.IP "\fB\s-1DS_TYPE_DERIVE\s0\fR" 4
+.IX Item "DS_TYPE_DERIVE"
+.IP "\fB\s-1DS_TYPE_ABSOLUTE\s0\fR" 4
+.IX Item "DS_TYPE_ABSOLUTE"
 .RE
 .RS 4
 .RE

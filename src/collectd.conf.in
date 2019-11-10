@@ -61,6 +61,7 @@ FQDNLookup   true
 #@BUILD_PLUGIN_CPUFREQ_TRUE@LoadPlugin cpufreq
 @LOAD_PLUGIN_CSV@LoadPlugin csv
 #@BUILD_PLUGIN_CURL_TRUE@LoadPlugin curl
+#@BUILD_PLUGIN_CURL_JSON_TRUE@LoadPlugin curl_json
 #@BUILD_PLUGIN_DBI_TRUE@LoadPlugin dbi
 #@BUILD_PLUGIN_DF_TRUE@LoadPlugin df
 #@BUILD_PLUGIN_DISK_TRUE@LoadPlugin disk
@@ -94,6 +95,7 @@ FQDNLookup   true
 #@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@LoadPlugin notify_email
 #@BUILD_PLUGIN_NTPD_TRUE@LoadPlugin ntpd
 #@BUILD_PLUGIN_NUT_TRUE@LoadPlugin nut
+#@BUILD_PLUGIN_OLSRD_TRUE@LoadPlugin olsrd
 #@BUILD_PLUGIN_ONEWIRE_TRUE@LoadPlugin onewire
 #@BUILD_PLUGIN_OPENVPN_TRUE@LoadPlugin openvpn
 #@BUILD_PLUGIN_ORACLE_TRUE@LoadPlugin oracle
@@ -116,6 +118,7 @@ FQDNLookup   true
 #@BUILD_PLUGIN_TEAMSPEAK2_TRUE@LoadPlugin teamspeak2
 #@BUILD_PLUGIN_TED_TRUE@LoadPlugin ted
 #@BUILD_PLUGIN_THERMAL_TRUE@LoadPlugin thermal
+#@BUILD_PLUGIN_TOKYOTYRANT_TRUE@LoadPlugin tokyotyrant
 #@BUILD_PLUGIN_UNIXSOCK_TRUE@LoadPlugin unixsock
 #@BUILD_PLUGIN_UPTIME_TRUE@LoadPlugin uptime
 #@BUILD_PLUGIN_USERS_TRUE@LoadPlugin users
@@ -123,7 +126,9 @@ FQDNLookup   true
 #@BUILD_PLUGIN_VMEM_TRUE@LoadPlugin vmem
 #@BUILD_PLUGIN_VSERVER_TRUE@LoadPlugin vserver
 #@BUILD_PLUGIN_WIRELESS_TRUE@LoadPlugin wireless
+#@BUILD_PLUGIN_WRITE_HTTP_TRUE@LoadPlugin write_http
 #@BUILD_PLUGIN_XMMS_TRUE@LoadPlugin xmms
+#@BUILD_PLUGIN_ZFS_ARC_TRUE@LoadPlugin zfs_arc
 
 ##############################################################################
 # Plugin configuration                                                       #
@@ -189,6 +194,37 @@ FQDNLookup   true
 #  </Page>
 #</Plugin>
 
+#<Plugin curl_json>
+## See: http://wiki.apache.org/couchdb/Runtime_Statistics
+#  <URL "http://localhost:5984/_stats">
+#    Instance "httpd"
+#    <Key "httpd/requests/count">
+#      Type "http_requests"
+#    </Key>
+#
+#    <Key "httpd_request_methods/*/count">
+#      Type "http_request_methods"
+#    </Key>
+#
+#    <Key "httpd_status_codes/*/count">
+#      Type "http_response_codes"
+#    </Key>
+#  </URL>
+## Database status metrics:
+#  <URL "http://localhost:5984/_all_dbs">
+#    Instance "dbs"
+#    <Key "*/doc_count">
+#      Type "gauge"
+#    </Key>
+#    <Key "*/doc_del_count">
+#      Type "counter"
+#    </Key>
+#    <Key "*/disk_size">
+#      Type "bytes"
+#    </Key>
+#  </URL>
+#</Plugin>
+
 #<Plugin dbi>
 #	<Query "num_of_customers">
 #		Statement "SELECT 'customers' AS c_key, COUNT(*) AS c_value FROM customers_tbl"
@@ -216,6 +252,7 @@ FQDNLookup   true
 #	MountPoint "/home"
 #	FSType "ext3"
 #	IgnoreSelected false
+#	ReportByDevice false
 #</Plugin>
 
 #<Plugin disk>
@@ -226,6 +263,7 @@ FQDNLookup   true
 #<Plugin dns>
 #	Interface "eth0"
 #	IgnoreSource "192.168.0.1"
+#	SelectNumericQueryTypes true
 #</Plugin>
 
 #<Plugin email>
@@ -269,7 +307,7 @@ FQDNLookup   true
 #  Port "7634"
 #
 #  #----------------------------------------------------------------#
-#  # `TranslateDevicename' enabled backwards compatibility behavior #
+#  # `TranslateDevicename' enables backwards compatibility behavior #
 #  # and is enabled by default. Setting this option to `false' is   #
 #  # highly recommended.                                            #
 #  #----------------------------------------------------------------#
@@ -303,7 +341,7 @@ FQDNLookup   true
 
 #<Plugin "java">
 #	JVMArg "-verbose:jni"
-#	JVMArg "-Djava.class.path=/opt/collectd/lib/collectd/bindings/java"
+#	JVMArg "-Djava.class.path=@prefix@/share/collectd/java"
 #
 #	LoadPlugin "org.collectd.java.Foobar"
 #	<Plugin "org.collectd.java.Foobar">
@@ -413,6 +451,14 @@ FQDNLookup   true
 
 #<Plugin nut>
 #	UPS "upsname@hostname:port"
+#</Plugin>
+
+#<Plugin olsrd>
+#	Host "127.0.0.1"
+#	Port "2006"
+#	CollectLinks "Summary"
+#	CollectRoutes "Summary"
+#	CollectTopology "Summary"
 #</Plugin>
 
 #<Plugin onewire>
@@ -567,7 +613,7 @@ FQDNLookup   true
 #       Version 1
 #       Community "community_string"
 #       Collect "std_traffic"
-#       Inverval 120
+#       Interval 120
 #   </Host>
 #   <Host "some.server.mydomain.org">
 #       Address "192.168.0.42"
@@ -644,6 +690,11 @@ FQDNLookup   true
 #	IgnoreSelected false
 #</Plugin>
 
+#<Plugin tokyotyrant>
+#	Host "localhost"
+#	Port "1978"
+#</Plugin>
+
 #<Plugin unixsock>
 #	SocketFile "@prefix@/var/run/@PACKAGE_NAME@-unixsock"
 #	SocketGroup "collectd"
@@ -656,6 +707,13 @@ FQDNLookup   true
 
 #<Plugin vmem>
 #	Verbose false
+#</Plugin>
+
+#<Plugin write_http>
+#	<URL "http://example.com/collectd-post">
+#		User "collectd"
+#		Password "weCh3ik0"
+#	</URL>
 #</Plugin>
 
 ##############################################################################
@@ -681,6 +739,6 @@ FQDNLookup   true
 # configured at all: All values will be sent to all available write plugins. #
 #----------------------------------------------------------------------------#
 
-#<Chain "Main">
+#<Chain "PostCache">
 #  Target "write"
 #</Chain>

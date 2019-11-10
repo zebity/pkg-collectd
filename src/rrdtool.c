@@ -1,6 +1,8 @@
 /**
  * collectd - src/rrdtool.c
  * Copyright (C) 2006-2008  Florian octo Forster
+ * Copyright (C) 2008-2008  Sebastian Harl
+ * Copyright (C) 2009       Mariusz Gronczewski
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +19,8 @@
  *
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
+ *   Sebastian Harl <sh at tokkee.org>
+ *   Mariusz Gronczewski <xani666 at gmail.com>
  **/
 
 #include "collectd.h"
@@ -40,6 +44,7 @@ struct rrd_cache_s
 	char **values;
 	time_t first_value;
 	time_t last_value;
+	int random_variation;
 	enum
 	{
 		FLAG_NONE   = 0x00,
@@ -76,7 +81,8 @@ static const char *config_keys[] =
 	"RRARows",
 	"RRATimespan",
 	"XFF",
-	"WritesPerSecond"
+	"WritesPerSecond",
+	"RandomTimeout"
 };
 static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 
@@ -103,6 +109,7 @@ static rrdcreate_config_t rrdcreate_config =
  * ALWAYS lock `cache_lock' first! */
 static int         cache_timeout = 0;
 static int         cache_flush_timeout = 0;
+static int         random_timeout = 1;
 static time_t      cache_flush_last;
 static c_avl_tree_t *cache = NULL;
 static pthread_mutex_t cache_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -204,15 +211,23 @@ static int value_list_to_string (char *buffer, int buffer_len,
 	for (i = 0; i < ds->ds_num; i++)
 	{
 		if ((ds->ds[i].type != DS_TYPE_COUNTER)
-				&& (ds->ds[i].type != DS_TYPE_GAUGE))
+				&& (ds->ds[i].type != DS_TYPE_GAUGE)
+				&& (ds->ds[i].type != DS_TYPE_DERIVE)
+				&& (ds->ds[i].type != DS_TYPE_ABSOLUTE))
 			return (-1);
 
 		if (ds->ds[i].type == DS_TYPE_COUNTER)
 			status = ssnprintf (buffer + offset, buffer_len - offset,
 					":%llu", vl->values[i].counter);
-		else
+		else if (ds->ds[i].type == DS_TYPE_GAUGE)
 			status = ssnprintf (buffer + offset, buffer_len - offset,
 					":%lf", vl->values[i].gauge);
+		else if (ds->ds[i].type == DS_TYPE_DERIVE)
+			status = ssnprintf (buffer + offset, buffer_len - offset,
+					":%"PRIi64, vl->values[i].derive);
+		else /*if (ds->ds[i].type == DS_TYPE_ABSOLUTE) */
+			status = ssnprintf (buffer + offset, buffer_len - offset,
+					":%"PRIu64, vl->values[i].absolute);
 
 		if ((status < 1) || (status >= (buffer_len - offset)))
 			return (-1);
@@ -731,7 +746,7 @@ static int rrd_cache_insert (const char *filename,
 			filename, rc->values_num,
 			(unsigned long)(rc->last_value - rc->first_value));
 
-	if ((rc->last_value - rc->first_value) >= cache_timeout)
+	if ((rc->last_value + rc->random_variation - rc->first_value) >= cache_timeout)
 	{
 		/* XXX: If you need to lock both, cache_lock and queue_lock, at
 		 * the same time, ALWAYS lock `cache_lock' first! */
@@ -742,6 +757,18 @@ static int rrd_cache_insert (const char *filename,
 			status = rrd_queue_enqueue (filename, &queue_head, &queue_tail);
 			if (status == 0)
 				rc->flags = FLAG_QUEUED;
+
+			/* Update the jitter value. Negative values are
+			 * slightly preferred. */
+			if (random_timeout > 0)
+			{
+				rc->random_variation = (rand () % (2 * random_timeout))
+					- random_timeout;
+			}
+			else
+			{
+				rc->random_variation = 0;
+			}
 		}
 		else
 		{
@@ -978,6 +1005,23 @@ static int rrd_config (const char *key, const char *value)
 		else
 		{
 			write_rate = 1.0 / wps;
+		}
+	}
+	else if (strcasecmp ("RandomTimeout", key) == 0)
+        {
+		int tmp;
+
+		tmp = atoi (value);
+		if (tmp < 0)
+		{
+			fprintf (stderr, "rrdtool: `RandomTimeout' must "
+					"be greater than or equal to zero.\n");
+			ERROR ("rrdtool: `RandomTimeout' must "
+					"be greater then or equal to zero.");
+		}
+		else
+		{
+			random_timeout = tmp;
 		}
 	}
 	else

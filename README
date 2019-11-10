@@ -33,9 +33,6 @@ Features
       Batterycharge, -current and voltage of ACPI and PMU based laptop
       batteries.
 
-    - curl
-      Parse statistics from websites using regular expressions.
-
     - bind
       Name server and resolver statistics from the `statistics-channel'
       interface of BIND 9.5, 9,6 and later.
@@ -49,6 +46,13 @@ Features
 
     - cpufreq
       CPU frequency (For laptops with speed step or a similar technology)
+
+    - curl
+      Parse statistics from websites using regular expressions.
+
+    - curl_json
+      Retrieves JSON data via cURL and parses it according to user
+      configuration.
 
     - dbi
       Executes SQL statements on various databases and interprets the returned
@@ -117,6 +121,10 @@ Features
     - libvirt
       CPU, disk and network I/O statistics from virtual machines.
 
+    - madwifi
+      Queries very detailed usage statistics from wireless LAN adapters and
+      interfaces that use the Atheros chipset and the MadWifi driver.
+
     - mbmon
       Motherboard sensors: temperature, fanspeed and voltage information,
       using mbmon(1).
@@ -164,6 +172,10 @@ Features
     - nut
       Network UPS tools: UPS current, voltage, power, charge, utilisation,
       temperature, etc. See upsd(8).
+
+    - olsr
+      Queries routing information from the “Optimized Link State Routing”
+      daemon.
 
     - onewire (EXPERIMENTAL!)
       Read onewire sensors using the owcapu library of the owfs project.
@@ -238,6 +250,10 @@ Features
     - thermal
       Linux ACPI thermal zone information.
 
+    - tokyotyrant
+      Reads the number of records and file size from a running Tokyo Tyrant
+      server.
+
     - uptime
       System uptime statistics.
 
@@ -257,6 +273,9 @@ Features
 
     - xmms
       Bitrate and frequency of music played with XMMS.
+
+    - zfs_arc
+      Statistics for ZFS' “Adaptive Replacement Cache” (ARC).
 
   * Output can be written or send to various destinations by the following
     plugins:
@@ -291,6 +310,11 @@ Features
       One can query the values from the unixsock plugin whenever they're
       needed. Please read collectd-unixsock(5) for a description on how that's
       done.
+
+    - write_http
+      Sends the values collected by collectd to a web-server using HTTP POST
+      requests. The transmitted data is either in a form understood by the
+      Exec plugin or formatted in JSON.
 
   * Logging is, as everything in collectd, provided by plugins. The following
     plugins keep up informed about what's going on:
@@ -333,6 +357,9 @@ Features
 
   * Value processing can be controlled using the "filter chain" infrastructure
     and "matches" and "targets". The following plugins are available:
+
+    - match_empty_counter
+      Match counter values which are currently zero.
 
     - match_regex
       Match values by their identifier based on regular expressions.
@@ -432,7 +459,8 @@ Prerequisites
     Used by the `oracle' plugin.
 
   * libcurl (optional)
-    If you want to use the `apache', `ascent', `curl' or `nginx' plugin.
+    If you want to use the `apache', `ascent', `curl', `nginx', or `write_http'
+    plugin.
     <http://curl.haxx.se/>
 
   * libdbi (optional)
@@ -453,10 +481,15 @@ Prerequisites
     If present, the uuid plugin will check for UUID from HAL.
     <http://hal.freedesktop.org/>
 
-  * libiptc (optional, if not found a version shipped with this distribution
-    can be used if the Linux kernel headers are available)
+  * libiptc (optional)
     For querying iptables counters.
     <http://netfilter.org/>
+
+    If not found on the system, a version shipped with this distribution can
+    be used. It requires some Linux headers in /usr/include/linux. You can
+    force the build system to use the shipped version by specifying
+      --with-libiptc=shipped
+    when running the configure script.
 
   * libjvm (optional)
     Library that encapsulates the `Java Virtual Machine' (JVM). This library is
@@ -482,8 +515,7 @@ Prerequisites
     For the `notify_desktop' plugin.
     <http://www.galago-project.org/>
 
-  * liboping (optional, if not found a version shipped with this distribution
-    can be used)
+  * liboping (optional)
     Used by the `ping' plugin to send and receive ICMP packets.
     <http://verplant.org/liboping/>
 
@@ -539,6 +571,9 @@ Prerequisites
   * libxmms (optional)
     <http://www.xmms.org/>
 
+  * libyajl (optional)
+    Parse JSON data. This is needed for the `curl_json' plugin.
+    <http://github.com/lloyd/yajl>
 
 Configuring / Compiling / Installing
 ------------------------------------

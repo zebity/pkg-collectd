@@ -1,6 +1,6 @@
 SUBDIRS = libcollectdclient
 if BUILD_WITH_OWN_LIBIPTC
-SUBDIRS += libiptc
+SUBDIRS += owniptc
 endif
 if BUILD_WITH_OWN_LIBOCONFIG
 SUBDIRS += liboconfig
@@ -223,6 +223,21 @@ endif
 collectd_DEPENDENCIES += curl.la
 endif
 
+if BUILD_PLUGIN_CURL_JSON
+pkglib_LTLIBRARIES += curl_json.la
+curl_json_la_SOURCES = curl_json.c
+curl_json_la_CFLAGS = $(AM_CFLAGS)
+curl_json_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBYAJL_LDFLAGS)
+curl_json_la_CPPFLAGS = $(BUILD_WITH_LIBYAJL_CPPFLAGS)
+curl_json_la_LIBADD = $(BUILD_WITH_LIBYAJL_LIBS)
+if BUILD_WITH_LIBCURL
+curl_json_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
+curl_json_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
+endif
+collectd_LDADD += "-dlopen" curl_json.la
+collectd_DEPENDENCIES += curl_json.la
+endif
+
 if BUILD_PLUGIN_DBI
 pkglib_LTLIBRARIES += dbi.la
 dbi_la_SOURCES = dbi.c \
@@ -356,10 +371,11 @@ endif # BUILD_PLUGIN_INTERFACE
 if BUILD_PLUGIN_IPTABLES
 pkglib_LTLIBRARIES += iptables.la
 iptables_la_SOURCES = iptables.c
-iptables_la_LDFLAGS = -module -avoid-version
+iptables_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBIPTC_CPPFLAGS)
+iptables_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBIPTC_LDFLAGS)
 if BUILD_WITH_OWN_LIBIPTC
-iptables_la_LIBADD  = libiptc/libiptc.la
-iptables_la_DEPENDENCIES = libiptc/libiptc.la
+iptables_la_LIBADD  = owniptc/libiptc.la
+iptables_la_DEPENDENCIES = owniptc/libiptc.la
 else
 iptables_la_LIBADD = -liptc
 endif
@@ -436,6 +452,22 @@ logfile_la_SOURCES = logfile.c
 logfile_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" logfile.la
 collectd_DEPENDENCIES += logfile.la
+endif
+
+if BUILD_PLUGIN_MADWIFI
+pkglib_LTLIBRARIES += madwifi.la
+madwifi_la_SOURCES = madwifi.c madwifi.h
+madwifi_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" madwifi.la
+collectd_DEPENDENCIES += madwifi.la
+endif
+
+if BUILD_PLUGIN_MATCH_EMPTY_COUNTER
+pkglib_LTLIBRARIES += match_empty_counter.la
+match_empty_counter_la_SOURCES = match_empty_counter.c
+match_empty_counter_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" match_empty_counter.la
+collectd_DEPENDENCIES += match_empty_counter.la
 endif
 
 if BUILD_PLUGIN_MATCH_REGEX
@@ -636,6 +668,18 @@ nut_la_LDFLAGS = -module -avoid-version
 nut_la_LIBADD = -lpthread $(BUILD_WITH_LIBUPSCLIENT_LIBS)
 collectd_LDADD += "-dlopen" nut.la
 collectd_DEPENDENCIES += nut.la
+endif
+
+if BUILD_PLUGIN_OLSRD
+pkglib_LTLIBRARIES += olsrd.la
+olsrd_la_SOURCES = olsrd.c
+olsrd_la_LDFLAGS = -module -avoid-version
+olsrd_la_LIBADD = 
+if BUILD_WITH_LIBSOCKET
+olsrd_la_LIBADD += -lsocket
+endif
+collectd_LDADD += "-dlopen" olsrd.la
+collectd_DEPENDENCIES += olsrd.la
 endif
 
 if BUILD_PLUGIN_ONEWIRE
@@ -911,11 +955,25 @@ collectd_LDADD += "-dlopen" thermal.la
 collectd_DEPENDENCIES += thermal.la
 endif
 
+if BUILD_PLUGIN_TOKYOTYRANT
+pkglib_LTLIBRARIES += tokyotyrant.la
+tokyotyrant_la_SOURCES = tokyotyrant.c
+tokyotyrant_la_CPPFLAGS  = $(AM_CPPFLAGS) $(BUILD_WITH_LIBTOKYOTYRANT_CPPFLAGS)
+tokyotyrant_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBTOKYOTYRANT_LDFLAGS)
+tokyotyrant_la_LIBADD  = $(BUILD_WITH_LIBTOKYOTYRANT_LIBS)
+if BUILD_WITH_LIBSOCKET
+tokyotyrant_la_LIBADD += -lsocket
+endif
+collectd_LDADD += "-dlopen" tokyotyrant.la
+collectd_DEPENDENCIES += tokyotyrant.la
+endif
+
 if BUILD_PLUGIN_UNIXSOCK
 pkglib_LTLIBRARIES += unixsock.la
 unixsock_la_SOURCES = unixsock.c \
 		      utils_cmd_flush.h utils_cmd_flush.c \
 		      utils_cmd_getval.h utils_cmd_getval.c \
+		      utils_cmd_getthreshold.h utils_cmd_getthreshold.c \
 		      utils_cmd_listval.h utils_cmd_listval.c \
 		      utils_cmd_putval.h utils_cmd_putval.c \
 		      utils_cmd_putnotif.h utils_cmd_putnotif.c
@@ -986,6 +1044,21 @@ collectd_LDADD += "-dlopen" wireless.la
 collectd_DEPENDENCIES += wireless.la
 endif
 
+if BUILD_PLUGIN_WRITE_HTTP
+pkglib_LTLIBRARIES += write_http.la
+write_http_la_SOURCES = write_http.c \
+			utils_format_json.c utils_format_json.h
+write_http_la_LDFLAGS = -module -avoid-version
+write_http_la_CFLAGS = $(AM_CFLAGS)
+write_http_la_LIBADD =
+collectd_LDADD += "-dlopen" write_http.la
+if BUILD_WITH_LIBCURL
+write_http_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
+write_http_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
+endif
+collectd_DEPENDENCIES += write_http.la
+endif
+
 if BUILD_PLUGIN_XMMS
 pkglib_LTLIBRARIES += xmms.la
 xmms_la_SOURCES = xmms.c
@@ -994,6 +1067,16 @@ xmms_la_LDFLAGS = -module -avoid-version
 xmms_la_LIBADD = $(BUILD_WITH_LIBXMMS_LIBS)
 collectd_LDADD += "-dlopen" xmms.la
 collectd_DEPENDENCIES += xmms.la
+endif
+
+if BUILD_PLUGIN_ZFS_ARC
+pkglib_LTLIBRARIES += zfs_arc.la
+zfs_arc_la_SOURCES = zfs_arc.c
+zfs_arc_la_CFLAGS = $(AM_CFLAGS)
+zfs_arc_la_LDFLAGS = -module -avoid-version
+zfs_arc_la_LIBADD = -lkstat
+collectd_LDADD += "-dlopen" zfs_arc.la
+collectd_DEPENDENCIES += zfs_arc.la
 endif
 
 

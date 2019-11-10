@@ -60,6 +60,7 @@ use Collectd::Unixsock();
 		HELP    => \&cmd_help,
 		PUTVAL  => \&putval,
 		GETVAL  => \&getval,
+		GETTHRESHOLD  => \&getthreshold,
 		FLUSH   => \&flush,
 		LISTVAL => \&listval,
 		PUTNOTIF => \&putnotif,
@@ -186,11 +187,19 @@ sub putid {
 =cut
 
 sub cmd_help {
-	print <<HELP;
+	my $sock = shift;
+	my $line = shift || '';
+
+	my @line = tokenize($line);
+	my $cmd = shift (@line);
+
+	my %text = (
+		help => <<HELP,
 Available commands:
   HELP
   PUTVAL
   GETVAL
+  GETTHRESHOLD
   FLUSH
   LISTVAL
   PUTNOTIF
@@ -198,6 +207,45 @@ Available commands:
 See the embedded Perldoc documentation for details. To do that, run:
   perldoc $0
 HELP
+		putval => <<HELP,
+PUTVAL <id> <value0> [<value1> ...]
+
+Submits a value to the daemon.
+HELP
+		getval => <<HELP,
+GETVAL <id>
+
+Retrieves the current value or values from the daemon.
+HELP
+		flush => <<HELP,
+FLUSH [plugin=<plugin>] [timeout=<timeout>] [identifier=<id>] [...]
+
+Sends a FLUSH command to the daemon.
+HELP
+		listval => <<HELP,
+LISTVAL
+
+Prints a list of available values.
+HELP
+		putnotif => <<HELP
+PUTNOTIF severity=<severity> [...] message=<message>
+
+Sends a notifications message to the daemon.
+HELP
+	);
+
+	if (!$cmd)
+	{
+		$cmd = 'help';
+	}
+	if (!exists ($text{$cmd}))
+	{
+		print STDOUT "Unknown command: " . uc ($cmd) . "\n\n";
+		$cmd = 'help';
+	}
+
+	print STDOUT $text{$cmd};
+
 	return 1;
 } # cmd_help
 
@@ -281,6 +329,48 @@ sub getval {
 	return 1;
 }
 
+=item B<GETTHRESHOLD> I<Identifier>
+
+=cut
+
+sub getthreshold {
+	my $sock = shift || return;
+	my $line = shift || return;
+
+	my @line = tokenize($line);
+
+	my $id;
+	my $vals;
+
+	if (! @line) {
+		return;
+	}
+
+	if (scalar(@line) < 1) {
+		print STDERR "Synopsis: GETTHRESHOLD <id>" . $/;
+		return;
+	}
+
+	$id = getid($line[0]);
+
+	if (! $id) {
+		print STDERR "Invalid id \"$line[0]\"." . $/;
+		return;
+	}
+
+	$vals = $sock->getthreshold(%$id);
+
+	if (! $vals) {
+		print STDERR "socket error: " . $sock->{'error'} . $/;
+		return;
+	}
+
+	foreach my $key (keys %$vals) {
+		print "\t$key: $vals->{$key}\n";
+	}
+	return 1;
+}
+
 =item B<FLUSH> [B<timeout>=I<$timeout>] [B<plugin>=I<$plugin>[ ...]]
 
 =cut
@@ -310,7 +400,7 @@ sub flush {
 				$args{"timeout"} = $value;
 			}
 			elsif ($option eq "identifier") {
-				my $id = getid (\$value);
+				my $id = getid ($value);
 				if (!$id)
 				{
 					print STDERR "Not a valid identifier: \"$value\"\n";

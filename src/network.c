@@ -1,6 +1,7 @@
 /**
  * collectd - src/network.c
  * Copyright (C) 2005-2009  Florian octo Forster
+ * Copyright (C) 2009       Aman Gupta
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +18,7 @@
  *
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
+ *   Aman Gupta <aman at tmm1.net>
  **/
 
 #define _BSD_SOURCE /* For struct ip_mreq */
@@ -27,6 +29,7 @@
 #include "configfile.h"
 #include "utils_fbhash.h"
 #include "utils_avltree.h"
+#include "utils_cache.h"
 
 #include "network.h"
 
@@ -51,10 +54,8 @@
 
 #if HAVE_LIBGCRYPT
 # include <gcrypt.h>
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #endif
-
-/* 1500 - 40 - 8  =  Ethernet packet - IPv6 header - UDP header */
-/* #define BUFF_SIZE 1452 */
 
 #ifndef IPV6_ADD_MEMBERSHIP
 # ifdef IPV6_JOIN_GROUP
@@ -63,9 +64,6 @@
 #  error "Neither IP_ADD_MEMBERSHIP nor IPV6_JOIN_GROUP is defined"
 # endif
 #endif /* !IP_ADD_MEMBERSHIP */
-
-/* Buffer size to allocate. */
-#define BUFF_SIZE 1024
 
 /*
  * Maximum size required for encryption / signing:
@@ -244,7 +242,7 @@ typedef struct part_encryption_aes256_s part_encryption_aes256_t;
 
 struct receive_list_entry_s
 {
-  char data[BUFF_SIZE];
+  char *data;
   int  data_len;
   int  fd;
   struct receive_list_entry_s *next;
@@ -255,6 +253,7 @@ typedef struct receive_list_entry_s receive_list_entry_t;
  * Private variables
  */
 static int network_config_ttl = 0;
+static size_t network_config_packet_size = 1024;
 static int network_config_forward = 0;
 
 static sockent_t *sending_sockets = NULL;
@@ -277,133 +276,104 @@ static int       dispatch_thread_running = 0;
 static pthread_t dispatch_thread_id;
 
 /* Buffer in which to-be-sent network packets are constructed. */
-static char             send_buffer[BUFF_SIZE];
+static char            *send_buffer;
 static char            *send_buffer_ptr;
 static int              send_buffer_fill;
 static value_list_t     send_buffer_vl = VALUE_LIST_STATIC;
 static pthread_mutex_t  send_buffer_lock = PTHREAD_MUTEX_INITIALIZER;
 
-/* In this cache we store all the values we received, so we can send out only
- * those values which were *not* received via the network plugin, too. This is
- * used for the `Forward false' option. */
-static c_avl_tree_t    *cache_tree = NULL;
-static pthread_mutex_t  cache_lock = PTHREAD_MUTEX_INITIALIZER;
-static time_t           cache_flush_last = 0;
-static int              cache_flush_interval = 1800;
-
 /*
  * Private functions
  */
-static int cache_flush (void)
+static _Bool check_receive_okay (const value_list_t *vl) /* {{{ */
 {
-	char **keys = NULL;
-	int    keys_num = 0;
+  uint64_t time_sent = 0;
+  int status;
 
-	char **tmp;
-	int    i;
+  status = uc_meta_data_get_unsigned_int (vl,
+      "network:time_sent", &time_sent);
 
-	char   *key;
-	time_t *value;
-	c_avl_iterator_t *iter;
+  /* This is a value we already sent. Don't allow it to be received again in
+   * order to avoid looping. */
+  if ((status == 0) && (time_sent >= ((uint64_t) vl->time)))
+    return (false);
 
-	time_t curtime = time (NULL);
+  return (true);
+} /* }}} _Bool check_receive_okay */
 
-	iter = c_avl_get_iterator (cache_tree);
-	while (c_avl_iterator_next (iter, (void *) &key, (void *) &value) == 0)
-	{
-		if ((curtime - *value) <= cache_flush_interval)
-			continue;
-		tmp = (char **) realloc (keys,
-				(keys_num + 1) * sizeof (char *));
-		if (tmp == NULL)
-		{
-			sfree (keys);
-			c_avl_iterator_destroy (iter);
-			ERROR ("network plugin: cache_flush: realloc"
-					" failed.");
-			return (-1);
-		}
-		keys = tmp;
-		keys[keys_num] = key;
-		keys_num++;
-	} /* while (c_avl_iterator_next) */
-	c_avl_iterator_destroy (iter);
-
-	for (i = 0; i < keys_num; i++)
-	{
-		if (c_avl_remove (cache_tree, keys[i], (void *) &key,
-					(void *) &value) != 0)
-		{
-			WARNING ("network plugin: cache_flush: c_avl_remove"
-					" (%s) failed.", keys[i]);
-			continue;
-		}
-
-		sfree (key);
-		sfree (value);
-	}
-
-	sfree (keys);
-
-	DEBUG ("network plugin: cache_flush: Removed %i %s",
-			keys_num, (keys_num == 1) ? "entry" : "entries");
-	cache_flush_last = curtime;
-	return (0);
-} /* int cache_flush */
-
-static int cache_check (const value_list_t *vl)
+static _Bool check_send_okay (const value_list_t *vl) /* {{{ */
 {
-	char key[1024];
-	time_t *value = NULL;
-	int retval = -1;
+  _Bool received = false;
+  int status;
 
-	if (cache_tree == NULL)
-		return (-1);
+  if (network_config_forward != 0)
+    return (true);
 
-	if (format_name (key, sizeof (key), vl->host, vl->plugin,
-				vl->plugin_instance, vl->type, vl->type_instance))
-		return (-1);
+  if (vl->meta == NULL)
+    return (true);
 
-	pthread_mutex_lock (&cache_lock);
+  status = meta_data_get_boolean (vl->meta, "network:received", &received);
+  if (status == -ENOENT)
+    return (true);
+  else if (status != 0)
+  {
+    ERROR ("network plugin: check_send_okay: meta_data_get_boolean failed "
+	"with status %i.", status);
+    return (true);
+  }
 
-	if (c_avl_get (cache_tree, key, (void *) &value) == 0)
-	{
-		if (*value < vl->time)
-		{
-			*value = vl->time;
-			retval = 0;
-		}
-		else
-		{
-			DEBUG ("network plugin: cache_check: *value = %i >= vl->time = %i",
-					(int) *value, (int) vl->time);
-			retval = 1;
-		}
-	}
-	else
-	{
-		char *key_copy = strdup (key);
-		value = malloc (sizeof (time_t));
-		if ((key_copy != NULL) && (value != NULL))
-		{
-			*value = vl->time;
-			c_avl_insert (cache_tree, key_copy, value);
-			retval = 0;
-		}
-		else
-		{
-			sfree (key_copy);
-			sfree (value);
-		}
-	}
+  /* By default, only *send* value lists that were not *received* by the
+   * network plugin. */
+  return (!received);
+} /* }}} _Bool check_send_okay */
 
-	if ((time (NULL) - cache_flush_last) > cache_flush_interval)
-		cache_flush ();
+static int network_dispatch_values (value_list_t *vl) /* {{{ */
+{
+  int status;
 
-	pthread_mutex_unlock (&cache_lock);
+  if ((vl->time <= 0)
+      || (strlen (vl->host) <= 0)
+      || (strlen (vl->plugin) <= 0)
+      || (strlen (vl->type) <= 0))
+    return (-EINVAL);
 
-	return (retval);
-} /* int cache_check */
+  if (!check_receive_okay (vl))
+  {
+#if COLLECT_DEBUG
+	  char name[6*DATA_MAX_NAME_LEN];
+	  FORMAT_VL (name, sizeof (name), vl);
+	  name[sizeof (name) - 1] = 0;
+	  DEBUG ("network plugin: network_dispatch_values: "
+	      "NOT dispatching %s.", name);
+#endif
+    return (0);
+  }
+
+  assert (vl->meta == NULL);
+
+  vl->meta = meta_data_create ();
+  if (vl->meta == NULL)
+  {
+    ERROR ("network plugin: meta_data_create failed.");
+    return (-ENOMEM);
+  }
+
+  status = meta_data_add_boolean (vl->meta, "network:received", true);
+  if (status != 0)
+  {
+    ERROR ("network plugin: meta_data_add_boolean failed.");
+    meta_data_destroy (vl->meta);
+    vl->meta = NULL;
+    return (status);
+  }
+
+  plugin_dispatch_values (vl);
+
+  meta_data_destroy (vl->meta);
+  vl->meta = NULL;
+
+  return (0);
+} /* }}} int network_dispatch_values */
 
 #if HAVE_LIBGCRYPT
 static gcry_cipher_hd_t network_get_aes256_cypher (sockent_t *se, /* {{{ */
@@ -527,17 +497,34 @@ static int write_part_values (char **ret_buffer, int *ret_buffer_len,
 
 	for (i = 0; i < num_values; i++)
 	{
-		if (ds->ds[i].type == DS_TYPE_COUNTER)
+		pkg_values_types[i] = (uint8_t) ds->ds[i].type;
+		switch (ds->ds[i].type)
 		{
-			pkg_values_types[i] = DS_TYPE_COUNTER;
-			pkg_values[i].counter = htonll (vl->values[i].counter);
-		}
-		else
-		{
-			pkg_values_types[i] = DS_TYPE_GAUGE;
-			pkg_values[i].gauge = htond (vl->values[i].gauge);
-		}
-	}
+			case DS_TYPE_COUNTER:
+				pkg_values[i].counter = htonll (vl->values[i].counter);
+				break;
+
+			case DS_TYPE_GAUGE:
+				pkg_values[i].gauge = htond (vl->values[i].gauge);
+				break;
+
+			case DS_TYPE_DERIVE:
+				pkg_values[i].derive = htonll (vl->values[i].derive);
+				break;
+
+			case DS_TYPE_ABSOLUTE:
+				pkg_values[i].absolute = htonll (vl->values[i].absolute);
+				break;
+
+			default:
+				free (pkg_values_types);
+				free (pkg_values);
+				ERROR ("network plugin: write_part_values: "
+						"Unknown data source type: %i",
+						ds->ds[i].type);
+				return (-1);
+		} /* switch (ds->ds[i].type) */
+	} /* for (num_values) */
 
 	/*
 	 * Use `memcpy' to write everything to the buffer, because the pointer
@@ -713,10 +700,32 @@ static int parse_part_values (void **ret_buffer, size_t *ret_buffer_len,
 
 	for (i = 0; i < pkg_numval; i++)
 	{
-		if (pkg_types[i] == DS_TYPE_COUNTER)
-			pkg_values[i].counter = ntohll (pkg_values[i].counter);
-		else if (pkg_types[i] == DS_TYPE_GAUGE)
-			pkg_values[i].gauge = ntohd (pkg_values[i].gauge);
+		switch (pkg_types[i])
+		{
+		  case DS_TYPE_COUNTER:
+		    pkg_values[i].counter = (counter_t) ntohll (pkg_values[i].counter);
+		    break;
+
+		  case DS_TYPE_GAUGE:
+		    pkg_values[i].gauge = (gauge_t) ntohd (pkg_values[i].gauge);
+		    break;
+
+		  case DS_TYPE_DERIVE:
+		    pkg_values[i].derive = (derive_t) ntohll (pkg_values[i].derive);
+		    break;
+
+		  case DS_TYPE_ABSOLUTE:
+		    pkg_values[i].absolute = (absolute_t) ntohll (pkg_values[i].absolute);
+		    break;
+
+		  default:
+		    sfree (pkg_types);
+		    sfree (pkg_values);
+		    NOTICE ("network plugin: parse_part_values: "
+			"Don't know how to handle data source type %"PRIu8,
+			pkg_types[i]);
+		    return (-1);
+		} /* switch (pkg_types[i]) */
 	}
 
 	*ret_buffer     = buffer;
@@ -1302,23 +1311,10 @@ static int parse_packet (sockent_t *se, /* {{{ */
 		{
 			status = parse_part_values (&buffer, &buffer_size,
 					&vl.values, &vl.values_len);
-
 			if (status != 0)
 				break;
 
-			if ((vl.time > 0)
-					&& (strlen (vl.host) > 0)
-					&& (strlen (vl.plugin) > 0)
-					&& (strlen (vl.type) > 0)
-					&& (cache_check (&vl) == 0))
-			{
-				plugin_dispatch_values (&vl);
-			}
-			else
-			{
-				DEBUG ("network plugin: parse_packet:"
-						" NOT dispatching values");
-			}
+			network_dispatch_values (&vl);
 
 			sfree (vl.values);
 		}
@@ -1432,6 +1428,10 @@ static int parse_packet (sockent_t *se, /* {{{ */
 			buffer = ((char *) buffer) + pkg_length;
 		}
 	} /* while (buffer_size > sizeof (part_header_t)) */
+
+	if (status == 0 && buffer_size > 0)
+		WARNING ("network plugin: parse_packet: Received truncated "
+				"packet, try increasing `MaxPacketSize'");
 
 	return (status);
 } /* }}} int parse_packet */
@@ -1961,7 +1961,7 @@ static void *dispatch_thread (void __attribute__((unused)) *arg) /* {{{ */
     /* Lock and wait for more data to come in */
     pthread_mutex_lock (&receive_list_lock);
     while ((listen_loop == 0)
-	&& (receive_list_head == NULL))
+        && (receive_list_head == NULL))
       pthread_cond_wait (&receive_list_cond, &receive_list_lock);
 
     /* Remove the head entry and unlock */
@@ -1993,14 +1993,16 @@ static void *dispatch_thread (void __attribute__((unused)) *arg) /* {{{ */
 
     if (se == NULL)
     {
-	    ERROR ("network plugin: Got packet from FD %i, but can't "
-			    "find an appropriate socket entry.",
-			    ent->fd);
-	    sfree (ent);
-	    continue;
+      ERROR ("network plugin: Got packet from FD %i, but can't "
+          "find an appropriate socket entry.",
+          ent->fd);
+      sfree (ent->data);
+      sfree (ent);
+      continue;
     }
 
     parse_packet (se, ent->data, ent->data_len, /* flags = */ 0);
+    sfree (ent->data);
     sfree (ent);
   } /* while (42) */
 
@@ -2009,7 +2011,7 @@ static void *dispatch_thread (void __attribute__((unused)) *arg) /* {{{ */
 
 static int network_receive (void) /* {{{ */
 {
-	char buffer[BUFF_SIZE];
+	char buffer[network_config_packet_size];
 	int  buffer_len;
 
 	int i;
@@ -2069,13 +2071,14 @@ static int network_receive (void) /* {{{ */
 				return (-1);
 			}
 			memset (ent, 0, sizeof (receive_list_entry_t));
+			ent->data = malloc (network_config_packet_size);
+			if (ent->data == NULL)
+			{
+				ERROR ("network plugin: malloc failed.");
+				return (-1);
+			}
 			ent->fd = listen_sockets_pollfd[i].fd;
 			ent->next = NULL;
-
-			/* Hopefully this be optimized out by the compiler. It
-			 * might help prevent stupid bugs in the future though.
-			 */
-			assert (sizeof (ent->data) == sizeof (buffer));
 
 			memcpy (ent->data, buffer, buffer_len);
 			ent->data_len = buffer_len;
@@ -2133,7 +2136,7 @@ static void *receive_thread (void __attribute__((unused)) *arg)
 
 static void network_init_buffer (void)
 {
-	memset (send_buffer, 0, sizeof (send_buffer));
+	memset (send_buffer, 0, network_config_packet_size);
 	send_buffer_ptr = send_buffer;
 	send_buffer_fill = 0;
 
@@ -2434,18 +2437,25 @@ static int network_write (const data_set_t *ds, const value_list_t *vl,
 {
 	int status;
 
-	/* If the value is already in the cache, we have received it via the
-	 * network. We write it again if forwarding is activated. It's then in
-	 * the cache and should we receive it again we will ignore it. */
-	status = cache_check (vl);
-	if ((network_config_forward == 0)
-			&& (status != 0))
-		return (0);
+	if (!check_send_okay (vl))
+	{
+#if COLLECT_DEBUG
+	  char name[6*DATA_MAX_NAME_LEN];
+	  FORMAT_VL (name, sizeof (name), vl);
+	  name[sizeof (name) - 1] = 0;
+	  DEBUG ("network plugin: network_write: "
+	      "NOT sending %s.", name);
+#endif
+	  return (0);
+	}
+
+	uc_meta_data_add_unsigned_int (vl,
+	    "network:time_sent", (uint64_t) vl->time);
 
 	pthread_mutex_lock (&send_buffer_lock);
 
 	status = add_to_buffer (send_buffer_ptr,
-			sizeof (send_buffer) - (send_buffer_fill + BUFF_SIG_SIZE),
+			network_config_packet_size - (send_buffer_fill + BUFF_SIG_SIZE),
 			&send_buffer_vl,
 			ds, vl);
 	if (status >= 0)
@@ -2459,7 +2469,7 @@ static int network_write (const data_set_t *ds, const value_list_t *vl,
 		flush_buffer ();
 
 		status = add_to_buffer (send_buffer_ptr,
-				sizeof (send_buffer) - (send_buffer_fill + BUFF_SIG_SIZE),
+				network_config_packet_size - (send_buffer_fill + BUFF_SIG_SIZE),
 				&send_buffer_vl,
 				ds, vl);
 
@@ -2475,7 +2485,7 @@ static int network_write (const data_set_t *ds, const value_list_t *vl,
 		ERROR ("network plugin: Unable to append to the "
 				"buffer for some weird reason");
 	}
-	else if ((sizeof (send_buffer) - send_buffer_fill) < 15)
+	else if ((network_config_packet_size - send_buffer_fill) < 15)
 	{
 		flush_buffer ();
 	}
@@ -2545,6 +2555,24 @@ static int network_config_set_ttl (const oconfig_item_t *ci) /* {{{ */
 
   return (0);
 } /* }}} int network_config_set_ttl */
+
+static int network_config_set_buffer_size (const oconfig_item_t *ci) /* {{{ */
+{
+  int tmp;
+  if ((ci->values_num != 1)
+      || (ci->values[0].type != OCONFIG_TYPE_NUMBER))
+  {
+    WARNING ("network plugin: The `MaxPacketSize' config option needs exactly "
+        "one numeric argument.");
+    return (-1);
+  }
+
+  tmp = (int) ci->values[0].value.number;
+  if ((tmp >= 1024) && (tmp <= 65535))
+    network_config_packet_size = tmp;
+
+  return (0);
+} /* }}} int network_config_set_buffer_size */
 
 #if HAVE_LIBGCRYPT
 static int network_config_set_string (const oconfig_item_t *ci, /* {{{ */
@@ -2755,24 +2783,6 @@ static int network_config_add_server (const oconfig_item_t *ci) /* {{{ */
   return (0);
 } /* }}} int network_config_add_server */
 
-static int network_config_set_cache_flush (const oconfig_item_t *ci) /* {{{ */
-{
-  int tmp;
-  if ((ci->values_num != 1)
-      || (ci->values[0].type != OCONFIG_TYPE_NUMBER))
-  {
-    WARNING ("network plugin: The `CacheFlush' config option needs exactly "
-        "one numeric argument.");
-    return (-1);
-  }
-
-  tmp = (int) ci->values[0].value.number;
-  if (tmp > 0)
-    network_config_ttl = tmp;
-
-  return (0);
-} /* }}} int network_config_set_cache_flush */
-
 static int network_config (oconfig_item_t *ci) /* {{{ */
 {
   int i;
@@ -2787,10 +2797,12 @@ static int network_config (oconfig_item_t *ci) /* {{{ */
       network_config_add_server (child);
     else if (strcasecmp ("TimeToLive", child->key) == 0)
       network_config_set_ttl (child);
+    else if (strcasecmp ("MaxPacketSize", child->key) == 0)
+      network_config_set_buffer_size (child);
     else if (strcasecmp ("Forward", child->key) == 0)
       network_config_set_boolean (child, &network_config_forward);
     else if (strcasecmp ("CacheFlush", child->key) == 0)
-      network_config_set_cache_flush (child);
+      /* no op for backwards compatibility only */;
     else
     {
       WARNING ("network plugin: Option `%s' is not allowed here.",
@@ -2804,7 +2816,7 @@ static int network_config (oconfig_item_t *ci) /* {{{ */
 static int network_notification (const notification_t *n,
 		user_data_t __attribute__((unused)) *user_data)
 {
-  char  buffer[BUFF_SIZE];
+  char  buffer[network_config_packet_size];
   char *buffer_ptr = buffer;
   int   buffer_free = sizeof (buffer);
   int   status;
@@ -2903,19 +2915,7 @@ static int network_shutdown (void)
 	if (send_buffer_fill > 0)
 		flush_buffer ();
 
-	if (cache_tree != NULL)
-	{
-		void *key;
-		void *value;
-
-		while (c_avl_pick (cache_tree, &key, &value) == 0)
-		{
-			sfree (key);
-			sfree (value);
-		}
-		c_avl_destroy (cache_tree);
-		cache_tree = NULL;
-	}
+	sfree (send_buffer);
 
 	/* TODO: Close `sending_sockets' */
 
@@ -2924,25 +2924,34 @@ static int network_shutdown (void)
 	plugin_unregister_write ("network");
 	plugin_unregister_shutdown ("network");
 
-	/* Let the init function do it's move again ;) */
-	cache_flush_last = 0;
-
 	return (0);
 } /* int network_shutdown */
 
 static int network_init (void)
 {
+	static _Bool have_init = false;
+
 	/* Check if we were already initialized. If so, just return - there's
 	 * nothing more to do (for now, that is). */
-	if (cache_flush_last != 0)
+	if (have_init)
 		return (0);
+	have_init = true;
+
+#if HAVE_LIBGCRYPT
+	gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+	gcry_control (GCRYCTL_INIT_SECMEM, 32768, 0);
+	gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
+#endif
 
 	plugin_register_shutdown ("network", network_shutdown);
 
+	send_buffer = malloc (network_config_packet_size);
+	if (send_buffer == NULL)
+	{
+		ERROR ("network plugin: malloc failed.");
+		return (-1);
+	}
 	network_init_buffer ();
-
-	cache_tree = c_avl_create ((int (*) (const void *, const void *)) strcmp);
-	cache_flush_last = time (NULL);
 
 	/* setup socket(s) and so on */
 	if (sending_sockets != NULL)
@@ -3015,11 +3024,8 @@ static int network_flush (int timeout,
 {
 	pthread_mutex_lock (&send_buffer_lock);
 
-	if (((time (NULL) - cache_flush_last) >= timeout)
-			&& (send_buffer_fill > 0))
-	{
-		flush_buffer ();
-	}
+	if (send_buffer_fill > 0)
+	  flush_buffer ();
 
 	pthread_mutex_unlock (&send_buffer_lock);
 

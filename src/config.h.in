@@ -154,8 +154,14 @@
    file. */
 #undef HAVE_IOKIT_STORAGE_IOBLOCKSTORAGEDRIVER_H
 
+/* Define to 1 if the system has the type `ip6tc_handle_t'. */
+#undef HAVE_IP6TC_HANDLE_T
+
 /* Define to 1 if you have the <iproute/libnetlink.h> header file. */
 #undef HAVE_IPROUTE_LIBNETLINK_H
+
+/* Define to 1 if the system has the type `iptc_handle_t'. */
+#undef HAVE_IPTC_HANDLE_T
 
 /* Define to 1 if you have the <ip_vs.h> header file. */
 #undef HAVE_IP_VS_H
@@ -166,16 +172,16 @@
 /* Define to 1 if you have the <kstat.h> header file. */
 #undef HAVE_KSTAT_H
 
-/* Define to 1 if `nwrites' is member of `kstat_io_t'. */
+/* Define to 1 if `kstat_io_t' is a member of `nwrites'. */
 #undef HAVE_KSTAT_IO_T_NWRITES
 
-/* Define to 1 if `nwritten' is member of `kstat_io_t'. */
+/* Define to 1 if `kstat_io_t' is a member of `nwritten'. */
 #undef HAVE_KSTAT_IO_T_NWRITTEN
 
-/* Define to 1 if `writes' is member of `kstat_io_t'. */
+/* Define to 1 if `kstat_io_t' is a member of `writes'. */
 #undef HAVE_KSTAT_IO_T_WRITES
 
-/* Define to 1 if `wtime' is member of `kstat_io_t'. */
+/* Define to 1 if `kstat_io_t' is a member of `wtime'. */
 #undef HAVE_KSTAT_IO_T_WTIME
 
 /* Define to 1 if you have the <kvm.h> header file. */
@@ -201,6 +207,9 @@
 
 /* Define to 1 if you have the iptc library (-liptc). */
 #undef HAVE_LIBIPTC
+
+/* Define to 1 if you have the <libiptc/libip6tc.h> header file. */
+#undef HAVE_LIBIPTC_LIBIP6TC_H
 
 /* Define to 1 if you have the <libiptc/libiptc.h> header file. */
 #undef HAVE_LIBIPTC_LIBIPTC_H
@@ -250,6 +259,9 @@
 /* Define to 1 if you have the 'statgrab' library (-lstatgrab) */
 #undef HAVE_LIBSTATGRAB
 
+/* Define to 1 if you have the tokyotyrant library (-ltokyotyrant). */
+#undef HAVE_LIBTOKYOTYRANT
+
 /* Define to 1 if you have the <libvirt/libvirt.h> header file. */
 #undef HAVE_LIBVIRT_LIBVIRT_H
 
@@ -258,6 +270,9 @@
 
 /* Define to 1 if you have the 'xmms' library (-lxmms). */
 #undef HAVE_LIBXMMS
+
+/* Define if libyajl is present and usable. */
+#undef HAVE_LIBYAJL
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -288,11 +303,17 @@
    file. */
 #undef HAVE_LINUX_NETFILTER_IPV6_IP6_TABLES_H
 
+/* Define to 1 if you have the <linux/netfilter/x_tables.h> header file. */
+#undef HAVE_LINUX_NETFILTER_X_TABLES_H
+
 /* Define to 1 if you have the <linux/pkt_sched.h> header file. */
 #undef HAVE_LINUX_PKT_SCHED_H
 
 /* Define to 1 if you have the <linux/un.h> header file. */
 #undef HAVE_LINUX_UN_H
+
+/* Define to 1 if you have the <linux/wireless.h> header file. */
+#undef HAVE_LINUX_WIRELESS_H
 
 /* Define to 1 if you have the `listmntent' function. */
 #undef HAVE_LISTMNTENT
@@ -489,6 +510,9 @@
 /* Define to 1 if the curl plugin is enabled. */
 #undef HAVE_PLUGIN_CURL
 
+/* Define to 1 if the curl_json plugin is enabled. */
+#undef HAVE_PLUGIN_CURL_JSON
+
 /* Define to 1 if the dbi plugin is enabled. */
 #undef HAVE_PLUGIN_DBI
 
@@ -549,6 +573,12 @@
 /* Define to 1 if the logfile plugin is enabled. */
 #undef HAVE_PLUGIN_LOGFILE
 
+/* Define to 1 if the madwifi plugin is enabled. */
+#undef HAVE_PLUGIN_MADWIFI
+
+/* Define to 1 if the match_empty_counter plugin is enabled. */
+#undef HAVE_PLUGIN_MATCH_EMPTY_COUNTER
+
 /* Define to 1 if the match_regex plugin is enabled. */
 #undef HAVE_PLUGIN_MATCH_REGEX
 
@@ -599,6 +629,9 @@
 
 /* Define to 1 if the nut plugin is enabled. */
 #undef HAVE_PLUGIN_NUT
+
+/* Define to 1 if the olsrd plugin is enabled. */
+#undef HAVE_PLUGIN_OLSRD
 
 /* Define to 1 if the onewire plugin is enabled. */
 #undef HAVE_PLUGIN_ONEWIRE
@@ -678,6 +711,9 @@
 /* Define to 1 if the thermal plugin is enabled. */
 #undef HAVE_PLUGIN_THERMAL
 
+/* Define to 1 if the tokyotyrant plugin is enabled. */
+#undef HAVE_PLUGIN_TOKYOTYRANT
+
 /* Define to 1 if the unixsock plugin is enabled. */
 #undef HAVE_PLUGIN_UNIXSOCK
 
@@ -699,8 +735,14 @@
 /* Define to 1 if the wireless plugin is enabled. */
 #undef HAVE_PLUGIN_WIRELESS
 
+/* Define to 1 if the write_http plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_HTTP
+
 /* Define to 1 if the xmms plugin is enabled. */
 #undef HAVE_PLUGIN_XMMS
+
+/* Define to 1 if the zfs_arc plugin is enabled. */
+#undef HAVE_PLUGIN_ZFS_ARC
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
@@ -816,31 +858,31 @@
 /* Define if struct if_data exists and is usable. */
 #undef HAVE_STRUCT_IF_DATA
 
-/* Define to 1 if `ifi_ibytes' is member of `struct if_data'. */
+/* Define to 1 if `struct if_data' is a member of `ifi_ibytes'. */
 #undef HAVE_STRUCT_IF_DATA_IFI_IBYTES
 
-/* Define to 1 if `ifi_ierrors' is member of `struct if_data'. */
+/* Define to 1 if `struct if_data' is a member of `ifi_ierrors'. */
 #undef HAVE_STRUCT_IF_DATA_IFI_IERRORS
 
-/* Define to 1 if `ifi_opackets' is member of `struct if_data'. */
+/* Define to 1 if `struct if_data' is a member of `ifi_opackets'. */
 #undef HAVE_STRUCT_IF_DATA_IFI_OPACKETS
 
 /* Define if struct kinfo_proc exists in the FreeBSD variant. */
 #undef HAVE_STRUCT_KINFO_PROC_FREEBSD
 
-/* Define to 1 if `ki_pid' is member of `struct kinfo_proc'. */
+/* Define to 1 if `struct kinfo_proc' is a member of `ki_pid'. */
 #undef HAVE_STRUCT_KINFO_PROC_KI_PID
 
-/* Define to 1 if `ki_rssize' is member of `struct kinfo_proc'. */
+/* Define to 1 if `struct kinfo_proc' is a member of `ki_rssize'. */
 #undef HAVE_STRUCT_KINFO_PROC_KI_RSSIZE
 
-/* Define to 1 if `ki_rusage' is member of `struct kinfo_proc'. */
+/* Define to 1 if `struct kinfo_proc' is a member of `ki_rusage'. */
 #undef HAVE_STRUCT_KINFO_PROC_KI_RUSAGE
 
-/* Define to 1 if `kp_eproc' is member of `struct kinfo_proc'. */
+/* Define to 1 if `struct kinfo_proc' is a member of `kp_eproc'. */
 #undef HAVE_STRUCT_KINFO_PROC_KP_EPROC
 
-/* Define to 1 if `kp_proc' is member of `struct kinfo_proc'. */
+/* Define to 1 if `struct kinfo_proc' is a member of `kp_proc'. */
 #undef HAVE_STRUCT_KINFO_PROC_KP_PROC
 
 /* Define if struct kinfo_proc exists in the OpenBSD variant. */
@@ -849,25 +891,25 @@
 /* Define if struct net_device_stats exists and is usable. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS
 
-/* Define to 1 if `rx_bytes' is member of `struct net_device_stats'. */
+/* Define to 1 if `struct net_device_stats' is a member of `rx_bytes'. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS_RX_BYTES
 
-/* Define to 1 if `rx_errors' is member of `struct net_device_stats'. */
+/* Define to 1 if `struct net_device_stats' is a member of `rx_errors'. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS_RX_ERRORS
 
-/* Define to 1 if `tx_packets' is member of `struct net_device_stats'. */
+/* Define to 1 if `struct net_device_stats' is a member of `tx_packets'. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS_TX_PACKETS
 
-/* Define to 1 if `dest' is member of `struct udphdr'. */
+/* Define to 1 if `struct udphdr' is a member of `dest'. */
 #undef HAVE_STRUCT_UDPHDR_DEST
 
-/* Define to 1 if `source' is member of `struct udphdr'. */
+/* Define to 1 if `struct udphdr' is a member of `source'. */
 #undef HAVE_STRUCT_UDPHDR_SOURCE
 
-/* Define to 1 if `uh_dport' is member of `struct udphdr'. */
+/* Define to 1 if `struct udphdr' is a member of `uh_dport'. */
 #undef HAVE_STRUCT_UDPHDR_UH_DPORT
 
-/* Define to 1 if `uh_sport' is member of `struct udphdr'. */
+/* Define to 1 if `struct udphdr' is a member of `uh_sport'. */
 #undef HAVE_STRUCT_UDPHDR_UH_SPORT
 
 /* Define if the function getmntent exists. It's the version from libsun. */
@@ -977,6 +1019,9 @@
 /* True if the enum-member TCA_STATS2 exists */
 #undef HAVE_TCA_STATS2
 
+/* Define to 1 if you have the <tcrdb.h> header file. */
+#undef HAVE_TCRDB_H
+
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
@@ -1015,6 +1060,9 @@
 
 /* Define to 1 if you have the <xfs/xqm.h> header file. */
 #undef HAVE_XFS_XQM_H
+
+/* Define to 1 if you have the <yajl/yajl_parse.h> header file. */
+#undef HAVE_YAJL_YAJL_PARSE_H
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
@@ -1055,6 +1103,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

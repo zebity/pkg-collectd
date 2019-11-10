@@ -1,6 +1,7 @@
 /**
  * collectd - src/dns.c
  * Copyright (C) 2006,2007  Florian octo Forster
+ * Copyright (C) 2009       Mirko Buffoni
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +18,7 @@
  *
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
+ *   Mirko Buffoni <briareos at eswat.org>
  **/
 
 #define _BSD_SOURCE
@@ -49,9 +51,10 @@ static const char *config_keys[] =
 {
 	"Interface",
 	"IgnoreSource",
-	NULL
+	"SelectNumericQueryTypes"
 };
-static int config_keys_num = 2;
+static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
+static int select_numeric_qtype = 1;
 
 #define PCAP_SNAPLEN 1460
 static char   *pcap_device = NULL;
@@ -158,6 +161,13 @@ static int dns_config (const char *key, const char *value)
 		if (value != NULL)
 			ignore_list_add_name (value);
 	}
+	else if (strcasecmp (key, "SelectNumericQueryTypes") == 0)
+	{
+		if ((value != NULL) && IS_FALSE (value))
+			select_numeric_qtype = 0;
+		else
+			select_numeric_qtype = 1;
+	}
 	else
 	{
 		return (-1);
@@ -171,13 +181,24 @@ static void dns_child_callback (const rfc1035_header_t *dns)
 	if (dns->qr == 0)
 	{
 		/* This is a query */
+		int skip = 0;
+		if (!select_numeric_qtype)
+		{
+			const char *str = qtype_str(dns->qtype);
+			if ((str == NULL) || (str[0] == '#'))
+				skip = 1;
+		}
+
 		pthread_mutex_lock (&traffic_mutex);
 		tr_queries += dns->length;
 		pthread_mutex_unlock (&traffic_mutex);
 
-		pthread_mutex_lock (&qtype_mutex);
-		counter_list_add (&qtype_list,  dns->qtype,  1);
-		pthread_mutex_unlock (&qtype_mutex);
+		if (skip == 0)
+		{
+			pthread_mutex_lock (&qtype_mutex);
+			counter_list_add (&qtype_list, dns->qtype,  1);
+			pthread_mutex_unlock (&qtype_mutex);
+		}
 	}
 	else
 	{

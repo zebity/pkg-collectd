@@ -1,6 +1,9 @@
 /**
  * collectd - src/utils_threshold.c
- * Copyright (C) 2007,2008  Florian octo Forster
+ * Copyright (C) 2007-2009  Florian octo Forster
+ * Copyright (C) 2008-2009  Sebastian Harl
+ * Copyright (C) 2009       Andrés J. Díaz
+ *
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +20,8 @@
  *
  * Author:
  *   Florian octo Forster <octo at verplant.org>
+ *   Sebastian Harl <sh at tokkee.org>
+ *   Andrés J. Díaz <ajdiaz at connectical.com>
  **/
 
 #include "collectd.h"
@@ -24,6 +29,7 @@
 #include "plugin.h"
 #include "utils_avltree.h"
 #include "utils_cache.h"
+#include "utils_threshold.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -33,22 +39,7 @@
  * {{{ */
 #define UT_FLAG_INVERT  0x01
 #define UT_FLAG_PERSIST 0x02
-
-typedef struct threshold_s
-{
-  char host[DATA_MAX_NAME_LEN];
-  char plugin[DATA_MAX_NAME_LEN];
-  char plugin_instance[DATA_MAX_NAME_LEN];
-  char type[DATA_MAX_NAME_LEN];
-  char type_instance[DATA_MAX_NAME_LEN];
-  char data_source[DATA_MAX_NAME_LEN];
-  gauge_t warning_min;
-  gauge_t warning_max;
-  gauge_t failure_min;
-  gauge_t failure_max;
-  int flags;
-  struct threshold_s *next;
-} threshold_t;
+#define UT_FLAG_PERCENTAGE 0x04
 /* }}} */
 
 /*
@@ -262,6 +253,54 @@ static int ut_config_type_persist (threshold_t *th, oconfig_item_t *ci)
   return (0);
 } /* int ut_config_type_persist */
 
+static int ut_config_type_percentage(threshold_t *th, oconfig_item_t *ci)
+{
+  if ((ci->values_num != 1)
+      || (ci->values[0].type != OCONFIG_TYPE_BOOLEAN))
+  {
+    WARNING ("threshold values: The `Percentage' option needs exactly one "
+	"boolean argument.");
+    return (-1);
+  }
+
+  if (ci->values[0].value.boolean)
+    th->flags |= UT_FLAG_PERCENTAGE;
+  else
+    th->flags &= ~UT_FLAG_PERCENTAGE;
+
+  return (0);
+} /* int ut_config_type_percentage */
+
+static int ut_config_type_hits (threshold_t *th, oconfig_item_t *ci)
+{
+  if ((ci->values_num != 1)
+      || (ci->values[0].type != OCONFIG_TYPE_NUMBER))
+  {
+    WARNING ("threshold values: The `%s' option needs exactly one "
+      "number argument.", ci->key);
+    return (-1);
+  }
+
+  th->hits = ci->values[0].value.number;
+
+  return (0);
+} /* int ut_config_type_hits */
+
+static int ut_config_type_hysteresis (threshold_t *th, oconfig_item_t *ci)
+{
+  if ((ci->values_num != 1)
+      || (ci->values[0].type != OCONFIG_TYPE_NUMBER))
+  {
+    WARNING ("threshold values: The `%s' option needs exactly one "
+      "number argument.", ci->key);
+    return (-1);
+  }
+
+  th->hysteresis = ci->values[0].value.number;
+
+  return (0);
+} /* int ut_config_type_hysteresis */
+
 static int ut_config_type (const threshold_t *th_orig, oconfig_item_t *ci)
 {
   int i;
@@ -289,6 +328,8 @@ static int ut_config_type (const threshold_t *th_orig, oconfig_item_t *ci)
   th.warning_max = NAN;
   th.failure_min = NAN;
   th.failure_max = NAN;
+  th.hits = 0;
+  th.hysteresis = 0;
 
   for (i = 0; i < ci->children_num; i++)
   {
@@ -309,6 +350,12 @@ static int ut_config_type (const threshold_t *th_orig, oconfig_item_t *ci)
       status = ut_config_type_invert (&th, option);
     else if (strcasecmp ("Persist", option->key) == 0)
       status = ut_config_type_persist (&th, option);
+    else if (strcasecmp ("Percentage", option->key) == 0)
+      status = ut_config_type_percentage (&th, option);
+    else if (strcasecmp ("Hits", option->key) == 0)
+      status = ut_config_type_hits (&th, option);
+    else if (strcasecmp ("Hysteresis", option->key) == 0)
+      status = ut_config_type_hysteresis (&th, option);
     else
     {
       WARNING ("threshold values: Option `%s' not allowed inside a `Type' "
@@ -467,6 +514,9 @@ int ut_config (const oconfig_item_t *ci)
   th.warning_max = NAN;
   th.failure_min = NAN;
   th.failure_max = NAN;
+
+  th.hits = 0;
+  th.hysteresis = 0;
     
   for (i = 0; i < ci->children_num; i++)
   {
@@ -562,6 +612,22 @@ static int ut_report_state (const data_set_t *ds,
 
   int status;
 
+  /* Check if hits matched */
+  if ( (th->hits != 0) )
+  {
+    int hits = uc_get_hits(ds,vl);
+    /* The STATE_OKAY always reset hits, or if hits reaise the limit */
+    if ( (state == STATE_OKAY) || (hits > th->hits) )
+    {
+        DEBUG("ut_report_state: reset uc_get_hits = 0");
+        uc_set_hits(ds,vl,0); /* reset hit counter and notify */
+    } else {
+      DEBUG("ut_report_state: th->hits = %d, uc_get_hits = %d",th->hits,uc_get_hits(ds,vl));
+      (void) uc_inc_hits(ds,vl,1); /* increase hit counter */
+      return (0);
+    }
+  } /* end check hits */
+
   state_old = uc_get_state (ds, vl);
 
   /* If the state didn't change, only report if `persistent' is specified and
@@ -643,30 +709,33 @@ static int ut_report_state (const data_set_t *ds,
     {
       if (!isnan (min) && !isnan (max))
       {
-	status = ssnprintf (buf, bufsize, ": Data source \"%s\" is currently "
-	    "%f. That is within the %s region of %f and %f.",
-	    ds->ds[ds_index].name, values[ds_index],
-	    (state == STATE_ERROR) ? "failure" : "warning",
-	    min, max);
+        status = ssnprintf (buf, bufsize, ": Data source \"%s\" is currently "
+            "%f. That is within the %s region of %f%s and %f%s.",
+            ds->ds[ds_index].name, values[ds_index],
+            (state == STATE_ERROR) ? "failure" : "warning",
+            min, ((th->flags & UT_FLAG_PERCENTAGE) != 0) ? "%" : "",
+            max, ((th->flags & UT_FLAG_PERCENTAGE) != 0) ? "%" : "");
       }
       else
       {
 	status = ssnprintf (buf, bufsize, ": Data source \"%s\" is currently "
-	    "%f. That is %s the %s threshold of %f.",
+	    "%f. That is %s the %s threshold of %f%s.",
 	    ds->ds[ds_index].name, values[ds_index],
 	    isnan (min) ? "below" : "above",
 	    (state == STATE_ERROR) ? "failure" : "warning",
-	    isnan (min) ? max : min);
+	    isnan (min) ? max : min,
+	    ((th->flags & UT_FLAG_PERCENTAGE) != 0) ? "%" : "");
       }
     }
     else /* is not inverted */
     {
       status = ssnprintf (buf, bufsize, ": Data source \"%s\" is currently "
-	  "%f. That is %s the %s threshold of %f.",
+	  "%f. That is %s the %s threshold of %f%s.",
 	  ds->ds[ds_index].name, values[ds_index],
 	  (values[ds_index] < min) ? "below" : "above",
 	  (state == STATE_ERROR) ? "failure" : "warning",
-	  (values[ds_index] < min) ? min : max);
+	  (values[ds_index] < min) ? min : max,
+	  ((th->flags & UT_FLAG_PERCENTAGE) != 0) ? "%" : "");
     }
     buf += status;
     bufsize -= status;
@@ -697,12 +766,16 @@ static int ut_check_one_data_source (const data_set_t *ds,
   const char *ds_name;
   int is_warning = 0;
   int is_failure = 0;
+  int prev_state = STATE_OKAY;
 
   /* check if this threshold applies to this data source */
-  ds_name = ds->ds[ds_index].name;
-  if ((th->data_source[0] != 0)
-      && (strcmp (ds_name, th->data_source) != 0))
-    return (STATE_OKAY);
+  if (ds != NULL)
+  {
+    ds_name = ds->ds[ds_index].name;
+    if ((th->data_source[0] != 0)
+	&& (strcmp (ds_name, th->data_source) != 0))
+      return (STATE_OKAY);
+  }
 
   if ((th->flags & UT_FLAG_INVERT) != 0)
   {
@@ -710,15 +783,39 @@ static int ut_check_one_data_source (const data_set_t *ds,
     is_failure--;
   }
 
-  if ((!isnan (th->failure_min) && (th->failure_min > values[ds_index]))
-      || (!isnan (th->failure_max) && (th->failure_max < values[ds_index])))
-    is_failure++;
+  /* XXX: This is an experimental code, not optimized, not fast, not reliable,
+   * and probably, do not work as you expect. Enjoy! :D */
+  if ( (th->hysteresis > 0) && ((prev_state = uc_get_state(ds,vl)) != STATE_OKAY) )
+  {
+    switch(prev_state)
+    {
+      case STATE_ERROR:
+	if ( (!isnan (th->failure_min) && ((th->failure_min + th->hysteresis) < values[ds_index])) ||
+	     (!isnan (th->failure_max) && ((th->failure_max - th->hysteresis) > values[ds_index])) )
+	  return (STATE_OKAY);
+	else
+	  is_failure++;
+      case STATE_WARNING:
+	if ( (!isnan (th->warning_min) && ((th->warning_min + th->hysteresis) < values[ds_index])) ||
+	     (!isnan (th->warning_max) && ((th->warning_max - th->hysteresis) > values[ds_index])) )
+	  return (STATE_OKAY);
+	else
+	  is_warning++;
+     }
+  }
+  else { /* no hysteresis */
+    if ((!isnan (th->failure_min) && (th->failure_min > values[ds_index]))
+	|| (!isnan (th->failure_max) && (th->failure_max < values[ds_index])))
+      is_failure++;
+
+    if ((!isnan (th->warning_min) && (th->warning_min > values[ds_index]))
+	|| (!isnan (th->warning_max) && (th->warning_max < values[ds_index])))
+      is_warning++;
+ }
+
   if (is_failure != 0)
     return (STATE_ERROR);
 
-  if ((!isnan (th->warning_min) && (th->warning_min > values[ds_index]))
-      || (!isnan (th->warning_max) && (th->warning_max < values[ds_index])))
-    is_warning++;
   if (is_warning != 0)
     return (STATE_WARNING);
 
@@ -742,12 +839,49 @@ static int ut_check_one_threshold (const data_set_t *ds,
   int ret = -1;
   int ds_index = -1;
   int i;
+  gauge_t values_copy[ds->ds_num];
+
+  memcpy (values_copy, values, sizeof (values_copy));
+
+  if ((th->flags & UT_FLAG_PERCENTAGE) != 0)
+  {
+    int num = 0;
+    gauge_t sum=0.0;
+
+    if (ds->ds_num == 1)
+    {
+      WARNING ("ut_check_one_threshold: The %s type has only one data "
+          "source, but you have configured to check this as a percentage. "
+          "That doesn't make much sense, because the percentage will always "
+          "be 100%%!", ds->type);
+    }
+
+    /* Prepare `sum' and `num'. */
+    for (i = 0; i < ds->ds_num; i++)
+      if (!isnan (values[i]))
+      {
+        num++;
+	sum += values[i];
+      }
+
+    if ((num == 0) /* All data sources are undefined. */
+        || (sum == 0.0)) /* Sum is zero, cannot calculate percentage. */
+    {
+      for (i = 0; i < ds->ds_num; i++)
+        values_copy[i] = NAN;
+    }
+    else /* We can actually calculate the percentage. */
+    {
+      for (i = 0; i < ds->ds_num; i++)
+        values_copy[i] = 100.0 * values[i] / sum;
+    }
+  } /* if (UT_FLAG_PERCENTAGE) */
 
   for (i = 0; i < ds->ds_num; i++)
   {
     int status;
 
-    status = ut_check_one_data_source (ds, vl, th, values, i);
+    status = ut_check_one_data_source (ds, vl, th, values_copy, i);
     if (ret < status)
     {
       ret = status;
@@ -899,4 +1033,22 @@ int ut_check_interesting (const char *name)
   return (2);
 } /* }}} int ut_check_interesting */
 
-/* vim: set sw=2 ts=8 sts=2 tw=78 fdm=marker : */
+int ut_search_threshold (const value_list_t *vl, /* {{{ */
+    threshold_t *ret_threshold)
+{
+  threshold_t *t;
+
+  if (vl == NULL)
+    return (EINVAL);
+
+  t = threshold_search (vl);
+  if (t == NULL)
+    return (ENOENT);
+
+  memcpy (ret_threshold, t, sizeof (*ret_threshold));
+  ret_threshold->next = NULL;
+
+  return (0);
+} /* }}} int ut_search_threshold */
+
+/* vim: set sw=2 ts=8 sts=2 tw=78 et fdm=marker : */

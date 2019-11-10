@@ -510,6 +510,109 @@ plugin below on how matches are defined.
 
 =back
 
+=head2 Plugin C<curl_json>
+
+The B<curl_json plugin> uses B<libcurl> (L<http://curl.haxx.se/>) and
+B<libyajl> (L<http://www.lloydforge.org/projects/yajl/>) to retrieve JSON data
+via cURL. This can be used to collect values from CouchDB documents (which are
+stored JSON notation), for example.
+
+The following example will collect several values from the built-in `_stats'
+runtime statistics module of CouchDB
+(L<http://wiki.apache.org/couchdb/Runtime_Statistics>).
+
+  <Plugin curl_json>
+    <URL "http://localhost:5984/_stats">
+      Instance "httpd"
+      <Key "httpd/requests/count">
+        Type "http_requests"
+      </Key>
+
+      <Key "httpd_request_methods/*/count">
+        Type "http_request_methods"
+      </Key>
+
+      <Key "httpd_status_codes/*/count">
+        Type "http_response_codes"
+      </Key>
+    </URL>
+  </Plugin>
+
+Another CouchDB example:
+The following example will collect the status values from each database:
+
+  <URL "http://localhost:5984/_all_dbs">
+    Instance "dbs"
+    <Key "*/doc_count">
+      Type "gauge"
+    </Key>
+    <Key "*/doc_del_count">
+      Type "counter"
+    </Key>
+    <Key "*/disk_size">
+      Type "bytes"
+    </Key>
+  </URL>
+
+In the B<Plugin> block, there may be one or more B<URL> blocks, each defining
+a URL to be fetched via HTTP (using libcurl) and one or more B<Key> blocks.
+The B<Key> string argument must be in a path format, of which is used to collect
+a value from a JSON map object.  If a B<Key> path element is that of a I<*> wildcard,
+the values for all keys will be collectd.
+
+The following options are valid within B<URL> blocks:
+
+=over 4
+
+=item B<Instance> I<Instance>
+
+Sets the plugin instance to I<Instance>.
+
+=item B<User> I<Name>
+
+Username to use if authorization is required to read the page.
+
+=item B<Password> I<Password>
+
+Password to use if authorization is required to read the page.
+
+=item B<VerifyPeer> B<true>|B<false>
+
+Enable or disable peer SSL certificate verification. See
+L<http://curl.haxx.se/docs/sslcerts.html> for details. Enabled by default.
+
+=item B<VerifyHost> B<true>|B<false>
+
+Enable or disable peer host name verification. If enabled, the plugin checks if
+the C<Common Name> or a C<Subject Alternate Name> field of the SSL certificate
+matches the host name provided by the B<URL> option. If this identity check
+fails, the connection is aborted. Obviously, only works when connecting to a
+SSL enabled server. Enabled by default.
+
+=item B<CACert> I<file>
+
+File that holds one or more SSL certificates. If you want to use HTTPS you will
+possibly need this option. What CA certificates come bundled with C<libcurl>
+and are checked by default depends on the distribution you use.
+
+=back
+
+The following options are valid within B<Key> blocks:
+
+=over 4
+
+=item B<Type> I<Type>
+
+Sets the type used to dispatch the values to the daemon. Detailed information
+about types and their configuration can be found in L<types.db(5)>. This
+option is mandatory.
+
+=item B<Instance> I<Instance>
+
+Type-instance to use. Defaults to the current map key or current string array element value.
+
+=back
+
 =head2 Plugin C<dbi>
 
 This plugin uses the B<dbi> library (L<http://libdbi.sourceforge.net/>) to
@@ -770,6 +873,12 @@ match any one of the criteria are collected. By default only selected
 partitions are collected if a selection is made. If no selection is configured
 at all, B<all> partitions are selected.
 
+=item B<ReportByDevice> I<true>|I<false>
+
+Report using the device name rather than the mountpoint. i.e. with this I<false>,
+(the default), it will report a disk as "root", but with it I<true>, it will be
+"sda1" (or whichever).
+
 =back
 
 =head2 Plugin C<disk>
@@ -820,6 +929,10 @@ may not work on certain platforms, such as MacE<nbsp>OSE<nbsp>X.
 =item B<IgnoreSource> I<IP-address>
 
 Ignore packets that originate from this address.
+
+=item B<SelectNumericQueryTypes> B<true>|B<false>
+
+Enabled by default, collects unknown (and thus presented as numeric only) query types.
 
 =back
 
@@ -961,6 +1074,11 @@ note that there are 1000 bytes in a kilobyte, not 1024.
 Controls whether or not to recurse into subdirectories. Enabled by default.
 
 =back
+
+=head2 Plugin C<GenericJMX>
+
+The I<GenericJMX plugin> is written in I<Java> and therefore documented in
+L<collectd-java(5)>.
 
 =head2 Plugin C<gmond>
 
@@ -1722,6 +1840,11 @@ multicast, and IPv4 and IPv6 packets. The default is to not change this value.
 That means that multicast packets will be sent with a TTL of C<1> (one) on most
 operating systems.
 
+=item B<MaxPacketSize> I<1024-65535>
+
+Set the maximum size for datagrams received over the network. Packets larger
+than this will be truncated.
+
 =item B<Forward> I<true|false>
 
 If set to I<true>, write packets that were received via the network plugin to
@@ -1899,6 +2022,55 @@ compatibility, though.
 
 Add a UPS to collect data from. The format is identical to the one accepted by
 L<upsc(8)>.
+
+=back
+
+=head2 Plugin C<olsrd>
+
+The I<olsrd> plugin connects to the TCP port opened by the I<txtinfo> plugin of
+the Optimized Link State Routing daemon and reads information about the current
+state of the meshed network.
+
+The following configuration options are understood:
+
+=over 4
+
+=item B<Host> I<Host>
+
+Connect to I<Host>. Defaults to B<"localhost">.
+
+=item B<Port> I<Port>
+
+Specifies the port to connect to. This must be a string, even if you give the
+port as a number rather than a service name. Defaults to B<"2006">.
+
+=item B<CollectLinks> B<No>|B<Summary>|B<Detail>
+
+Specifies what information to collect about links, i.E<nbsp>e. direct
+connections of the daemon queried. If set to B<No>, no information is
+collected. If set to B<Summary>, the number of links and the average of all
+I<link quality> (LQ) and I<neighbor link quality> (NLQ) values is calculated.
+If set to B<Detail> LQ and NLQ are collected per link.
+
+Defaults to B<Detail>.
+
+=item B<CollectRoutes> B<No>|B<Summary>|B<Detail>
+
+Specifies what information to collect about routes of the daemon queried. If
+set to B<No>, no information is collected. If set to B<Summary>, the number of
+routes and the average I<metric> and I<ETX> is calculated. If set to B<Detail>
+metric and ETX are collected per route.
+
+Defaults to B<Summary>.
+
+=item B<CollectTopology> B<No>|B<Summary>|B<Detail>
+
+Specifies what information to collect about the global topology. If set to
+B<No>, no information is collected. If set to B<Summary>, the number of links
+in the entire topology and the average I<link quality> (LQ) is calculated.
+If set to B<Detail> LQ and NLQ are collected for each link in the entire topology.
+
+Defaults to B<Summary>.
 
 =back
 
@@ -2626,7 +2798,7 @@ matching values will be ignored.
 
 =head2 Plugin C<rrdcached>
 
-The C<rrdcached> plugin uses the RRDTool accelerator daemon, L<rrdcached(1)>,
+The C<rrdcached> plugin uses the RRDtool accelerator daemon, L<rrdcached(1)>,
 to store values to RRD files in an efficient manner. The combination of the
 C<rrdcached> B<plugin> and the C<rrdcached> B<daemon> is very similar to the
 way the C<rrdtool> plugin works (see below). The added abstraction layer
@@ -2678,7 +2850,7 @@ expected. Default is B<true>.
 
 You can use the settings B<StepSize>, B<HeartBeat>, B<RRARows>, and B<XFF> to
 fine-tune your RRD-files. Please read L<rrdcreate(1)> if you encounter problems
-using these settings. If you don't want to dive into the depths of RRDTool, you
+using these settings. If you don't want to dive into the depths of RRDtool, you
 can safely ignore these settings.
 
 =over 4
@@ -2774,6 +2946,14 @@ updates per second, writing all values to disk will take approximately
 56E<nbsp>minutes. Together with the flushing ability that's integrated into
 "collection3" you'll end up with a responsive and fast system, up to date
 graphs and basically a "backup" of your values every hour.
+
+=item B<RandomTimeout> I<Seconds>
+
+When set, the actual timeout for each value is chosen randomly between
+I<CacheTimeout>-I<RandomTimeout> and I<CacheTimeout>+I<RandomTimeout>. The
+intention is to avoid high load situations that appear when many values timeout
+at the same time. This is especially a problem shortly after the daemon starts,
+because all values were added to the internal cache at roughly the same time.
 
 =back
 
@@ -3163,6 +3343,26 @@ selection is configured at all, B<all> devices are selected.
 
 =back
 
+=head2 Plugin C<tokyotyrant>
+
+The C<tokyotyrant plugin> connects to a TokyoTyrant server and collects a 
+couple metrics: number of records, and database size on disk.
+
+=over 4
+
+=item B<Host> I<Hostname/IP>
+
+The hostname or ip which identifies the server.
+Default: B<127.0.0.1>
+
+=item B<Port> I<Service/Port>
+
+The query port of the server. This needs to be a string, even if the port is
+given in its numeric form.
+Default: B<1978>
+
+=back
+
 =head2 Plugin C<unixsock>
 
 =over 4
@@ -3258,6 +3458,64 @@ traffic passing a socket which might be a lot less than the actual on-wire
 traffic (e.E<nbsp>g. due to headers and retransmission). If you want to
 collect on-wire traffic you could, for example, use the logging facilities of
 iptables to feed data for the guest IPs into the iptables plugin.
+
+=head2 Plugin C<write_http>
+
+This output plugin submits values to an http server by POST them using the
+PUTVAL plain-text protocol. Each destination you want to post data to needs to
+have one B<URL> block, within which the destination can be configured further,
+for example by specifying authentication data.
+
+Synopsis:
+
+ <Plugin "write_http">
+   <URL "http://example.com/post-collectd">
+     User "collectd"
+     Password "weCh3ik0"
+   </URL>
+ </Plugin>
+
+B<URL> blocks need one string argument which is used as the URL to which data
+is posted. The following options are understood within B<URL> blocks.
+
+=over 4
+
+=item B<User> I<Username>
+
+Optional user name needed for authentication.
+
+=item B<Password> I<Password>
+
+Optional password needed for authentication.
+
+=item B<VerifyPeer> B<true>|B<false>
+
+Enable or disable peer SSL certificate verification. See
+L<http://curl.haxx.se/docs/sslcerts.html> for details. Enabled by default.
+
+=item B<VerifyHost> B<true|false>
+
+Enable or disable peer host name verification. If enabled, the plugin checks if
+the C<Common Name> or a C<Subject Alternate Name> field of the SSL certificate
+matches the host name provided by the B<URL> option. If this identity check
+fails, the connection is aborted. Obviously, only works when connecting to a
+SSL enabled server. Enabled by default.
+
+=item B<CACert> I<File>
+
+File that holds one or more SSL certificates. If you want to use HTTPS you will
+possibly need this option. What CA certificates come bundled with C<libcurl>
+and are checked by default depends on the distribution you use.
+
+=item B<Format> B<Command>|B<JSON>
+
+Format of the output to generate. If set to B<Command>, will create output that
+is understood by the I<Exec> and I<UnixSock> plugins. When set to B<JSON>, will
+create output in the I<JavaScript Object Notation> (JSON).
+
+Defaults to B<Command>.
+
+=back
 
 =head1 THRESHOLD CONFIGURATION
 
@@ -3383,6 +3641,13 @@ of range but the previous value was okay.
 This applies to missing values, too: If set to B<true> a notification about a
 missing value is generated once every B<Interval> seconds. If set to B<false>
 only one such notification is generated until the value appears again.
+
+=item B<Percentage> B<true>|B<false>
+
+If set to B<true>, the minimum and maximum values given are interpreted as
+percentage value, relative to the other data sources. This is helpful for
+example for the "df" type, where you may want to issue a warning when less than
+5E<nbsp>% of the total space is available. Defaults to B<false>.
 
 =back
 
@@ -3876,6 +4141,19 @@ Example:
    Invert true
    Satisfy "Any"
  </Match>
+
+=item B<empty_counter>
+
+Matches all values with one or more data sources of type B<COUNTER> and where
+all counter values are zero. These counters usually I<never> increased since
+they started existing (and are therefore uninteresting), or got reset recently
+or overflowed and you had really, I<really> bad luck.
+
+Please keep in mind that ignoring such counters can result in confusing
+behavior: Counters which hardly ever increase will be zero for long periods of
+time. If the counter is reset for some reason (machine or service restarted,
+usually), the graph will be empty (NAN) for a long time. People may not
+understand why.
 
 =back
 

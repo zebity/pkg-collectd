@@ -26,6 +26,7 @@
 
 #include "utils_cmd_flush.h"
 #include "utils_cmd_getval.h"
+#include "utils_cmd_getthreshold.h"
 #include "utils_cmd_listval.h"
 #include "utils_cmd_putval.h"
 #include "utils_cmd_putnotif.h"
@@ -157,32 +158,45 @@ static int us_open_socket (void)
 
 static void *us_handle_client (void *arg)
 {
-	int fd;
+	int fdin;
+	int fdout;
 	FILE *fhin, *fhout;
 
-	fd = *((int *) arg);
+	fdin = *((int *) arg);
 	free (arg);
 	arg = NULL;
 
-	DEBUG ("unixsock plugin: us_handle_client: Reading from fd #%i", fd);
+	DEBUG ("unixsock plugin: us_handle_client: Reading from fd #%i", fdin);
 
-	fhin  = fdopen (fd, "r");
+	fdout = dup (fdin);
+	if (fdout < 0)
+	{
+		char errbuf[1024];
+		ERROR ("unixsock plugin: dup failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		close (fdin);
+		pthread_exit ((void *) 1);
+	}
+
+	fhin  = fdopen (fdin, "r");
 	if (fhin == NULL)
 	{
 		char errbuf[1024];
 		ERROR ("unixsock plugin: fdopen failed: %s",
 				sstrerror (errno, errbuf, sizeof (errbuf)));
-		close (fd);
+		close (fdin);
+		close (fdout);
 		pthread_exit ((void *) 1);
 	}
 
-	fhout = fdopen (fd, "w");
+	fhout = fdopen (fdout, "w");
 	if (fhout == NULL)
 	{
 		char errbuf[1024];
 		ERROR ("unixsock plugin: fdopen failed: %s",
 				sstrerror (errno, errbuf, sizeof (errbuf)));
-		fclose (fhin); /* this closes fd as well */
+		fclose (fhin); /* this closes fdin as well */
+		close (fdout);
 		pthread_exit ((void *) 1);
 	}
 
@@ -230,16 +244,21 @@ static void *us_handle_client (void *arg)
 
 		fields_num = strsplit (buffer_copy, fields,
 				sizeof (fields) / sizeof (fields[0]));
-
 		if (fields_num < 1)
 		{
-			close (fd);
-			break;
+			fprintf (fhout, "-1 Internal error\n");
+			fclose (fhin);
+			fclose (fhout);
+			pthread_exit ((void *) 1);
 		}
 
 		if (strcasecmp (fields[0], "getval") == 0)
 		{
 			handle_getval (fhout, buffer);
+		}
+		else if (strcasecmp (fields[0], "getthreshold") == 0)
+		{
+			handle_getthreshold (fhout, buffer);
 		}
 		else if (strcasecmp (fields[0], "putval") == 0)
 		{
