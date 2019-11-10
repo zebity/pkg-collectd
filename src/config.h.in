@@ -93,7 +93,7 @@
 /* Define to 1 if you have the <bsd/nlist.h> header file. */
 #undef HAVE_BSD_NLIST_H
 
-/* Define to 1 if you have cap_get_bound() (-lcap). */
+/* Define to 1 if you have cap_get_proc() (-lcap). */
 #undef HAVE_CAPABILITY
 
 /* Define if the clock_gettime(2) function is available. */
@@ -1544,6 +1544,9 @@
 /* Define to 1 if you have the `thread_info' function. */
 #undef HAVE_THREAD_INFO
 
+/* Define if the timegm(3) function is available. */
+#undef HAVE_TIMEGM
+
 /* Define if the function getmntent exists and takes two arguments. */
 #undef HAVE_TWO_GETMNTENT
 
@@ -1702,6 +1705,9 @@
 
 /* Set to true if strptime is only exported in X/Open mode (GNU libc). */
 #undef STRPTIME_NEEDS_STANDARDS
+
+/* Set to true if timegm is only exported in BSD mode. */
+#undef TIMEGM_NEEDS_BSD
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
