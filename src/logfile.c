@@ -53,23 +53,8 @@ static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 static int logfile_config (const char *key, const char *value)
 {
 	if (0 == strcasecmp (key, "LogLevel")) {
-		if ((0 == strcasecmp (value, "emerg"))
-				|| (0 == strcasecmp (value, "alert"))
-				|| (0 == strcasecmp (value, "crit"))
-				|| (0 == strcasecmp (value, "err")))
-			log_level = LOG_ERR;
-		else if (0 == strcasecmp (value, "warning"))
-			log_level = LOG_WARNING;
-		else if (0 == strcasecmp (value, "notice"))
-			log_level = LOG_NOTICE;
-		else if (0 == strcasecmp (value, "info"))
-			log_level = LOG_INFO;
-#if COLLECT_DEBUG
-		else if (0 == strcasecmp (value, "debug"))
-			log_level = LOG_DEBUG;
-#endif /* COLLECT_DEBUG */
-		else
-			return 1;
+		log_level = parse_log_severity(value);
+		if (log_level == -1) return 1; /* to keep previous behaviour */
 	}
 	else if (0 == strcasecmp (key, "File")) {
 		sfree (log_file);
@@ -92,7 +77,8 @@ static int logfile_config (const char *key, const char *value)
 	return 0;
 } /* int logfile_config (const char *, const char *) */
 
-static void logfile_print (const char *msg, int severity, time_t timestamp_time)
+static void logfile_print (const char *msg, int severity,
+	   	cdtime_t timestamp_time)
 {
 	FILE *fh;
 	int do_close = 0;
@@ -126,7 +112,8 @@ static void logfile_print (const char *msg, int severity, time_t timestamp_time)
 
 	if (print_timestamp)
 	{
-		localtime_r (&timestamp_time, &timestamp_tm);
+		time_t tt = CDTIME_T_TO_TIME_T (timestamp_time);
+		localtime_r (&tt, &timestamp_tm);
 
 		strftime (timestamp_str, sizeof (timestamp_str), "%Y-%m-%d %H:%M:%S",
 				&timestamp_tm);
@@ -179,7 +166,7 @@ static void logfile_log (int severity, const char *msg,
 	if (severity > log_level)
 		return;
 
-	logfile_print (msg, severity, time (NULL));
+	logfile_print (msg, severity, cdtime ());
 } /* void logfile_log (int, const char *) */
 
 static int logfile_notification (const notification_t *n,
@@ -218,7 +205,7 @@ static int logfile_notification (const notification_t *n,
 	buf[sizeof (buf) - 1] = '\0';
 
 	logfile_print (buf, LOG_INFO,
-			(n->time > 0) ? n->time : time (NULL));
+			(n->time != 0) ? n->time : cdtime ());
 
 	return (0);
 } /* int logfile_notification */

@@ -33,9 +33,7 @@
 #include <poll.h>
 
 #include <pcap.h>
-#if HAVE_PCAP_BPF_H
-# include <pcap-bpf.h>
-#endif
+#include <pcap-bpf.h>
 
 /*
  * Private data types
@@ -63,8 +61,8 @@ static int select_numeric_qtype = 1;
 #define PCAP_SNAPLEN 1460
 static char   *pcap_device = NULL;
 
-static counter_t       tr_queries;
-static counter_t       tr_responses;
+static derive_t       tr_queries;
+static derive_t       tr_responses;
 static counter_list_t *qtype_list;
 static counter_list_t *opcode_list;
 static counter_list_t *rcode_list;
@@ -84,14 +82,10 @@ static counter_list_t *counter_list_search (counter_list_t **list, unsigned int 
 {
 	counter_list_t *entry;
 
-	DEBUG ("counter_list_search (list = %p, key = %u)",
-			(void *) *list, key);
-
 	for (entry = *list; entry != NULL; entry = entry->next)
 		if (entry->key == key)
 			break;
 
-	DEBUG ("return (%p)", (void *) entry);
 	return (entry);
 }
 
@@ -99,9 +93,6 @@ static counter_list_t *counter_list_create (counter_list_t **list,
 		unsigned int key, unsigned int value)
 {
 	counter_list_t *entry;
-
-	DEBUG ("counter_list_create (list = %p, key = %u, value = %u)",
-			(void *) *list, key, value);
 
 	entry = (counter_list_t *) malloc (sizeof (counter_list_t));
 	if (entry == NULL)
@@ -126,7 +117,6 @@ static counter_list_t *counter_list_create (counter_list_t **list,
 		last->next = entry;
 	}
 
-	DEBUG ("return (%p)", (void *) entry);
 	return (entry);
 }
 
@@ -134,9 +124,6 @@ static void counter_list_add (counter_list_t **list,
 		unsigned int key, unsigned int increment)
 {
 	counter_list_t *entry;
-
-	DEBUG ("counter_list_add (list = %p, key = %u, increment = %u)",
-			(void *) *list, key, increment);
 
 	entry = counter_list_search (list, key);
 
@@ -148,7 +135,6 @@ static void counter_list_add (counter_list_t **list,
 	{
 		counter_list_create (list, key, increment);
 	}
-	DEBUG ("return ()");
 }
 
 static int dns_config (const char *key, const char *value)
@@ -242,7 +228,7 @@ static void *dns_child_loop (__attribute__((unused)) void *dummy)
 	pcap_obj = pcap_open_live ((pcap_device != NULL) ? pcap_device : "any",
 			PCAP_SNAPLEN,
 			0 /* Not promiscuous */,
-			interval_g,
+			(int) CDTIME_T_TO_MS (interval_g / 2),
 			pcap_error);
 	if (pcap_obj == NULL)
 	{
@@ -265,7 +251,7 @@ static void *dns_child_loop (__attribute__((unused)) void *dummy)
 		return (NULL);
 	}
 
-	DEBUG ("PCAP object created.");
+	DEBUG ("dns plugin: PCAP object created.");
 
 	dnstop_set_pcap_obj (pcap_obj);
 	dnstop_set_callback (dns_child_callback);
@@ -278,7 +264,7 @@ static void *dns_child_loop (__attribute__((unused)) void *dummy)
 		ERROR ("dns plugin: Listener thread is exiting "
 				"abnormally: %s", pcap_geterr (pcap_obj));
 
-	DEBUG ("child is exiting");
+	DEBUG ("dns plugin: Child is exiting.");
 
 	pcap_close (pcap_obj);
 	listen_thread_init = 0;
@@ -315,13 +301,13 @@ static int dns_init (void)
 	return (0);
 } /* int dns_init */
 
-static void submit_counter (const char *type, const char *type_instance,
-		counter_t value)
+static void submit_derive (const char *type, const char *type_instance,
+		derive_t value)
 {
 	value_t values[1];
 	value_list_t vl = VALUE_LIST_INIT;
 
-	values[0].counter = value;
+	values[0].derive = value;
 
 	vl.values = values;
 	vl.values_len = 1;
@@ -331,15 +317,15 @@ static void submit_counter (const char *type, const char *type_instance,
 	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
 	plugin_dispatch_values (&vl);
-} /* void submit_counter */
+} /* void submit_derive */
 
-static void submit_octets (counter_t queries, counter_t responses)
+static void submit_octets (derive_t queries, derive_t responses)
 {
 	value_t values[2];
 	value_list_t vl = VALUE_LIST_INIT;
 
-	values[0].counter = queries;
-	values[1].counter = responses;
+	values[0].derive = queries;
+	values[1].derive = responses;
 
 	vl.values = values;
 	vl.values_len = 2;
@@ -348,7 +334,7 @@ static void submit_octets (counter_t queries, counter_t responses)
 	sstrncpy (vl.type, "dns_octets", sizeof (vl.type));
 
 	plugin_dispatch_values (&vl);
-} /* void submit_counter */
+} /* void submit_octets */
 
 static int dns_read (void)
 {
@@ -379,8 +365,8 @@ static int dns_read (void)
 
 	for (i = 0; i < len; i++)
 	{
-		DEBUG ("qtype = %u; counter = %u;", keys[i], values[i]);
-		submit_counter ("dns_qtype", qtype_str (keys[i]), values[i]);
+		DEBUG ("dns plugin: qtype = %u; counter = %u;", keys[i], values[i]);
+		submit_derive ("dns_qtype", qtype_str (keys[i]), values[i]);
 	}
 
 	pthread_mutex_lock (&opcode_mutex);
@@ -395,8 +381,8 @@ static int dns_read (void)
 
 	for (i = 0; i < len; i++)
 	{
-		DEBUG ("opcode = %u; counter = %u;", keys[i], values[i]);
-		submit_counter ("dns_opcode", opcode_str (keys[i]), values[i]);
+		DEBUG ("dns plugin: opcode = %u; counter = %u;", keys[i], values[i]);
+		submit_derive ("dns_opcode", opcode_str (keys[i]), values[i]);
 	}
 
 	pthread_mutex_lock (&rcode_mutex);
@@ -411,8 +397,8 @@ static int dns_read (void)
 
 	for (i = 0; i < len; i++)
 	{
-		DEBUG ("rcode = %u; counter = %u;", keys[i], values[i]);
-		submit_counter ("dns_rcode", rcode_str (keys[i]), values[i]);
+		DEBUG ("dns plugin: rcode = %u; counter = %u;", keys[i], values[i]);
+		submit_derive ("dns_rcode", rcode_str (keys[i]), values[i]);
 	}
 
 	return (0);

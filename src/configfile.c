@@ -1,6 +1,6 @@
 /**
  * collectd - src/configfile.c
- * Copyright (C) 2005-2009  Florian octo Forster
+ * Copyright (C) 2005-2011  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,7 +17,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Authors:
- *   Florian octo Forster <octo at verplant.org>
+ *   Florian octo Forster <octo at collectd.org>
  *   Sebastian tokkee Harl <sh at tokkee.org>
  **/
 
@@ -29,7 +29,6 @@
 #include "plugin.h"
 #include "configfile.h"
 #include "types_list.h"
-#include "utils_threshold.h"
 #include "filter_chain.h"
 
 #if HAVE_WORDEXP_H
@@ -96,7 +95,7 @@ static cf_global_option_t cf_global_options[] =
 	{"BaseDir",     NULL, PKGLOCALSTATEDIR},
 	{"PIDFile",     NULL, PIDFILE},
 	{"Hostname",    NULL, NULL},
-	{"FQDNLookup",  NULL, "false"},
+	{"FQDNLookup",  NULL, "true"},
 	{"Interval",    NULL, "10"},
 	{"ReadThreads", NULL, "5"},
 	{"Timeout",     NULL, "2"},
@@ -243,7 +242,8 @@ static int dispatch_value_plugindir (const oconfig_item_t *ci)
 static int dispatch_loadplugin (const oconfig_item_t *ci)
 {
 	int i;
-	uint32_t flags = 0;
+	const char *name;
+	unsigned int flags = 0;
 	assert (strcasecmp (ci->key, "LoadPlugin") == 0);
 
 	if (ci->values_num != 1)
@@ -251,19 +251,34 @@ static int dispatch_loadplugin (const oconfig_item_t *ci)
 	if (ci->values[0].type != OCONFIG_TYPE_STRING)
 		return (-1);
 
+	name = ci->values[0].value.string;
+
+	/*
+	 * XXX: Magic at work:
+	 *
+	 * Some of the language bindings, for example the Python and Perl
+	 * plugins, need to be able to export symbols to the scripts they run.
+	 * For this to happen, the "Globals" flag needs to be set.
+	 * Unfortunately, this technical detail is hard to explain to the
+	 * average user and she shouldn't have to worry about this, ideally.
+	 * So in order to save everyone's sanity use a different default for a
+	 * handful of special plugins. --octo
+	 */
+	if ((strcasecmp ("Perl", name) == 0)
+			|| (strcasecmp ("Python", name) == 0))
+		flags |= PLUGIN_FLAGS_GLOBAL;
+
 	for (i = 0; i < ci->children_num; ++i) {
-		if (ci->children[i].values_num != 1 ||
-				ci->children[i].values[0].type != OCONFIG_TYPE_BOOLEAN) {
-			WARNING("Ignoring unknown LoadPlugin option %s for plugin %s", ci->children[i].key, ci->values[0].value.string);
-			continue;
-		}
-		if (strcasecmp(ci->children[i].key, "globals") == 0) {
-			flags |= PLUGIN_FLAGS_GLOBAL;
-		} else {
-			WARNING("Ignoring unknown LoadPlugin option %s for plugin %s", ci->children[i].key, ci->values[0].value.string);
+		if (strcasecmp("Globals", ci->children[i].key) == 0)
+			cf_util_get_flag (ci->children + i, &flags, PLUGIN_FLAGS_GLOBAL);
+		else {
+			WARNING("Ignoring unknown LoadPlugin option \"%s\" "
+					"for plugin \"%s\"",
+					ci->children[i].key, ci->values[0].value.string);
 		}
 	}
-	return (plugin_load (ci->values[0].value.string, flags));
+
+	return (plugin_load (name, (uint32_t) flags));
 } /* int dispatch_value_loadplugin */
 
 static int dispatch_value_plugin (const char *plugin, oconfig_item_t *ci)
@@ -372,8 +387,6 @@ static int dispatch_block (oconfig_item_t *ci)
 		return (dispatch_loadplugin (ci));
 	else if (strcasecmp (ci->key, "Plugin") == 0)
 		return (dispatch_block_plugin (ci));
-	else if (strcasecmp (ci->key, "Threshold") == 0)
-		return (ut_config (ci));
 	else if (strcasecmp (ci->key, "Chain") == 0)
 		return (fc_configure (ci));
 
@@ -1014,22 +1027,142 @@ int cf_util_get_boolean (const oconfig_item_t *ci, _Bool *ret_bool) /* {{{ */
 		return (-1);
 	}
 
-	*ret_bool = ci->values[0].value.boolean ? true : false;
+	*ret_bool = ci->values[0].value.boolean ? 1 : 0;
 
 	return (0);
 } /* }}} int cf_util_get_boolean */
 
-/* Assures that the config option is a string. The string is then converted to
- * a port number using `service_name_to_port_number' and returned. Returns the
- * port number in the range [1-65535] or less than zero upon failure. */
+int cf_util_get_flag (const oconfig_item_t *ci, /* {{{ */
+		unsigned int *ret_value, unsigned int flag)
+{
+	int status;
+	_Bool b;
+
+	if (ret_value == NULL)
+		return (EINVAL);
+
+	b = 0;
+	status = cf_util_get_boolean (ci, &b);
+	if (status != 0)
+		return (status);
+
+	if (b)
+	{
+		*ret_value |= flag;
+	}
+	else
+	{
+		*ret_value &= ~flag;
+	}
+
+	return (0);
+} /* }}} int cf_util_get_flag */
+
+/* Assures that the config option is a string or a number if the correct range
+ * of 1-65535. The string is then converted to a port number using
+ * `service_name_to_port_number' and returned.
+ * Returns the port number in the range [1-65535] or less than zero upon
+ * failure. */
 int cf_util_get_port_number (const oconfig_item_t *ci) /* {{{ */
 {
-	if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_STRING))
+	int tmp;
+
+	if ((ci->values_num != 1)
+			|| ((ci->values[0].type != OCONFIG_TYPE_STRING)
+				&& (ci->values[0].type != OCONFIG_TYPE_NUMBER)))
 	{
-		ERROR ("cf_util_get_port_number: The %s option requires "
+		ERROR ("cf_util_get_port_number: The \"%s\" option requires "
 				"exactly one string argument.", ci->key);
 		return (-1);
 	}
 
-	return (service_name_to_port_number (ci->values[0].value.string));
+	if (ci->values[0].type == OCONFIG_TYPE_STRING)
+		return (service_name_to_port_number (ci->values[0].value.string));
+
+	assert (ci->values[0].type == OCONFIG_TYPE_NUMBER);
+	tmp = (int) (ci->values[0].value.number + 0.5);
+	if ((tmp < 1) || (tmp > 65535))
+	{
+		ERROR ("cf_util_get_port_number: The \"%s\" option requires "
+				"a service name or a port number. The number "
+				"you specified, %i, is not in the valid "
+				"range of 1-65535.",
+				ci->key, tmp);
+		return (-1);
+	}
+
+	return (tmp);
 } /* }}} int cf_util_get_port_number */
+
+int cf_util_get_service (const oconfig_item_t *ci, char **ret_string) /* {{{ */
+{
+	int port;
+	char *service;
+	int status;
+
+	if (ci->values_num != 1)
+	{
+		ERROR ("cf_util_get_service: The %s option requires exactly "
+				"one argument.", ci->key);
+		return (-1);
+	}
+
+	if (ci->values[0].type == OCONFIG_TYPE_STRING)
+		return (cf_util_get_string (ci, ret_string));
+	if (ci->values[0].type != OCONFIG_TYPE_NUMBER)
+	{
+		ERROR ("cf_util_get_service: The %s option requires "
+				"exactly one string or numeric argument.",
+				ci->key);
+	}
+
+	port = 0;
+	status = cf_util_get_int (ci, &port);
+	if (status != 0)
+		return (status);
+	else if ((port < 1) || (port > 65535))
+	{
+		ERROR ("cf_util_get_service: The port number given "
+				"for the %s option is out of "
+				"range (%i).", ci->key, port);
+		return (-1);
+	}
+
+	service = malloc (6);
+	if (service == NULL)
+	{
+		ERROR ("cf_util_get_service: Out of memory.");
+		return (-1);
+	}
+	ssnprintf (service, 6, "%i", port);
+
+	sfree (*ret_string);
+	*ret_string = service;
+
+	return (0);
+} /* }}} int cf_util_get_service */
+
+int cf_util_get_cdtime (const oconfig_item_t *ci, cdtime_t *ret_value) /* {{{ */
+{
+	if ((ci == NULL) || (ret_value == NULL))
+		return (EINVAL);
+
+	if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_NUMBER))
+	{
+		ERROR ("cf_util_get_cdtime: The %s option requires "
+				"exactly one numeric argument.", ci->key);
+		return (-1);
+	}
+
+	if (ci->values[0].value.number < 0.0)
+	{
+		ERROR ("cf_util_get_cdtime: The numeric argument of the %s "
+				"option must not be negative.", ci->key);
+		return (-1);
+	}
+
+	*ret_value = DOUBLE_TO_CDTIME_T (ci->values[0].value.number);
+
+	return (0);
+} /* }}} int cf_util_get_cdtime */
+

@@ -1,6 +1,6 @@
 /**
  * collectd - src/network.c
- * Copyright (C) 2005-2009  Florian octo Forster
+ * Copyright (C) 2005-2010  Florian octo Forster
  * Copyright (C) 2009       Aman Gupta
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -259,7 +259,8 @@ typedef struct receive_list_entry_s receive_list_entry_t;
  * Private variables
  */
 static int network_config_ttl = 0;
-static size_t network_config_packet_size = 1024;
+/* Ethernet - (IPv6 + UDP) = 1500 - (40 + 8) = 1452 */
+static size_t network_config_packet_size = 1452;
 static int network_config_forward = 0;
 static int network_config_stats = 0;
 
@@ -296,14 +297,14 @@ static pthread_mutex_t  send_buffer_lock = PTHREAD_MUTEX_INITIALIZER;
  * example). Only if neither is true, the stats_lock is acquired. The counters
  * are always read without holding a lock in the hope that writing 8 bytes to
  * memory is an atomic operation. */
-static uint64_t stats_octets_rx  = 0;
-static uint64_t stats_octets_tx  = 0;
-static uint64_t stats_packets_rx = 0;
-static uint64_t stats_packets_tx = 0;
-static uint64_t stats_values_dispatched = 0;
-static uint64_t stats_values_not_dispatched = 0;
-static uint64_t stats_values_sent = 0;
-static uint64_t stats_values_not_sent = 0;
+static derive_t stats_octets_rx  = 0;
+static derive_t stats_octets_tx  = 0;
+static derive_t stats_packets_rx = 0;
+static derive_t stats_packets_tx = 0;
+static derive_t stats_values_dispatched = 0;
+static derive_t stats_values_not_dispatched = 0;
+static derive_t stats_values_sent = 0;
+static derive_t stats_values_not_sent = 0;
 static pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
@@ -320,30 +321,30 @@ static _Bool check_receive_okay (const value_list_t *vl) /* {{{ */
   /* This is a value we already sent. Don't allow it to be received again in
    * order to avoid looping. */
   if ((status == 0) && (time_sent >= ((uint64_t) vl->time)))
-    return (false);
+    return (0);
 
-  return (true);
+  return (1);
 } /* }}} _Bool check_receive_okay */
 
 static _Bool check_send_okay (const value_list_t *vl) /* {{{ */
 {
-  _Bool received = false;
+  _Bool received = 0;
   int status;
 
   if (network_config_forward != 0)
-    return (true);
+    return (1);
 
   if (vl->meta == NULL)
-    return (true);
+    return (1);
 
   status = meta_data_get_boolean (vl->meta, "network:received", &received);
   if (status == -ENOENT)
-    return (true);
+    return (1);
   else if (status != 0)
   {
     ERROR ("network plugin: check_send_okay: meta_data_get_boolean failed "
 	"with status %i.", status);
-    return (true);
+    return (1);
   }
 
   /* By default, only *send* value lists that were not *received* by the
@@ -421,7 +422,7 @@ static int network_dispatch_values (value_list_t *vl, /* {{{ */
     return (-ENOMEM);
   }
 
-  status = meta_data_add_boolean (vl->meta, "network:received", true);
+  status = meta_data_add_boolean (vl->meta, "network:received", 1);
   if (status != 0)
   {
     ERROR ("network plugin: meta_data_add_boolean failed.");
@@ -1439,8 +1440,19 @@ static int parse_packet (sockent_t *se, /* {{{ */
 					&tmp);
 			if (status == 0)
 			{
-				vl.time = (time_t) tmp;
-				n.time = (time_t) tmp;
+				vl.time = TIME_T_TO_CDTIME_T (tmp);
+				n.time  = TIME_T_TO_CDTIME_T (tmp);
+			}
+		}
+		else if (pkg_type == TYPE_TIME_HR)
+		{
+			uint64_t tmp = 0;
+			status = parse_part_number (&buffer, &buffer_size,
+					&tmp);
+			if (status == 0)
+			{
+				vl.time = (cdtime_t) tmp;
+				n.time  = (cdtime_t) tmp;
 			}
 		}
 		else if (pkg_type == TYPE_INTERVAL)
@@ -1449,7 +1461,15 @@ static int parse_packet (sockent_t *se, /* {{{ */
 			status = parse_part_number (&buffer, &buffer_size,
 					&tmp);
 			if (status == 0)
-				vl.interval = (int) tmp;
+				vl.interval = TIME_T_TO_CDTIME_T (tmp);
+		}
+		else if (pkg_type == TYPE_INTERVAL_HR)
+		{
+			uint64_t tmp = 0;
+			status = parse_part_number (&buffer, &buffer_size,
+					&tmp);
+			if (status == 0)
+				vl.interval = (cdtime_t) tmp;
 		}
 		else if (pkg_type == TYPE_HOST)
 		{
@@ -2646,7 +2666,7 @@ static int add_to_buffer (char *buffer, int buffer_size, /* {{{ */
 
 	if (vl_def->time != vl->time)
 	{
-		if (write_part_number (&buffer, &buffer_size, TYPE_TIME,
+		if (write_part_number (&buffer, &buffer_size, TYPE_TIME_HR,
 					(uint64_t) vl->time))
 			return (-1);
 		vl_def->time = vl->time;
@@ -2654,7 +2674,7 @@ static int add_to_buffer (char *buffer, int buffer_size, /* {{{ */
 
 	if (vl_def->interval != vl->interval)
 	{
-		if (write_part_number (&buffer, &buffer_size, TYPE_INTERVAL,
+		if (write_part_number (&buffer, &buffer_size, TYPE_INTERVAL_HR,
 					(uint64_t) vl->interval))
 			return (-1);
 		vl_def->interval = vl->interval;
@@ -3116,8 +3136,6 @@ static int network_config (oconfig_item_t *ci) /* {{{ */
       network_config_set_boolean (child, &network_config_forward);
     else if (strcasecmp ("ReportStats", child->key) == 0)
       network_config_set_boolean (child, &network_config_stats);
-    else if (strcasecmp ("CacheFlush", child->key) == 0)
-      /* no op for backwards compatibility only */;
     else
     {
       WARNING ("network plugin: Option `%s' is not allowed here.",
@@ -3141,7 +3159,7 @@ static int network_notification (const notification_t *n,
 
   memset (buffer, 0, sizeof (buffer));
 
-  status = write_part_number (&buffer_ptr, &buffer_free, TYPE_TIME,
+  status = write_part_number (&buffer_ptr, &buffer_free, TYPE_TIME_HR,
       (uint64_t) n->time);
   if (status != 0)
     return (-1);
@@ -3246,15 +3264,15 @@ static int network_shutdown (void)
 
 static int network_stats_read (void) /* {{{ */
 {
-	uint64_t copy_octets_rx;
-	uint64_t copy_octets_tx;
-	uint64_t copy_packets_rx;
-	uint64_t copy_packets_tx;
-	uint64_t copy_values_dispatched;
-	uint64_t copy_values_not_dispatched;
-	uint64_t copy_values_sent;
-	uint64_t copy_values_not_sent;
-	uint64_t copy_receive_list_length;
+	derive_t copy_octets_rx;
+	derive_t copy_octets_tx;
+	derive_t copy_packets_rx;
+	derive_t copy_packets_tx;
+	derive_t copy_values_dispatched;
+	derive_t copy_values_not_dispatched;
+	derive_t copy_values_sent;
+	derive_t copy_values_not_sent;
+	derive_t copy_receive_list_length;
 	value_list_t vl = VALUE_LIST_INIT;
 	value_t values[2];
 
@@ -3277,14 +3295,14 @@ static int network_stats_read (void) /* {{{ */
 	sstrncpy (vl.plugin, "network", sizeof (vl.plugin));
 
 	/* Octets received / sent */
-	vl.values[0].counter = (counter_t) copy_octets_rx;
-	vl.values[1].counter = (counter_t) copy_octets_tx;
+	vl.values[0].derive = (derive_t) copy_octets_rx;
+	vl.values[1].derive = (derive_t) copy_octets_tx;
 	sstrncpy (vl.type, "if_octets", sizeof (vl.type));
 	plugin_dispatch_values_secure (&vl);
 
 	/* Packets received / send */
-	vl.values[0].counter = (counter_t) copy_packets_rx;
-	vl.values[1].counter = (counter_t) copy_packets_tx;
+	vl.values[0].derive = (derive_t) copy_packets_rx;
+	vl.values[1].derive = (derive_t) copy_packets_tx;
 	sstrncpy (vl.type, "if_packets", sizeof (vl.type));
 	plugin_dispatch_values_secure (&vl);
 
@@ -3323,13 +3341,13 @@ static int network_stats_read (void) /* {{{ */
 
 static int network_init (void)
 {
-	static _Bool have_init = false;
+	static _Bool have_init = 0;
 
 	/* Check if we were already initialized. If so, just return - there's
 	 * nothing more to do (for now, that is). */
 	if (have_init)
 		return (0);
-	have_init = true;
+	have_init = 1;
 
 #if HAVE_LIBGCRYPT
 	gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
@@ -3415,9 +3433,9 @@ static int network_init (void)
  * just send the buffer if `flush'  is called - if the requested value was in
  * there, good. If not, well, then there is nothing to flush.. -octo
  */
-static int network_flush (int timeout,
-		const char __attribute__((unused)) *identifier,
-		user_data_t __attribute__((unused)) *user_data)
+static int network_flush (__attribute__((unused)) cdtime_t timeout,
+		__attribute__((unused)) const char *identifier,
+		__attribute__((unused)) user_data_t *user_data)
 {
 	pthread_mutex_lock (&send_buffer_lock);
 

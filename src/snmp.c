@@ -69,7 +69,7 @@ struct host_definition_s
   int version;
   void *sess_handle;
   c_complain_t complaint;
-  uint32_t interval;
+  cdtime_t interval;
   data_definition_t **data_list;
   int data_list_len;
 };
@@ -159,7 +159,6 @@ static void csnmp_host_definition_destroy (void *arg) /* {{{ */
  *      +-> csnmp_config_add_host_community
  *      +-> csnmp_config_add_host_version
  *      +-> csnmp_config_add_host_collect
- *      +-> csnmp_config_add_host_interval
  */
 static void call_snmp_init_once (void)
 {
@@ -543,22 +542,6 @@ static int csnmp_config_add_host_collect (host_definition_t *host,
   return (0);
 } /* int csnmp_config_add_host_collect */
 
-static int csnmp_config_add_host_interval (host_definition_t *hd, oconfig_item_t *ci)
-{
-  if ((ci->values_num != 1)
-      || (ci->values[0].type != OCONFIG_TYPE_NUMBER))
-  {
-    WARNING ("snmp plugin: The `Interval' config option needs exactly one number argument.");
-    return (-1);
-  }
-
-  hd->interval = ci->values[0].value.number >= 0
-    ? (uint32_t) ci->values[0].value.number
-    : 0;
-
-  return (0);
-} /* int csnmp_config_add_host_interval */
-
 static int csnmp_config_add_host (oconfig_item_t *ci)
 {
   host_definition_t *hd;
@@ -607,7 +590,7 @@ static int csnmp_config_add_host (oconfig_item_t *ci)
     else if (strcasecmp ("Collect", option->key) == 0)
       csnmp_config_add_host_collect (hd, option);
     else if (strcasecmp ("Interval", option->key) == 0)
-      csnmp_config_add_host_interval (hd, option);
+      cf_util_get_cdtime (option, &hd->interval);
     else
     {
       WARNING ("snmp plugin: csnmp_config_add_host: Option `%s' not allowed here.", option->key);
@@ -651,9 +634,7 @@ static int csnmp_config_add_host (oconfig_item_t *ci)
   cb_data.data = hd;
   cb_data.free_func = csnmp_host_definition_destroy;
 
-  memset (&cb_interval, 0, sizeof (cb_interval));
-  if (hd->interval != 0)
-    cb_interval.tv_sec = (time_t) hd->interval;
+  CDTIME_T_TO_TIMESPEC (hd->interval, &cb_interval);
 
   status = plugin_register_complex_read (/* group = */ NULL, cb_name,
       csnmp_read_host, /* interval = */ &cb_interval,
@@ -722,7 +703,8 @@ static void csnmp_host_open_session (host_definition_t *host)
 
 /* TODO: Check if negative values wrap around. Problem: negative temperatures. */
 static value_t csnmp_value_list_to_value (struct variable_list *vl, int type,
-    double scale, double shift)
+    double scale, double shift,
+    const char *host_name, const char *data_name)
 {
   value_t ret;
   uint64_t tmp_unsigned = 0;
@@ -774,8 +756,11 @@ static value_t csnmp_value_list_to_value (struct variable_list *vl, int type,
 	  oid_buffer);
     else
 #endif
-      WARNING ("snmp plugin: I don't know the ASN type \"%i\" (OID: %s)",
-	  (int) vl->type, oid_buffer);
+      WARNING ("snmp plugin: I don't know the ASN type #%i "
+               "(OID: \"%s\", data block \"%s\", host block \"%s\")",
+          (int) vl->type, oid_buffer,
+          (data_name != NULL) ? data_name : "UNKNOWN",
+          (host_name != NULL) ? host_name : "UNKNOWN");
 
     defined = 0;
   }
@@ -994,7 +979,8 @@ static int csnmp_strvbcopy (char *dst, /* {{{ */
 
 static int csnmp_instance_list_add (csnmp_list_instances_t **head,
     csnmp_list_instances_t **tail,
-    const struct snmp_pdu *res)
+    const struct snmp_pdu *res,
+    const host_definition_t *hd, const data_definition_t *dd)
 {
   csnmp_list_instances_t *il;
   struct variable_list *vb;
@@ -1034,7 +1020,8 @@ static int csnmp_instance_list_add (csnmp_list_instances_t **head,
   }
   else
   {
-    value_t val = csnmp_value_list_to_value (vb, DS_TYPE_COUNTER, 1.0, 0.0);
+    value_t val = csnmp_value_list_to_value (vb, DS_TYPE_COUNTER,
+        /* scale = */ 1.0, /* shift = */ 0.0, hd->name, dd->name);
     ssnprintf (il->instance, sizeof (il->instance),
 	"%llu", val.counter);
   }
@@ -1322,7 +1309,7 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
       /* Allocate a new `csnmp_list_instances_t', insert the instance name and
        * add it to the list */
       if (csnmp_instance_list_add (&instance_list, &instance_list_ptr,
-	    res) != 0)
+	    res, host, data) != 0)
       {
 	ERROR ("snmp plugin: csnmp_instance_list_add failed.");
 	status = -1;
@@ -1378,7 +1365,7 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
 
       vt->subid = vb->name[vb->name_length - 1];
       vt->value = csnmp_value_list_to_value (vb, ds->ds[i].type,
-	  data->scale, data->shift);
+          data->scale, data->shift, host->name, data->name);
       vt->next = NULL;
 
       if (value_table_ptr[i] == NULL)
@@ -1528,8 +1515,8 @@ static int csnmp_read_value (host_definition_t *host, data_definition_t *data)
     for (i = 0; i < data->values_len; i++)
       if (snmp_oid_compare (data->values[i].oid, data->values[i].oid_len,
 	    vb->name, vb->name_length) == 0)
-	vl.values[i] = csnmp_value_list_to_value (vb, ds->ds[i].type,
-	    data->scale, data->shift);
+        vl.values[i] = csnmp_value_list_to_value (vb, ds->ds[i].type,
+            data->scale, data->shift, host->name, data->name);
   } /* for (res->variables) */
 
   if (res != NULL)
@@ -1546,8 +1533,8 @@ static int csnmp_read_value (host_definition_t *host, data_definition_t *data)
 static int csnmp_read_host (user_data_t *ud)
 {
   host_definition_t *host;
-  time_t time_start;
-  time_t time_end;
+  cdtime_t time_start;
+  cdtime_t time_end;
   int status;
   int success;
   int i;
@@ -1557,9 +1544,7 @@ static int csnmp_read_host (user_data_t *ud)
   if (host->interval == 0)
     host->interval = interval_g;
 
-  time_start = time (NULL);
-  DEBUG ("snmp plugin: csnmp_read_host (%s) started at %u;", host->name,
-      (unsigned int) time_start);
+  time_start = cdtime ();
 
   if (host->sess_handle == NULL)
     csnmp_host_open_session (host);
@@ -1581,14 +1566,14 @@ static int csnmp_read_host (user_data_t *ud)
       success++;
   }
 
-  time_end = time (NULL);
-  DEBUG ("snmp plugin: csnmp_read_host (%s) finished at %u;", host->name,
-      (unsigned int) time_end);
-  if ((uint32_t) (time_end - time_start) > host->interval)
+  time_end = cdtime ();
+  if ((time_end - time_start) > host->interval)
   {
-    WARNING ("snmp plugin: Host `%s' should be queried every %"PRIu32
-	" seconds, but reading all values takes %u seconds.",
-	host->name, host->interval, (unsigned int) (time_end - time_start));
+    WARNING ("snmp plugin: Host `%s' should be queried every %.3f "
+	"seconds, but reading all values takes %.3f seconds.",
+	host->name,
+	CDTIME_T_TO_DOUBLE (host->interval),
+	CDTIME_T_TO_DOUBLE (time_end - time_start));
   }
 
   if (success == 0)

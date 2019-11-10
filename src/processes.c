@@ -1,7 +1,7 @@
 /**
  * collectd - src/processes.c
  * Copyright (C) 2005       Lyonel Vincent
- * Copyright (C) 2006-2008  Florian octo Forster
+ * Copyright (C) 2006-2010  Florian octo Forster
  * Copyright (C) 2008       Oleg King
  * Copyright (C) 2009       Sebastian Harl
  * Copyright (C) 2009       Andrés J. Díaz
@@ -136,13 +136,13 @@ typedef struct procstat_entry_s
 
 	unsigned long vmem_minflt;
 	unsigned long vmem_majflt;
-	unsigned long vmem_minflt_counter;
-	unsigned long vmem_majflt_counter;
+	derive_t      vmem_minflt_counter;
+	derive_t      vmem_majflt_counter;
 
 	unsigned long cpu_user;
 	unsigned long cpu_system;
-	unsigned long cpu_user_counter;
-	unsigned long cpu_system_counter;
+	derive_t      cpu_user_counter;
+	derive_t      cpu_system_counter;
 
 	/* io data */
 	derive_t io_rchar;
@@ -169,11 +169,11 @@ typedef struct procstat
 	unsigned long vmem_code;
 	unsigned long stack_size;
 
-	unsigned long vmem_minflt_counter;
-	unsigned long vmem_majflt_counter;
+	derive_t vmem_minflt_counter;
+	derive_t vmem_majflt_counter;
 
-	unsigned long cpu_user_counter;
-	unsigned long cpu_system_counter;
+	derive_t cpu_user_counter;
+	derive_t cpu_system_counter;
 
 	/* io data */
 	derive_t io_rchar;
@@ -200,7 +200,7 @@ static long pagesize_g;
 /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKVM_GETPROCS && HAVE_STRUCT_KINFO_PROC_FREEBSD
-/* no global variables */
+static int pagesize;
 /* #endif HAVE_LIBKVM_GETPROCS && HAVE_STRUCT_KINFO_PROC_FREEBSD */
 
 #elif HAVE_PROCINFO_H
@@ -609,7 +609,7 @@ static int ps_init (void)
 /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKVM_GETPROCS && HAVE_STRUCT_KINFO_PROC_FREEBSD
-/* no initialization */
+	pagesize = getpagesize();
 /* #endif HAVE_LIBKVM_GETPROCS && HAVE_STRUCT_KINFO_PROC_FREEBSD */
 
 #elif HAVE_PROCINFO_H
@@ -676,8 +676,8 @@ static void ps_submit_proc_list (procstat_t *ps)
 	plugin_dispatch_values (&vl);
 
 	sstrncpy (vl.type, "ps_cputime", sizeof (vl.type));
-	vl.values[0].counter = ps->cpu_user_counter;
-	vl.values[1].counter = ps->cpu_system_counter;
+	vl.values[0].derive = ps->cpu_user_counter;
+	vl.values[1].derive = ps->cpu_system_counter;
 	vl.values_len = 2;
 	plugin_dispatch_values (&vl);
 
@@ -688,8 +688,8 @@ static void ps_submit_proc_list (procstat_t *ps)
 	plugin_dispatch_values (&vl);
 
 	sstrncpy (vl.type, "ps_pagefaults", sizeof (vl.type));
-	vl.values[0].counter = ps->vmem_minflt_counter;
-	vl.values[1].counter = ps->vmem_majflt_counter;
+	vl.values[0].derive = ps->vmem_minflt_counter;
+	vl.values[1].derive = ps->vmem_majflt_counter;
 	vl.values_len = 2;
 	plugin_dispatch_values (&vl);
 
@@ -714,8 +714,8 @@ static void ps_submit_proc_list (procstat_t *ps)
 	DEBUG ("name = %s; num_proc = %lu; num_lwp = %lu; "
                         "vmem_size = %lu; vmem_rss = %lu; vmem_data = %lu; "
 			"vmem_code = %lu; "
-			"vmem_minflt_counter = %lu; vmem_majflt_counter = %lu; "
-			"cpu_user_counter = %lu; cpu_system_counter = %lu; "
+			"vmem_minflt_counter = %"PRIi64"; vmem_majflt_counter = %"PRIi64"; "
+			"cpu_user_counter = %"PRIi64"; cpu_system_counter = %"PRIi64"; "
 			"io_rchar = %"PRIi64"; io_wchar = %"PRIi64"; "
 			"io_syscr = %"PRIi64"; io_syscw = %"PRIi64";",
 			ps->name, ps->num_proc, ps->num_lwp,
@@ -790,7 +790,7 @@ static procstat_t *ps_read_vmem (int pid, procstat_t *ps)
 		tmp = strtoll (fields[1], &endptr, /* base = */ 10);
 		if ((errno == 0) && (endptr != fields[1]))
 		{
-			if (strncmp (buffer, "VmData", 6) == 0) 
+			if (strncmp (buffer, "VmData", 6) == 0)
 			{
 				data = tmp;
 			}
@@ -888,8 +888,8 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 	size_t name_end_pos;
 	size_t name_len;
 
-	long long unsigned cpu_user_counter;
-	long long unsigned cpu_system_counter;
+	derive_t cpu_user_counter;
+	derive_t cpu_system_counter;
 	long long unsigned vmem_size;
 	long long unsigned vmem_rss;
 	long long unsigned stack_size;
@@ -1001,8 +1001,8 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 		DEBUG("ps_read_process: did not get vmem data for pid %i",pid);
 	}
 
-	ps->cpu_user_counter = (unsigned long) cpu_user_counter;
-	ps->cpu_system_counter = (unsigned long) cpu_system_counter;
+	ps->cpu_user_counter = cpu_user_counter;
+	ps->cpu_system_counter = cpu_system_counter;
 	ps->vmem_size = (unsigned long) vmem_size;
 	ps->vmem_rss = (unsigned long) vmem_rss;
 	ps->stack_size = (unsigned long) stack_size;
@@ -1605,10 +1605,8 @@ static int ps_read (void)
 
 	kvm_t *kd;
 	char errbuf[1024];
-	char cmdline[ARG_MAX];
-	char *cmdline_ptr;
   	struct kinfo_proc *procs;          /* array of processes */
-  	char **argv;
+	struct kinfo_proc *proc_ptr = NULL;
   	int count;                         /* returns number of processes */
 	int i;
 
@@ -1639,64 +1637,80 @@ static int ps_read (void)
 	/* Iterate through the processes in kinfo_proc */
 	for (i = 0; i < count; i++)
 	{
-		/* retrieve the arguments */
-		cmdline[0] = 0;
-		cmdline_ptr = NULL;
-
-		argv = kvm_getargv (kd, (const struct kinfo_proc *) &(procs[i]), 0);
-		if (argv != NULL)
+		/* Create only one process list entry per _process_, i.e.
+		 * filter out threads (duplicate PID entries). */
+		if ((proc_ptr == NULL) || (proc_ptr->ki_pid != procs[i].ki_pid))
 		{
-			int status;
-			int argc;
+			char cmdline[ARG_MAX] = "";
+			_Bool have_cmdline = 0;
 
-			argc = 0;
-			while (argv[argc] != NULL)
-				argc++;
-
-			status = strjoin (cmdline, sizeof (cmdline),
-					argv, argc, " ");
-
-			if (status < 0)
+			proc_ptr = &(procs[i]);
+			/* Don't probe system processes and processes without arguments */
+			if (((procs[i].ki_flag & P_SYSTEM) == 0)
+					&& (procs[i].ki_args != NULL))
 			{
-				WARNING ("processes plugin: Command line did "
-						"not fit into buffer.");
-			}
-			else
+				char **argv;
+				int argc;
+				int status;
+
+				/* retrieve the arguments */
+				argv = kvm_getargv (kd, proc_ptr, /* nchr = */ 0);
+				argc = 0;
+				if ((argv != NULL) && (argv[0] != NULL))
+				{
+					while (argv[argc] != NULL)
+						argc++;
+
+					status = strjoin (cmdline, sizeof (cmdline), argv, argc, " ");
+					if (status < 0)
+						WARNING ("processes plugin: Command line did not fit into buffer.");
+					else
+						have_cmdline = 1;
+				}
+			} /* if (process has argument list) */
+
+			pse.id       = procs[i].ki_pid;
+			pse.age      = 0;
+
+			pse.num_proc = 1;
+			pse.num_lwp  = procs[i].ki_numthreads;
+
+			pse.vmem_size = procs[i].ki_size;
+			pse.vmem_rss = procs[i].ki_rssize * pagesize;
+			pse.vmem_data = procs[i].ki_dsize * pagesize;
+			pse.vmem_code = procs[i].ki_tsize * pagesize;
+			pse.stack_size = procs[i].ki_ssize * pagesize;
+			pse.vmem_minflt = 0;
+			pse.vmem_minflt_counter = procs[i].ki_rusage.ru_minflt;
+			pse.vmem_majflt = 0;
+			pse.vmem_majflt_counter = procs[i].ki_rusage.ru_majflt;
+
+			pse.cpu_user = 0;
+			pse.cpu_system = 0;
+			pse.cpu_user_counter = 0;
+			pse.cpu_system_counter = 0;
+			/*
+			 * The u-area might be swapped out, and we can't get
+			 * at it because we have a crashdump and no swap.
+			 * If it's here fill in these fields, otherwise, just
+			 * leave them 0.
+			 */
+			if (procs[i].ki_flag & P_INMEM)
 			{
-				cmdline_ptr = &cmdline[0];
+				pse.cpu_user_counter = procs[i].ki_rusage.ru_utime.tv_usec
+				       	+ (1000000lu * procs[i].ki_rusage.ru_utime.tv_sec);
+				pse.cpu_system_counter = procs[i].ki_rusage.ru_stime.tv_usec
+					+ (1000000lu * procs[i].ki_rusage.ru_stime.tv_sec);
 			}
-		}
 
-		pse.id       = procs[i].ki_pid;
-		pse.age      = 0;
+			/* no I/O data */
+			pse.io_rchar = -1;
+			pse.io_wchar = -1;
+			pse.io_syscr = -1;
+			pse.io_syscw = -1;
 
-		pse.num_proc = 1;
-		pse.num_lwp  = procs[i].ki_numthreads;
-
-		pse.vmem_size = procs[i].ki_size;
-		pse.vmem_rss = procs[i].ki_rssize * getpagesize();
-		pse.vmem_data = procs[i].ki_dsize * getpagesize();
-		pse.vmem_code = procs[i].ki_tsize * getpagesize();
-		pse.stack_size = procs[i].ki_ssize * getpagesize();
-		pse.vmem_minflt = 0;
-		pse.vmem_minflt_counter = procs[i].ki_rusage.ru_minflt;
-		pse.vmem_majflt = 0;
-		pse.vmem_majflt_counter = procs[i].ki_rusage.ru_majflt;
-
-		pse.cpu_user = 0;
-		pse.cpu_user_counter = procs[i].ki_rusage.ru_utime.tv_sec
-			* 1000
-			+ procs[i].ki_rusage.ru_utime.tv_usec;
-		pse.cpu_system = 0;
-		pse.cpu_system_counter = procs[i].ki_rusage.ru_stime.tv_sec
-			* 1000
-			+ procs[i].ki_rusage.ru_stime.tv_usec;
-
-		/* no io data */
-		pse.io_rchar = -1;
-		pse.io_wchar = -1;
-		pse.io_syscr = -1;
-		pse.io_syscw = -1;
+			ps_list_add (procs[i].ki_comm, have_cmdline ? cmdline : NULL, &pse);
+		} /* if ((proc_ptr == NULL) || (proc_ptr->ki_pid != procs[i].ki_pid)) */
 
 		switch (procs[i].ki_stat)
 		{
@@ -1708,8 +1722,6 @@ static int ps_read (void)
 			case SLOCK:	blocked++;	break;
 			case SZOMB:	zombies++;	break;
 		}
-
-		ps_list_add (procs[i].ki_comm, cmdline_ptr, &pse);
 	}
 
 	kvm_close(kd);

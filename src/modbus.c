@@ -1,19 +1,20 @@
 /**
  * collectd - src/modbus.c
- * Copyright (C) 2010  noris network AG
+ * Copyright (C) 2010,2011  noris network AG
  *
  * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; only version 2 of the License is applicable.
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; only version 2.1 of the License is
+ * applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Authors:
  *   Florian Forster <octo at noris.net>
@@ -27,6 +28,13 @@
 #include <netdb.h>
 
 #include <modbus/modbus.h>
+
+#ifndef LIBMODBUS_VERSION_CHECK
+/* Assume version 2.0.3 */
+# define LEGACY_LIBMODBUS 1
+#else
+/* Assume version 2.9.2 */
+#endif
 
 #ifndef MODBUS_TCP_DEFAULT_PORT
 # ifdef MODBUS_TCP_PORT
@@ -61,6 +69,8 @@
  */
 enum mb_register_type_e /* {{{ */
 {
+  REG_TYPE_INT16,
+  REG_TYPE_INT32,
   REG_TYPE_UINT16,
   REG_TYPE_UINT32,
   REG_TYPE_FLOAT
@@ -94,12 +104,16 @@ struct mb_host_s /* {{{ */
   char node[NI_MAXHOST];
   /* char service[NI_MAXSERV]; */
   int port;
-  int interval;
+  cdtime_t interval;
 
   mb_slave_t *slaves;
   size_t slaves_num;
 
+#if LEGACY_LIBMODBUS
   modbus_param_t connection;
+#else
+  modbus_t *connection;
+#endif
   _Bool is_connected;
   _Bool have_reconnected;
 }; /* }}} */
@@ -265,6 +279,8 @@ static float mb_register_to_float (uint16_t hi, uint16_t lo) /* {{{ */
   return (conv.f);
 } /* }}} float mb_register_to_float */
 
+#if LEGACY_LIBMODBUS
+/* Version 2.0.3 */
 static int mb_init_connection (mb_host_t *host) /* {{{ */
 {
   int status;
@@ -306,6 +322,57 @@ static int mb_init_connection (mb_host_t *host) /* {{{ */
   host->have_reconnected = 1;
   return (0);
 } /* }}} int mb_init_connection */
+/* #endif LEGACY_LIBMODBUS */
+
+#else /* if !LEGACY_LIBMODBUS */
+/* Version 2.9.2 */
+static int mb_init_connection (mb_host_t *host) /* {{{ */
+{
+  int status;
+
+  if (host == NULL)
+    return (EINVAL);
+
+  if (host->connection != NULL)
+    return (0);
+
+  /* Only reconnect once per interval. */
+  if (host->have_reconnected)
+    return (-1);
+
+  if ((host->port < 1) || (host->port > 65535))
+    host->port = MODBUS_TCP_DEFAULT_PORT;
+
+  DEBUG ("Modbus plugin: Trying to connect to \"%s\", port %i.",
+      host->node, host->port);
+
+  host->connection = modbus_new_tcp (host->node, host->port);
+  if (host->connection == NULL)
+  {
+    host->have_reconnected = 1;
+    ERROR ("Modbus plugin: Creating new Modbus/TCP object failed.");
+    return (-1);
+  }
+
+  modbus_set_debug (host->connection, 1);
+
+  /* We'll do the error handling ourselves. */
+  modbus_set_error_recovery (host->connection, 0);
+
+  status = modbus_connect (host->connection);
+  if (status != 0)
+  {
+    ERROR ("Modbus plugin: modbus_connect (%s, %i) failed with status %i.",
+        host->node, host->port, status);
+    modbus_free (host->connection);
+    host->connection = NULL;
+    return (status);
+  }
+
+  host->have_reconnected = 1;
+  return (0);
+} /* }}} int mb_init_connection */
+#endif /* !LEGACY_LIBMODBUS */
 
 #define CAST_TO_VALUE_T(ds,vt,raw) do { \
   if ((ds)->ds[0].type == DS_TYPE_COUNTER) \
@@ -346,6 +413,7 @@ static int mb_read_data (mb_host_t *host, mb_slave_t *slave, /* {{{ */
   }
 
   if ((ds->ds[0].type != DS_TYPE_GAUGE)
+      && (data->register_type != REG_TYPE_INT32)
       && (data->register_type != REG_TYPE_UINT32))
   {
     NOTICE ("Modbus plugin: The data source of type \"%s\" is %s, not gauge. "
@@ -354,28 +422,53 @@ static int mb_read_data (mb_host_t *host, mb_slave_t *slave, /* {{{ */
   }
 
   memset (values, 0, sizeof (values));
-  if ((data->register_type == REG_TYPE_UINT32)
+  if ((data->register_type == REG_TYPE_INT32)
+      || (data->register_type == REG_TYPE_UINT32)
       || (data->register_type == REG_TYPE_FLOAT))
     values_num = 2;
   else
     values_num = 1;
 
+#if LEGACY_LIBMODBUS
+  /* Version 2.0.3: Pass the connection struct as a pointer and pass the slave
+   * id to each call of "read_holding_registers". */
+# define modbus_read_registers(ctx, addr, nb, dest) \
+  read_holding_registers (&(ctx), slave->id, (addr), (nb), (dest))
+#else /* if !LEGACY_LIBMODBUS */
+  /* Version 2.9.2: Set the slave id once before querying the registers. */
+  status = modbus_set_slave (host->connection, slave->id);
+  if (status != 0)
+  {
+    ERROR ("Modbus plugin: modbus_set_slave (%i) failed with status %i.",
+        slave->id, status);
+    return (-1);
+  }
+#endif
+
   for (i = 0; i < 2; i++)
   {
-    status = read_holding_registers (&host->connection,
-        /* slave = */ slave->id, /* start_addr = */ data->register_base,
+    status = modbus_read_registers (host->connection,
+        /* start_addr = */ data->register_base,
         /* num_registers = */ values_num, /* buffer = */ values);
     if (status > 0)
       break;
 
     if (host->is_connected)
+    {
+#if LEGACY_LIBMODBUS
       modbus_close (&host->connection);
-    host->is_connected = 0;
+      host->is_connected = 0;
+#else
+      modbus_close (host->connection);
+      modbus_free (host->connection);
+      host->connection = NULL;
+#endif
+    }
 
     /* If we already tried reconnecting this round, give up. */
     if (host->have_reconnected)
     {
-      ERROR ("Modbus plugin: read_holding_registers (%s) failed. "
+      ERROR ("Modbus plugin: modbus_read_registers (%s) failed. "
           "Reconnecting has already been tried. Giving up.", host->host);
       return (-1);
     }
@@ -385,7 +478,7 @@ static int mb_read_data (mb_host_t *host, mb_slave_t *slave, /* {{{ */
     status = mb_init_connection (host);
     if (status != 0)
     {
-      ERROR ("Modbus plugin: read_holding_registers (%s) failed. "
+      ERROR ("Modbus plugin: modbus_read_registers (%s) failed. "
           "While trying to reconnect, connecting to \"%s\" failed. "
           "Giving up.",
           host->host, host->node);
@@ -399,7 +492,7 @@ static int mb_read_data (mb_host_t *host, mb_slave_t *slave, /* {{{ */
   } /* for (i = 0, 1) */
 
   DEBUG ("Modbus plugin: mb_read_data: Success! "
-      "read_holding_registers returned with status %i.", status);
+      "modbus_read_registers returned with status %i.", status);
 
   if (data->register_type == REG_TYPE_FLOAT)
   {
@@ -413,12 +506,47 @@ static int mb_read_data (mb_host_t *host, mb_slave_t *slave, /* {{{ */
     CAST_TO_VALUE_T (ds, vt, float_value);
     mb_submit (host, slave, data, vt);
   }
+  else if (data->register_type == REG_TYPE_INT32)
+  {
+    union
+    {
+      uint32_t u32;
+      int32_t  i32;
+    } v;
+    value_t vt;
+
+    v.u32 = (((uint32_t) values[0]) << 16)
+      | ((uint32_t) values[1]);
+    DEBUG ("Modbus plugin: mb_read_data: "
+        "Returned int32 value is %"PRIi32, v.i32);
+
+    CAST_TO_VALUE_T (ds, vt, v.i32);
+    mb_submit (host, slave, data, vt);
+  }
+  else if (data->register_type == REG_TYPE_INT16)
+  {
+    union
+    {
+      uint16_t u16;
+      int16_t  i16;
+    } v;
+    value_t vt;
+
+    v.u16 = values[0];
+
+    DEBUG ("Modbus plugin: mb_read_data: "
+        "Returned int16 value is %"PRIi16, v.i16);
+
+    CAST_TO_VALUE_T (ds, vt, v.i16);
+    mb_submit (host, slave, data, vt);
+  }
   else if (data->register_type == REG_TYPE_UINT32)
   {
     uint32_t v32;
     value_t vt;
 
-    v32 = (values[0] << 16) | values[1];
+    v32 = (((uint32_t) values[0]) << 16)
+      | ((uint32_t) values[1]);
     DEBUG ("Modbus plugin: mb_read_data: "
         "Returned uint32 value is %"PRIu32, v32);
 
@@ -574,6 +702,10 @@ static int mb_config_add_data (oconfig_item_t *ci) /* {{{ */
       status = cf_util_get_string_buffer (child, tmp, sizeof (tmp));
       if (status != 0)
         /* do nothing */;
+      else if (strcasecmp ("Int16", tmp) == 0)
+        data.register_type = REG_TYPE_INT16;
+      else if (strcasecmp ("Int32", tmp) == 0)
+        data.register_type = REG_TYPE_INT32;
       else if (strcasecmp ("Uint16", tmp) == 0)
         data.register_type = REG_TYPE_UINT16;
       else if (strcasecmp ("Uint32", tmp) == 0)
@@ -767,7 +899,7 @@ static int mb_config_add_host (oconfig_item_t *ci) /* {{{ */
         status = -1;
     }
     else if (strcasecmp ("Interval", child->key) == 0)
-      status = cf_util_get_int (child, &host->interval);
+      status = cf_util_get_cdtime (child, &host->interval);
     else if (strcasecmp ("Slave", child->key) == 0)
       /* Don't set status: Gracefully continue if a slave fails. */
       mb_config_add_slave (host, child);
@@ -793,21 +925,19 @@ static int mb_config_add_host (oconfig_item_t *ci) /* {{{ */
   {
     user_data_t ud;
     char name[1024];
-    struct timespec interval;
+    struct timespec interval = { 0, 0 };
 
     ud.data = host;
     ud.free_func = host_free;
 
     ssnprintf (name, sizeof (name), "modbus-%s", host->host);
 
-    interval.tv_nsec = 0;
-    if (host->interval > 0)
-      interval.tv_sec = host->interval;
-    else
-      interval.tv_sec = 0;
+    CDTIME_T_TO_TIMESPEC (host->interval, &interval);
 
     plugin_register_complex_read (/* group = */ NULL, name,
-        mb_read, (interval.tv_sec > 0) ? &interval : NULL, &ud);
+        /* callback = */ mb_read,
+        /* interval = */ (host->interval > 0) ? &interval : NULL,
+        &ud);
   }
   else
   {

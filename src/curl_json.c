@@ -40,7 +40,7 @@
 
 #define CJ_DEFAULT_HOST "localhost"
 #define CJ_KEY_MAGIC 0x43484b59UL /* CHKY */
-#define CJ_IS_KEY(key) (key)->magic == CJ_KEY_MAGIC
+#define CJ_IS_KEY(key) ((key)->magic == CJ_KEY_MAGIC)
 #define CJ_ANY "*"
 #define COUCH_MIN(x,y) ((x) < (y) ? (x) : (y))
 
@@ -64,8 +64,8 @@ struct cj_s /* {{{ */
   char *user;
   char *pass;
   char *credentials;
-  int   verify_peer;
-  int   verify_host;
+  _Bool verify_peer;
+  _Bool verify_host;
   char *cacert;
 
   CURL *curl;
@@ -111,7 +111,7 @@ static size_t cj_curl_callback (void *buf, /* {{{ */
   if (db == NULL)
     return (0);
 
-  status = yajl_parse(db->yajl, (unsigned char *)buf, len);
+  status = yajl_parse(db->yajl, (unsigned char *) buf, len);
   if (status == yajl_status_ok)
   {
 #if HAVE_YAJL_V2
@@ -129,7 +129,8 @@ static size_t cj_curl_callback (void *buf, /* {{{ */
   if (status != yajl_status_ok)
   {
     unsigned char *msg =
-      yajl_get_error(db->yajl, 1, (unsigned char *)buf, len);
+      yajl_get_error(db->yajl, /* verbose = */ 1,
+          /* jsonText = */ (unsigned char *) buf, (unsigned int) len);
     ERROR ("curl_json plugin: yajl_parse failed: %s", msg);
     yajl_free_error(db->yajl, msg);
     return (0); /* abort write callback */
@@ -184,41 +185,21 @@ static int cj_cb_number (void *ctx,
 
   cj_t *db = (cj_t *)ctx;
   cj_key_t *key = db->state[db->depth].key;
-  char *endptr;
   value_t vt;
   int type;
+  int status;
 
-  if (key == NULL)
+  if ((key == NULL) || !CJ_IS_KEY (key))
     return (CJ_CB_CONTINUE);
 
   memcpy (buffer, number, number_len);
   buffer[sizeof (buffer) - 1] = 0;
 
   type = cj_get_type (key);
-  if (type < 0)
-    return (CJ_CB_CONTINUE);
-
-  endptr = NULL;
-  errno = 0;
-
-  if (type == DS_TYPE_COUNTER)
-    vt.counter = (counter_t) strtoull (buffer, &endptr, /* base = */ 0);
-  else if (type == DS_TYPE_GAUGE)
-    vt.gauge = (gauge_t) strtod (buffer, &endptr);
-  else if (type == DS_TYPE_DERIVE)
-    vt.derive = (derive_t) strtoll (buffer, &endptr, /* base = */ 0);
-  else if (type == DS_TYPE_ABSOLUTE)
-    vt.absolute = (absolute_t) strtoull (buffer, &endptr, /* base = */ 0);
-  else
+  status = parse_value (buffer, &vt, type);
+  if (status != 0)
   {
-    ERROR ("curl_json plugin: Unknown data source type: \"%s\"", key->type);
-    return (CJ_CB_ABORT);
-  }
-
-  if ((endptr == &buffer[0]) || (errno != 0))
-  {
-    NOTICE ("curl_json plugin: Overflow while parsing number. "
-        "Ignoring this value.");
+    NOTICE ("curl_json plugin: Unable to parse number: \"%s\"", buffer);
     return (CJ_CB_CONTINUE);
   }
 
@@ -258,34 +239,26 @@ static int cj_cb_string (void *ctx, const unsigned char *val,
     yajl_len_t len)
 {
   cj_t *db = (cj_t *)ctx;
-  c_avl_tree_t *tree;
-  char *ptr;
+  char str[len + 1];
 
-  if (db->depth != 1) /* e.g. _all_dbs */
+  /* Create a null-terminated version of the string. */
+  memcpy (str, val, len);
+  str[len] = 0;
+
+  /* No configuration for this string -> simply return. */
+  if (db->state[db->depth].key == NULL)
     return (CJ_CB_CONTINUE);
 
-  cj_cb_map_key (ctx, val, len); /* same logic */
-
-  tree = db->state[db->depth].tree;
-
-  if ((tree != NULL) && (ptr = rindex (db->url, '/')))
+  if (!CJ_IS_KEY (db->state[db->depth].key))
   {
-    char url[PATH_MAX];
-    CURL *curl;
-
-    /* url =~ s,[^/]+$,$name, */
-    len = (ptr - db->url) + 1;
-    ptr = url;
-    sstrncpy (ptr, db->url, sizeof (url));
-    sstrncpy (ptr + len, db->state[db->depth].name, sizeof (url) - len);
-
-    curl = curl_easy_duphandle (db->curl);
-    curl_easy_setopt (curl, CURLOPT_URL, url);
-    cj_curl_perform (db, curl);
-    curl_easy_cleanup (curl);
+    NOTICE ("curl_json plugin: Found string \"%s\", but the configuration "
+        "expects a map here.", str);
+    return (CJ_CB_CONTINUE);
   }
-  return (CJ_CB_CONTINUE);
-}
+
+  /* Handle the string as if it was a number. */
+  return (cj_cb_number (ctx, (const char *) val, len));
+} /* int cj_cb_string */
 
 static int cj_cb_start (void *ctx)
 {
@@ -407,37 +380,6 @@ static void cj_free (void *arg) /* {{{ */
 
 /* Configuration handling functions {{{ */
 
-static int cj_config_add_string (const char *name, char **dest, /* {{{ */
-                                      oconfig_item_t *ci)
-{
-  if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_STRING))
-  {
-    WARNING ("curl_json plugin: `%s' needs exactly one string argument.", name);
-    return (-1);
-  }
-
-  sfree (*dest);
-  *dest = strdup (ci->values[0].value.string);
-  if (*dest == NULL)
-    return (-1);
-
-  return (0);
-} /* }}} int cj_config_add_string */
-
-static int cj_config_set_boolean (const char *name, int *dest, /* {{{ */
-                                       oconfig_item_t *ci)
-{
-  if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_BOOLEAN))
-  {
-    WARNING ("curl_json plugin: `%s' needs exactly one boolean argument.", name);
-    return (-1);
-  }
-
-  *dest = ci->values[0].value.boolean ? 1 : 0;
-
-  return (0);
-} /* }}} int cj_config_set_boolean */
-
 static c_avl_tree_t *cj_avl_create(void)
 {
   return c_avl_create ((int (*) (const void *, const void *)) strcmp);
@@ -469,7 +411,7 @@ static int cj_config_add_key (cj_t *db, /* {{{ */
 
   if (strcasecmp ("Key", ci->key) == 0)
   {
-    status = cj_config_add_string ("Key", &key->path, ci);
+    status = cf_util_get_string (ci, &key->path);
     if (status != 0)
     {
       sfree (key);
@@ -489,9 +431,9 @@ static int cj_config_add_key (cj_t *db, /* {{{ */
     oconfig_item_t *child = ci->children + i;
 
     if (strcasecmp ("Type", child->key) == 0)
-      status = cj_config_add_string ("Type", &key->type, child);
+      status = cf_util_get_string (child, &key->type);
     else if (strcasecmp ("Instance", child->key) == 0)
-      status = cj_config_add_string ("Instance", &key->instance, child);
+      status = cf_util_get_string (child, &key->instance);
     else
     {
       WARNING ("curl_json plugin: Option `%s' not allowed here.", child->key);
@@ -607,9 +549,9 @@ static int cj_init_curl (cj_t *db) /* {{{ */
     curl_easy_setopt (db->curl, CURLOPT_USERPWD, db->credentials);
   }
 
-  curl_easy_setopt (db->curl, CURLOPT_SSL_VERIFYPEER, db->verify_peer);
+  curl_easy_setopt (db->curl, CURLOPT_SSL_VERIFYPEER, (int) db->verify_peer);
   curl_easy_setopt (db->curl, CURLOPT_SSL_VERIFYHOST,
-                    db->verify_host ? 2 : 0);
+                    (int) (db->verify_host ? 2 : 0));
   if (db->cacert != NULL)
     curl_easy_setopt (db->curl, CURLOPT_CAINFO, db->cacert);
 
@@ -640,7 +582,7 @@ static int cj_config_add_url (oconfig_item_t *ci) /* {{{ */
 
   if (strcasecmp ("URL", ci->key) == 0)
   {
-    status = cj_config_add_string ("URL", &db->url, ci);
+    status = cf_util_get_string (ci, &db->url);
     if (status != 0)
     {
       sfree (db);
@@ -660,19 +602,19 @@ static int cj_config_add_url (oconfig_item_t *ci) /* {{{ */
     oconfig_item_t *child = ci->children + i;
 
     if (strcasecmp ("Instance", child->key) == 0)
-      status = cj_config_add_string ("Instance", &db->instance, child);
+      status = cf_util_get_string (child, &db->instance);
     else if (strcasecmp ("Host", child->key) == 0)
-      status = cj_config_add_string ("Host", &db->host, child);
+      status = cf_util_get_string (child, &db->host);
     else if (strcasecmp ("User", child->key) == 0)
-      status = cj_config_add_string ("User", &db->user, child);
+      status = cf_util_get_string (child, &db->user);
     else if (strcasecmp ("Password", child->key) == 0)
-      status = cj_config_add_string ("Password", &db->pass, child);
+      status = cf_util_get_string (child, &db->pass);
     else if (strcasecmp ("VerifyPeer", child->key) == 0)
-      status = cj_config_set_boolean ("VerifyPeer", &db->verify_peer, child);
+      status = cf_util_get_boolean (child, &db->verify_peer);
     else if (strcasecmp ("VerifyHost", child->key) == 0)
-      status = cj_config_set_boolean ("VerifyHost", &db->verify_host, child);
+      status = cf_util_get_boolean (child, &db->verify_host);
     else if (strcasecmp ("CACert", child->key) == 0)
-      status = cj_config_add_string ("CACert", &db->cacert, child);
+      status = cf_util_get_string (child, &db->cacert);
     else if (strcasecmp ("Key", child->key) == 0)
       status = cj_config_add_key (db, child);
     else
@@ -824,29 +766,52 @@ static int cj_curl_perform (cj_t *db, CURL *curl) /* {{{ */
     return (-1);
   }
 
-  status = curl_easy_perform (curl);
-
-  yajl_free (db->yajl);
-  db->yajl = yprev;
-
+  url = NULL;
   curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
+
+  status = curl_easy_perform (curl);
+  if (status != 0)
+  {
+    ERROR ("curl_json plugin: curl_easy_perform failed with status %i: %s (%s)",
+           status, db->curl_errbuf, (url != NULL) ? url : "<null>");
+    yajl_free (db->yajl);
+    db->yajl = yprev;
+    return (-1);
+  }
+
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &rc);
 
   /* The response code is zero if a non-HTTP transport was used. */
   if ((rc != 0) && (rc != 200))
   {
-    ERROR ("curl_json plugin: curl_easy_perform failed with response code %ld (%s)",
-           rc, url);
+    ERROR ("curl_json plugin: curl_easy_perform failed with "
+        "response code %ld (%s)", rc, url);
+    yajl_free (db->yajl);
+    db->yajl = yprev;
     return (-1);
   }
 
-  if (status != 0)
+#if HAVE_YAJL_V2
+    status = yajl_complete_parse(db->yajl);
+#else
+    status = yajl_parse_complete(db->yajl);
+#endif
+  if (status != yajl_status_ok)
   {
-    ERROR ("curl_json plugin: curl_easy_perform failed with status %i: %s (%s)",
-           status, db->curl_errbuf, url);
+    unsigned char *errmsg;
+
+    errmsg = yajl_get_error (db->yajl, /* verbose = */ 0,
+        /* jsonText = */ NULL, /* jsonTextLen = */ 0);
+    ERROR ("curl_json plugin: yajl_parse_complete failed: %s",
+        (char *) errmsg);
+    yajl_free_error (db->yajl, errmsg);
+    yajl_free (db->yajl);
+    db->yajl = yprev;
     return (-1);
   }
 
+  yajl_free (db->yajl);
+  db->yajl = yprev;
   return (0);
 } /* }}} int cj_curl_perform */
 

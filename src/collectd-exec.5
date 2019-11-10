@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-EXEC 5"
-.TH COLLECTD-EXEC 5 "2012-04-01" "4.10.7" "collectd"
+.TH COLLECTD-EXEC 5 "2012-04-02" "5.1.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -374,6 +374,12 @@ to make use of collectd's more powerful interface.
 .IP "\(bu" 4
 The user, the binary is executed as, may not have root privileges, i.\ e.
 must have an \s-1UID\s0 that is non-zero. This is for your own good.
+.IP "\(bu" 4
+Early versions of the plugin did not use a command but treated all lines as if
+they were arguments to the \fI\s-1PUTVAL\s0\fR command. When the \fI\s-1PUTNOTIF\s0\fR command was
+implemented, this behavior was kept for lines which start with an unknown
+command for backwards compatibility. This compatibility code has been removed
+in \fIcollectd\ 5\fR.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),

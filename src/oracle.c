@@ -344,7 +344,7 @@ static int o_config (oconfig_item_t *ci) /* {{{ */
     oconfig_item_t *child = ci->children + i;
     if (strcasecmp ("Query", child->key) == 0)
       udb_query_create (&queries, &queries_num, child,
-          /* callback = */ NULL, /* legacy mode = */ 0);
+          /* callback = */ NULL);
     else if (strcasecmp ("Database", child->key) == 0)
       o_config_add_database (child);
     else
@@ -603,7 +603,7 @@ static int o_read_database_query (o_database_t *db, /* {{{ */
 
   status = udb_query_prepare_result (q, prep_area, hostname_g,
       /* plugin = */ "oracle", db->name, column_names, column_num,
-      /* interval = */ -1);
+      /* interval = */ 0);
   if (status != 0)
   {
     ERROR ("oracle plugin: o_read_database_query (%s, %s): "

@@ -21,6 +21,12 @@
 /* Define if doubles are stored in x86 representation. */
 #undef FP_LAYOUT_NEED_NOTHING
 
+/* Define to 1 if you have the <amqp.h> header file. */
+#undef HAVE_AMQP_H
+
+/* Define to 1 if `library_errno' is a member of `amqp_rpc_reply_t'. */
+#undef HAVE_AMQP_RPC_REPLY_T_LIBRARY_ERRNO
+
 /* Define to 1 if you have the `argz_add' function. */
 #undef HAVE_ARGZ_ADD
 
@@ -60,6 +66,9 @@
 /* Define to 1 if you have the <bsd/nlist.h> header file. */
 #undef HAVE_BSD_NLIST_H
 
+/* Define if the clock_gettime(2) function is available. */
+#undef HAVE_CLOCK_GETTIME
+
 /* Define to 1 if you have the `closedir' function. */
 #undef HAVE_CLOSEDIR
 
@@ -69,6 +78,9 @@
 /* Define to 1 if you have the <CoreFoundation/CoreFoundation.h> header file.
    */
 #undef HAVE_COREFOUNDATION_COREFOUNDATION_H
+
+/* Define to 1 if you have the <credis.h> header file. */
+#undef HAVE_CREDIS_H
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
@@ -311,6 +323,9 @@
 /* Wether or not to use pthread (POSIX threads) library */
 #undef HAVE_LIBPTHREAD
 
+/* Define if librabbitmq is present and usable. */
+#undef HAVE_LIBRABBITMQ
+
 /* Define to 1 if you have the 'resolv' library (-lresolv). */
 #undef HAVE_LIBRESOLV
 
@@ -340,6 +355,9 @@
 
 /* Define to 1 if you have the <linux/config.h> header file. */
 #undef HAVE_LINUX_CONFIG_H
+
+/* Define to 1 if you have the <linux/ethtool.h> header file. */
+#undef HAVE_LINUX_ETHTOOL_H
 
 /* Define to 1 if you have the <linux/gen_stats.h> header file. */
 #undef HAVE_LINUX_GEN_STATS_H
@@ -372,6 +390,12 @@
 
 /* Define to 1 if you have the <linux/pkt_sched.h> header file. */
 #undef HAVE_LINUX_PKT_SCHED_H
+
+/* Define to 1 if you have the <linux/raid/md_u.h> header file. */
+#undef HAVE_LINUX_RAID_MD_U_H
+
+/* Define to 1 if you have the <linux/sockios.h> header file. */
+#undef HAVE_LINUX_SOCKIOS_H
 
 /* Define to 1 if you have the <linux/un.h> header file. */
 #undef HAVE_LINUX_UN_H
@@ -456,6 +480,9 @@
 
 /* Define to 1 if you have the <modbus/modbus.h> header file. */
 #undef HAVE_MODBUS_MODBUS_H
+
+/* Define to 1 if you have the <mongo.h> header file. */
+#undef HAVE_MONGO_H
 
 /* Define to 1 if you have the <mysql.h> header file. */
 #undef HAVE_MYSQL_H
@@ -565,6 +592,9 @@
 /* Define if Perl's struct mgvtbl has member svt_local. */
 #undef HAVE_PERL_STRUCT_MGVTBL_SVT_LOCAL
 
+/* Define to 1 if the amqp plugin is enabled. */
+#undef HAVE_PLUGIN_AMQP
+
 /* Define to 1 if the apache plugin is enabled. */
 #undef HAVE_PLUGIN_APACHE
 
@@ -625,6 +655,9 @@
 /* Define to 1 if the entropy plugin is enabled. */
 #undef HAVE_PLUGIN_ENTROPY
 
+/* Define to 1 if the ethstat plugin is enabled. */
+#undef HAVE_PLUGIN_ETHSTAT
+
 /* Define to 1 if the exec plugin is enabled. */
 #undef HAVE_PLUGIN_EXEC
 
@@ -667,6 +700,9 @@
 /* Define to 1 if the logfile plugin is enabled. */
 #undef HAVE_PLUGIN_LOGFILE
 
+/* Define to 1 if the lpar plugin is enabled. */
+#undef HAVE_PLUGIN_LPAR
+
 /* Define to 1 if the madwifi plugin is enabled. */
 #undef HAVE_PLUGIN_MADWIFI
 
@@ -687,6 +723,9 @@
 
 /* Define to 1 if the mbmon plugin is enabled. */
 #undef HAVE_PLUGIN_MBMON
+
+/* Define to 1 if the md plugin is enabled. */
+#undef HAVE_PLUGIN_MD
 
 /* Define to 1 if the memcachec plugin is enabled. */
 #undef HAVE_PLUGIN_MEMCACHEC
@@ -730,6 +769,9 @@
 /* Define to 1 if the ntpd plugin is enabled. */
 #undef HAVE_PLUGIN_NTPD
 
+/* Define to 1 if the numa plugin is enabled. */
+#undef HAVE_PLUGIN_NUMA
+
 /* Define to 1 if the nut plugin is enabled. */
 #undef HAVE_PLUGIN_NUT
 
@@ -768,6 +810,9 @@
 
 /* Define to 1 if the python plugin is enabled. */
 #undef HAVE_PLUGIN_PYTHON
+
+/* Define to 1 if the redis plugin is enabled. */
+#undef HAVE_PLUGIN_REDIS
 
 /* Define to 1 if the routeros plugin is enabled. */
 #undef HAVE_PLUGIN_ROUTEROS
@@ -814,6 +859,9 @@
 /* Define to 1 if the target_set plugin is enabled. */
 #undef HAVE_PLUGIN_TARGET_SET
 
+/* Define to 1 if the target_v5upgrade plugin is enabled. */
+#undef HAVE_PLUGIN_TARGET_V5UPGRADE
+
 /* Define to 1 if the tcpconns plugin is enabled. */
 #undef HAVE_PLUGIN_TCPCONNS
 
@@ -825,6 +873,9 @@
 
 /* Define to 1 if the thermal plugin is enabled. */
 #undef HAVE_PLUGIN_THERMAL
+
+/* Define to 1 if the threshold plugin is enabled. */
+#undef HAVE_PLUGIN_THRESHOLD
 
 /* Define to 1 if the tokyotyrant plugin is enabled. */
 #undef HAVE_PLUGIN_TOKYOTYRANT
@@ -841,6 +892,9 @@
 /* Define to 1 if the uuid plugin is enabled. */
 #undef HAVE_PLUGIN_UUID
 
+/* Define to 1 if the varnish plugin is enabled. */
+#undef HAVE_PLUGIN_VARNISH
+
 /* Define to 1 if the vmem plugin is enabled. */
 #undef HAVE_PLUGIN_VMEM
 
@@ -850,8 +904,17 @@
 /* Define to 1 if the wireless plugin is enabled. */
 #undef HAVE_PLUGIN_WIRELESS
 
+/* Define to 1 if the write_graphite plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_GRAPHITE
+
 /* Define to 1 if the write_http plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_HTTP
+
+/* Define to 1 if the write_mongodb plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_MONGODB
+
+/* Define to 1 if the write_redis plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_REDIS
 
 /* Define to 1 if the xmms plugin is enabled. */
 #undef HAVE_PLUGIN_XMMS
@@ -991,6 +1054,9 @@
 /* Define to 1 if you have the `strncpy' function. */
 #undef HAVE_STRNCPY
 
+/* Define to 1 if you have the `strptime' function. */
+#undef HAVE_STRPTIME
+
 /* Define to 1 if you have the `strstr' function. */
 #undef HAVE_STRSTR
 
@@ -1062,6 +1128,12 @@
 
 /* Define to 1 if you have the `swapctl' function. */
 #undef HAVE_SWAPCTL
+
+/* Define if the function swapctl exists and takes three arguments. */
+#undef HAVE_SWAPCTL_THREE_ARGS
+
+/* Define if the function swapctl exists and takes two arguments. */
+#undef HAVE_SWAPCTL_TWO_ARGS
 
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
@@ -1203,6 +1275,18 @@
 /* Define to 1 if you have the <utmp.h> header file. */
 #undef HAVE_UTMP_H
 
+/* Varnish 2 API support */
+#undef HAVE_VARNISH_V2
+
+/* Varnish 3 API support */
+#undef HAVE_VARNISH_V3
+
+/* Define to 1 if you have the <varnish/varnishapi.h> header file. */
+#undef HAVE_VARNISH_VARNISHAPI_H
+
+/* Define to 1 if you have the <varnish/vsc.h> header file. */
+#undef HAVE_VARNISH_VSC_H
+
 /* Define to 1 if you have the <vm/anon.h> header file. */
 #undef HAVE_VM_ANON_H
 
@@ -1296,11 +1380,17 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define to 1 if your version of the 'perfstat' library supports donation */
+#undef PERFSTAT_SUPPORTS_DONATION
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
 /* Define to 1 if strerror_r returns char *. */
 #undef STRERROR_R_CHAR_P
+
+/* Set to true if strptime is only exported in X/Open mode (GNU libc). */
+#undef STRPTIME_NEEDS_STANDARDS
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
@@ -1321,7 +1411,7 @@
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
 
-/* Define to enforce POSIX.1-2001 compliance. */
+/* Define to enforce POSIX.1-2008 compliance. */
 #undef _POSIX_C_SOURCE
 
 /* Define to enforce POSIX thread semantics under Solaris. */
@@ -1333,7 +1423,7 @@
 /* Define to use the thread-safe version of errno under AIX. */
 #undef _THREAD_SAFE_ERRNO
 
-/* Define to enforce X/Open 6 (XSI) compliance. */
+/* Define to enforce X/Open 7 (XSI) compliance. */
 #undef _XOPEN_SOURCE
 
 /* Define so that glibc/gnulib argp.h does not typedef error_t. */

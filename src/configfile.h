@@ -2,7 +2,7 @@
 #define CONFIGFILE_H
 /**
  * collectd - src/configfile.h
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2011  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,10 +19,11 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Authors:
- *   Florian octo Forster <octo at verplant.org>
+ *   Florian octo Forster <octo at collectd.org>
  **/
 
 #include "collectd.h"
+#include "utils_time.h"
 #include "liboconfig/oconfig.h"
 
 /*
@@ -103,9 +104,24 @@ int cf_util_get_int (const oconfig_item_t *ci, int *ret_value);
  * Otherwise, `ret_bool' is not changed and non-zero is returned. */
 int cf_util_get_boolean (const oconfig_item_t *ci, _Bool *ret_bool);
 
-/* Assures that the config option is a string. The string is then converted to
- * a port number using `service_name_to_port_number' and returned. Returns the
- * port number in the range [1-65535] or less than zero upon failure. */
+/* Assures the config option is a boolean and set or unset the given flag in
+ * `ret_value' as appropriate. Returns non-zero on error. */
+int cf_util_get_flag (const oconfig_item_t *ci,
+		unsigned int *ret_value, unsigned int flag);
+
+/* Assures that the config option is a string or a number if the correct range
+ * of 1-65535. The string is then converted to a port number using
+ * `service_name_to_port_number' and returned.
+ * Returns the port number in the range [1-65535] or less than zero upon
+ * failure. */
 int cf_util_get_port_number (const oconfig_item_t *ci);
+
+/* Assures that the config option is either a service name (a string) or a port
+ * number (an integer in the appropriate range) and returns a newly allocated
+ * string. If ret_string points to a non-NULL pointer, it is freed before
+ * assigning a new value. */
+int cf_util_get_service (const oconfig_item_t *ci, char **ret_string);
+
+int cf_util_get_cdtime (const oconfig_item_t *ci, cdtime_t *ret_value);
 
 #endif /* defined(CONFIGFILE_H) */

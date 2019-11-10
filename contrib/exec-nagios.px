@@ -25,7 +25,8 @@ our $ConfigFile = '/etc/exec-nagios.conf';
 our $TypeMap = {};
 our $NRPEMap = {};
 our $Scripts = [];
-our $Interval = 300;
+our $Interval = defined ($ENV{'COLLECTD_INTERVAL'}) ? (0 + $ENV{'COLLECTD_INTERVAL'}) : 300;
+our $Hostname = defined ($ENV{'COLLECTD_HOSTNAME'}) ? $ENV{'COLLECTD_HOSTNAME'} : '';
 
 main ();
 exit (0);
@@ -351,6 +352,7 @@ sub handle_performance_data
   my $type = shift;
   my $time = shift;
   my $line = shift;
+  my $ident = "$host/$plugin-$pinst/$type-$tinst";
 
   my $tinst;
   my $value;
@@ -366,7 +368,9 @@ sub handle_performance_data
     return;
   }
 
-  print "PUTVAL $host/$plugin-$pinst/$type-$tinst interval=$Interval ${time}:$value\n";
+  $ident =~ s/"/\\"/g;
+
+  print qq(PUTVAL "$ident" interval=$Interval ${time}:$value\n);
 }
 
 sub execute_script
@@ -376,7 +380,7 @@ sub execute_script
   my $time = time ();
   my $script = shift;
   my @args = ();
-  my $host = hostname () || 'localhost';
+  my $host = $Hostname || hostname () || 'localhost';
 
   my $state = 0;
   my $serviceoutput;

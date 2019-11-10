@@ -1,6 +1,6 @@
 /**
  * collectd - src/common.c
- * Copyright (C) 2005-2009  Florian octo Forster
+ * Copyright (C) 2005-2010  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +16,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Authors:
- *   Florian octo Forster <octo at verplant.org>
+ *   Florian octo Forster <octo at collectd.org>
  *   Niki W. Waibel <niki.waibel@gmx.net>
  *   Sebastian Harl <sh at tokkee.org>
  *   Michał Mirosław <mirq-linux at rere.qmqm.pl>
@@ -29,6 +29,7 @@
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
+#include "utils_cache.h"
 
 #if HAVE_PTHREAD_H
 # include <pthread.h>
@@ -38,11 +39,6 @@
 # include <math.h>
 #endif
 
-/* for ntohl and htonl */
-#if HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
-
 /* for getaddrinfo */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -50,6 +46,11 @@
 
 #if HAVE_NETINET_IN_H
 # include <netinet/in.h>
+#endif
+
+/* for ntohl and htonl */
+#if HAVE_ARPA_INET_H
+# include <arpa/inet.h>
 #endif
 
 #ifdef HAVE_LIBKSTAT
@@ -803,6 +804,75 @@ int format_name (char *ret, int ret_len,
 	return (0);
 } /* int format_name */
 
+int format_values (char *ret, size_t ret_len, /* {{{ */
+		const data_set_t *ds, const value_list_t *vl,
+		_Bool store_rates)
+{
+        size_t offset = 0;
+        int status;
+        int i;
+        gauge_t *rates = NULL;
+
+        assert (0 == strcmp (ds->type, vl->type));
+
+        memset (ret, 0, ret_len);
+
+#define BUFFER_ADD(...) do { \
+        status = ssnprintf (ret + offset, ret_len - offset, \
+                        __VA_ARGS__); \
+        if (status < 1) \
+        { \
+                sfree (rates); \
+                return (-1); \
+        } \
+        else if (((size_t) status) >= (ret_len - offset)) \
+        { \
+                sfree (rates); \
+                return (-1); \
+        } \
+        else \
+                offset += ((size_t) status); \
+} while (0)
+
+        BUFFER_ADD ("%.3f", CDTIME_T_TO_DOUBLE (vl->time));
+
+        for (i = 0; i < ds->ds_num; i++)
+        {
+                if (ds->ds[i].type == DS_TYPE_GAUGE)
+                        BUFFER_ADD (":%f", vl->values[i].gauge);
+                else if (store_rates)
+                {
+                        if (rates == NULL)
+                                rates = uc_get_rate (ds, vl);
+                        if (rates == NULL)
+                        {
+                                WARNING ("format_values: "
+						"uc_get_rate failed.");
+                                return (-1);
+                        }
+                        BUFFER_ADD (":%g", rates[i]);
+                }
+                else if (ds->ds[i].type == DS_TYPE_COUNTER)
+                        BUFFER_ADD (":%llu", vl->values[i].counter);
+                else if (ds->ds[i].type == DS_TYPE_DERIVE)
+                        BUFFER_ADD (":%"PRIi64, vl->values[i].derive);
+                else if (ds->ds[i].type == DS_TYPE_ABSOLUTE)
+                        BUFFER_ADD (":%"PRIu64, vl->values[i].absolute);
+                else
+                {
+                        ERROR ("format_values plugin: Unknown data source type: %i",
+                                        ds->ds[i].type);
+                        sfree (rates);
+                        return (-1);
+                }
+        } /* for ds->ds_num */
+
+#undef BUFFER_ADD
+
+        sfree (rates);
+        return (0);
+} /* }}} int format_values */
+
 int parse_identifier (char *str, char **ret_host,
 		char **ret_plugin, char **ret_plugin_instance,
 		char **ret_type, char **ret_type_instance)
@@ -848,6 +918,40 @@ int parse_identifier (char *str, char **ret_host,
 	*ret_type_instance = type_instance;
 	return (0);
 } /* int parse_identifier */
+
+int parse_identifier_vl (const char *str, value_list_t *vl) /* {{{ */
+{
+	char str_copy[6 * DATA_MAX_NAME_LEN];
+	char *host = NULL;
+	char *plugin = NULL;
+	char *plugin_instance = NULL;
+	char *type = NULL;
+	char *type_instance = NULL;
+	int status;
+
+	if ((str == NULL) || (vl == NULL))
+		return (EINVAL);
+
+	sstrncpy (str_copy, str, sizeof (str_copy));
+
+	status = parse_identifier (str_copy, &host,
+			&plugin, &plugin_instance,
+			&type, &type_instance);
+	if (status != 0)
+		return (status);
+
+	sstrncpy (vl->host, host, sizeof (vl->host));
+	sstrncpy (vl->plugin, plugin, sizeof (vl->plugin));
+	sstrncpy (vl->plugin_instance,
+			(plugin_instance != NULL) ? plugin_instance : "",
+			sizeof (vl->plugin_instance));
+	sstrncpy (vl->type, type, sizeof (vl->type));
+	sstrncpy (vl->type_instance,
+			(type_instance != NULL) ? type_instance : "",
+			sizeof (vl->type_instance));
+
+	return (0);
+} /* }}} int parse_identifier_vl */
 
 int parse_value (const char *value_orig, value_t *ret_value, int ds_type)
 {
@@ -932,9 +1036,22 @@ int parse_values (char *buffer, value_list_t *vl, const data_set_t *ds)
 		if (i == -1)
 		{
 			if (strcmp ("N", ptr) == 0)
-				vl->time = time (NULL);
+				vl->time = cdtime ();
 			else
-				vl->time = (time_t) atoi (ptr);
+			{
+				char *endptr = NULL;
+				double tmp;
+
+				errno = 0;
+				tmp = strtod (ptr, &endptr);
+				if ((errno != 0)                    /* Overflow */
+						|| (endptr == ptr)  /* Invalid string */
+						|| (endptr == NULL) /* This should not happen */
+						|| (*endptr != 0))  /* Trailing chars */
+					return (-1);
+
+				vl->time = DOUBLE_TO_CDTIME_T (tmp);
+			}
 		}
 		else
 		{

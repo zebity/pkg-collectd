@@ -83,6 +83,9 @@ Features
     - entropy
       Amount of entropy available to the system.
 
+    - ethstat
+      Network interface card statistics.
+
     - exec
       Values gathered by a custom program or script.
       See collectd-exec(5).
@@ -125,6 +128,10 @@ Features
     - load
       System load average over the last 1, 5 and 15 minutes.
 
+    - lpar
+      Detailed CPU statistics of the “Logical Partitions” virtualization
+      technique built into IBM's POWER processors.
+
     - libvirt
       CPU, disk and network I/O statistics from virtual machines.
 
@@ -135,6 +142,10 @@ Features
     - mbmon
       Motherboard sensors: temperature, fanspeed and voltage information,
       using mbmon(1).
+
+    - md
+      Linux software-RAID device information (number of active, failed, spare
+      and missing disks).
 
     - memcachec
       Query and parse data from a memcache daemon (memcached).
@@ -188,6 +199,9 @@ Features
       Network UPS tools: UPS current, voltage, power, charge, utilisation,
       temperature, etc. See upsd(8).
 
+    - numa
+      Information about Non-Uniform Memory Access (NUMA).
+
     - olsrd
       Queries routing information from the “Optimized Link State Routing”
       daemon.
@@ -234,6 +248,10 @@ Features
       makes it possible to write plugins in Python which are executed by
       collectd without the need to start a heavy interpreter every interval.
       See collectd-python(5) for details.
+
+    - redis
+      The redis plugin gathers information from a redis server, including:
+      uptime, used memory, total connections etc.
 
     - routeros
       Query interface and wireless registration statistics from RouterOS.
@@ -288,6 +306,9 @@ Features
     - users
       Users currently logged in.
 
+    - varnish
+      Various statistics from Varnish, an HTTP accelerator.
+
     - vmem
       Virtual memory statistics, e. g. the number of page-ins/-outs or the
       number of pagefaults.
@@ -307,6 +328,10 @@ Features
 
   * Output can be written or sent to various destinations by the following
     plugins:
+
+    - amqp
+      Sends JSON-encoded data to an Advanced Message Queuing Protocol (AMQP)
+      server, such as RabbitMQ.
 
     - csv
       Write to comma separated values (CSV) files. This needs lots of
@@ -343,10 +368,16 @@ Features
       needed. Please read collectd-unixsock(5) for a description on how that's
       done.
 
+    - write_graphite
+      Sends data to Carbon, the storage layer of Graphite.
+
     - write_http
       Sends the values collected by collectd to a web-server using HTTP POST
       requests. The transmitted data is either in a form understood by the
       Exec plugin or formatted in JSON.
+
+    - write_redis
+      Sends the values to a Redis key-value database server.
 
   * Logging is, as everything in collectd, provided by plugins. The following
     plugins keep up informed about what's going on:
@@ -427,6 +458,10 @@ Features
 
   * Miscellaneous plugins:
 
+    - threshold
+      Checks values against configured thresholds and creates notifications if
+      values are out of bounds. See collectd-threshold(5) for details.
+
     - uuid
       Sets the hostname to an unique identifier. This is meant for setups
       where each client may migrate to another physical host, possibly going
@@ -503,6 +538,10 @@ Prerequisites
 
   * libclntsh (optional)
     Used by the `oracle' plugin.
+
+  * libcredis (optional)
+    Used by the redis plugin. Please note that you require a 0.2.2 version
+    or higher. <http://code.google.com/p/credis/>
 
   * libcurl (optional)
     If you want to use the `apache', `ascent', `curl', `nginx', or `write_http'
@@ -610,6 +649,10 @@ Prerequisites
     are supported.
     <http://www.python.org/>
 
+  * librabbitmq (optional; also called “rabbitmq-c”)
+    Used by the AMQP plugin for AMQP connections, for example to RabbitMQ.
+    <http://hg.rabbitmq.com/rabbitmq-c/>
+
   * librouteros (optional)
     Used by the `routeros' plugin to connect to a device running `RouterOS'.
     <http://verplant.org/librouteros/>
@@ -655,6 +698,10 @@ Prerequisites
   * libyajl (optional)
     Parse JSON data. This is needed for the `curl_json' plugin.
     <http://github.com/lloyd/yajl>
+
+  * libvarnish (optional)
+     Fetches statistics from a Varnish instance. This is needed for the Varnish plugin
+     <http://varnish-cache.org>
 
 Configuring / Compiling / Installing
 ------------------------------------

@@ -270,13 +270,14 @@ static void set_environment (void) /* {{{ */
   char buffer[1024];
 
 #ifdef HAVE_SETENV
-  ssnprintf (buffer, sizeof (buffer), "%i", interval_g);
+  ssnprintf (buffer, sizeof (buffer), "%.3f", CDTIME_T_TO_DOUBLE (interval_g));
   setenv ("COLLECTD_INTERVAL", buffer, /* overwrite = */ 1);
 
   ssnprintf (buffer, sizeof (buffer), "%s", hostname_g);
   setenv ("COLLECTD_HOSTNAME", buffer, /* overwrite = */ 1);
 #else
-  ssnprintf (buffer, sizeof (buffer), "COLLECTD_INTERVAL=%i", interval_g);
+  ssnprintf (buffer, sizeof (buffer), "COLLECTD_INTERVAL=%.3f",
+      CDTIME_T_TO_DOUBLE (interval_g));
   putenv (buffer);
 
   ssnprintf (buffer, sizeof (buffer), "COLLECTD_HOSTNAME=%s", hostname_g);
@@ -537,12 +538,9 @@ static int parse_line (char *buffer) /* {{{ */
     return (handle_putnotif (stdout, buffer));
   else
   {
-    /* For backwards compatibility */
-    char tmp[1220];
-    /* Let's annoy the user a bit.. */
-    INFO ("exec plugin: Prepending `PUTVAL' to this line: %s", buffer);
-    ssnprintf (tmp, sizeof (tmp), "PUTVAL %s", buffer);
-    return (handle_putval (stdout, tmp));
+    ERROR ("exec plugin: Unable to parse command, ignoring line: \"%s\"",
+	buffer);
+    return (-1);
   }
 } /* int parse_line }}} */
 
@@ -739,8 +737,8 @@ static void *exec_notification_one (void *arg) /* {{{ */
 
   fprintf (fh,
       "Severity: %s\n"
-      "Time: %u\n",
-      severity, (unsigned int) n->time);
+      "Time: %.3f\n",
+      severity, CDTIME_T_TO_DOUBLE (n->time));
 
   /* Print the optional fields */
   if (strlen (n->host) > 0)

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PERL 5"
-.TH COLLECTD-PERL 5 "2012-04-01" "4.10.7" "collectd"
+.TH COLLECTD-PERL 5 "2012-04-02" "5.1.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -474,11 +474,6 @@ Submits a \fIvalue-list\fR to the daemon. If the data-set identified by
 is found (and the number of values matches the number of data-sources) then the
 type, data-set and value-list is passed to all write-callbacks that are
 registered with the daemon.
-.Sp
-\&\fBNote\fR: Prior to version 4.4 of collectd, the data-set type used to be passed
-as the first argument to \fBplugin_register\fR. This syntax is still supported
-for backwards compatibility but has been deprecated and will be removed in
-some future version of collectd.
 .IP "\fBplugin_write\fR ([\fBplugins\fR => \fI...\fR][, \fBdatasets\fR => \fI...\fR], \fBvaluelists\fR => \fI...\fR)" 4
 .IX Item "plugin_write ([plugins => ...][, datasets => ...], valuelists => ...)"
 Calls the write function of the given \fIplugins\fR with the provided \fIdata
@@ -499,21 +494,6 @@ to \f(CW\*(C`\-1\*(C'\fR. The identifier defaults to the undefined value. If the
 argument has been specified, only named plugins will be flushed. The value of
 the \fBplugins\fR and \fBidentifiers\fR arguments may either be a string or a
 reference to an array of strings.
-.IP "\fBplugin_flush_one\fR (\fItimeout\fR, \fIplugin\fR)" 4
-.IX Item "plugin_flush_one (timeout, plugin)"
-This is identical to using "plugin_flush (timeout => \fItimeout\fR, plugins
-=> \fIplugin\fR".
-.Sp
-\&\fBNote\fR: Starting with version 4.5 of collectd, \fBplugin_flush_one\fR has been
-deprecated and will be removed in some future version of collectd. Use
-\&\fBplugin_flush\fR instead.
-.IP "\fBplugin_flush_all\fR (\fItimeout\fR)" 4
-.IX Item "plugin_flush_all (timeout)"
-This is identical to using "plugin_flush (timeout => \fItimeout\fR)".
-.Sp
-\&\fBNote\fR: Starting with version 4.5 of collectd, \fBplugin_flush_all\fR has been
-deprecated and will be removed in some future version of collectd. Use
-\&\fBplugin_flush\fR instead.
 .IP "\fBplugin_dispatch_notification\fR (\fInotification\fR)" 4
 .IX Item "plugin_dispatch_notification (notification)"
 Submits a \fInotification\fR to the daemon which will then pass it to all
@@ -755,9 +735,9 @@ A very simple read function might look like:
 .Vb 7
 \&  sub foobar_read
 \&  {
-\&    my $vl = { plugin => \*(Aqfoobar\*(Aq };
+\&    my $vl = { plugin => \*(Aqfoobar\*(Aq, type => \*(Aqgauge\*(Aq };
 \&    $vl\->{\*(Aqvalues\*(Aq} = [ rand(42) ];
-\&    plugin_dispatch_values (\*(Aqgauge\*(Aq, $vl);
+\&    plugin_dispatch_values ($vl);
 \&    return 1;
 \&  }
 .Ve

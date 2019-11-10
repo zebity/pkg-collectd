@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-JAVA 5"
-.TH COLLECTD-JAVA 5 "2012-04-01" "4.10.7" "collectd"
+.TH COLLECTD-JAVA 5 "2012-04-02" "5.1.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -710,6 +710,13 @@ will be used.
 .IX Item "Password password"
 Use \fIpassword\fR to authenticate to the server. If not given, unauthenticated
 access is used.
+.IP "\fBInstancePrefix\fR \fIprefix\fR" 4
+.IX Item "InstancePrefix prefix"
+Prefixes the generated \fIplugin instance\fR with \fIprefix\fR. If a second
+\&\fIInstancePrefix\fR is specified in a referenced \fIMBean\fR block, the prefix
+specified in the \fIConnection\fR block will appear at the beginning of the
+\&\fIplugin instance\fR, the prefix specified in the \fIMBean\fR block will be appended
+to it.
 .IP "\fBCollect\fR \fImbean_block_name\fR" 4
 .IX Item "Collect mbean_block_name"
 Configures which of the \fIMBean\fR blocks to use with this connection. May be
