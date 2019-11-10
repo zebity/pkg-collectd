@@ -97,6 +97,9 @@ confflags += --disable-sigrok
 # Cf. https://github.com/collectd/collectd/issues/2647
 confflags += --disable-lvm
 
+# libnvidia-ml is non-free
+confflags += --disable-gpu_nvidia
+
 
 # temporarily disable mqtt plugin, as #911265, #911266 blocks collectd from
 # migrating to testing.
