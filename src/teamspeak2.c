@@ -23,8 +23,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -46,14 +46,14 @@ typedef struct vserver_list_s {
   int port;
   struct vserver_list_s *next;
 } vserver_list_t;
-static vserver_list_t *server_list = NULL;
+static vserver_list_t *server_list;
 
 /* Host data */
-static char *config_host = NULL;
-static char *config_port = NULL;
+static char *config_host;
+static char *config_port;
 
-static FILE *global_read_fh = NULL;
-static FILE *global_write_fh = NULL;
+static FILE *global_read_fh;
+static FILE *global_write_fh;
 
 /* Config data */
 static const char *config_keys[] = {"Host", "Port", "Server"};
@@ -132,7 +132,8 @@ static void tss2_submit_io(const char *plugin_instance, const char *type,
    */
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = rx}, {.derive = tx},
+      {.derive = rx},
+      {.derive = tx},
   };
 
   vl.values = values;
@@ -204,18 +205,14 @@ static int tss2_get_socket(FILE **ret_read_fh, FILE **ret_write_fh) {
     /* Create socket */
     sd = socket(ai_ptr->ai_family, ai_ptr->ai_socktype, ai_ptr->ai_protocol);
     if (sd < 0) {
-      char errbuf[1024];
-      WARNING("teamspeak2 plugin: socket failed: %s",
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+      WARNING("teamspeak2 plugin: socket failed: %s", STRERRNO);
       continue;
     }
 
     /* Try to connect */
     status = connect(sd, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
     if (status != 0) {
-      char errbuf[1024];
-      WARNING("teamspeak2 plugin: connect failed: %s",
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+      WARNING("teamspeak2 plugin: connect failed: %s", STRERRNO);
       close(sd);
       sd = -1;
       continue;
@@ -236,18 +233,14 @@ static int tss2_get_socket(FILE **ret_read_fh, FILE **ret_write_fh) {
   /* Create file objects from sockets */
   global_read_fh = fdopen(sd, "r");
   if (global_read_fh == NULL) {
-    char errbuf[1024];
-    ERROR("teamspeak2 plugin: fdopen failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("teamspeak2 plugin: fdopen failed: %s", STRERRNO);
     close(sd);
     return -1;
   }
 
   global_write_fh = fdopen(sd, "w");
   if (global_write_fh == NULL) {
-    char errbuf[1024];
-    ERROR("teamspeak2 plugin: fdopen failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("teamspeak2 plugin: fdopen failed: %s", STRERRNO);
     tss2_close_socket();
     return -1;
   }
@@ -263,7 +256,7 @@ static int tss2_get_socket(FILE **ret_read_fh, FILE **ret_write_fh) {
               config_host ? config_host : DEFAULT_HOST,
               config_port ? config_port : DEFAULT_PORT);
     }
-    buffer[sizeof(buffer) - 1] = 0;
+    buffer[sizeof(buffer) - 1] = '\0';
 
     if (memcmp("[TS]\r\n", buffer, 6) != 0) {
       ERROR("teamspeak2 plugin: Unexpected response when connecting "
@@ -312,14 +305,12 @@ static int tss2_receive_line(FILE *fh, char *buffer, int buffer_size) {
    */
   temp = fgets(buffer, buffer_size, fh);
   if (temp == NULL) {
-    char errbuf[1024];
-    ERROR("teamspeak2 plugin: fgets failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("teamspeak2 plugin: fgets failed: %s", STRERRNO);
     tss2_close_socket();
     return -1;
   }
 
-  buffer[buffer_size - 1] = 0;
+  buffer[buffer_size - 1] = '\0';
   return 0;
 } /* int tss2_receive_line */
 
@@ -347,7 +338,7 @@ static int tss2_select_vserver(FILE *read_fh, FILE *write_fh,
     ERROR("teamspeak2 plugin: tss2_receive_line failed.");
     return -1;
   }
-  response[sizeof(response) - 1] = 0;
+  response[sizeof(response) - 1] = '\0';
 
   /* Check answer */
   if ((strncasecmp("OK", response, 2) == 0) &&
@@ -389,7 +380,7 @@ static int tss2_vserver_gapl(FILE *read_fh, FILE *write_fh,
       ERROR("teamspeak2 plugin: tss2_receive_line failed.");
       return -1;
     }
-    buffer[sizeof(buffer) - 1] = 0;
+    buffer[sizeof(buffer) - 1] = '\0';
 
     if (strncmp("average_packet_loss=", buffer,
                 strlen("average_packet_loss=")) == 0) {

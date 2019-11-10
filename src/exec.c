@@ -28,11 +28,11 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
-#include "utils_cmd_putnotif.h"
-#include "utils_cmd_putval.h"
+#include "utils/cmds/putnotif.h"
+#include "utils/cmds/putval.h"
 
 #include <grp.h>
 #include <pwd.h>
@@ -85,7 +85,7 @@ const long int MAX_GRBUF_SIZE = 65536;
 /*
  * Private variables
  */
-static program_list_t *pl_head = NULL;
+static program_list_t *pl_head;
 static pthread_mutex_t pl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*
@@ -290,7 +290,6 @@ __attribute__((noreturn)) static void exec_child(program_list_t *pl, int uid,
                                                  int gid, int egid) /* {{{ */
 {
   int status;
-  char errbuf[1024];
 
 #if HAVE_SETGROUPS
   if (getuid() == 0) {
@@ -311,31 +310,27 @@ __attribute__((noreturn)) static void exec_child(program_list_t *pl, int uid,
 
   status = setgid(gid);
   if (status != 0) {
-    ERROR("exec plugin: setgid (%i) failed: %s", gid,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("exec plugin: setgid (%i) failed: %s", gid, STRERRNO);
     exit(-1);
   }
 
   if (egid != -1) {
     status = setegid(egid);
     if (status != 0) {
-      ERROR("exec plugin: setegid (%i) failed: %s", egid,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("exec plugin: setegid (%i) failed: %s", egid, STRERRNO);
       exit(-1);
     }
   }
 
   status = setuid(uid);
   if (status != 0) {
-    ERROR("exec plugin: setuid (%i) failed: %s", uid,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("exec plugin: setuid (%i) failed: %s", uid, STRERRNO);
     exit(-1);
   }
 
   execvp(pl->exec, pl->argv);
 
-  ERROR("exec plugin: Failed to execute ``%s'': %s", pl->exec,
-        sstrerror(errno, errbuf, sizeof(errbuf)));
+  ERROR("exec plugin: Failed to execute ``%s'': %s", pl->exec, STRERRNO);
   exit(-1);
 } /* void exec_child }}} */
 
@@ -349,13 +344,11 @@ static void reset_signal_mask(void) /* {{{ */
 
 static int create_pipe(int fd_pipe[2]) /* {{{ */
 {
-  char errbuf[1024];
   int status;
 
   status = pipe(fd_pipe);
   if (status != 0) {
-    ERROR("exec plugin: pipe failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("exec plugin: pipe failed: %s", STRERRNO);
     return -1;
   }
 
@@ -420,9 +413,7 @@ static int getegr_id(program_list_t *pl, int gid) /* {{{ */
     } else if (errno == ERANGE) {
       grbuf_size += grbuf_size; // increment buffer size and try again
     } else {
-      char errbuf[1024];
-      ERROR("exec plugin: getegr_id failed %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("exec plugin: getegr_id failed %s", STRERRNO);
       sfree(grbuf);
       return -2;
     }
@@ -430,7 +421,7 @@ static int getegr_id(program_list_t *pl, int gid) /* {{{ */
   ERROR("exec plugin: getegr_id Max grbuf size reached  for %s", pl->group);
   sfree(grbuf);
   return -2;
-} /* }}} */
+}
 
 /*
  * Creates three pipes (one for reading, one for writing and one for errors),
@@ -444,7 +435,6 @@ static int fork_child(program_list_t *pl, int *fd_in, int *fd_out,
   int fd_pipe_in[2] = {-1, -1};
   int fd_pipe_out[2] = {-1, -1};
   int fd_pipe_err[2] = {-1, -1};
-  char errbuf[1024];
   int status;
   int pid;
 
@@ -473,7 +463,7 @@ static int fork_child(program_list_t *pl, int *fd_in, int *fd_out,
   status = getpwnam_r(pl->user, &sp, nambuf, sizeof(nambuf), &sp_ptr);
   if (status != 0) {
     ERROR("exec plugin: Failed to get user information for user ``%s'': %s",
-          pl->user, sstrerror(status, errbuf, sizeof(errbuf)));
+          pl->user, STRERROR(status));
     goto failed;
   }
 
@@ -489,6 +479,8 @@ static int fork_child(program_list_t *pl, int *fd_in, int *fd_out,
     goto failed;
   }
 
+  /* The group configured in the configfile is set as effective group, because
+   * this way the forked process can (re-)gain the user's primary group. */
   egid = getegr_id(pl, gid);
   if (egid == -2) {
     goto failed;
@@ -498,8 +490,7 @@ static int fork_child(program_list_t *pl, int *fd_in, int *fd_out,
 
   pid = fork();
   if (pid < 0) {
-    ERROR("exec plugin: fork failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("exec plugin: fork failed: %s", STRERRNO);
     goto failed;
   } else if (pid == 0) {
     int fd_num;
@@ -750,9 +741,7 @@ static void *exec_notification_one(void *arg) /* {{{ */
 
   fh = fdopen(fd, "w");
   if (fh == NULL) {
-    char errbuf[1024];
-    ERROR("exec plugin: fdopen (%i) failed: %s", fd,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("exec plugin: fdopen (%i) failed: %s", fd, STRERRNO);
     kill(pid, SIGTERM);
     close(fd);
     sfree(arg);
@@ -765,8 +754,9 @@ static void *exec_notification_one(void *arg) /* {{{ */
   else if (n->severity == NOTIF_OKAY)
     severity = "OKAY";
 
-  fprintf(fh, "Severity: %s\n"
-              "Time: %.3f\n",
+  fprintf(fh,
+          "Severity: %s\n"
+          "Time: %.3f\n",
           severity, CDTIME_T_TO_DOUBLE(n->time));
 
   /* Print the optional fields */

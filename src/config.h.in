@@ -45,12 +45,6 @@
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
-/* Define to 1 if you have the <arpa/nameser_compat.h> header file. */
-#undef HAVE_ARPA_NAMESER_COMPAT_H
-
-/* Define to 1 if you have the <arpa/nameser.h> header file. */
-#undef HAVE_ARPA_NAMESER_H
-
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
@@ -65,9 +59,6 @@
 
 /* Define if the clock_gettime(2) function is available. */
 #undef HAVE_CLOCK_GETTIME
-
-/* Define to 1 if you have the `closelog' function. */
-#undef HAVE_CLOSELOG
 
 /* Define to 1 if you have the <CoreFoundation/CoreFoundation.h> header file.
    */
@@ -103,9 +94,6 @@
    */
 #undef HAVE_DIRENT_H
 
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
 /* Define to 1 if you have the <endian.h> header file. */
 #undef HAVE_ENDIAN_H
 
@@ -127,14 +115,8 @@
 /* Define if the function getmntent exists. It is the version from libgen. */
 #undef HAVE_GEN_GETMNTENT
 
-/* Define to 1 if you have the `getaddrinfo' function. */
-#undef HAVE_GETADDRINFO
-
 /* Define to 1 if you have the `getfsstat' function. */
 #undef HAVE_GETFSSTAT
-
-/* Define to 1 if you have the `getgrnam_r' function. */
-#undef HAVE_GETGRNAM_R
 
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
@@ -148,14 +130,11 @@
 /* Define to 1 if you have the `getmntent_r' function. */
 #undef HAVE_GETMNTENT_R
 
-/* Define to 1 if you have the `getnameinfo' function. */
-#undef HAVE_GETNAMEINFO
+/* Define to 1 if you have the `getpwnam' function. */
+#undef HAVE_GETPWNAM
 
 /* Define to 1 if you have the `getpwnam_r' function. */
 #undef HAVE_GETPWNAM_R
-
-/* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
 
 /* Define to 1 if you have the `getutent' function. */
 #undef HAVE_GETUTENT
@@ -194,6 +173,9 @@
 
 /* Define if the function htonll exists. */
 #undef HAVE_HTONLL
+
+/* Define to 1 if you have the <i2c/smbus.h> header file. */
+#undef HAVE_I2C_SMBUS_H
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
@@ -313,6 +295,9 @@
 /* Define to 1 if you have the <librdkafka/rdkafka.h> header file. */
 #undef HAVE_LIBRDKAFKA_RDKAFKA_H
 
+/* Define if libssl is present and usable. */
+#undef HAVE_LIBSSL
+
 /* Define to 1 if you have the 'statgrab' library (-lstatgrab) */
 #undef HAVE_LIBSTATGRAB
 
@@ -355,6 +340,9 @@
 /* Define to 1 if you have the <linux/netdevice.h> header file. */
 #undef HAVE_LINUX_NETDEVICE_H
 
+/* Define to 1 if you have the <linux/pci_regs.h> header file. */
+#undef HAVE_LINUX_PCI_REGS_H
+
 /* Define to 1 if you have the <linux/pkt_sched.h> header file. */
 #undef HAVE_LINUX_PKT_SCHED_H
 
@@ -372,6 +360,9 @@
 
 /* Define to 1 if you have the `listmntent' function. */
 #undef HAVE_LISTMNTENT
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
 
 /* Define to 1 if you have the <lualib.h> header file. */
 #undef HAVE_LUALIB_H
@@ -505,6 +496,9 @@
 /* Define to 1 if you have the <netinet/udp.h> header file. */
 #undef HAVE_NETINET_UDP_H
 
+/* "Define 1 if you have old netsnmp API" */
+#undef HAVE_NETSNMP_OLD_API
+
 /* Define to 1 if you have the <net/if_arp.h> header file. */
 #undef HAVE_NET_IF_ARP_H
 
@@ -533,6 +527,9 @@
 /* Define to 1 if you have the <nlist.h> header file. */
 #undef HAVE_NLIST_H
 
+/* Define to 1 if you have the <nvml.h> header file. */
+#undef HAVE_NVML_H
+
 /* Define to 1 if you have the <oci.h> header file. */
 #undef HAVE_OCI_H
 
@@ -542,8 +539,14 @@
 /* Define to 1 if you have the <OpenIPMI/ipmi_smi.h> header file. */
 #undef HAVE_OPENIPMI_IPMI_SMI_H
 
-/* Define to 1 if you have the `openlog' function. */
-#undef HAVE_OPENLOG
+/* Define to 1 if you have the <openssl/blowfish.h> header file. */
+#undef HAVE_OPENSSL_BLOWFISH_H
+
+/* Define to 1 if you have the <openssl/rand.h> header file. */
+#undef HAVE_OPENSSL_RAND_H
+
+/* Define to 1 if you have the <openssl/sha.h> header file. */
+#undef HAVE_OPENSSL_SHA_H
 
 /* Define to 1 if you have the <oping.h> header file. */
 #undef HAVE_OPING_H
@@ -568,6 +571,9 @@
 
 /* Define to 1 if the amqp plugin is enabled. */
 #undef HAVE_PLUGIN_AMQP
+
+/* Define to 1 if the amqp1 plugin is enabled. */
+#undef HAVE_PLUGIN_AMQP1
 
 /* Define to 1 if the apache plugin is enabled. */
 #undef HAVE_PLUGIN_APACHE
@@ -599,8 +605,14 @@
 /* Define to 1 if the cgroups plugin is enabled. */
 #undef HAVE_PLUGIN_CGROUPS
 
+/* Define to 1 if the check_uptime plugin is enabled. */
+#undef HAVE_PLUGIN_CHECK_UPTIME
+
 /* Define to 1 if the chrony plugin is enabled. */
 #undef HAVE_PLUGIN_CHRONY
+
+/* Define to 1 if the connectivity plugin is enabled. */
+#undef HAVE_PLUGIN_CONNECTIVITY
 
 /* Define to 1 if the conntrack plugin is enabled. */
 #undef HAVE_PLUGIN_CONNTRACK
@@ -676,6 +688,9 @@
 
 /* Define to 1 if the gps plugin is enabled. */
 #undef HAVE_PLUGIN_GPS
+
+/* Define to 1 if the gpu_nvidia plugin is enabled. */
+#undef HAVE_PLUGIN_GPU_NVIDIA
 
 /* Define to 1 if the grpc plugin is enabled. */
 #undef HAVE_PLUGIN_GRPC
@@ -836,6 +851,9 @@
 /* Define to 1 if the ovs_stats plugin is enabled. */
 #undef HAVE_PLUGIN_OVS_STATS
 
+/* Define to 1 if the pcie_errors plugin is enabled. */
+#undef HAVE_PLUGIN_PCIE_ERRORS
+
 /* Define to 1 if the perl plugin is enabled. */
 #undef HAVE_PLUGIN_PERL
 
@@ -856,6 +874,9 @@
 
 /* Define to 1 if the processes plugin is enabled. */
 #undef HAVE_PLUGIN_PROCESSES
+
+/* Define to 1 if the procevent plugin is enabled. */
+#undef HAVE_PLUGIN_PROCEVENT
 
 /* Define to 1 if the protocols plugin is enabled. */
 #undef HAVE_PLUGIN_PROTOCOLS
@@ -901,6 +922,9 @@
 
 /* Define to 1 if the synproxy plugin is enabled. */
 #undef HAVE_PLUGIN_SYNPROXY
+
+/* Define to 1 if the sysevent plugin is enabled. */
+#undef HAVE_PLUGIN_SYSEVENT
 
 /* Define to 1 if the syslog plugin is enabled. */
 #undef HAVE_PLUGIN_SYSLOG
@@ -1007,6 +1031,12 @@
 /* Define to 1 if the write_sensu plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_SENSU
 
+/* Define to 1 if the write_stackdriver plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_STACKDRIVER
+
+/* Define to 1 if the write_syslog plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_SYSLOG
+
 /* Define to 1 if the write_tsdb plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_TSDB
 
@@ -1040,6 +1070,9 @@
 /* Define to 1 if you have the <protobuf-c/protobuf-c.h> header file. */
 #undef HAVE_PROTOBUF_C_PROTOBUF_C_H
 
+/* Define to 1 if you have the <proton/proactor.h> header file. */
+#undef HAVE_PROTON_PROACTOR_H
+
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
 
@@ -1058,20 +1091,8 @@
 /* Define to 1 if you have the <Python.h> header file. */
 #undef HAVE_PYTHON_H
 
-/* Define to 1 if you have the `regcomp' function. */
-#undef HAVE_REGCOMP
-
-/* Define to 1 if you have the `regerror' function. */
-#undef HAVE_REGERROR
-
-/* Define to 1 if you have the `regexec' function. */
-#undef HAVE_REGEXEC
-
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
-
-/* Define to 1 if you have the `regfree' function. */
-#undef HAVE_REGFREE
 
 /* Define to 1 if you have the <routeros_api.h> header file. */
 #undef HAVE_ROUTEROS_API_H
@@ -1085,9 +1106,6 @@
 /* Define if struct rtnl_link_stats64 exists and is usable. */
 #undef HAVE_RTNL_LINK_STATS64
 
-/* Define to 1 if you have the `select' function. */
-#undef HAVE_SELECT
-
 /* Define to 1 if you have the <sensors/sensors.h> header file. */
 #undef HAVE_SENSORS_SENSORS_H
 
@@ -1096,6 +1114,9 @@
 
 /* Define to 1 if you have the `setgroups' function. */
 #undef HAVE_SETGROUPS
+
+/* Define to 1 if you have the `setlocale' function. */
+#undef HAVE_SETLOCALE
 
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
@@ -1115,12 +1136,6 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strcasecmp' function. */
-#undef HAVE_STRCASECMP
-
-/* Define to 1 if you have the `strdup' function. */
-#undef HAVE_STRDUP
-
 /* Define to 1 if you have the `strerror_r' function. */
 #undef HAVE_STRERROR_R
 
@@ -1129,9 +1144,6 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strncasecmp' function. */
-#undef HAVE_STRNCASECMP
 
 /* Define to 1 if you have the `strptime' function. */
 #undef HAVE_STRPTIME
@@ -1205,9 +1217,15 @@
 /* Define to 1 if `tx_packets' is a member of `struct net_device_stats'. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS_TX_PACKETS
 
+/* Define to 1 if `rx_nohandler' is a member of `struct rtnl_link_stats64'. */
+#undef HAVE_STRUCT_RTNL_LINK_STATS64_RX_NOHANDLER
+
 /* Define to 1 if `tx_window_errors' is a member of `struct
    rtnl_link_stats64'. */
 #undef HAVE_STRUCT_RTNL_LINK_STATS64_TX_WINDOW_ERRORS
+
+/* Define to 1 if `rx_nohandler' is a member of `struct rtnl_link_stats'. */
+#undef HAVE_STRUCT_RTNL_LINK_STATS_RX_NOHANDLER
 
 /* Define to 1 if `dest' is a member of `struct udphdr'. */
 #undef HAVE_STRUCT_UDPHDR_DEST
@@ -1232,9 +1250,6 @@
 
 /* Define if the function swapctl exists and takes two arguments. */
 #undef HAVE_SWAPCTL_TWO_ARGS
-
-/* Define to 1 if you have the `sysconf' function. */
-#undef HAVE_SYSCONF
 
 /* Define to 1 if you have the `sysctl' function. */
 #undef HAVE_SYSCTL
@@ -1460,8 +1475,8 @@
 /* True if program is to be compiled for a Solaris kernel */
 #undef KERNEL_SOLARIS
 
-/* Define to the sub-directory where libtool stores uninstalled libraries. */
-#undef LT_OBJDIR
+/* True if program is to be compiled for a Windows kernel */
+#undef KERNEL_WIN32
 
 /* Define if NAN is defined by default and can initialize static variables. */
 #undef NAN_STATIC_DEFAULT
@@ -1472,9 +1487,6 @@
 
 /* Define if NAN can be defined as (0.0 / 0.0) */
 #undef NAN_ZERO_ZERO
-
-/* Name of package */
-#undef PACKAGE
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -1511,9 +1523,6 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
-
-/* Version number of package */
-#undef VERSION
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

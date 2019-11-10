@@ -28,8 +28,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if COLLECT_DEBUG
 static int log_level = LOG_DEBUG;
@@ -39,9 +39,9 @@ static int log_level = LOG_INFO;
 
 static pthread_mutex_t file_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static char *log_file = NULL;
+static char *log_file;
 static int print_timestamp = 1;
-static int print_severity = 0;
+static int print_severity;
 
 static const char *config_keys[] = {"LogLevel", "File", "Timestamp",
                                     "PrintSeverity"};
@@ -52,8 +52,8 @@ static int logfile_config(const char *key, const char *value) {
     log_level = parse_log_severity(value);
     if (log_level < 0) {
       log_level = LOG_INFO;
-      ERROR("logfile: invalid loglevel [%s] defaulting to 'info'", value);
-      return 1;
+      WARNING("logfile: invalid loglevel [%s] defaulting to 'info'", value);
+      return 0;
     }
   } else if (0 == strcasecmp(key, "File")) {
     sfree(log_file);
@@ -77,7 +77,7 @@ static int logfile_config(const char *key, const char *value) {
 static void logfile_print(const char *msg, int severity,
                           cdtime_t timestamp_time) {
   FILE *fh;
-  _Bool do_close = 0;
+  bool do_close = false;
   char timestamp_str[64];
   char level_str[16] = "";
 
@@ -122,13 +122,12 @@ static void logfile_print(const char *msg, int severity,
     fh = stdout;
   else {
     fh = fopen(log_file, "a");
-    do_close = 1;
+    do_close = true;
   }
 
   if (fh == NULL) {
-    char errbuf[1024];
     fprintf(stderr, "logfile plugin: fopen (%s) failed: %s\n", log_file,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+            STRERRNO);
   } else {
     if (print_timestamp)
       fprintf(fh, "[%s] %s%s\n", timestamp_str, level_str, msg);

@@ -33,9 +33,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "filter_chain.h"
-#include "meta_data.h"
+#include "utils/common/common.h"
+#include "utils/metadata/meta_data.h"
 #include "utils_llist.h"
 
 #include <regex.h>
@@ -66,7 +66,7 @@ struct mr_match_s {
   mr_regex_t *type;
   mr_regex_t *type_instance;
   llist_t *meta; /* Maps each meta key into mr_regex_t* */
-  _Bool invert;
+  bool invert;
 };
 
 /*
@@ -151,7 +151,7 @@ static int mr_add_regex(mr_regex_t **re_head, const char *re_str, /* {{{ */
   if (status != 0) {
     char errmsg[1024];
     regerror(status, &re->re, errmsg, sizeof(errmsg));
-    errmsg[sizeof(errmsg) - 1] = 0;
+    errmsg[sizeof(errmsg) - 1] = '\0';
     log_err("Compiling regex `%s' for `%s' failed: %s.", re->re_str, option,
             errmsg);
     sfree(re->re_str);
@@ -245,7 +245,7 @@ static int mr_create(const oconfig_item_t *ci, void **user_data) /* {{{ */
     return -ENOMEM;
   }
 
-  m->invert = 0;
+  m->invert = false;
 
   status = 0;
   for (int i = 0; i < ci->children_num; i++) {
@@ -336,21 +336,22 @@ static int mr_match(const data_set_t __attribute__((unused)) * ds, /* {{{ */
   if (mr_match_regexen(m->type_instance, vl->type_instance) ==
       FC_MATCH_NO_MATCH)
     return nomatch_value;
-  if (vl->meta != NULL) {
-    for (llentry_t *e = llist_head(m->meta); e != NULL; e = e->next) {
-      mr_regex_t *meta_re = (mr_regex_t *)e->value;
-      char *value;
-      int status = meta_data_get_string(vl->meta, e->key, &value);
-      if (status == (-ENOENT)) /* key is not present */
-        return nomatch_value;
-      if (status != 0) /* some other problem */
-        continue;      /* error will have already been printed. */
-      if (mr_match_regexen(meta_re, value) == FC_MATCH_NO_MATCH) {
-        sfree(value);
-        return nomatch_value;
-      }
+  for (llentry_t *e = llist_head(m->meta); e != NULL; e = e->next) {
+    mr_regex_t *meta_re = (mr_regex_t *)e->value;
+    char *value;
+    int status;
+    if (vl->meta == NULL)
+      return nomatch_value;
+    status = meta_data_get_string(vl->meta, e->key, &value);
+    if (status == (-ENOENT)) /* key is not present */
+      return nomatch_value;
+    if (status != 0) /* some other problem */
+      continue;      /* error will have already been printed. */
+    if (mr_match_regexen(meta_re, value) == FC_MATCH_NO_MATCH) {
       sfree(value);
+      return nomatch_value;
     }
+    sfree(value);
   }
 
   return match_value;

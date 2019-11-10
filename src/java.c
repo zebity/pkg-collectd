@@ -23,9 +23,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "filter_chain.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <jni.h>
 
@@ -77,23 +77,23 @@ typedef struct cjni_callback_info_s cjni_callback_info_t;
 /*
  * Global variables
  */
-static JavaVM *jvm = NULL;
+static JavaVM *jvm;
 static pthread_key_t jvm_env_key;
 
 /* Configuration options for the JVM. */
-static char **jvm_argv = NULL;
-static size_t jvm_argc = 0;
+static char **jvm_argv;
+static size_t jvm_argc;
 
 /* List of class names to load */
-static java_plugin_class_t *java_classes_list = NULL;
+static java_plugin_class_t *java_classes_list;
 static size_t java_classes_list_len;
 
 /* List of config, init, and shutdown callbacks. */
-static cjni_callback_info_t *java_callbacks = NULL;
-static size_t java_callbacks_num = 0;
+static cjni_callback_info_t *java_callbacks;
+static size_t java_callbacks_num;
 static pthread_mutex_t java_callbacks_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static oconfig_item_t *config_block = NULL;
+static oconfig_item_t *config_block;
 
 /*
  * Prototypes
@@ -1009,9 +1009,8 @@ static int jtoc_values_array(JNIEnv *jvm_env, /* {{{ */
   jobjectArray o_number_array;
 
   value_t *values;
-  int values_num;
 
-  values_num = ds->ds_num;
+  size_t values_num = ds->ds_num;
 
   values = NULL;
   o_number_array = NULL;
@@ -1058,13 +1057,13 @@ static int jtoc_values_array(JNIEnv *jvm_env, /* {{{ */
     BAIL_OUT(-1);
   }
 
-  values = (value_t *)calloc(values_num, sizeof(value_t));
+  values = calloc(values_num, sizeof(*values));
   if (values == NULL) {
     ERROR("java plugin: jtoc_values_array: calloc failed.");
     BAIL_OUT(-1);
   }
 
-  for (int i = 0; i < values_num; i++) {
+  for (size_t i = 0; i < values_num; i++) {
     jobject o_number;
     int status;
 
@@ -1072,7 +1071,7 @@ static int jtoc_values_array(JNIEnv *jvm_env, /* {{{ */
         (*jvm_env)->GetObjectArrayElement(jvm_env, o_number_array, (jsize)i);
     if (o_number == NULL) {
       ERROR("java plugin: jtoc_values_array: "
-            "GetObjectArrayElement (%i) failed.",
+            "GetObjectArrayElement (%zu) failed.",
             i);
       BAIL_OUT(-1);
     }
@@ -1080,7 +1079,7 @@ static int jtoc_values_array(JNIEnv *jvm_env, /* {{{ */
     status = jtoc_value(jvm_env, values + i, ds->ds[i].type, o_number);
     if (status != 0) {
       ERROR("java plugin: jtoc_values_array: "
-            "jtoc_value (%i) failed.",
+            "jtoc_value (%zu) failed.",
             i);
       BAIL_OUT(-1);
     }
@@ -1307,7 +1306,8 @@ static jint JNICALL cjni_api_register_read(JNIEnv *jvm_env, /* {{{ */
       /* group = */ NULL, cbi->name, cjni_read,
       /* interval = */ 0,
       &(user_data_t){
-          .data = cbi, .free_func = cjni_callback_info_destroy,
+          .data = cbi,
+          .free_func = cjni_callback_info_destroy,
       });
 
   (*jvm_env)->DeleteLocalRef(jvm_env, o_read);
@@ -1326,11 +1326,11 @@ static jint JNICALL cjni_api_register_write(JNIEnv *jvm_env, /* {{{ */
 
   DEBUG("java plugin: Registering new write callback: %s", cbi->name);
 
-  plugin_register_write(
-      cbi->name, cjni_write,
-      &(user_data_t){
-          .data = cbi, .free_func = cjni_callback_info_destroy,
-      });
+  plugin_register_write(cbi->name, cjni_write,
+                        &(user_data_t){
+                            .data = cbi,
+                            .free_func = cjni_callback_info_destroy,
+                        });
 
   (*jvm_env)->DeleteLocalRef(jvm_env, o_write);
 
@@ -1348,11 +1348,11 @@ static jint JNICALL cjni_api_register_flush(JNIEnv *jvm_env, /* {{{ */
 
   DEBUG("java plugin: Registering new flush callback: %s", cbi->name);
 
-  plugin_register_flush(
-      cbi->name, cjni_flush,
-      &(user_data_t){
-          .data = cbi, .free_func = cjni_callback_info_destroy,
-      });
+  plugin_register_flush(cbi->name, cjni_flush,
+                        &(user_data_t){
+                            .data = cbi,
+                            .free_func = cjni_callback_info_destroy,
+                        });
 
   (*jvm_env)->DeleteLocalRef(jvm_env, o_flush);
 
@@ -1378,7 +1378,8 @@ static jint JNICALL cjni_api_register_log(JNIEnv *jvm_env, /* {{{ */
 
   plugin_register_log(cbi->name, cjni_log,
                       &(user_data_t){
-                          .data = cbi, .free_func = cjni_callback_info_destroy,
+                          .data = cbi,
+                          .free_func = cjni_callback_info_destroy,
                       });
 
   (*jvm_env)->DeleteLocalRef(jvm_env, o_log);
@@ -1398,11 +1399,11 @@ static jint JNICALL cjni_api_register_notification(JNIEnv *jvm_env, /* {{{ */
 
   DEBUG("java plugin: Registering new notification callback: %s", cbi->name);
 
-  plugin_register_notification(
-      cbi->name, cjni_notification,
-      &(user_data_t){
-          .data = cbi, .free_func = cjni_callback_info_destroy,
-      });
+  plugin_register_notification(cbi->name, cjni_notification,
+                               &(user_data_t){
+                                   .data = cbi,
+                                   .free_func = cjni_callback_info_destroy,
+                               });
 
   (*jvm_env)->DeleteLocalRef(jvm_env, o_notification);
 
@@ -1544,16 +1545,19 @@ static JNINativeMethod jni_api_functions[] = /* {{{ */
          "(Ljava/lang/String;Lorg/collectd/api/CollectdLogInterface;)I",
          cjni_api_register_log},
 
-        {"registerNotification", "(Ljava/lang/String;Lorg/collectd/api/"
-                                 "CollectdNotificationInterface;)I",
+        {"registerNotification",
+         "(Ljava/lang/String;Lorg/collectd/api/"
+         "CollectdNotificationInterface;)I",
          cjni_api_register_notification},
 
-        {"registerMatch", "(Ljava/lang/String;Lorg/collectd/api/"
-                          "CollectdMatchFactoryInterface;)I",
+        {"registerMatch",
+         "(Ljava/lang/String;Lorg/collectd/api/"
+         "CollectdMatchFactoryInterface;)I",
          cjni_api_register_match},
 
-        {"registerTarget", "(Ljava/lang/String;Lorg/collectd/api/"
-                           "CollectdTargetFactoryInterface;)I",
+        {"registerTarget",
+         "(Ljava/lang/String;Lorg/collectd/api/"
+         "CollectdTargetFactoryInterface;)I",
          cjni_api_register_target},
 
         {"log", "(ILjava/lang/String;)V", cjni_api_log},
@@ -1840,7 +1844,8 @@ static int cjni_create_jvm(void) /* {{{ */
   vm_args.nOptions = (jint)jvm_argc;
 
   for (size_t i = 0; i < jvm_argc; i++) {
-    DEBUG("java plugin: cjni_create_jvm: jvm_argv[%zu] = %s", i, jvm_argv[i]);
+    DEBUG("java plugin: cjni_create_jvm: jvm_argv[%" PRIsz "] = %s", i,
+          jvm_argv[i]);
     vm_args.options[i].optionString = jvm_argv[i];
   }
 
@@ -2071,7 +2076,7 @@ static int cjni_config_load_plugin(oconfig_item_t *ci) /* {{{ */
     class->object = NULL;
   if (class->object == NULL) {
     ERROR("java plugin: cjni_config_load_plugin: "
-          "Could create a new `%s' object.",
+          "Could not create a new `%s' object.",
           class->name);
     cjni_thread_detach();
     free(class->name);
@@ -2183,8 +2188,9 @@ static int cjni_config_perform(oconfig_item_t *ci) /* {{{ */
     }
   }
 
-  DEBUG("java plugin: jvm_argc = %zu;", jvm_argc);
-  DEBUG("java plugin: java_classes_list_len = %zu;", java_classes_list_len);
+  DEBUG("java plugin: jvm_argc = %" PRIsz ";", jvm_argc);
+  DEBUG("java plugin: java_classes_list_len = %" PRIsz ";",
+        java_classes_list_len);
 
   if ((success == 0) && (errors > 0)) {
     ERROR("java plugin: All statements failed.");

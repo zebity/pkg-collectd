@@ -33,20 +33,11 @@
 /* do not automatically get the thread specific Perl interpreter */
 #define PERL_NO_GET_CONTEXT
 
-#define DONT_POISON_SPRINTF_YET 1
 #include "collectd.h"
-
-#undef DONT_POISON_SPRINTF_YET
-
 #include <stdbool.h>
 
 #include <EXTERN.h>
 #include <perl.h>
-
-#if defined(COLLECT_DEBUG) && COLLECT_DEBUG && defined(__GNUC__) && __GNUC__
-#undef sprintf
-#pragma GCC poison sprintf
-#endif
 
 #include <XSUB.h>
 
@@ -56,8 +47,8 @@
 #endif /* DEBUG */
 
 /* ... while we want the definition found in plugin.h. */
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include "filter_chain.h"
 
@@ -138,8 +129,8 @@ static int perl_flush(cdtime_t timeout, const char *identifier,
 typedef struct c_ithread_s {
   /* the thread's Perl interpreter */
   PerlInterpreter *interp;
-  _Bool running; /* thread is inside Perl interpreter */
-  _Bool shutdown;
+  bool running; /* thread is inside Perl interpreter */
+  bool shutdown;
   pthread_t pthread;
 
   /* double linked list of threads */
@@ -183,17 +174,17 @@ extern char **environ;
  * private variables
  */
 
-static _Bool register_legacy_flush = 1;
+static bool register_legacy_flush = true;
 
 /* if perl_threads != NULL perl_threads->head must
  * point to the "base" thread */
-static c_ithread_list_t *perl_threads = NULL;
+static c_ithread_list_t *perl_threads;
 
 /* the key used to store each pthread's ithread */
 static pthread_key_t perl_thr_key;
 
-static int perl_argc = 0;
-static char **perl_argv = NULL;
+static int perl_argc;
+static char **perl_argv;
 
 static char base_name[DATA_MAX_NAME_LEN] = "";
 
@@ -331,12 +322,12 @@ static size_t av2value(pTHX_ char *name, AV *array, value_t *value,
 
   if (array_len < ds->ds_num) {
     log_warn("av2value: array does not contain enough elements for type "
-             "\"%s\": got %zu, want %zu",
+             "\"%s\": got %" PRIsz ", want %" PRIsz,
              name, array_len, ds->ds_num);
     return 0;
   } else if (array_len > ds->ds_num) {
     log_warn("av2value: array contains excess elements for type \"%s\": got "
-             "%zu, want %zu",
+             "%" PRIsz ", want %" PRIsz,
              name, array_len, ds->ds_num);
   }
 
@@ -872,9 +863,9 @@ static int oconfig_item2hv(pTHX_ oconfig_item_t *ci, HV *hash) {
 static char *get_module_name(char *buf, size_t buf_len, const char *module) {
   int status = 0;
   if (base_name[0] == '\0')
-    status = snprintf(buf, buf_len, "%s", module);
+    status = ssnprintf(buf, buf_len, "%s", module);
   else
-    status = snprintf(buf, buf_len, "%s::%s", base_name, module);
+    status = ssnprintf(buf, buf_len, "%s::%s", base_name, module);
   if ((status < 0) || ((unsigned int)status >= buf_len))
     return NULL;
   return buf;
@@ -981,7 +972,7 @@ static int pplugin_dispatch_notification(pTHX_ HV *notif) {
  * Call perl sub with thread locking flags handled.
  */
 static int call_pv_locked(pTHX_ const char *sub_name) {
-  _Bool old_running;
+  bool old_running;
   int ret;
 
   c_ithread_t *t = (c_ithread_t *)pthread_getspecific(perl_thr_key);
@@ -989,7 +980,7 @@ static int call_pv_locked(pTHX_ const char *sub_name) {
     return 0;
 
   old_running = t->running;
-  t->running = 1;
+  t->running = true;
 
   if (t->shutdown) {
     t->running = old_running;
@@ -1189,7 +1180,7 @@ static void c_ithread_destroy(c_ithread_t *ithread) {
   /* Mark as running to avoid deadlock:
      c_ithread_destroy -> log_debug -> perl_log()
   */
-  ithread->running = 1;
+  ithread->running = true;
   log_debug("Shutting down Perl interpreter %p...", aTHX);
 
 #if COLLECT_DEBUG
@@ -1275,8 +1266,8 @@ static c_ithread_t *c_ithread_create(PerlInterpreter *base) {
   }
 
   t->pthread = pthread_self();
-  t->running = 0;
-  t->shutdown = 0;
+  t->running = false;
+  t->shutdown = false;
   perl_threads->tail = t;
 
   pthread_setspecific(perl_thr_key, (const void *)t);
@@ -2274,7 +2265,7 @@ static int perl_shutdown(void) {
      * the thread as this will free the memory */
     t = t->prev;
 
-    thr->shutdown = 1;
+    thr->shutdown = true;
     if (thr->running) {
       /* Give some time to thread to exit from Perl interpreter */
       WARNING("perl shutdown: Thread is running inside Perl. Waiting.");

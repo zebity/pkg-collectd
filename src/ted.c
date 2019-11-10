@@ -36,8 +36,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if HAVE_TERMIOS_H && HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -53,8 +53,8 @@
 
 #define DEFAULT_DEVICE "/dev/ttyUSB0"
 
-static char *conf_device = NULL;
-static int conf_retries = 0;
+static char *conf_device;
+static int conf_retries;
 
 static int fd = -1;
 
@@ -109,19 +109,15 @@ static int ted_read_value(double *ret_power, double *ret_voltage) {
       /* Some signal or something. Start over.. */
       continue;
     } else if (status < 0) {
-      char errbuf[1024];
-      ERROR("ted plugin: select failed: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("ted plugin: select failed: %s", STRERRNO);
       return -1;
     }
 
     receive_buffer_length = read(fd, receive_buffer, sizeof(receive_buffer));
     if (receive_buffer_length < 0) {
-      char errbuf[1024];
       if ((errno == EAGAIN) || (errno == EINTR))
         continue;
-      ERROR("ted plugin: read(2) failed: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("ted plugin: read(2) failed: %s", STRERRNO);
       return -1;
     } else if (receive_buffer_length == 0) {
       /* Should we close the FD in this case? */
@@ -247,7 +243,7 @@ static int ted_config(const char *key, const char *value) {
 
     tmp = atoi(value);
     if (tmp < 0) {
-      WARNING("ted plugin: Invalid retry count: %i", tmp);
+      ERROR("ted plugin: Invalid retry count: %i", tmp);
       return 1;
     }
     conf_retries = tmp;

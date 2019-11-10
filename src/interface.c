@@ -24,9 +24,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_ignorelist.h"
+#include "utils/common/common.h"
+#include "utils/ignorelist/ignorelist.h"
 
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -82,13 +82,15 @@ static int pnif;
  * (Module-)Global variables
  */
 static const char *config_keys[] = {
-    "Interface", "IgnoreSelected", "ReportInactive",
+    "Interface",
+    "IgnoreSelected",
+    "ReportInactive",
 };
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static ignorelist_t *ignorelist = NULL;
+static ignorelist_t *ignorelist;
 
-static _Bool report_inactive = 1;
+static bool report_inactive = true;
 
 #ifdef HAVE_LIBKSTAT
 #if HAVE_KSTAT_H
@@ -97,8 +99,8 @@ static _Bool report_inactive = 1;
 #define MAX_NUMIF 256
 extern kstat_ctl_t *kc;
 static kstat_t *ksp[MAX_NUMIF];
-static int numif = 0;
-static _Bool unique_name = 0;
+static int numif;
+static bool unique_name;
 #endif /* HAVE_LIBKSTAT */
 
 static int interface_config(const char *key, const char *value) {
@@ -117,7 +119,7 @@ static int interface_config(const char *key, const char *value) {
   else if (strcasecmp(key, "UniqueName") == 0) {
 #ifdef HAVE_LIBKSTAT
     if (IS_TRUE(value))
-      unique_name = 1;
+      unique_name = true;
 #else
     WARNING("interface plugin: the \"UniqueName\" option is only valid on "
             "Solaris.");
@@ -160,7 +162,8 @@ static void if_submit(const char *dev, const char *type, derive_t rx,
                       derive_t tx) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = rx}, {.derive = tx},
+      {.derive = rx},
+      {.derive = tx},
   };
 
   if (ignorelist_match(ignorelist, dev) != 0)
@@ -188,7 +191,7 @@ static int interface_read(void) {
 #define IFA_TX_PACKT ifi_opackets
 #define IFA_RX_ERROR ifi_ierrors
 #define IFA_TX_ERROR ifi_oerrors
-/* #endif HAVE_STRUCT_IF_DATA */
+  /* #endif HAVE_STRUCT_IF_DATA */
 
 #elif HAVE_STRUCT_NET_DEVICE_STATS
 #define IFA_DATA net_device_stats
@@ -226,7 +229,7 @@ static int interface_read(void) {
   }
 
   freeifaddrs(if_list);
-/* #endif HAVE_GETIFADDRS */
+  /* #endif HAVE_GETIFADDRS */
 
 #elif KERNEL_LINUX
   FILE *fh;
@@ -239,9 +242,7 @@ static int interface_read(void) {
   int numfields;
 
   if ((fh = fopen("/proc/net/dev", "r")) == NULL) {
-    char errbuf[1024];
-    WARNING("interface plugin: fopen: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("interface plugin: fopen: %s", STRERRNO);
     return -1;
   }
 
@@ -284,7 +285,7 @@ static int interface_read(void) {
   }
 
   fclose(fh);
-/* #endif KERNEL_LINUX */
+  /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
   derive_t rx;
@@ -299,8 +300,8 @@ static int interface_read(void) {
       continue;
 
     if (unique_name)
-      snprintf(iname, sizeof(iname), "%s_%d_%s", ksp[i]->ks_module,
-               ksp[i]->ks_instance, ksp[i]->ks_name);
+      ssnprintf(iname, sizeof(iname), "%s_%d_%s", ksp[i]->ks_module,
+                ksp[i]->ks_instance, ksp[i]->ks_name);
     else
       sstrncpy(iname, ksp[i]->ks_name, sizeof(iname));
 
@@ -334,7 +335,7 @@ static int interface_read(void) {
     if ((rx != -1LL) || (tx != -1LL))
       if_submit(iname, "if_errors", rx, tx);
   }
-/* #endif HAVE_LIBKSTAT */
+    /* #endif HAVE_LIBKSTAT */
 
 #elif defined(HAVE_LIBSTATGRAB)
   sg_network_io_stats *ios;
@@ -347,7 +348,7 @@ static int interface_read(void) {
       continue;
     if_submit(ios[i].interface_name, "if_octets", ios[i].rx, ios[i].tx);
   }
-/* #endif HAVE_LIBSTATGRAB */
+    /* #endif HAVE_LIBSTATGRAB */
 
 #elif defined(HAVE_PERFSTAT)
   perfstat_id_t id;
@@ -355,9 +356,7 @@ static int interface_read(void) {
 
   if ((nif = perfstat_netinterface(NULL, NULL, sizeof(perfstat_netinterface_t),
                                    0)) < 0) {
-    char errbuf[1024];
-    WARNING("interface plugin: perfstat_netinterface: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("interface plugin: perfstat_netinterface: %s", STRERRNO);
     return -1;
   }
 
@@ -370,9 +369,8 @@ static int interface_read(void) {
   id.name[0] = '\0';
   if ((ifs = perfstat_netinterface(&id, ifstat, sizeof(perfstat_netinterface_t),
                                    nif)) < 0) {
-    char errbuf[1024];
     WARNING("interface plugin: perfstat_netinterface (interfaces=%d): %s", nif,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+            STRERRNO);
     return -1;
   }
 

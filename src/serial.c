@@ -23,8 +23,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if !KERNEL_LINUX
 #error "No applicable input method."
@@ -33,7 +33,8 @@
 static void serial_submit(const char *type_instance, derive_t rx, derive_t tx) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = rx}, {.derive = tx},
+      {.derive = rx},
+      {.derive = tx},
   };
 
   vl.values = values;
@@ -52,15 +53,15 @@ static int serial_read(void) {
   /* there are a variety of names for the serial device */
   if ((fh = fopen("/proc/tty/driver/serial", "r")) == NULL &&
       (fh = fopen("/proc/tty/driver/ttyS", "r")) == NULL) {
-    char errbuf[1024];
-    WARNING("serial: fopen: %s", sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("serial: fopen: %s", STRERRNO);
     return -1;
   }
 
   while (fgets(buffer, sizeof(buffer), fh) != NULL) {
     derive_t rx = 0;
     derive_t tx = 0;
-    _Bool have_rx = 0, have_tx = 0;
+    bool have_rx = false;
+    bool have_tx = false;
     size_t len;
 
     char *fields[16];
@@ -79,7 +80,7 @@ static int serial_read(void) {
       continue;
     if (fields[0][len - 1] != ':')
       continue;
-    fields[0][len - 1] = 0;
+    fields[0][len - 1] = '\0';
 
     for (int i = 1; i < numfields; i++) {
       len = strlen(fields[i]);
@@ -88,10 +89,10 @@ static int serial_read(void) {
 
       if (strncmp(fields[i], "tx:", 3) == 0) {
         if (strtoderive(fields[i] + 3, &tx) == 0)
-          have_tx = 1;
+          have_tx = true;
       } else if (strncmp(fields[i], "rx:", 3) == 0) {
         if (strtoderive(fields[i] + 3, &rx) == 0)
-          have_rx = 1;
+          have_rx = true;
       }
     }
 

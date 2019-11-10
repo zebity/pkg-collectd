@@ -26,9 +26,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_avltree.h"
+#include "utils/avltree/avltree.h"
+#include "utils/common/common.h"
 
 #if HAVE_NETDB_H
 #include <netdb.h>
@@ -84,19 +84,19 @@ struct metric_map_s {
 typedef struct metric_map_s metric_map_t;
 
 #define MC_RECEIVE_GROUP_DEFAULT "239.2.11.71"
-static char *mc_receive_group = NULL;
+static char *mc_receive_group;
 #define MC_RECEIVE_PORT_DEFAULT "8649"
-static char *mc_receive_port = NULL;
+static char *mc_receive_port;
 
-static struct pollfd *mc_receive_sockets = NULL;
-static size_t mc_receive_sockets_num = 0;
+static struct pollfd *mc_receive_sockets;
+static size_t mc_receive_sockets_num;
 
-static socket_entry_t *mc_send_sockets = NULL;
-static size_t mc_send_sockets_num = 0;
+static socket_entry_t *mc_send_sockets;
+static size_t mc_send_sockets_num;
 static pthread_mutex_t mc_send_sockets_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static int mc_receive_thread_loop = 0;
-static int mc_receive_thread_running = 0;
+static int mc_receive_thread_loop;
+static int mc_receive_thread_running;
 static pthread_t mc_receive_thread_id;
 
 static metric_map_t metric_map_default[] =
@@ -122,8 +122,8 @@ static metric_map_t metric_map_default[] =
      {"pkts_out", "if_packets", "", "tx", -1, -1}};
 static size_t metric_map_len_default = STATIC_ARRAY_SIZE(metric_map_default);
 
-static metric_map_t *metric_map = NULL;
-static size_t metric_map_len = 0;
+static metric_map_t *metric_map;
+static size_t metric_map_len;
 
 static c_avl_tree_t *staging_tree;
 static pthread_mutex_t staging_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -217,12 +217,10 @@ static int create_sockets(socket_entry_t **ret_sockets, /* {{{ */
 
   ai_return = getaddrinfo(node, service, &ai_hints, &ai_list);
   if (ai_return != 0) {
-    char errbuf[1024];
     ERROR("gmond plugin: getaddrinfo (%s, %s) failed: %s",
           (node == NULL) ? "(null)" : node,
           (service == NULL) ? "(null)" : service,
-          (ai_return == EAI_SYSTEM) ? sstrerror(errno, errbuf, sizeof(errbuf))
-                                    : gai_strerror(ai_return));
+          (ai_return == EAI_SYSTEM) ? STRERRNO : gai_strerror(ai_return));
     return -1;
   }
 
@@ -241,9 +239,7 @@ static int create_sockets(socket_entry_t **ret_sockets, /* {{{ */
     sockets[sockets_num].fd =
         socket(ai_ptr->ai_family, ai_ptr->ai_socktype, ai_ptr->ai_protocol);
     if (sockets[sockets_num].fd < 0) {
-      char errbuf[1024];
-      ERROR("gmond plugin: socket failed: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("gmond plugin: socket failed: %s", STRERRNO);
       continue;
     }
 
@@ -256,22 +252,16 @@ static int create_sockets(socket_entry_t **ret_sockets, /* {{{ */
       sockets_num++;
       break;
     } else {
-      int yes = 1;
-
       status = setsockopt(sockets[sockets_num].fd, SOL_SOCKET, SO_REUSEADDR,
-                          (void *)&yes, sizeof(yes));
+                          &(int){1}, sizeof(int));
       if (status != 0) {
-        char errbuf[1024];
-        WARNING("gmond plugin: setsockopt(2) failed: %s",
-                sstrerror(errno, errbuf, sizeof(errbuf)));
+        WARNING("gmond plugin: setsockopt(2) failed: %s", STRERRNO);
       }
     }
 
     status = bind(sockets[sockets_num].fd, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
     if (status != 0) {
-      char errbuf[1024];
-      ERROR("gmond plugin: bind failed: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("gmond plugin: bind failed: %s", STRERRNO);
       close(sockets[sockets_num].fd);
       continue;
     }
@@ -291,9 +281,7 @@ static int create_sockets(socket_entry_t **ret_sockets, /* {{{ */
       status = setsockopt(sockets[sockets_num].fd, IPPROTO_IP,
                           IP_MULTICAST_LOOP, (void *)&loop, sizeof(loop));
       if (status != 0) {
-        char errbuf[1024];
-        WARNING("gmond plugin: setsockopt(2) failed: %s",
-                sstrerror(errno, errbuf, sizeof(errbuf)));
+        WARNING("gmond plugin: setsockopt(2) failed: %s", STRERRNO);
       }
 
       struct ip_mreq mreq = {.imr_multiaddr.s_addr = addr->sin_addr.s_addr,
@@ -302,9 +290,7 @@ static int create_sockets(socket_entry_t **ret_sockets, /* {{{ */
       status = setsockopt(sockets[sockets_num].fd, IPPROTO_IP,
                           IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq));
       if (status != 0) {
-        char errbuf[1024];
-        WARNING("gmond plugin: setsockopt(2) failed: %s",
-                sstrerror(errno, errbuf, sizeof(errbuf)));
+        WARNING("gmond plugin: setsockopt(2) failed: %s", STRERRNO);
       }
     } /* if (ai_ptr->ai_family == AF_INET) */
     else if (ai_ptr->ai_family == AF_INET6) {
@@ -322,9 +308,7 @@ static int create_sockets(socket_entry_t **ret_sockets, /* {{{ */
       status = setsockopt(sockets[sockets_num].fd, IPPROTO_IPV6,
                           IPV6_MULTICAST_LOOP, (void *)&loop, sizeof(loop));
       if (status != 0) {
-        char errbuf[1024];
-        WARNING("gmond plugin: setsockopt(2) failed: %s",
-                sstrerror(errno, errbuf, sizeof(errbuf)));
+        WARNING("gmond plugin: setsockopt(2) failed: %s", STRERRNO);
       }
 
       struct ipv6_mreq mreq = {
@@ -335,9 +319,7 @@ static int create_sockets(socket_entry_t **ret_sockets, /* {{{ */
       status = setsockopt(sockets[sockets_num].fd, IPPROTO_IPV6,
                           IPV6_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq));
       if (status != 0) {
-        char errbuf[1024];
-        WARNING("gmond plugin: setsockopt(2) failed: %s",
-                sstrerror(errno, errbuf, sizeof(errbuf)));
+        WARNING("gmond plugin: setsockopt(2) failed: %s", STRERRNO);
       }
     } /* if (ai_ptr->ai_family == AF_INET6) */
 
@@ -393,9 +375,7 @@ static int request_meta_data(const char *host, const char *name) /* {{{ */
                /* flags = */ 0, (struct sockaddr *)&mc_send_sockets[i].addr,
                mc_send_sockets[i].addrlen);
     if (status == -1) {
-      char errbuf[1024];
-      ERROR("gmond plugin: sendto(2) failed: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("gmond plugin: sendto(2) failed: %s", STRERRNO);
       continue;
     }
   }
@@ -417,8 +397,8 @@ static staging_entry_t *staging_entry_get(const char *host, /* {{{ */
   if (staging_tree == NULL)
     return NULL;
 
-  snprintf(key, sizeof(key), "%s/%s/%s", host, type,
-           (type_instance != NULL) ? type_instance : "");
+  ssnprintf(key, sizeof(key), "%s/%s/%s", host, type,
+            (type_instance != NULL) ? type_instance : "");
 
   se = NULL;
   status = c_avl_get(staging_tree, key, (void *)&se);
@@ -433,7 +413,7 @@ static staging_entry_t *staging_entry_get(const char *host, /* {{{ */
   sstrncpy(se->key, key, sizeof(se->key));
   se->flags = 0;
 
-  se->vl.values = (value_t *)calloc(values_len, sizeof(*se->vl.values));
+  se->vl.values = calloc(values_len, sizeof(*se->vl.values));
   if (se->vl.values == NULL) {
     sfree(se);
     return NULL;
@@ -472,7 +452,8 @@ static int staging_entry_update(const char *host, const char *name, /* {{{ */
   }
 
   if (ds->ds_num <= ds_index) {
-    ERROR("gmond plugin: Invalid index %zu: %s has only %zu data source(s).",
+    ERROR("gmond plugin: Invalid index %" PRIsz ": %s has only %" PRIsz
+          " data source(s).",
           ds_index, ds->type, ds->ds_num);
     return -1;
   }
@@ -737,9 +718,7 @@ static int mc_handle_socket(struct pollfd *p) /* {{{ */
 
   buffer_size = recv(p->fd, buffer, sizeof(buffer), /* flags = */ 0);
   if (buffer_size <= 0) {
-    char errbuf[1024];
-    ERROR("gmond plugin: recv failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("gmond plugin: recv failed: %s", STRERRNO);
     p->revents = 0;
     return -1;
   }
@@ -764,8 +743,8 @@ static void *mc_receive_thread(void *arg) /* {{{ */
     return (void *)-1;
   }
 
-  mc_receive_sockets = (struct pollfd *)calloc(mc_receive_sockets_num,
-                                               sizeof(*mc_receive_sockets));
+  mc_receive_sockets =
+      calloc(mc_receive_sockets_num, sizeof(*mc_receive_sockets));
   if (mc_receive_sockets == NULL) {
     ERROR("gmond plugin: calloc failed.");
     for (size_t i = 0; i < mc_receive_sockets_num; i++)
@@ -785,11 +764,9 @@ static void *mc_receive_thread(void *arg) /* {{{ */
   while (mc_receive_thread_loop != 0) {
     status = poll(mc_receive_sockets, mc_receive_sockets_num, -1);
     if (status <= 0) {
-      char errbuf[1024];
       if (errno == EINTR)
         continue;
-      ERROR("gmond plugin: poll failed: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("gmond plugin: poll failed: %s", STRERRNO);
       break;
     }
 
@@ -854,28 +831,6 @@ static int mc_receive_thread_stop(void) /* {{{ */
  *   </Metric>
  * </Plugin>
  */
-static int gmond_config_set_string(oconfig_item_t *ci, char **str) /* {{{ */
-{
-  char *tmp;
-
-  if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_STRING)) {
-    WARNING("gmond plugin: The `%s' option needs "
-            "exactly one string argument.",
-            ci->key);
-    return -1;
-  }
-
-  tmp = strdup(ci->values[0].value.string);
-  if (tmp == NULL) {
-    ERROR("gmond plugin: strdup failed.");
-    return -1;
-  }
-
-  sfree(*str);
-  *str = tmp;
-  return 0;
-} /* }}} int gmond_config_set_string */
-
 static int gmond_config_add_metric(oconfig_item_t *ci) /* {{{ */
 {
   metric_map_t *map;
@@ -910,11 +865,11 @@ static int gmond_config_add_metric(oconfig_item_t *ci) /* {{{ */
   for (int i = 0; i < ci->children_num; i++) {
     oconfig_item_t *child = ci->children + i;
     if (strcasecmp("Type", child->key) == 0)
-      gmond_config_set_string(child, &map->type);
+      cf_util_get_string(child, &map->type);
     else if (strcasecmp("TypeInstance", child->key) == 0)
-      gmond_config_set_string(child, &map->type_instance);
+      cf_util_get_string(child, &map->type_instance);
     else if (strcasecmp("DataSource", child->key) == 0)
-      gmond_config_set_string(child, &map->ds_name);
+      cf_util_get_string(child, &map->ds_name);
     else {
       WARNING("gmond plugin: Unknown configuration option `%s' ignored.",
               child->key);

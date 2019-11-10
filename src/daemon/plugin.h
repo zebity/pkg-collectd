@@ -31,9 +31,10 @@
 #include "collectd.h"
 
 #include "configfile.h"
-#include "meta_data.h"
+#include "utils/metadata/meta_data.h"
 #include "utils_time.h"
 
+#include <inttypes.h>
 #include <pthread.h>
 
 #define DS_TYPE_COUNTER 0
@@ -147,7 +148,7 @@ typedef struct notification_meta_s {
     int64_t nm_signed_int;
     uint64_t nm_unsigned_int;
     double nm_double;
-    _Bool nm_boolean;
+    bool nm_boolean;
   } nm_value;
   struct notification_meta_s *next;
 } notification_meta_t;
@@ -170,7 +171,17 @@ struct user_data_s {
 };
 typedef struct user_data_s user_data_t;
 
+enum cache_event_type_e { CE_VALUE_NEW, CE_VALUE_UPDATE, CE_VALUE_EXPIRED };
+
+typedef struct cache_event_s {
+  enum cache_event_type_e type;
+  const value_list_t *value_list;
+  const char *value_list_name;
+  int ret;
+} cache_event_t;
+
 struct plugin_ctx_s {
+  char *name;
   cdtime_t interval;
   cdtime_t flush_interval;
   cdtime_t flush_timeout;
@@ -190,6 +201,11 @@ typedef int (*plugin_flush_cb)(cdtime_t timeout, const char *identifier,
  * callbacks should be called, greater than zero if no more callbacks should be
  * called. */
 typedef int (*plugin_missing_cb)(const value_list_t *, user_data_t *);
+/* "cache event" callback. CE_VALUE_NEW events are sent to all registered
+ * callbacks. Callback should check if it interested in further CE_VALUE_UPDATE
+ * and CE_VALUE_EXPIRED events for metric and set event->ret = 1 if so.
+ */
+typedef int (*plugin_cache_event_cb)(cache_event_t *, user_data_t *);
 typedef void (*plugin_log_cb)(int severity, const char *message, user_data_t *);
 typedef int (*plugin_shutdown_cb)(void);
 typedef int (*plugin_notification_cb)(const notification_t *, user_data_t *);
@@ -230,7 +246,8 @@ void plugin_set_dir(const char *dir);
  *  Re-loading an already loaded module is detected and zero is returned in
  *  this case.
  */
-int plugin_load(const char *name, _Bool global);
+int plugin_load(const char *name, bool global);
+bool plugin_is_loaded(char const *name);
 
 int plugin_init_all(void);
 void plugin_read_all(void);
@@ -243,7 +260,7 @@ int plugin_shutdown_all(void);
  *
  * DESCRIPTION
  *  Calls the write function of the given plugin with the provided data set and
- *  value list. It differs from `plugin_dispatch_value' in that it does not
+ *  value list. It differs from `plugin_dispatch_values' in that it does not
  *  update the cache, does not do threshold checking, call the chain subsystem
  *  and so on. It looks up the requested plugin and invokes the function, end
  *  of story.
@@ -292,6 +309,9 @@ int plugin_register_flush(const char *name, plugin_flush_cb callback,
                           user_data_t const *user_data);
 int plugin_register_missing(const char *name, plugin_missing_cb callback,
                             user_data_t const *user_data);
+int plugin_register_cache_event(const char *name,
+                                plugin_cache_event_cb callback,
+                                user_data_t const *ud);
 int plugin_register_shutdown(const char *name, plugin_shutdown_cb callback);
 int plugin_register_data_set(const data_set_t *ds);
 int plugin_register_log(const char *name, plugin_log_cb callback,
@@ -308,6 +328,7 @@ int plugin_unregister_read_group(const char *group);
 int plugin_unregister_write(const char *name);
 int plugin_unregister_flush(const char *name);
 int plugin_unregister_missing(const char *name);
+int plugin_unregister_cache_event(const char *name);
 int plugin_unregister_shutdown(const char *name);
 int plugin_unregister_data_set(const char *name);
 int plugin_unregister_log(const char *name);
@@ -346,7 +367,7 @@ int plugin_dispatch_values(value_list_t const *vl);
  *  plugin_dispatch_multivalue
  *
  * SYNOPSIS
- *  plugin_dispatch_multivalue (vl, 1, DS_TYPE_GAUGE,
+ *  plugin_dispatch_multivalue (vl, true, DS_TYPE_GAUGE,
  *                              "free", 42.0,
  *                              "used", 58.0,
  *                              NULL);
@@ -374,10 +395,13 @@ int plugin_dispatch_values(value_list_t const *vl);
  *  The number of values it failed to dispatch (zero on success).
  */
 __attribute__((sentinel)) int plugin_dispatch_multivalue(value_list_t const *vl,
-                                                         _Bool store_percentage,
+                                                         bool store_percentage,
                                                          int store_type, ...);
 
 int plugin_dispatch_missing(const value_list_t *vl);
+void plugin_dispatch_cache_event(enum cache_event_type_e event_type,
+                                 unsigned long callbacks_mask, const char *name,
+                                 const value_list_t *vl);
 
 int plugin_dispatch_notification(const notification_t *notif);
 
@@ -398,6 +422,15 @@ int parse_notif_severity(const char *severity);
 #define DEBUG(...) /* noop */
 #endif             /* ! COLLECT_DEBUG */
 
+/* This will log messages, prefixed by plugin name */
+void daemon_log(int level, const char *format, ...)
+    __attribute__((format(printf, 2, 3)));
+
+#define P_ERROR(...) daemon_log(LOG_ERR, __VA_ARGS__)
+#define P_WARNING(...) daemon_log(LOG_WARNING, __VA_ARGS__)
+#define P_NOTICE(...) daemon_log(LOG_NOTICE, __VA_ARGS__)
+#define P_INFO(...) daemon_log(LOG_INFO, __VA_ARGS__)
+
 const data_set_t *plugin_get_ds(const char *name);
 
 int plugin_notification_meta_add_string(notification_t *n, const char *name,
@@ -409,7 +442,7 @@ int plugin_notification_meta_add_unsigned_int(notification_t *n,
 int plugin_notification_meta_add_double(notification_t *n, const char *name,
                                         double value);
 int plugin_notification_meta_add_boolean(notification_t *n, const char *name,
-                                         _Bool value);
+                                         bool value);
 
 int plugin_notification_meta_copy(notification_t *dst,
                                   const notification_t *src);

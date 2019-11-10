@@ -26,8 +26,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <curl/curl.h>
 #include <libxml/parser.h>
@@ -87,19 +87,19 @@ typedef struct player_info_s player_info_t;
 #define PLAYER_INFO_STATIC_INIT                                                \
   { -1, -1, -1, -1, -1 }
 
-static char *url = NULL;
-static char *user = NULL;
-static char *pass = NULL;
-static char *verify_peer = NULL;
-static char *verify_host = NULL;
-static char *cacert = NULL;
-static char *timeout = NULL;
+static char *url;
+static char *user;
+static char *pass;
+static char *verify_peer;
+static char *verify_host;
+static char *cacert;
+static char *timeout;
 
-static CURL *curl = NULL;
+static CURL *curl;
 
-static char *ascent_buffer = NULL;
-static size_t ascent_buffer_size = 0;
-static size_t ascent_buffer_fill = 0;
+static char *ascent_buffer;
+static size_t ascent_buffer_size;
+static size_t ascent_buffer_fill;
 static char ascent_curl_error[CURL_ERROR_SIZE];
 
 static const char *config_keys[] = {
@@ -499,8 +499,8 @@ static int ascent_init(void) /* {{{ */
     static char credentials[1024];
     int status;
 
-    status = snprintf(credentials, sizeof(credentials), "%s:%s", user,
-                      (pass == NULL) ? "" : pass);
+    status = ssnprintf(credentials, sizeof(credentials), "%s:%s", user,
+                       (pass == NULL) ? "" : pass);
     if ((status < 0) || ((size_t)status >= sizeof(credentials))) {
       ERROR("ascent plugin: ascent_init: Returning an error because the "
             "credentials have been truncated.");

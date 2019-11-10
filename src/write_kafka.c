@@ -26,11 +26,11 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_cmd_putval.h"
-#include "utils_format_graphite.h"
-#include "utils_format_json.h"
+#include "utils/cmds/putval.h"
+#include "utils/common/common.h"
+#include "utils/format_graphite/format_graphite.h"
+#include "utils/format_json/format_json.h"
 #include "utils_random.h"
 
 #include <errno.h>
@@ -43,7 +43,7 @@ struct kafka_topic_context {
 #define KAFKA_FORMAT_GRAPHITE 2
   uint8_t format;
   unsigned int graphite_flags;
-  _Bool store_rates;
+  bool store_rates;
   rd_kafka_topic_conf_t *conf;
   rd_kafka_topic_t *topic;
   rd_kafka_conf_t *kafka_conf;
@@ -97,7 +97,7 @@ static uint32_t kafka_hash(const char *keydata, size_t keylen) {
 #define KAFKA_RANDOM_KEY_BUFFER                                                \
   (char[KAFKA_RANDOM_KEY_SIZE]) { "" }
 static char *kafka_random_key(char buffer[static KAFKA_RANDOM_KEY_SIZE]) {
-  snprintf(buffer, KAFKA_RANDOM_KEY_SIZE, "%08" PRIX32, cdrand_u());
+  ssnprintf(buffer, KAFKA_RANDOM_KEY_SIZE, "%08" PRIX32, cdrand_u());
   return buffer;
 }
 
@@ -273,7 +273,7 @@ static void kafka_config_topic(rd_kafka_conf_t *conf,
   }
 
   tctx->escape_char = '.';
-  tctx->store_rates = 1;
+  tctx->store_rates = true;
   tctx->format = KAFKA_FORMAT_JSON;
   tctx->key = NULL;
 
@@ -383,6 +383,10 @@ static void kafka_config_topic(rd_kafka_conf_t *conf,
       status = cf_util_get_flag(child, &tctx->graphite_flags,
                                 GRAPHITE_PRESERVE_SEPARATOR);
 
+    } else if (strcasecmp("GraphiteUseTags", child->key) == 0) {
+      status =
+          cf_util_get_flag(child, &tctx->graphite_flags, GRAPHITE_USE_TAGS);
+
     } else if (strcasecmp("GraphitePrefix", child->key) == 0) {
       status = cf_util_get_string(child, &tctx->prefix);
     } else if (strcasecmp("GraphitePostfix", child->key) == 0) {
@@ -406,14 +410,14 @@ static void kafka_config_topic(rd_kafka_conf_t *conf,
   rd_kafka_topic_conf_set_partitioner_cb(tctx->conf, kafka_partition);
   rd_kafka_topic_conf_set_opaque(tctx->conf, tctx);
 
-  snprintf(callback_name, sizeof(callback_name), "write_kafka/%s",
-           tctx->topic_name);
+  ssnprintf(callback_name, sizeof(callback_name), "write_kafka/%s",
+            tctx->topic_name);
 
-  status = plugin_register_write(
-      callback_name, kafka_write,
-      &(user_data_t){
-          .data = tctx, .free_func = kafka_topic_context_free,
-      });
+  status = plugin_register_write(callback_name, kafka_write,
+                                 &(user_data_t){
+                                     .data = tctx,
+                                     .free_func = kafka_topic_context_free,
+                                 });
   if (status != 0) {
     WARNING("write_kafka plugin: plugin_register_write (\"%s\") "
             "failed with status %i.",

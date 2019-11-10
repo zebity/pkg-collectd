@@ -21,9 +21,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_ignorelist.h"
+#include "utils/common/common.h"
+#include "utils/ignorelist/ignorelist.h"
 
 #include <MicAccessApi.h>
 #include <MicAccessErrorTypes.h>
@@ -35,8 +35,8 @@
 #define MAX_CORES 256
 
 static MicDeviceOnSystem mics[MAX_MICS];
-static U32 num_mics = 0;
-static HANDLE mic_handle = NULL;
+static U32 num_mics;
+static HANDLE mic_handle;
 
 static int const therm_ids[] = {
     eMicThermalDie,  eMicThermalDevMem, eMicThermalFin, eMicThermalFout,
@@ -50,13 +50,13 @@ static const char *config_keys[] = {
     "ShowPower",        "Power",        "IgnoreSelectedPower"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static _Bool show_cpu = 1;
-static _Bool show_cpu_cores = 1;
-static _Bool show_memory = 1;
-static _Bool show_temps = 1;
-static ignorelist_t *temp_ignore = NULL;
-static _Bool show_power = 1;
-static ignorelist_t *power_ignore = NULL;
+static bool show_cpu = true;
+static bool show_cpu_cores = true;
+static bool show_memory = true;
+static bool show_temps = true;
+static ignorelist_t *temp_ignore;
+static bool show_power = true;
+static ignorelist_t *power_ignore;
 
 static int mic_init(void) {
   U32 ret;
@@ -132,7 +132,7 @@ static void mic_submit_memory_use(int micnumber, const char *type_instance,
   vl.values_len = 1;
 
   strncpy(vl.plugin, "mic", sizeof(vl.plugin));
-  snprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
+  ssnprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
   strncpy(vl.type, "memory", sizeof(vl.type));
   strncpy(vl.type_instance, type_instance, sizeof(vl.type_instance));
 
@@ -164,7 +164,7 @@ static void mic_submit_temp(int micnumber, const char *type, gauge_t value) {
   vl.values_len = 1;
 
   strncpy(vl.plugin, "mic", sizeof(vl.plugin));
-  snprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
+  ssnprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
   strncpy(vl.type, "temperature", sizeof(vl.type));
   strncpy(vl.type_instance, type, sizeof(vl.type_instance));
 
@@ -206,10 +206,10 @@ static void mic_submit_cpu(int micnumber, const char *type_instance, int core,
 
   strncpy(vl.plugin, "mic", sizeof(vl.plugin));
   if (core < 0) /* global aggregation */
-    snprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
+    ssnprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
   else /* per-core statistics */
-    snprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i-cpu-%i",
-             micnumber, core);
+    ssnprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i-cpu-%i",
+              micnumber, core);
   strncpy(vl.type, "cpu", sizeof(vl.type));
   strncpy(vl.type_instance, type_instance, sizeof(vl.type_instance));
 
@@ -258,7 +258,7 @@ static void mic_submit_power(int micnumber, const char *type,
   vl.values_len = 1;
 
   strncpy(vl.plugin, "mic", sizeof(vl.plugin));
-  snprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
+  ssnprintf(vl.plugin_instance, sizeof(vl.plugin_instance), "%i", micnumber);
   strncpy(vl.type, type, sizeof(vl.type));
   strncpy(vl.type_instance, type_instance, sizeof(vl.type_instance));
 

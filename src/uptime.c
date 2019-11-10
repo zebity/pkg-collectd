@@ -21,8 +21,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if KERNEL_LINUX
 #include <sys/sysinfo.h>
@@ -52,6 +52,7 @@
 /*
  * Global variables
  */
+
 #if HAVE_KSTAT_H
 #include <kstat.h>
 #endif
@@ -90,14 +91,12 @@ static time_t uptime_get_sys(void) { /* {{{ */
 
   status = sysinfo(&info);
   if (status != 0) {
-    char errbuf[1024];
-    ERROR("uptime plugin: Error calling sysinfo: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("uptime plugin: Error calling sysinfo: %s", STRERRNO);
     return -1;
   }
 
   result = (time_t)info.uptime;
-/* #endif KERNEL_LINUX */
+  /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
   kstat_t *ksp;
@@ -137,7 +136,7 @@ static time_t uptime_get_sys(void) { /* {{{ */
   }
 
   result = time(NULL) - (time_t)knp->value.ui32;
-/* #endif HAVE_LIBKSTAT */
+  /* #endif HAVE_LIBKSTAT */
 
 #elif HAVE_SYS_SYSCTL_H
   struct timeval boottv = {0};
@@ -151,9 +150,7 @@ static time_t uptime_get_sys(void) { /* {{{ */
   status = sysctl(mib, STATIC_ARRAY_SIZE(mib), &boottv, &boottv_len,
                   /* new_value = */ NULL, /* new_length = */ 0);
   if (status != 0) {
-    char errbuf[1024];
-    ERROR("uptime plugin: No value read from sysctl interface: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("uptime plugin: No value read from sysctl interface: %s", STRERRNO);
     return -1;
   }
 
@@ -164,7 +161,7 @@ static time_t uptime_get_sys(void) { /* {{{ */
   }
 
   result = time(NULL) - boottv.tv_sec;
-/* #endif HAVE_SYS_SYSCTL_H */
+  /* #endif HAVE_SYS_SYSCTL_H */
 
 #elif HAVE_PERFSTAT
   int status;
@@ -173,9 +170,7 @@ static time_t uptime_get_sys(void) { /* {{{ */
 
   status = perfstat_cpu_total(NULL, &cputotal, sizeof(perfstat_cpu_total_t), 1);
   if (status < 0) {
-    char errbuf[1024];
-    ERROR("uptime plugin: perfstat_cpu_total: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("uptime plugin: perfstat_cpu_total: %s", STRERRNO);
     return -1;
   }
 

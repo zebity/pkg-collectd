@@ -28,8 +28,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
-#include "utils_ignorelist.h"
+#include "utils/common/common.h"
+#include "utils/ignorelist/ignorelist.h"
 
 #include <netapp_api.h>
 #include <netapp_errno.h>
@@ -643,7 +643,8 @@ static int submit_two_derive(const char *host,
                              derive_t val0, derive_t val1, cdtime_t timestamp,
                              cdtime_t interval) {
   value_t values[] = {
-      {.derive = val0}, {.derive = val1},
+      {.derive = val0},
+      {.derive = val1},
   };
 
   return submit_values(host, plugin_inst, type, type_inst, values,
@@ -666,7 +667,8 @@ static int submit_two_gauge(const char *host, const char *plugin_inst, /* {{{ */
                             gauge_t val0, gauge_t val1, cdtime_t timestamp,
                             cdtime_t interval) {
   value_t values[] = {
-      {.gauge = val0}, {.gauge = val1},
+      {.gauge = val0},
+      {.gauge = val1},
   };
 
   return submit_values(host, plugin_inst, type, type_inst, values,
@@ -773,14 +775,13 @@ static int submit_volume_perf_data(const char *hostname, /* {{{ */
   if ((hostname == NULL) || (old_data == NULL) || (new_data == NULL))
     return -1;
 
-  snprintf(plugin_instance, sizeof(plugin_instance), "volume-%s",
-           old_data->name);
+  ssnprintf(plugin_instance, sizeof(plugin_instance), "volume-%s",
+            old_data->name);
 
   /* Check for and submit disk-octet values */
   if (HAS_ALL_FLAGS(old_data->flags, CFG_VOLUME_PERF_IO) &&
-      HAS_ALL_FLAGS(new_data->flags,
-                    HAVE_VOLUME_PERF_BYTES_READ |
-                        HAVE_VOLUME_PERF_BYTES_WRITE)) {
+      HAS_ALL_FLAGS(new_data->flags, HAVE_VOLUME_PERF_BYTES_READ |
+                                         HAVE_VOLUME_PERF_BYTES_WRITE)) {
     submit_two_derive(
         hostname, plugin_instance, "disk_octets", /* type instance = */ NULL,
         (derive_t)new_data->read_bytes, (derive_t)new_data->write_bytes,
@@ -798,15 +799,15 @@ static int submit_volume_perf_data(const char *hostname, /* {{{ */
   }
 
   /* Check for, calculate and submit disk-latency values */
-  if (HAS_ALL_FLAGS(old_data->flags,
-                    CFG_VOLUME_PERF_LATENCY | HAVE_VOLUME_PERF_OPS_READ |
-                        HAVE_VOLUME_PERF_OPS_WRITE |
-                        HAVE_VOLUME_PERF_LATENCY_READ |
-                        HAVE_VOLUME_PERF_LATENCY_WRITE) &&
-      HAS_ALL_FLAGS(new_data->flags,
-                    HAVE_VOLUME_PERF_OPS_READ | HAVE_VOLUME_PERF_OPS_WRITE |
-                        HAVE_VOLUME_PERF_LATENCY_READ |
-                        HAVE_VOLUME_PERF_LATENCY_WRITE)) {
+  if (HAS_ALL_FLAGS(old_data->flags, CFG_VOLUME_PERF_LATENCY |
+                                         HAVE_VOLUME_PERF_OPS_READ |
+                                         HAVE_VOLUME_PERF_OPS_WRITE |
+                                         HAVE_VOLUME_PERF_LATENCY_READ |
+                                         HAVE_VOLUME_PERF_LATENCY_WRITE) &&
+      HAS_ALL_FLAGS(new_data->flags, HAVE_VOLUME_PERF_OPS_READ |
+                                         HAVE_VOLUME_PERF_OPS_WRITE |
+                                         HAVE_VOLUME_PERF_LATENCY_READ |
+                                         HAVE_VOLUME_PERF_LATENCY_WRITE)) {
     gauge_t latency_per_op_read;
     gauge_t latency_per_op_write;
 
@@ -1404,11 +1405,10 @@ static int cna_submit_volume_usage_data(const char *hostname, /* {{{ */
     uint64_t snap_reserve_free = v->snap_reserved;
     uint64_t snap_norm_used = v->snap_used;
 
-    snprintf(plugin_instance, sizeof(plugin_instance), "volume-%s", v->name);
+    ssnprintf(plugin_instance, sizeof(plugin_instance), "volume-%s", v->name);
 
-    if (HAS_ALL_FLAGS(v->flags,
-                      HAVE_VOLUME_USAGE_SNAP_USED |
-                          HAVE_VOLUME_USAGE_SNAP_RSVD)) {
+    if (HAS_ALL_FLAGS(v->flags, HAVE_VOLUME_USAGE_SNAP_USED |
+                                    HAVE_VOLUME_USAGE_SNAP_RSVD)) {
       if (v->snap_reserved > v->snap_used) {
         snap_reserve_free = v->snap_reserved - v->snap_used;
         snap_reserve_used = v->snap_used;
@@ -1422,9 +1422,8 @@ static int cna_submit_volume_usage_data(const char *hostname, /* {{{ */
 
     /* The space used by snapshots but not reserved for them is included in
      * both, norm_used and snap_norm_used. If possible, subtract this here. */
-    if (HAS_ALL_FLAGS(v->flags,
-                      HAVE_VOLUME_USAGE_NORM_USED |
-                          HAVE_VOLUME_USAGE_SNAP_USED)) {
+    if (HAS_ALL_FLAGS(v->flags, HAVE_VOLUME_USAGE_NORM_USED |
+                                    HAVE_VOLUME_USAGE_SNAP_USED)) {
       if (norm_used >= snap_norm_used)
         norm_used -= snap_norm_used;
       else {
@@ -1466,9 +1465,8 @@ static int cna_submit_volume_usage_data(const char *hostname, /* {{{ */
                     "df_complex", "snap_reserved", (double)snap_reserve_free,
                     /* timestamp = */ 0, interval);
 
-    if (HAS_ALL_FLAGS(v->flags,
-                      HAVE_VOLUME_USAGE_SNAP_USED |
-                          HAVE_VOLUME_USAGE_SNAP_RSVD))
+    if (HAS_ALL_FLAGS(v->flags, HAVE_VOLUME_USAGE_SNAP_USED |
+                                    HAVE_VOLUME_USAGE_SNAP_RSVD))
       submit_double(hostname, /* plugin instance = */ plugin_instance,
                     "df_complex", "snap_reserve_used",
                     (double)snap_reserve_used, /* timestamp = */ 0, interval);
@@ -1498,12 +1496,13 @@ static int cna_change_volume_status(const char *hostname, /* {{{ */
 
   if ((v->flags & IS_VOLUME_USAGE_OFFLINE) != 0) {
     n.severity = NOTIF_OKAY;
-    snprintf(n.message, sizeof(n.message), "Volume %s is now online.", v->name);
+    ssnprintf(n.message, sizeof(n.message), "Volume %s is now online.",
+              v->name);
     v->flags &= ~IS_VOLUME_USAGE_OFFLINE;
   } else {
     n.severity = NOTIF_WARNING;
-    snprintf(n.message, sizeof(n.message), "Volume %s is now offline.",
-             v->name);
+    ssnprintf(n.message, sizeof(n.message), "Volume %s is now offline.",
+              v->name);
     v->flags |= IS_VOLUME_USAGE_OFFLINE;
   }
 
@@ -1832,8 +1831,8 @@ static int cna_handle_quota_data(const host_config_t *host, /* {{{ */
     if (volume_name == NULL)
       continue;
 
-    snprintf(plugin_instance, sizeof(plugin_instance), "quota-%s-%s",
-             volume_name, tree_name);
+    ssnprintf(plugin_instance, sizeof(plugin_instance), "quota-%s-%s",
+              volume_name, tree_name);
 
     value = na_child_get_uint64(elem_quota, "disk-used", UINT64_MAX);
     if (value != UINT64_MAX) {
@@ -1945,8 +1944,8 @@ static int cna_handle_snapvault_data(const char *hostname, /* {{{ */
       continue;
 
     /* possible TODO: make plugin instance configurable */
-    snprintf(plugin_instance, sizeof(plugin_instance), "snapvault-%s",
-             dest_path);
+    ssnprintf(plugin_instance, sizeof(plugin_instance), "snapvault-%s",
+              dest_path);
     submit_double(hostname, plugin_instance, /* type = */ "delay", NULL,
                   (double)value, /* timestamp = */ 0, interval);
 
@@ -2229,42 +2228,6 @@ static int cna_query_system(host_config_t *host) /* {{{ */
 /*
  * Configuration handling
  */
-/* Sets a given flag if the boolean argument is true and unsets the flag if it
- * is false. On error, the flag-field is not changed. */
-static int cna_config_bool_to_flag(const oconfig_item_t *ci, /* {{{ */
-                                   uint32_t *flags, uint32_t flag) {
-  if ((ci == NULL) || (flags == NULL))
-    return EINVAL;
-
-  if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_BOOLEAN)) {
-    WARNING("netapp plugin: The %s option needs exactly one boolean argument.",
-            ci->key);
-    return -1;
-  }
-
-  if (ci->values[0].value.boolean)
-    *flags |= flag;
-  else
-    *flags &= ~flag;
-
-  return 0;
-} /* }}} int cna_config_bool_to_flag */
-
-/* Handling of the "Interval" option which is allowed in every block. */
-static int cna_config_get_interval(const oconfig_item_t *ci, /* {{{ */
-                                   cna_interval_t *out_interval) {
-  cdtime_t tmp = 0;
-  int status;
-
-  status = cf_util_get_cdtime(ci, &tmp);
-  if (status != 0)
-    return status;
-
-  out_interval->interval = tmp;
-  out_interval->last_read = 0;
-
-  return 0;
-} /* }}} int cna_config_get_interval */
 
 /* Handling of the "GetIO", "GetOps" and "GetLatency" options within a
  * <VolumePerf /> block. */
@@ -2385,7 +2348,7 @@ static int cna_config_volume_performance(host_config_t *host, /* {{{ */
 
     /* if (!item || !item->key || !*item->key) continue; */
     if (strcasecmp(item->key, "Interval") == 0)
-      cna_config_get_interval(item, &cfg_volume_perf->interval);
+      cf_util_get_cdtime(item, &cfg_volume_perf->interval.interval);
     else if (!strcasecmp(item->key, "GetIO"))
       cna_config_volume_perf_option(cfg_volume_perf, item);
     else if (!strcasecmp(item->key, "GetOps"))
@@ -2481,7 +2444,7 @@ static int cna_config_quota(host_config_t *host, oconfig_item_t *ci) /* {{{ */
     oconfig_item_t *item = ci->children + i;
 
     if (strcasecmp(item->key, "Interval") == 0)
-      cna_config_get_interval(item, &cfg_quota->interval);
+      cf_util_get_cdtime(item, &cfg_quota->interval.interval);
     else
       WARNING("netapp plugin: The option %s is not allowed within "
               "`Quota' blocks.",
@@ -2517,9 +2480,9 @@ static int cna_config_disk(host_config_t *host, oconfig_item_t *ci) { /* {{{ */
 
     /* if (!item || !item->key || !*item->key) continue; */
     if (strcasecmp(item->key, "Interval") == 0)
-      cna_config_get_interval(item, &cfg_disk->interval);
+      cf_util_get_cdtime(item, &cfg_disk->interval.interval);
     else if (strcasecmp(item->key, "GetBusy") == 0)
-      cna_config_bool_to_flag(item, &cfg_disk->flags, CFG_DISK_BUSIEST);
+      cf_util_get_flag(item, &cfg_disk->flags, CFG_DISK_BUSIEST);
   }
 
   if ((cfg_disk->flags & CFG_DISK_ALL) == 0) {
@@ -2556,15 +2519,15 @@ static int cna_config_wafl(host_config_t *host, oconfig_item_t *ci) /* {{{ */
     oconfig_item_t *item = ci->children + i;
 
     if (strcasecmp(item->key, "Interval") == 0)
-      cna_config_get_interval(item, &cfg_wafl->interval);
+      cf_util_get_cdtime(item, &cfg_wafl->interval.interval);
     else if (!strcasecmp(item->key, "GetNameCache"))
-      cna_config_bool_to_flag(item, &cfg_wafl->flags, CFG_WAFL_NAME_CACHE);
+      cf_util_get_flag(item, &cfg_wafl->flags, CFG_WAFL_NAME_CACHE);
     else if (!strcasecmp(item->key, "GetDirCache"))
-      cna_config_bool_to_flag(item, &cfg_wafl->flags, CFG_WAFL_DIR_CACHE);
+      cf_util_get_flag(item, &cfg_wafl->flags, CFG_WAFL_DIR_CACHE);
     else if (!strcasecmp(item->key, "GetBufferCache"))
-      cna_config_bool_to_flag(item, &cfg_wafl->flags, CFG_WAFL_BUF_CACHE);
+      cf_util_get_flag(item, &cfg_wafl->flags, CFG_WAFL_BUF_CACHE);
     else if (!strcasecmp(item->key, "GetInodeCache"))
-      cna_config_bool_to_flag(item, &cfg_wafl->flags, CFG_WAFL_INODE_CACHE);
+      cf_util_get_flag(item, &cfg_wafl->flags, CFG_WAFL_INODE_CACHE);
     else
       WARNING("netapp plugin: The %s config option is not allowed within "
               "`WAFL' blocks.",
@@ -2636,7 +2599,7 @@ static int cna_config_volume_usage(host_config_t *host, /* {{{ */
 
     /* if (!item || !item->key || !*item->key) continue; */
     if (strcasecmp(item->key, "Interval") == 0)
-      cna_config_get_interval(item, &cfg_volume_usage->interval);
+      cf_util_get_cdtime(item, &cfg_volume_usage->interval.interval);
     else if (!strcasecmp(item->key, "GetCapacity"))
       cna_config_volume_usage_option(cfg_volume_usage, item);
     else if (!strcasecmp(item->key, "GetSnapshot"))
@@ -2677,7 +2640,7 @@ static int cna_config_snapvault(host_config_t *host, /* {{{ */
     oconfig_item_t *item = ci->children + i;
 
     if (strcasecmp(item->key, "Interval") == 0)
-      cna_config_get_interval(item, &cfg_snapvault->interval);
+      cf_util_get_cdtime(item, &cfg_snapvault->interval.interval);
     else
       WARNING("netapp plugin: The option %s is not allowed within "
               "`SnapVault' blocks.",
@@ -2712,15 +2675,15 @@ static int cna_config_system(host_config_t *host, /* {{{ */
     oconfig_item_t *item = ci->children + i;
 
     if (strcasecmp(item->key, "Interval") == 0) {
-      cna_config_get_interval(item, &cfg_system->interval);
+      cf_util_get_cdtime(item, &cfg_system->interval.interval);
     } else if (!strcasecmp(item->key, "GetCPULoad")) {
-      cna_config_bool_to_flag(item, &cfg_system->flags, CFG_SYSTEM_CPU);
+      cf_util_get_flag(item, &cfg_system->flags, CFG_SYSTEM_CPU);
     } else if (!strcasecmp(item->key, "GetInterfaces")) {
-      cna_config_bool_to_flag(item, &cfg_system->flags, CFG_SYSTEM_NET);
+      cf_util_get_flag(item, &cfg_system->flags, CFG_SYSTEM_NET);
     } else if (!strcasecmp(item->key, "GetDiskOps")) {
-      cna_config_bool_to_flag(item, &cfg_system->flags, CFG_SYSTEM_OPS);
+      cf_util_get_flag(item, &cfg_system->flags, CFG_SYSTEM_OPS);
     } else if (!strcasecmp(item->key, "GetDiskIO")) {
-      cna_config_bool_to_flag(item, &cfg_system->flags, CFG_SYSTEM_DISK);
+      cf_util_get_flag(item, &cfg_system->flags, CFG_SYSTEM_DISK);
     } else {
       WARNING("netapp plugin: The %s config option is not allowed within "
               "`System' blocks.",
@@ -2823,17 +2786,18 @@ static int cna_register_host(host_config_t *host) /* {{{ */
   char cb_name[256];
 
   if (host->vfiler)
-    snprintf(cb_name, sizeof(cb_name), "netapp-%s-%s", host->name,
-             host->vfiler);
+    ssnprintf(cb_name, sizeof(cb_name), "netapp-%s-%s", host->name,
+              host->vfiler);
   else
-    snprintf(cb_name, sizeof(cb_name), "netapp-%s", host->name);
+    ssnprintf(cb_name, sizeof(cb_name), "netapp-%s", host->name);
 
   plugin_register_complex_read(
       /* group = */ NULL, cb_name,
       /* callback  = */ cna_read,
       /* interval  = */ host->interval,
       &(user_data_t){
-          .data = host, .free_func = (void *)free_host_config,
+          .data = host,
+          .free_func = (void *)free_host_config,
       });
 
   return 0;
@@ -2842,11 +2806,11 @@ static int cna_register_host(host_config_t *host) /* {{{ */
 static int cna_config_host(host_config_t *host, /* {{{ */
                            const oconfig_item_t *ci) {
   oconfig_item_t *item;
-  _Bool is_vfiler = 0;
+  bool is_vfiler = false;
   int status;
 
   if (!strcasecmp(ci->key, "VFiler"))
-    is_vfiler = 1;
+    is_vfiler = true;
 
   if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_STRING)) {
     WARNING("netapp plugin: \"%s\" needs exactly one string argument. Ignoring "
@@ -3010,7 +2974,7 @@ static int cna_init(void) /* {{{ */
   char err[256] = {0};
 
   if (!na_startup(err, sizeof(err))) {
-    err[sizeof(err) - 1] = 0;
+    err[sizeof(err) - 1] = '\0';
     ERROR("netapp plugin: Error initializing netapp API: %s", err);
     return 1;
   }

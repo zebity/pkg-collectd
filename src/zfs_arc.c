@@ -29,8 +29,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 /*
  * Global variables
@@ -127,7 +127,7 @@ static long long get_zfs_value(kstat_t *dummy __attribute__((unused)),
   size_t valuelen = sizeof(value);
   int rv;
 
-  snprintf(buffer, sizeof(buffer), "%s%s", zfs_arcstat, name);
+  ssnprintf(buffer, sizeof(buffer), "%s%s", zfs_arcstat, name);
   rv = sysctlbyname(buffer, (void *)&value, &valuelen,
                     /* new value = */ NULL, /* new length = */ (size_t)0);
   if (rv == 0)
@@ -207,9 +207,8 @@ static int za_read(void) {
 
   fh = fopen(ZOL_ARCSTATS_FILE, "r");
   if (fh == NULL) {
-    char errbuf[1024];
     ERROR("zfs_arc plugin: Opening \"%s\" failed: %s", ZOL_ARCSTATS_FILE,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+          STRERRNO);
     return -1;
   }
 
@@ -269,9 +268,16 @@ static int za_read(void) {
   za_read_gauge(ksp, "mfu_size", "cache_size", "mfu_size");
   za_read_gauge(ksp, "mru_ghost_size", "cache_size", "mru_ghost_size");
   za_read_gauge(ksp, "mru_size", "cache_size", "mru_size");
-  za_read_gauge(ksp, "other_size", "cache_size", "other_size");
   za_read_gauge(ksp, "p", "cache_size", "p");
   za_read_gauge(ksp, "size", "cache_size", "arc");
+
+  /* The "other_size" value was replaced by more specific values in ZFS on Linux
+   * version 0.7.0 (commit 25458cb)
+   */
+  if (za_read_gauge(ksp, "dbuf_size", "cache_size", "dbuf_size") != 0 ||
+      za_read_gauge(ksp, "dnode_size", "cache_size", "dnode_size") != 0 ||
+      za_read_gauge(ksp, "bonus_size", "cache_size", "bonus_size") != 0)
+    za_read_gauge(ksp, "other_size", "cache_size", "other_size");
 
   /* The "l2_size" value has disappeared from Solaris some time in
    * early 2013, and has only reappeared recently in Solaris 11.2.

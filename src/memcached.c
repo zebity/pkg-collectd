@@ -32,8 +32,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -69,7 +69,7 @@ struct memcached_s {
 };
 typedef struct memcached_s memcached_t;
 
-static _Bool memcached_have_instances = 0;
+static bool memcached_have_instances;
 
 static void memcached_free(void *arg) {
   memcached_t *st = arg;
@@ -99,9 +99,8 @@ static int memcached_connect_unix(memcached_t *st) {
   /* create our socket descriptor */
   int fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (fd < 0) {
-    char errbuf[1024];
     ERROR("memcached plugin: memcached_connect_unix: socket(2) failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+          STRERRNO);
     return -1;
   }
 
@@ -134,12 +133,10 @@ static int memcached_connect_inet(memcached_t *st) {
 
   int status = getaddrinfo(st->connhost, st->connport, &ai_hints, &ai_list);
   if (status != 0) {
-    char errbuf[1024];
     ERROR("memcached plugin: memcached_connect_inet: "
           "getaddrinfo(%s,%s) failed: %s",
           st->connhost, st->connport,
-          (status == EAI_SYSTEM) ? sstrerror(errno, errbuf, sizeof(errbuf))
-                                 : gai_strerror(status));
+          (status == EAI_SYSTEM) ? STRERRNO : gai_strerror(status));
     return -1;
   }
 
@@ -148,10 +145,9 @@ static int memcached_connect_inet(memcached_t *st) {
     /* create our socket descriptor */
     fd = socket(ai_ptr->ai_family, ai_ptr->ai_socktype, ai_ptr->ai_protocol);
     if (fd < 0) {
-      char errbuf[1024];
       WARNING("memcached plugin: memcached_connect_inet: "
               "socket(2) failed: %s",
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+              STRERRNO);
       continue;
     }
 
@@ -175,7 +171,8 @@ static int memcached_connect_inet(memcached_t *st) {
 
     /* Wait until connection establishes */
     struct pollfd pollfd = {
-        .fd = fd, .events = POLLOUT,
+        .fd = fd,
+        .events = POLLOUT,
     };
     do
       status = poll(&pollfd, 1, MEMCACHED_CONNECT_TIMEOUT);
@@ -230,7 +227,8 @@ static int memcached_query_daemon(char *buffer, size_t buffer_size,
   }
 
   struct pollfd pollfd = {
-      .fd = st->fd, .events = POLLOUT,
+      .fd = st->fd,
+      .events = POLLOUT,
   };
 
   do
@@ -246,9 +244,8 @@ static int memcached_query_daemon(char *buffer, size_t buffer_size,
 
   status = (int)swrite(st->fd, "stats\r\n", strlen("stats\r\n"));
   if (status != 0) {
-    char errbuf[1024];
     ERROR("memcached plugin: Instance \"%s\": write(2) failed: %s", st->name,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+          STRERRNO);
     shutdown(st->fd, SHUT_RDWR);
     close(st->fd);
     st->fd = -1;
@@ -280,13 +277,12 @@ static int memcached_query_daemon(char *buffer, size_t buffer_size,
 
     char const end_token[5] = {'E', 'N', 'D', '\r', '\n'};
     if (status < 0) {
-      char errbuf[1024];
 
       if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
         continue;
 
       ERROR("memcached plugin: Instance \"%s\": Error reading from socket: %s",
-            st->name, sstrerror(errno, errbuf, sizeof(errbuf)));
+            st->name, STRERRNO);
       shutdown(st->fd, SHUT_RDWR);
       close(st->fd);
       st->fd = -1;
@@ -352,7 +348,8 @@ static void submit_derive2(const char *type, const char *type_inst,
                            derive_t value0, derive_t value1, memcached_t *st) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = value0}, {.derive = value1},
+      {.derive = value0},
+      {.derive = value1},
   };
 
   memcached_init_vl(&vl, st);
@@ -383,7 +380,8 @@ static void submit_gauge2(const char *type, const char *type_inst,
                           gauge_t value0, gauge_t value1, memcached_t *st) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.gauge = value0}, {.gauge = value1},
+      {.gauge = value0},
+      {.gauge = value1},
   };
 
   memcached_init_vl(&vl, st);
@@ -481,7 +479,7 @@ static int memcached_read(user_data_t *user_data) {
     if (strsplit(line, fields, 3) != 3)
       continue;
 
-    int name_len = strlen(fields[1]);
+    size_t name_len = strlen(fields[1]);
     if (name_len == 0)
       continue;
 
@@ -512,6 +510,13 @@ static int memcached_read(user_data_t *user_data) {
      */
     else if (FIELD_IS("curr_items")) {
       submit_gauge("memcached_items", "current", atof(fields[2]), st);
+    }
+
+    /*
+     * Number of secs since the server started
+     */
+    else if (FIELD_IS("uptime")) {
+      submit_gauge("uptime", NULL, atof(fields[2]), st);
     }
 
     /*
@@ -691,7 +696,8 @@ static int memcached_add_read_callback(memcached_t *st) {
       /* callback  = */ memcached_read,
       /* interval  = */ 0,
       &(user_data_t){
-          .data = st, .free_func = memcached_free,
+          .data = st,
+          .free_func = memcached_free,
       });
 } /* int memcached_add_read_callback */
 
@@ -708,7 +714,7 @@ static int config_add_instance(oconfig_item_t *ci) {
   int status = 0;
 
   /* Disable automatic generation of default instance in the init callback. */
-  memcached_have_instances = 1;
+  memcached_have_instances = true;
 
   memcached_t *st = calloc(1, sizeof(*st));
   if (st == NULL) {
@@ -761,7 +767,7 @@ static int config_add_instance(oconfig_item_t *ci) {
 } /* int config_add_instance */
 
 static int memcached_config(oconfig_item_t *ci) {
-  _Bool have_instance_block = 0;
+  bool have_instance_block = 0;
 
   for (int i = 0; i < ci->children_num; i++) {
     oconfig_item_t *child = ci->children + i;
@@ -803,7 +809,7 @@ static int memcached_init(void) {
 
   int status = memcached_add_read_callback(st);
   if (status == 0)
-    memcached_have_instances = 1;
+    memcached_have_instances = true;
 
   return status;
 } /* int memcached_init */

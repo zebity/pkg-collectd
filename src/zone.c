@@ -33,13 +33,13 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <procfs.h>
 #include <zone.h>
 
-#include "utils_avltree.h"
+#include "utils/avltree/avltree.h"
 
 #define MAX_PROCFS_PATH 40
 #define FRC2PCT(pp) (((float)(pp)) / 0x8000 * 100)
@@ -68,9 +68,7 @@ static int zone_read_procfile(char const *pidstr, char const *name, void *buf,
   }
 
   if (sread(fd, buf, bufsize) != 0) {
-    char errbuf[1024];
-    ERROR("zone plugin: Reading \"%s\" failed: %s", procfile,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("zone plugin: Reading \"%s\" failed: %s", procfile, STRERRNO);
     close(fd);
     return 1;
   }

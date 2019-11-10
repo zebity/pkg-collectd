@@ -245,24 +245,25 @@ static int test_network_parse() {
     uint8_t buffer[LCC_NETWORK_BUFFER_SIZE_DEFAULT];
     size_t buffer_size = sizeof(buffer);
     if (decode_string(raw_packet_data[i], buffer, &buffer_size)) {
-      fprintf(
-          stderr,
-          "lcc_network_parse(raw_packet_data[%zu]): decoding string failed\n",
-          i);
+      fprintf(stderr,
+              "lcc_network_parse(raw_packet_data[%" PRIsz "]):"
+              " decoding string failed\n",
+              i);
       return -1;
     }
 
-    int status =
-        lcc_network_parse(buffer, buffer_size, (lcc_network_parse_options_t){
-                                                   .writer = nop_writer,
-                                               });
+    int status = lcc_network_parse(buffer, buffer_size,
+                                   (lcc_network_parse_options_t){
+                                       .writer = nop_writer,
+                                   });
     if (status != 0) {
-      fprintf(stderr, "lcc_network_parse(raw_packet_data[%zu]) = %d, want 0\n",
+      fprintf(stderr,
+              "lcc_network_parse(raw_packet_data[%" PRIsz "]) = %d, want 0\n",
               i, status);
       ret = status;
     }
 
-    printf("ok - lcc_network_parse(raw_packet_data[%zu])\n", i);
+    printf("ok - lcc_network_parse(raw_packet_data[%" PRIsz "])\n", i);
   }
 
   return ret;
@@ -376,7 +377,7 @@ static int test_parse_values() {
   }
 
   if (vl.values_len != 3) {
-    fprintf(stderr, "parse_values(): vl.values_len = %zu, want 3\n",
+    fprintf(stderr, "parse_values(): vl.values_len = %" PRIsz ", want 3\n",
             vl.values_len);
     return -1;
   }
@@ -384,7 +385,8 @@ static int test_parse_values() {
   int want_types[] = {LCC_TYPE_GAUGE, LCC_TYPE_DERIVE, LCC_TYPE_GAUGE};
   for (size_t i = 0; i < sizeof(want_types) / sizeof(want_types[0]); i++) {
     if (vl.values_types[i] != want_types[i]) {
-      fprintf(stderr, "parse_values(): vl.values_types[%zu] = %d, want %d\n", i,
+      fprintf(stderr,
+              "parse_values(): vl.values_types[%" PRIsz "] = %d, want %d\n", i,
               vl.values_types[i], want_types[i]);
       ret = -1;
     }
@@ -465,7 +467,8 @@ static int test_decrypt_aes256() {
 
   int status = decrypt_aes256(
       &(buffer_t){
-          .data = ciphertext, .len = ciphertext_len,
+          .data = ciphertext,
+          .len = ciphertext_len,
       },
       iv, iv_len, "admin");
   if (status != 0) {

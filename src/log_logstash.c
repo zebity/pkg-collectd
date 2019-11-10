@@ -28,8 +28,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <sys/types.h>
 #include <yajl/yajl_common.h>
@@ -49,7 +49,7 @@ static int log_level = LOG_INFO;
 
 static pthread_mutex_t file_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static char *log_file = NULL;
+static char *log_file;
 
 static const char *config_keys[] = {"LogLevel", "File"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
@@ -75,7 +75,7 @@ static int log_logstash_config(const char *key, const char *value) {
 static void log_logstash_print(yajl_gen g, int severity,
                                cdtime_t timestamp_time) {
   FILE *fh;
-  _Bool do_close = 0;
+  bool do_close = false;
   struct tm timestamp_tm;
   char timestamp_str[64];
   const unsigned char *buf;
@@ -150,19 +150,18 @@ static void log_logstash_print(yajl_gen g, int severity,
     fh = stderr;
   } else if (strcasecmp(log_file, "stdout") == 0) {
     fh = stdout;
-    do_close = 0;
+    do_close = false;
   } else if (strcasecmp(log_file, "stderr") == 0) {
     fh = stderr;
-    do_close = 0;
+    do_close = false;
   } else {
     fh = fopen(log_file, "a");
-    do_close = 1;
+    do_close = true;
   }
 
   if (fh == NULL) {
-    char errbuf[1024];
     fprintf(stderr, "log_logstash plugin: fopen (%s) failed: %s\n", log_file,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+            STRERRNO);
   } else {
     fprintf(fh, "%s\n", buf);
     if (do_close) {
@@ -183,22 +182,14 @@ err:
 
 static void log_logstash_log(int severity, const char *msg,
                              user_data_t __attribute__((unused)) * user_data) {
-  yajl_gen g;
-#if !defined(HAVE_YAJL_V2)
-  yajl_gen_config conf = {};
-
-  conf.beautify = 0;
-#endif
-
   if (severity > log_level)
     return;
 
 #if HAVE_YAJL_V2
-  g = yajl_gen_alloc(NULL);
+  yajl_gen g = yajl_gen_alloc(NULL);
 #else
-  g = yajl_gen_alloc(&conf, NULL);
+  yajl_gen g = yajl_gen_alloc(&(yajl_gen_config){0}, NULL);
 #endif
-
   if (g == NULL) {
     fprintf(stderr, "Could not allocate JSON generator.\n");
     return;

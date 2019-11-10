@@ -23,9 +23,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_ignorelist.h"
+#include "utils/common/common.h"
+#include "utils/ignorelist/ignorelist.h"
 
 #if HAVE_MACH_MACH_TYPES_H
 #include <mach/mach_types.h>
@@ -59,9 +59,6 @@
 #include <libgeom.h>
 #endif
 
-#if HAVE_LIMITS_H
-#include <limits.h>
-#endif
 #ifndef UINT_MAX
 #define UINT_MAX 4294967295U
 #endif
@@ -82,7 +79,7 @@
 static mach_port_t io_master_port = MACH_PORT_NULL;
 /* This defaults to false for backwards compatibility. Please fix in the next
  * major version. */
-static _Bool use_bsd_name = 0;
+static bool use_bsd_name;
 /* #endif HAVE_IOKIT_IOKITLIB_H */
 
 #elif KERNEL_LINUX
@@ -106,9 +103,9 @@ typedef struct diskstats {
   derive_t avg_read_time;
   derive_t avg_write_time;
 
-  _Bool has_merged;
-  _Bool has_in_progress;
-  _Bool has_io_time;
+  bool has_merged;
+  bool has_in_progress;
+  bool has_io_time;
 
   struct diskstats *next;
 } diskstats_t;
@@ -126,7 +123,7 @@ static struct gmesh geom_tree;
 #define MAX_NUMDISK 1024
 extern kstat_ctl_t *kc;
 static kstat_t *ksp[MAX_NUMDISK];
-static int numdisk = 0;
+static int numdisk;
 /* #endif HAVE_LIBKSTAT */
 
 #elif defined(HAVE_LIBSTATGRAB)
@@ -145,7 +142,7 @@ static int pnumdisk;
 #if HAVE_LIBUDEV_H
 #include <libudev.h>
 
-static char *conf_udev_name_attr = NULL;
+static char *conf_udev_name_attr;
 static struct udev *handle_udev;
 #endif
 
@@ -153,7 +150,7 @@ static const char *config_keys[] = {"Disk", "UseBSDName", "IgnoreSelected",
                                     "UdevNameAttr"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static ignorelist_t *ignorelist = NULL;
+static ignorelist_t *ignorelist;
 
 static int disk_config(const char *key, const char *value) {
   if (ignorelist == NULL)
@@ -170,7 +167,7 @@ static int disk_config(const char *key, const char *value) {
     ignorelist_set_invert(ignorelist, invert);
   } else if (strcasecmp("UseBSDName", key) == 0) {
 #if HAVE_IOKIT_IOKITLIB_H
-    use_bsd_name = IS_TRUE(value) ? 1 : 0;
+    use_bsd_name = IS_TRUE(value);
 #else
     WARNING("disk plugin: The \"UseBSDName\" option is only supported "
             "on Mach / Mac OS X and will be ignored.");
@@ -209,7 +206,7 @@ static int disk_init(void) {
     io_master_port = MACH_PORT_NULL;
     return -1;
   }
-/* #endif HAVE_IOKIT_IOKITLIB_H */
+    /* #endif HAVE_IOKIT_IOKITLIB_H */
 
 #elif KERNEL_LINUX
 #if HAVE_LIBUDEV_H
@@ -221,7 +218,7 @@ static int disk_init(void) {
     }
   }
 #endif /* HAVE_LIBUDEV_H */
-/* #endif KERNEL_LINUX */
+    /* #endif KERNEL_LINUX */
 
 #elif KERNEL_FREEBSD
   int rv;
@@ -236,7 +233,7 @@ static int disk_init(void) {
     ERROR("geom_stats_open() failed, returned %d", rv);
     return -1;
   }
-/* #endif KERNEL_FREEBSD */
+    /* #endif KERNEL_FREEBSD */
 
 #elif HAVE_LIBKSTAT
   kstat_t *ksp_chain;
@@ -275,7 +272,8 @@ static void disk_submit(const char *plugin_instance, const char *type,
                         derive_t read, derive_t write) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = read}, {.derive = write},
+      {.derive = read},
+      {.derive = write},
   };
 
   vl.values = values;
@@ -292,7 +290,8 @@ static void submit_io_time(char const *plugin_instance, derive_t io_time,
                            derive_t weighted_time) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = io_time}, {.derive = weighted_time},
+      {.derive = io_time},
+      {.derive = weighted_time},
   };
 
   vl.values = values;
@@ -303,9 +302,7 @@ static void submit_io_time(char const *plugin_instance, derive_t io_time,
 
   plugin_dispatch_values(&vl);
 } /* void submit_io_time */
-#endif /* KERNEL_FREEBSD || KERNEL_LINUX */
 
-#if KERNEL_LINUX
 static void submit_in_progress(char const *disk_name, gauge_t in_progress) {
   value_list_t vl = VALUE_LIST_INIT;
 
@@ -317,7 +314,9 @@ static void submit_in_progress(char const *disk_name, gauge_t in_progress) {
 
   plugin_dispatch_values(&vl);
 }
+#endif /* KERNEL_FREEBSD || KERNEL_LINUX */
 
+#if KERNEL_LINUX
 static counter_t disk_calc_time_incr(counter_t delta_time,
                                      counter_t delta_ops) {
   double interval = CDTIME_T_TO_DOUBLE(plugin_get_interval());
@@ -493,10 +492,11 @@ static int disk_read(void) {
         sstrncpy(disk_name, props_disk_name_bsd, sizeof(disk_name));
       else {
         ERROR("disk plugin: can't find bsd disk name.");
-        snprintf(disk_name, sizeof(disk_name), "%i-%i", disk_major, disk_minor);
+        ssnprintf(disk_name, sizeof(disk_name), "%i-%i", disk_major,
+                  disk_minor);
       }
     } else
-      snprintf(disk_name, sizeof(disk_name), "%i-%i", disk_major, disk_minor);
+      ssnprintf(disk_name, sizeof(disk_name), "%i-%i", disk_major, disk_minor);
 
     DEBUG("disk plugin: disk_name = \"%s\"", disk_name);
 
@@ -532,7 +532,7 @@ static int disk_read(void) {
       disk_submit(disk_name, "disk_time", read_tme / 1000, write_tme / 1000);
   }
   IOObjectRelease(disk_list);
-/* #endif HAVE_IOKIT_IOKITLIB_H */
+  /* #endif HAVE_IOKIT_IOKITLIB_H */
 
 #elif KERNEL_FREEBSD
   int retry, dirty;
@@ -544,6 +544,7 @@ static int disk_read(void) {
 
   const char *disk_name;
   long double read_time, write_time, busy_time, total_duration;
+  uint64_t queue_length;
 
   for (retry = 0, dirty = 1; retry < 5 && dirty == 1; retry++) {
     if (snap != NULL)
@@ -646,10 +647,12 @@ static int disk_read(void) {
     }
     if (devstat_compute_statistics(snap_iter, NULL, 1.0, DSM_TOTAL_BUSY_TIME,
                                    &busy_time, DSM_TOTAL_DURATION,
-                                   &total_duration, DSM_NONE) != 0) {
+                                   &total_duration, DSM_QUEUE_LENGTH,
+                                   &queue_length, DSM_NONE) != 0) {
       WARNING("%s", devstat_errbuf);
     } else {
       submit_io_time(disk_name, busy_time, total_duration);
+      submit_in_progress(disk_name, (gauge_t)queue_length);
     }
   }
   geom_stats_snapshot_free(snap);
@@ -659,10 +662,7 @@ static int disk_read(void) {
   char buffer[1024];
 
   char *fields[32];
-  int numfields;
-  int fieldshift = 0;
-
-  int minor = 0;
+  static unsigned int poll_count = 0;
 
   derive_t read_sectors = 0;
   derive_t write_sectors = 0;
@@ -681,30 +681,19 @@ static int disk_read(void) {
   diskstats_t *ds, *pre_ds;
 
   if ((fh = fopen("/proc/diskstats", "r")) == NULL) {
-    fh = fopen("/proc/partitions", "r");
-    if (fh == NULL) {
-      ERROR("disk plugin: fopen (/proc/{diskstats,partitions}) failed.");
-      return -1;
-    }
-
-    /* Kernel is 2.4.* */
-    fieldshift = 1;
+    ERROR("disk plugin: fopen(\"/proc/diskstats\"): %s", STRERRNO);
+    return -1;
   }
 
+  poll_count++;
   while (fgets(buffer, sizeof(buffer), fh) != NULL) {
-    char *disk_name;
-    char *output_name;
+    int numfields = strsplit(buffer, fields, 32);
 
-    numfields = strsplit(buffer, fields, 32);
-
-    /* need either 7 fields (partition)
-     * or at least 14 fields (15 on Linux 2.4) */
-    if ((numfields != 7) && (numfields < (14 + fieldshift)))
+    /* need either 7 fields (partition) or at least 14 fields */
+    if ((numfields != 7) && (numfields < 14))
       continue;
 
-    minor = atoll(fields[1]);
-
-    disk_name = fields[2 + fieldshift];
+    char *disk_name = fields[2];
 
     for (ds = disklist, pre_ds = disklist; ds != NULL;
          pre_ds = ds, ds = ds->next)
@@ -712,7 +701,7 @@ static int disk_read(void) {
         break;
 
     if (ds == NULL) {
-      if ((ds = (diskstats_t *)calloc(1, sizeof(diskstats_t))) == NULL)
+      if ((ds = calloc(1, sizeof(*ds))) == NULL)
         continue;
 
       if ((ds->name = strdup(disk_name)) == NULL) {
@@ -734,25 +723,23 @@ static int disk_read(void) {
       write_ops = atoll(fields[5]);
       write_sectors = atoll(fields[6]);
     } else {
-      assert(numfields >= (14 + fieldshift));
-      read_ops = atoll(fields[3 + fieldshift]);
-      write_ops = atoll(fields[7 + fieldshift]);
+      assert(numfields >= 14);
+      read_ops = atoll(fields[3]);
+      write_ops = atoll(fields[7]);
 
-      read_sectors = atoll(fields[5 + fieldshift]);
-      write_sectors = atoll(fields[9 + fieldshift]);
+      read_sectors = atoll(fields[5]);
+      write_sectors = atoll(fields[9]);
 
-      if ((fieldshift == 0) || (minor == 0)) {
-        is_disk = 1;
-        read_merged = atoll(fields[4 + fieldshift]);
-        read_time = atoll(fields[6 + fieldshift]);
-        write_merged = atoll(fields[8 + fieldshift]);
-        write_time = atoll(fields[10 + fieldshift]);
+      is_disk = 1;
+      read_merged = atoll(fields[4]);
+      read_time = atoll(fields[6]);
+      write_merged = atoll(fields[8]);
+      write_time = atoll(fields[10]);
 
-        in_progress = atof(fields[11 + fieldshift]);
+      in_progress = atof(fields[11]);
 
-        io_time = atof(fields[12 + fieldshift]);
-        weighted_time = atof(fields[13 + fieldshift]);
-      }
+      io_time = atof(fields[12]);
+      weighted_time = atof(fields[13]);
     }
 
     {
@@ -817,24 +804,23 @@ static int disk_read(void) {
       ds->write_time = write_time;
 
       if (read_merged || write_merged)
-        ds->has_merged = 1;
+        ds->has_merged = true;
 
       if (in_progress)
-        ds->has_in_progress = 1;
+        ds->has_in_progress = true;
 
       if (io_time)
-        ds->has_io_time = 1;
+        ds->has_io_time = true;
 
     } /* if (is_disk) */
 
-    /* Don't write to the RRDs if we've just started.. */
-    ds->poll_count++;
-    if (ds->poll_count <= 2) {
-      DEBUG("disk plugin: (ds->poll_count = %i) <= "
-            "(min_poll_count = 2); => Not writing.",
-            ds->poll_count);
+    /* Skip first cycle for newly-added disk */
+    if (ds->poll_count == 0) {
+      DEBUG("disk plugin: (ds->poll_count = 0) => Skipping.");
+      ds->poll_count = poll_count;
       continue;
     }
+    ds->poll_count = poll_count;
 
     if ((read_ops == 0) && (write_ops == 0)) {
       DEBUG("disk plugin: ((read_ops == 0) && "
@@ -842,7 +828,7 @@ static int disk_read(void) {
       continue;
     }
 
-    output_name = disk_name;
+    char *output_name = disk_name;
 
 #if HAVE_LIBUDEV_H
     char *alt_name = NULL;
@@ -887,8 +873,30 @@ static int disk_read(void) {
 #endif
   } /* while (fgets (buffer, sizeof (buffer), fh) != NULL) */
 
+  /* Remove disks that have disappeared from diskstats */
+  for (ds = disklist, pre_ds = disklist; ds != NULL;) {
+    /* Disk exists */
+    if (ds->poll_count == poll_count) {
+      pre_ds = ds;
+      ds = ds->next;
+      continue;
+    }
+
+    /* Disk is missing, remove it */
+    diskstats_t *missing_ds = ds;
+    if (ds == disklist) {
+      pre_ds = disklist = ds->next;
+    } else {
+      pre_ds->next = ds->next;
+    }
+    ds = ds->next;
+
+    DEBUG("disk plugin: Disk %s disappeared.", missing_ds->name);
+    free(missing_ds->name);
+    free(missing_ds);
+  }
   fclose(fh);
-/* #endif defined(KERNEL_LINUX) */
+  /* #endif defined(KERNEL_LINUX) */
 
 #elif HAVE_LIBKSTAT
 #if HAVE_KSTAT_IO_T_WRITES && HAVE_KSTAT_IO_T_NWRITES && HAVE_KSTAT_IO_T_WTIME
@@ -936,7 +944,7 @@ static int disk_read(void) {
       disk_submit(ksp[i]->ks_name, "disk_ops", kio.KIO_ROPS, kio.KIO_WOPS);
     }
   }
-/* #endif defined(HAVE_LIBKSTAT) */
+    /* #endif defined(HAVE_LIBKSTAT) */
 
 #elif defined(HAVE_LIBSTATGRAB)
   sg_disk_io_stats *ds;
@@ -963,7 +971,7 @@ static int disk_read(void) {
     disk_submit(name, "disk_octets", ds->read_bytes, ds->write_bytes);
     ds++;
   }
-/* #endif defined(HAVE_LIBSTATGRAB) */
+    /* #endif defined(HAVE_LIBSTATGRAB) */
 
 #elif defined(HAVE_PERFSTAT)
   derive_t read_sectors;
@@ -976,25 +984,20 @@ static int disk_read(void) {
   int rnumdisk;
 
   if ((numdisk = perfstat_disk(NULL, NULL, sizeof(perfstat_disk_t), 0)) < 0) {
-    char errbuf[1024];
-    WARNING("disk plugin: perfstat_disk: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("disk plugin: perfstat_disk: %s", STRERRNO);
     return -1;
   }
 
   if (numdisk != pnumdisk || stat_disk == NULL) {
-    if (stat_disk != NULL)
-      free(stat_disk);
-    stat_disk = (perfstat_disk_t *)calloc(numdisk, sizeof(perfstat_disk_t));
+    free(stat_disk);
+    stat_disk = calloc(numdisk, sizeof(*stat_disk));
   }
   pnumdisk = numdisk;
 
   firstpath.name[0] = '\0';
   if ((rnumdisk = perfstat_disk(&firstpath, stat_disk, sizeof(perfstat_disk_t),
                                 numdisk)) < 0) {
-    char errbuf[1024];
-    WARNING("disk plugin: perfstat_disk : %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("disk plugin: perfstat_disk : %s", STRERRNO);
     return -1;
   }
 

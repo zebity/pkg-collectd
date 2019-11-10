@@ -25,11 +25,11 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_avltree.h"
+#include "utils/avltree/avltree.h"
+#include "utils/common/common.h"
+#include "utils/rrdcreate/rrdcreate.h"
 #include "utils_random.h"
-#include "utils_rrdcreate.h"
 
 #include <rrd.h>
 
@@ -66,8 +66,8 @@ static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 /* If datadir is zero, the daemon's basedir is used. If stepsize or heartbeat
  * is zero a default, depending on the `interval' member of the value list is
  * being used. */
-static char *datadir = NULL;
-static double write_rate = 0.0;
+static char *datadir;
+static double write_rate;
 static rrdcreate_config_t rrdcreate_config = {
     /* stepsize = */ 0,
     /* heartbeat = */ 0,
@@ -84,17 +84,17 @@ static rrdcreate_config_t rrdcreate_config = {
 
 /* XXX: If you need to lock both, cache_lock and queue_lock, at the same time,
  * ALWAYS lock `cache_lock' first! */
-static cdtime_t cache_timeout = 0;
-static cdtime_t cache_flush_timeout = 0;
-static cdtime_t random_timeout = 0;
+static cdtime_t cache_timeout;
+static cdtime_t cache_flush_timeout;
+static cdtime_t random_timeout;
 static cdtime_t cache_flush_last;
-static c_avl_tree_t *cache = NULL;
+static c_avl_tree_t *cache;
 static pthread_mutex_t cache_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static rrd_queue_t *queue_head = NULL;
-static rrd_queue_t *queue_tail = NULL;
-static rrd_queue_t *flushq_head = NULL;
-static rrd_queue_t *flushq_tail = NULL;
+static rrd_queue_t *queue_head;
+static rrd_queue_t *queue_tail;
+static rrd_queue_t *flushq_head;
+static rrd_queue_t *flushq_tail;
 static pthread_t queue_thread;
 static int queue_thread_running = 1;
 static pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -104,7 +104,7 @@ static pthread_cond_t queue_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t librrd_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-static int do_shutdown = 0;
+static int do_shutdown;
 
 #if HAVE_THREADSAFE_LIBRRD
 static int srrd_update(char *filename, char *template, int argc,
@@ -120,7 +120,7 @@ static int srrd_update(char *filename, char *template, int argc,
 
   return status;
 } /* int srrd_update */
-/* #endif HAVE_THREADSAFE_LIBRRD */
+  /* #endif HAVE_THREADSAFE_LIBRRD */
 
 #else  /* !HAVE_THREADSAFE_LIBRRD */
 static int srrd_update(char *filename, char *template, int argc,
@@ -173,7 +173,7 @@ static int value_list_to_string_multiple(char *buffer, int buffer_len,
   memset(buffer, '\0', buffer_len);
 
   tt = CDTIME_T_TO_TIME_T(vl->time);
-  status = snprintf(buffer, buffer_len, "%u", (unsigned int)tt);
+  status = ssnprintf(buffer, buffer_len, "%u", (unsigned int)tt);
   if ((status < 1) || (status >= buffer_len))
     return -1;
   offset = status;
@@ -186,17 +186,17 @@ static int value_list_to_string_multiple(char *buffer, int buffer_len,
       return -1;
 
     if (ds->ds[i].type == DS_TYPE_COUNTER)
-      status = snprintf(buffer + offset, buffer_len - offset, ":%llu",
-                        vl->values[i].counter);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":%" PRIu64,
+                         (uint64_t)vl->values[i].counter);
     else if (ds->ds[i].type == DS_TYPE_GAUGE)
-      status = snprintf(buffer + offset, buffer_len - offset, ":" GAUGE_FORMAT,
-                        vl->values[i].gauge);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":" GAUGE_FORMAT,
+                         vl->values[i].gauge);
     else if (ds->ds[i].type == DS_TYPE_DERIVE)
-      status = snprintf(buffer + offset, buffer_len - offset, ":%" PRIi64,
-                        vl->values[i].derive);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":%" PRIi64,
+                         vl->values[i].derive);
     else /*if (ds->ds[i].type == DS_TYPE_ABSOLUTE) */
-      status = snprintf(buffer + offset, buffer_len - offset, ":%" PRIu64,
-                        vl->values[i].absolute);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":%" PRIu64,
+                         vl->values[i].absolute);
 
     if ((status < 1) || (status >= (buffer_len - offset)))
       return -1;
@@ -218,20 +218,20 @@ static int value_list_to_string(char *buffer, int buffer_len,
   tt = CDTIME_T_TO_TIME_T(vl->time);
   switch (ds->ds[0].type) {
   case DS_TYPE_DERIVE:
-    status = snprintf(buffer, buffer_len, "%u:%" PRIi64, (unsigned)tt,
-                      vl->values[0].derive);
+    status = ssnprintf(buffer, buffer_len, "%u:%" PRIi64, (unsigned)tt,
+                       vl->values[0].derive);
     break;
   case DS_TYPE_GAUGE:
-    status = snprintf(buffer, buffer_len, "%u:" GAUGE_FORMAT, (unsigned)tt,
-                      vl->values[0].gauge);
+    status = ssnprintf(buffer, buffer_len, "%u:" GAUGE_FORMAT, (unsigned)tt,
+                       vl->values[0].gauge);
     break;
   case DS_TYPE_COUNTER:
-    status = snprintf(buffer, buffer_len, "%u:%llu", (unsigned)tt,
-                      vl->values[0].counter);
+    status = ssnprintf(buffer, buffer_len, "%u:%" PRIu64, (unsigned)tt,
+                       (uint64_t)vl->values[0].counter);
     break;
   case DS_TYPE_ABSOLUTE:
-    status = snprintf(buffer, buffer_len, "%u:%" PRIu64, (unsigned)tt,
-                      vl->values[0].absolute);
+    status = ssnprintf(buffer, buffer_len, "%u:%" PRIu64, (unsigned)tt,
+                       vl->values[0].absolute);
     break;
   default:
     return EINVAL;
@@ -520,10 +520,7 @@ static void rrd_cache_flush(cdtime_t timeout) {
     {
       char **tmp = realloc(keys, (keys_num + 1) * sizeof(char *));
       if (tmp == NULL) {
-        char errbuf[1024];
-        ERROR("rrdtool plugin: "
-              "realloc failed: %s",
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+        ERROR("rrdtool plugin: realloc failed: %s", STRERRNO);
         c_avl_iterator_destroy(iter);
         sfree(keys);
         return;
@@ -569,10 +566,10 @@ static int rrd_cache_flush_identifier(cdtime_t timeout,
   now = cdtime();
 
   if (datadir == NULL)
-    snprintf(key, sizeof(key), "%s.rrd", identifier);
+    ssnprintf(key, sizeof(key), "%s.rrd", identifier);
   else
-    snprintf(key, sizeof(key), "%s/%s.rrd", datadir, identifier);
-  key[sizeof(key) - 1] = 0;
+    ssnprintf(key, sizeof(key), "%s/%s.rrd", datadir, identifier);
+  key[sizeof(key) - 1] = '\0';
 
   status = c_avl_get(cache, key, (void *)&rc);
   if (status != 0) {
@@ -627,6 +624,7 @@ static int rrd_cache_insert(const char *filename, const char *value,
   if ((status != 0) || (rc == NULL)) {
     rc = malloc(sizeof(*rc));
     if (rc == NULL) {
+      ERROR("rrdtool plugin: malloc failed: %s", STRERRNO);
       pthread_mutex_unlock(&cache_lock);
       return -1;
     }
@@ -651,15 +649,12 @@ static int rrd_cache_insert(const char *filename, const char *value,
   values_new =
       realloc((void *)rc->values, (rc->values_num + 1) * sizeof(char *));
   if (values_new == NULL) {
-    char errbuf[1024];
     void *cache_key = NULL;
-
-    sstrerror(errno, errbuf, sizeof(errbuf));
 
     c_avl_remove(cache, filename, &cache_key, NULL);
     pthread_mutex_unlock(&cache_lock);
 
-    ERROR("rrdtool plugin: realloc failed: %s", errbuf);
+    ERROR("rrdtool plugin: realloc failed: %s", STRERRNO);
 
     sfree(cache_key);
     sfree(rc->values);
@@ -681,12 +676,9 @@ static int rrd_cache_insert(const char *filename, const char *value,
     void *cache_key = strdup(filename);
 
     if (cache_key == NULL) {
-      char errbuf[1024];
-      sstrerror(errno, errbuf, sizeof(errbuf));
-
       pthread_mutex_unlock(&cache_lock);
 
-      ERROR("rrdtool plugin: strdup failed: %s", errbuf);
+      ERROR("rrdtool plugin: strdup failed: %s", STRERRNO);
 
       sfree(rc->values[0]);
       sfree(rc->values);
@@ -799,25 +791,28 @@ static int rrd_write(const data_set_t *ds, const value_list_t *vl,
   }
 
   char filename[PATH_MAX];
-  if (value_list_to_filename(filename, sizeof(filename), vl) != 0)
+  if (value_list_to_filename(filename, sizeof(filename), vl) != 0) {
+    ERROR("rrdtool plugin: failed to build filename");
     return -1;
+  }
 
   char values[32 * (ds->ds_num + 1)];
-  if (value_list_to_string(values, sizeof(values), ds, vl) != 0)
+  if (value_list_to_string(values, sizeof(values), ds, vl) != 0) {
+    ERROR("rrdtool plugin: failed to build values string");
     return -1;
+  }
 
   struct stat statbuf = {0};
   if (stat(filename, &statbuf) == -1) {
     if (errno == ENOENT) {
       if (cu_rrd_create_file(filename, ds, vl, &rrdcreate_config) != 0) {
+        ERROR("rrdtool plugin: cu_rrd_create_file (%s) failed.", filename);
         return -1;
       } else if (rrdcreate_config.async) {
         return 0;
       }
     } else {
-      char errbuf[1024];
-      ERROR("rrdtool plugin: stat(%s) failed: %s", filename,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("rrdtool plugin: stat(%s) failed: %s", filename, STRERRNO);
       return -1;
     }
   } else if (!S_ISREG(statbuf.st_mode)) {
@@ -1021,7 +1016,7 @@ static int rrd_shutdown(void) {
 } /* int rrd_shutdown */
 
 static int rrd_init(void) {
-  static int init_once = 0;
+  static int init_once;
 
   if (init_once != 0)
     return 0;

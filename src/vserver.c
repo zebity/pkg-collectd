@@ -28,8 +28,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <dirent.h>
 #include <sys/types.h>
@@ -42,7 +42,7 @@
 #error "No applicable input method."
 #endif
 
-static int pagesize = 0;
+static int pagesize;
 
 static int vserver_init(void) {
   /* XXX Should we check for getpagesize () in configure?
@@ -57,7 +57,8 @@ static void traffic_submit(const char *plugin_instance,
                            derive_t tx) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = rx}, {.derive = tx},
+      {.derive = rx},
+      {.derive = tx},
   };
 
   vl.values = values;
@@ -74,7 +75,9 @@ static void load_submit(const char *plugin_instance, gauge_t snum, gauge_t mnum,
                         gauge_t lnum) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.gauge = snum}, {.gauge = mnum}, {.gauge = lnum},
+      {.gauge = snum},
+      {.gauge = mnum},
+      {.gauge = lnum},
   };
 
   vl.values = values;
@@ -124,9 +127,7 @@ static int vserver_read(void) {
   errno = 0;
   proc = opendir(PROCDIR);
   if (proc == NULL) {
-    char errbuf[1024];
-    ERROR("vserver plugin: fopen (%s): %s", PROCDIR,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("vserver plugin: fopen (%s): %s", PROCDIR, STRERRNO);
     return -1;
   }
 
@@ -146,13 +147,11 @@ static int vserver_read(void) {
     errno = 0;
     dent = readdir(proc);
     if (dent == NULL) {
-      char errbuf[4096];
-
       if (errno == 0) /* end of directory */
         break;
 
       ERROR("vserver plugin: failed to read directory %s: %s", PROCDIR,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+            STRERRNO);
       closedir(proc);
       return -1;
     }
@@ -166,9 +165,7 @@ static int vserver_read(void) {
 
     status = stat(file, &statbuf);
     if (status != 0) {
-      char errbuf[4096];
-      WARNING("vserver plugin: stat (%s) failed: %s", file,
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+      WARNING("vserver plugin: stat (%s) failed: %s", file, STRERRNO);
       continue;
     }
 
@@ -181,9 +178,7 @@ static int vserver_read(void) {
       continue;
 
     if (NULL == (fh = fopen(file, "r"))) {
-      char errbuf[1024];
-      ERROR("Cannot open '%s': %s", file,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("Cannot open '%s': %s", file, STRERRNO);
     }
 
     while ((fh != NULL) && (NULL != fgets(buffer, BUFSIZE, fh))) {
@@ -225,9 +220,7 @@ static int vserver_read(void) {
       continue;
 
     if (NULL == (fh = fopen(file, "r"))) {
-      char errbuf[1024];
-      ERROR("Cannot open '%s': %s", file,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("Cannot open '%s': %s", file, STRERRNO);
     }
 
     while ((fh != NULL) && (NULL != fgets(buffer, BUFSIZE, fh))) {
@@ -271,9 +264,7 @@ static int vserver_read(void) {
       continue;
 
     if (NULL == (fh = fopen(file, "r"))) {
-      char errbuf[1024];
-      ERROR("Cannot open '%s': %s", file,
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+      ERROR("Cannot open '%s': %s", file, STRERRNO);
     }
 
     while ((fh != NULL) && (NULL != fgets(buffer, BUFSIZE, fh))) {

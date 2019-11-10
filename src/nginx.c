@@ -28,23 +28,23 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <curl/curl.h>
 
-static char *url = NULL;
-static char *user = NULL;
-static char *pass = NULL;
-static char *verify_peer = NULL;
-static char *verify_host = NULL;
-static char *cacert = NULL;
-static char *timeout = NULL;
+static char *url;
+static char *user;
+static char *pass;
+static char *verify_peer;
+static char *verify_host;
+static char *cacert;
+static char *timeout;
 
-static CURL *curl = NULL;
+static CURL *curl;
 
 static char nginx_buffer[16384];
-static size_t nginx_buffer_len = 0;
+static size_t nginx_buffer_len;
 static char nginx_curl_error[CURL_ERROR_SIZE];
 
 static const char *config_keys[] = {
@@ -122,8 +122,8 @@ static int init(void) {
     curl_easy_setopt(curl, CURLOPT_PASSWORD, (pass == NULL) ? "" : pass);
 #else
     static char credentials[1024];
-    int status = snprintf(credentials, sizeof(credentials), "%s:%s", user,
-                          pass == NULL ? "" : pass);
+    int status = ssnprintf(credentials, sizeof(credentials), "%s:%s", user,
+                           pass == NULL ? "" : pass);
     if ((status < 0) || ((size_t)status >= sizeof(credentials))) {
       ERROR("nginx plugin: Credentials would have been truncated.");
       return -1;
