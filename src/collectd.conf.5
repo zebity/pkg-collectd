@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2010-05-01" "4.10.0" "collectd"
+.TH COLLECTD.CONF 5 "2010-07-09" "4.10.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -2378,7 +2378,7 @@ This feature is only available if the \fInetwork\fR plugin was linked with
 Set the outgoing interface for \s-1IP\s0 packets. This applies at least
 to IPv6 packets and if possible to IPv4. If this option is not applicable,
 undefined or a non-existent interface name is specified, the default
-behaviour is to let the kernel choose the appropriate interface. Be warned
+behavior is to let the kernel choose the appropriate interface. Be warned
 that the manual selection of an interface for unicast traffic is only
 necessary in rare cases.
 .RE
@@ -2433,7 +2433,7 @@ the file is being read, it is locked using \fIfcntl\fR\|(2).
 Set the incoming interface for \s-1IP\s0 packets explicitly. This applies at least
 to IPv6 packets and if possible to IPv4. If this option is not applicable,
 undefined or a non-existent interface name is specified, the default
-behaviour is, to let the kernel choose the appropriate interface. Thus incoming
+behavior is, to let the kernel choose the appropriate interface. Thus incoming
 traffic gets only accepted, if it arrives on the given interface.
 .RE
 .RS 4
@@ -2740,7 +2740,7 @@ because aggregating this data in a save manner is tricky. Defaults to \fBtrue\fR
 .IP "\fBCollectUserCount\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "CollectUserCount true|false"
 When enabled, the number of currently connected clients or users is collected.
-This is expecially interesting when \fBCollectIndividualUsers\fR is disabled, but
+This is especially interesting when \fBCollectIndividualUsers\fR is disabled, but
 can be configured independently from that option. Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""oracle"""
 .el .SS "Plugin \f(CWoracle\fP"
@@ -2805,6 +2805,75 @@ refer to them from.
 .IX Subsection "Plugin perl"
 This plugin embeds a Perl-interpreter into collectd and provides an interface
 to collectd's plugin system. See \fIcollectd\-perl\fR\|(5) for its documentation.
+.ie n .SS "Plugin ""pinba"""
+.el .SS "Plugin \f(CWpinba\fP"
+.IX Subsection "Plugin pinba"
+The \fIPinba plugin\fR receives profiling information from \fIPinba\fR, an extension
+for the \fI\s-1PHP\s0\fR interpreter. At the end of executing a script, i.e. after a
+PHP-based webpage has been delivered, the extension will send a \s-1UDP\s0 packet
+containing timing information, peak memory usage and so on. The plugin will
+wait for such packets, parse them and account the provided information, which
+is then dispatched to the daemon once per interval.
+.PP
+Synopsis:
+.PP
+.Vb 10
+\& <Plugin pinba>
+\&   Address "::0"
+\&   Port "30002"
+\&   # Overall statistics for the website.
+\&   <View "www\-total">
+\&     Server "www.example.com"
+\&   </View>
+\&   # Statistics for www\-a only
+\&   <View "www\-a">
+\&     Host "www\-a.example.com"
+\&     Server "www.example.com"
+\&   </View>
+\&   # Statistics for www\-b only
+\&   <View "www\-b">
+\&     Host "www\-b.example.com"
+\&     Server "www.example.com"
+\&   </View>
+\& </Plugin>
+.Ve
+.PP
+The plugin provides the following configuration options:
+.IP "\fBAddress\fR \fINode\fR" 4
+.IX Item "Address Node"
+Configures the address used to open a listening socket. By default, plugin will
+bind to the \fIany\fR address \f(CW\*(C`::0\*(C'\fR.
+.IP "\fBPort\fR \fIService\fR" 4
+.IX Item "Port Service"
+Configures the port (service) to bind to. By default the default Pinba port
+\&\*(L"30002\*(R" will be used. The option accepts service names in addition to port
+numbers and thus requires a \fIstring\fR argument.
+.IP "<\fBView\fR \fIName\fR> block" 4
+.IX Item "<View Name> block"
+The packets sent by the Pinba extension include the hostname of the server, the
+server name (the name of the virtual host) and the script that was executed.
+Using \fBView\fR blocks it is possible to separate the data into multiple groups
+to get more meaningful statistics. Each packet is added to all matching groups,
+so that a packet may be accounted for more than once.
+.RS 4
+.IP "\fBHost\fR \fIHost\fR" 4
+.IX Item "Host Host"
+Matches the hostname of the system the webserver / script is running on. This
+will contain the result of the \fIgethostname\fR\|(2) system call. If not
+configured, all hostnames will be accepted.
+.IP "\fBServer\fR \fIServer\fR" 4
+.IX Item "Server Server"
+Matches the name of the \fIvirtual host\fR, i.e. the contents of the
+\&\f(CW$_SERVER["SERVER_NAME"]\fR variable when within \s-1PHP\s0. If not configured, all
+server names will be accepted.
+.IP "\fBScript\fR \fIScript\fR" 4
+.IX Item "Script Script"
+Matches the name of the \fIscript name\fR, i.e. the contents of the
+\&\f(CW$_SERVER["SCRIPT_NAME"]\fR variable when within \s-1PHP\s0. If not configured, all
+script names will be accepted.
+.RE
+.RS 4
+.RE
 .ie n .SS "Plugin ""ping"""
 .el .SS "Plugin \f(CWping\fP"
 .IX Subsection "Plugin ping"
@@ -2850,7 +2919,7 @@ interface name (e.\ g. \f(CW\*(C`eth0\*(C'\fR). This might not be supported by a
 operating systems.
 .IP "\fBMaxMissed\fR \fIPackets\fR" 4
 .IX Item "MaxMissed Packets"
-Trigger a \s-1DNS\s0 resolv after the host has not replied to \fIPackets\fR packets. This
+Trigger a \s-1DNS\s0 resolve after the host has not replied to \fIPackets\fR packets. This
 enables the use of dynamic \s-1DNS\s0 services (like dyndns.org) with the ping plugin.
 .Sp
 Default: \fB\-1\fR (disabled)

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PYTHON 5"
-.TH COLLECTD-PYTHON 5 "2010-05-01" "4.10.0" "collectd"
+.TH COLLECTD-PYTHON 5 "2010-07-09" "4.10.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -498,8 +498,15 @@ information on this read the \fItypes.db\fR\|(5) manual page.
 If the sequence does not have the correct size upon dispatch a \fIRuntimeError\fR
 exception will be raised. If the content of the sequence is not a number, a
 \&\fITypeError\fR exception will be raised.
-.IP "meta These are the meta data for this Value object. It has to be a dictionary of numbers, strings or bools. All keys must be strings. \fIint\fR and <long> objects will be dispatched as signed integers unless they are between 2**63 and 2**64\-1, which will result in a unsigned integer. You can force one of these storage classes by using the classes \fBcollectd.Signed\fR and \fBcollectd.Unsigned\fR. A meta object received by a write callback will always contain \fBSigned\fR or \fBUnsigned\fR objects." 4
-.IX Item "meta These are the meta data for this Value object. It has to be a dictionary of numbers, strings or bools. All keys must be strings. int and <long> objects will be dispatched as signed integers unless they are between 2**63 and 2**64-1, which will result in a unsigned integer. You can force one of these storage classes by using the classes collectd.Signed and collectd.Unsigned. A meta object received by a write callback will always contain Signed or Unsigned objects."
+.IP "meta" 4
+.IX Item "meta"
+These are the meta data for this Value object.
+It has to be a dictionary of numbers, strings or bools. All keys must be
+strings. \fIint\fR and <long> objects will be dispatched as signed integers unless
+they are between 2**63 and 2**64\-1, which will result in a unsigned integer.
+You can force one of these storage classes by using the classes
+\&\fBcollectd.Signed\fR and \fBcollectd.Unsigned\fR. A meta object received by a write
+callback will always contain \fBSigned\fR or \fBUnsigned\fR objects.
 .SS "Notification"
 .IX Subsection "Notification"
 A notification is an object defining the severity and message of the status

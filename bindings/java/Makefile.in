@@ -209,6 +209,8 @@ PERL_BINDINGS_OPTIONS = @PERL_BINDINGS_OPTIONS@
 PERL_CFLAGS = @PERL_CFLAGS@
 PERL_LDFLAGS = @PERL_LDFLAGS@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -487,7 +489,7 @@ uninstall-am:
 	ps ps-am uninstall uninstall-am
 
 
-java-build-stamp: org/collectd/api/*.java
+java-build-stamp: org/collectd/api/*.java org/collectd/java/*.java
 	$(JAVAC) -d "." "$(srcdir)/org/collectd/api"/*.java
 	$(JAVAC) -d "." "$(srcdir)/org/collectd/java"/*.java
 	mkdir -p .libs

@@ -335,7 +335,7 @@ static int cpy_read_callback(user_data_t *data) {
 static int cpy_write_callback(const data_set_t *ds, const value_list_t *value_list, user_data_t *data) {
 	int i;
 	cpy_callback_t *c = data->data;
-	PyObject *ret, *list, *temp, *dict = NULL;
+	PyObject *ret, *list, *temp, *dict = NULL, *val;
 	Values *v;
 
 	CPY_LOCK_THREADS
@@ -371,6 +371,7 @@ static int cpy_write_callback(const data_set_t *ds, const value_list_t *value_li
 			}
 			if (PyErr_Occurred() != NULL) {
 				cpy_log_exception("value building for write callback");
+				Py_DECREF(list);
 				CPY_RETURN_FROM_THREADS 0;
 			}
 		}
@@ -427,7 +428,8 @@ static int cpy_write_callback(const data_set_t *ds, const value_list_t *value_li
 			}
 			free(table);
 		}
-		v = PyObject_New(Values, (void *) &ValuesType);
+		val = Values_New(); /* New reference. */
+		v = (Values *) val; 
 		sstrncpy(v->data.host, value_list->host, sizeof(v->data.host));
 		sstrncpy(v->data.type, value_list->type, sizeof(v->data.type));
 		sstrncpy(v->data.type_instance, value_list->type_instance, sizeof(v->data.type_instance));
@@ -435,9 +437,12 @@ static int cpy_write_callback(const data_set_t *ds, const value_list_t *value_li
 		sstrncpy(v->data.plugin_instance, value_list->plugin_instance, sizeof(v->data.plugin_instance));
 		v->data.time = value_list->time;
 		v->interval = value_list->interval;
+		Py_CLEAR(v->values);
 		v->values = list;
+		Py_CLEAR(v->meta);
 		v->meta = dict;
 		ret = PyObject_CallFunctionObjArgs(c->callback, v, c->data, (void *) 0); /* New reference. */
+		Py_XDECREF(val);
 		if (ret == NULL) {
 			cpy_log_exception("write callback");
 		} else {
@@ -449,11 +454,12 @@ static int cpy_write_callback(const data_set_t *ds, const value_list_t *value_li
 
 static int cpy_notification_callback(const notification_t *notification, user_data_t *data) {
 	cpy_callback_t *c = data->data;
-	PyObject *ret;
+	PyObject *ret, *notify;
 	Notification *n;
 
 	CPY_LOCK_THREADS
-		n = PyObject_New(Notification, (void *) &NotificationType);
+		notify = Notification_New(); /* New reference. */
+		n = (Notification *) notify;
 		sstrncpy(n->data.host, notification->host, sizeof(n->data.host));
 		sstrncpy(n->data.type, notification->type, sizeof(n->data.type));
 		sstrncpy(n->data.type_instance, notification->type_instance, sizeof(n->data.type_instance));
@@ -463,6 +469,7 @@ static int cpy_notification_callback(const notification_t *notification, user_da
 		sstrncpy(n->message, notification->message, sizeof(n->message));
 		n->severity = notification->severity;
 		ret = PyObject_CallFunctionObjArgs(c->callback, n, c->data, (void *) 0); /* New reference. */
+		Py_XDECREF(notify);
 		if (ret == NULL) {
 			cpy_log_exception("notification callback");
 		} else {
@@ -896,6 +903,11 @@ static int cpy_init(void) {
 	static pthread_t thread;
 	sigset_t sigset;
 	
+	if (!Py_IsInitialized()) {
+		WARNING("python: Plugin loaded but not configured.");
+		plugin_unregister_shutdown("python");
+		return 0;
+	}
 	PyEval_InitThreads();
 	/* Now it's finally OK to use python threads. */
 	for (c = cpy_init_callbacks; c; c = c->next) {
