@@ -83,7 +83,7 @@ static int default_callback (const char __attribute__((unused)) *str,
     if (matches_num < 2)
       return (-1);
 
-    value = strtod (matches[1], &endptr);
+    value = (gauge_t) strtod (matches[1], &endptr);
     if (matches[1] == endptr)
       return (-1);
 
@@ -131,7 +131,7 @@ static int default_callback (const char __attribute__((unused)) *str,
     if (matches_num < 2)
       return (-1);
 
-    value = strtoll (matches[1], &endptr, 0);
+    value = (counter_t) strtoull (matches[1], &endptr, 0);
     if (matches[1] == endptr)
       return (-1);
 
@@ -162,7 +162,7 @@ static int default_callback (const char __attribute__((unused)) *str,
     if (matches_num < 2)
       return (-1);
 
-    value = strtoll (matches[1], &endptr, 0);
+    value = (derive_t) strtoll (matches[1], &endptr, 0);
     if (matches[1] == endptr)
       return (-1);
 
@@ -186,7 +186,7 @@ static int default_callback (const char __attribute__((unused)) *str,
     if (matches_num < 2)
       return (-1);
 
-    value = strtoll (matches[1], &endptr, 0);
+    value = (absolute_t) strtoull (matches[1], &endptr, 0);
     if (matches[1] == endptr)
       return (-1);
 
@@ -228,7 +228,7 @@ cu_match_t *match_create_callback (const char *regex, const char *excluderegex,
     return (NULL);
   memset (obj, '\0', sizeof (cu_match_t));
 
-  status = regcomp (&obj->regex, regex, REG_EXTENDED);
+  status = regcomp (&obj->regex, regex, REG_EXTENDED | REG_NEWLINE);
   if (status != 0)
   {
     ERROR ("Compiling the regular expression \"%s\" failed.", regex);

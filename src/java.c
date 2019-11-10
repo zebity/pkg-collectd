@@ -1931,7 +1931,9 @@ static int cjni_init_native (JNIEnv *jvm_env) /* {{{ */
   api_class_ptr = (*jvm_env)->FindClass (jvm_env, "org/collectd/api/Collectd");
   if (api_class_ptr == NULL)
   {
-    ERROR ("cjni_init_native: Cannot find API class `org/collectd/api/Collectd'.");
+    ERROR ("cjni_init_native: Cannot find the API class \"org.collectd.api"
+        ".Collectd\". Please set the correct class path "
+        "using 'JVMArg \"-Djava.class.path=...\"'.");
     return (-1);
   }
 
@@ -2253,7 +2255,6 @@ static int cjni_config_plugin_block (oconfig_item_t *ci) /* {{{ */
   cjni_callback_info_t *cbi;
   jobject o_ocitem;
   const char *name;
-  int status;
   size_t i;
 
   jclass class;
@@ -2308,7 +2309,7 @@ static int cjni_config_plugin_block (oconfig_item_t *ci) /* {{{ */
   method = (*jvm_env)->GetMethodID (jvm_env, class,
       "config", "(Lorg/collectd/api/OConfigItem;)I");
 
-  status = (*jvm_env)->CallIntMethod (jvm_env,
+  (*jvm_env)->CallIntMethod (jvm_env,
       cbi->object, method, o_ocitem);
 
   (*jvm_env)->DeleteLocalRef (jvm_env, o_ocitem);
@@ -3065,9 +3066,8 @@ static int cjni_init (void) /* {{{ */
 
   if (config_block != NULL)
   {
-    int status;
 
-    status = cjni_config_perform (config_block);
+    cjni_config_perform (config_block);
     oconfig_free (config_block);
     config_block = NULL;
   }

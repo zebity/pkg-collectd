@@ -550,8 +550,10 @@ Prerequisites
     <http://tangent.org/552/libmemcached.html>
 
   * libmodbus (optional)
-    Used by the `modbus' plugin to communicate with Modbus/TCP devices.
-    <https://launchpad.net/libmodbus>
+    Used by the “modbus” plugin to communicate with Modbus/TCP devices. The
+    “modbus” plugin works with version 2.0.3 of the library – due to frequent
+    API changes other versions may or may not compile cleanly.
+    <http://www.libmodbus.org/>
 
   * libmysqlclient (optional)
     Unsurprisingly used by the `mysql' plugin.
@@ -585,6 +587,9 @@ Prerequisites
   * libpcap (optional)
     Used to capture packets by the `dns' plugin.
     <http://www.tcpdump.org/>
+
+  * libperfstat (optional)
+    Used by various plugins to gather statistics under AIX.
 
   * libperl (optional)
     Obviously used by the `perl' plugin. The library has to be compiled with

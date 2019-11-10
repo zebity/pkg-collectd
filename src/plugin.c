@@ -280,8 +280,6 @@ static int plugin_load_file (char *file, uint32_t flags)
 	lt_dlhandle dlh;
 	void (*reg_handle) (void);
 
-	DEBUG ("file = %s", file);
-
 	lt_dlinit ();
 	lt_dlerror (); /* clear errors */
 
@@ -297,23 +295,35 @@ static int plugin_load_file (char *file, uint32_t flags)
 	}
 #else /* if LIBTOOL_VERSION == 1 */
 	if (flags & PLUGIN_FLAGS_GLOBAL)
-		ERROR ("plugin_load_file: The global flag is not supported, "
+		WARNING ("plugin_load_file: The global flag is not supported, "
 				"libtool 2 is required for this.");
 	dlh = lt_dlopen (file);
 #endif
 
 	if (dlh == NULL)
 	{
-		const char *error = lt_dlerror ();
+		char errbuf[1024] = "";
 
-		ERROR ("lt_dlopen (%s) failed: %s", file, error);
-		fprintf (stderr, "lt_dlopen (%s) failed: %s\n", file, error);
+		ssnprintf (errbuf, sizeof (errbuf),
+				"lt_dlopen (\"%s\") failed: %s. "
+				"The most common cause for this problem are "
+				"missing dependencies. Use ldd(1) to check "
+				"the dependencies of the plugin "
+				"/ shared object.",
+				file, lt_dlerror ());
+
+		ERROR ("%s", errbuf);
+		/* Make sure this is printed to STDERR in any case, but also
+		 * make sure it's printed only once. */
+		if (list_log != NULL)
+			fprintf (stderr, "ERROR: %s\n", errbuf);
+
 		return (1);
 	}
 
 	if ((reg_handle = (void (*) (void)) lt_dlsym (dlh, "module_register")) == NULL)
 	{
-		WARNING ("Couldn't find symbol `module_register' in `%s': %s\n",
+		WARNING ("Couldn't find symbol \"module_register\" in \"%s\": %s\n",
 				file, lt_dlerror ());
 		lt_dlclose (dlh);
 		return (-1);
@@ -842,7 +852,7 @@ int plugin_register_flush (const char *name,
 				(void *) callback, ud));
 } /* int plugin_register_flush */
 
-int plugin_register_shutdown (char *name,
+int plugin_register_shutdown (const char *name,
 		int (*callback) (void))
 {
 	return (create_register_callback (&list_shutdown, name,
@@ -1348,7 +1358,8 @@ int plugin_dispatch_values (value_list_t *vl)
 	if ((vl == NULL) || (vl->type[0] == 0)
 			|| (vl->values == NULL) || (vl->values_len < 1))
 	{
-		ERROR ("plugin_dispatch_values: Invalid value list.");
+		ERROR ("plugin_dispatch_values: Invalid value list "
+				"from plugin %s.", vl->plugin);
 		return (-1);
 	}
 
@@ -1374,7 +1385,12 @@ int plugin_dispatch_values (value_list_t *vl)
 
 	if (c_avl_get (data_sets, vl->type, (void *) &ds) != 0)
 	{
-		INFO ("plugin_dispatch_values: Dataset not found: %s", vl->type);
+		char ident[6 * DATA_MAX_NAME_LEN];
+
+		FORMAT_VL (ident, sizeof (ident), vl);
+		INFO ("plugin_dispatch_values: Dataset not found: %s "
+				"(from \"%s\"), check your types.db!",
+				vl->type, ident);
 		return (-1);
 	}
 

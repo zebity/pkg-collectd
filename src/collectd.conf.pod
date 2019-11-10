@@ -57,6 +57,33 @@ directory for the daemon.
 Loads the plugin I<Plugin>. There must be at least one such line or B<collectd>
 will be mostly useless.
 
+Starting with collectd 4.9, this may also be a block in which further options
+affecting the behavior of B<LoadPlugin> may be specified. The following
+options are allowed inside a B<LoadPlugin> block:
+
+  <LoadPlugin perl>
+    Globals true
+  </LoadPlugin>
+
+=over 4
+
+=item B<Globals> B<true|false>
+
+If enabled, collectd will export all global symbols of the plugin (and of all
+libraries loaded as dependencies of the plugin) and, thus, makes those symbols
+available for resolving unresolved symbols in subsequently loaded plugins if
+that is supported by your system. By default, this is disabled.
+
+This is useful (or possibly even required), e.E<nbsp>g., when loading a plugin
+that embeds some scripting language into the daemon (e.E<nbsp>g. the C<perl>
+or C<python> plugins). Scripting languages usually provide means to load
+extensions written in C. Those extensions require symbols provided by the
+interpreter, which is loaded as a dependency of the respective collectd
+plugin. See the documentation of those plugins (e.E<nbsp>g.,
+L<collectd-perl(5)> or L<collectd-python(5)>) for details.
+
+=back
+
 =item B<Include> I<Path>
 
 If I<Path> points to a file, includes that file. If I<Path> points to a
@@ -101,6 +128,10 @@ L<types.db(5)> for a description of the format of this file.
 Configures the interval in which to query the read plugins. Obviously smaller
 values lead to a higher system load produced by collectd, while higher values
 lead to more coarse statistics.
+
+B<Warning:> You should set this once and then never touch it again. If you do,
+I<you will have to delete all your RRD files> or know some serious RRDtool
+magic! (Assuming you're using the I<RRDtool> or I<RRDCacheD> plugin.)
 
 =item B<Timeout> I<Iterations>
 
@@ -1880,8 +1911,10 @@ Hostname of the database server. Defaults to B<localhost>.
 =item B<User> I<Username>
 
 Username to use when connecting to the database. The user does not have to be
-granted any privileges (which is synonym to granting the C<USAGE> privilege).
-Any existing MySQL user will do.
+granted any privileges (which is synonym to granting the C<USAGE> privilege),
+unless you want to collectd replication statistics (see B<MasterStats> and
+B<SlaveStats> below). In this case, the user needs the C<REPLICATION CLIENT>
+(or C<SUPER>) privileges. Else, any existing MySQL user will do.
 
 =item B<Password> I<Password>
 
@@ -1913,7 +1946,9 @@ C<mysql_real_connect> function for details.
 
 =item B<SlaveStats> I<true|false>
 
-Enable the collection of master / slave statistics in a replication setup.
+Enable the collection of master / slave statistics in a replication setup. In
+order to be able to get access to these statistics, the user needs special
+privileges. See the B<User> documentation above.
 
 =item B<SlaveNotifications> I<true|false>
 
@@ -2681,7 +2716,8 @@ and are checked by default depends on the distribution you use.
 This plugin sends a desktop notification to a notification daemon, as defined
 in the Desktop Notification Specification. To actually display the
 notifications, B<notification-daemon> is required and B<collectd> has to be
-able to access the X server.
+able to access the X server (i.E<nbsp>e., the C<DISPLAY> and C<XAUTHORITY>
+environment variables have to be set correctly) and the D-Bus message bus.
 
 The Desktop Notification Specification can be found at
 L<http://www.galago-project.org/specs/notification/>.
@@ -4175,25 +4211,37 @@ Use the last number found.
 
 =item B<CounterSet>
 
-The matched number is a counter. Simply sets the internal counter to this
-value.
+=item B<DeriveSet>
+
+=item B<AbsoluteSet>
+
+The matched number is a counter. Simply I<sets> the internal counter to this
+value. Variants exist for C<COUNTER>, C<DERIVE>, and C<ABSOLUTE> data sources.
 
 =item B<CounterAdd>
 
-Add the matched value to the internal counter.
+=item B<DeriveAdd>
+
+Add the matched value to the internal counter. In case of B<DeriveAdd>, the
+matched number may be negative, which will effectively subtract from the
+internal counter.
 
 =item B<CounterInc>
 
-Increase the internal counter by one. This B<DSType> is the only one that does
-not use the matched subexpression, but simply counts the number of matched
+=item B<DeriveInc>
+
+Increase the internal counter by one. These B<DSType> are the only ones that do
+not use the matched subexpression, but simply count the number of matched
 lines. Thus, you may use a regular expression without submatch in this case.
 
 =back
 
 As you'd expect the B<Gauge*> types interpret the submatch as a floating point
-number, using L<strtod(3)>. The B<CounterSet> and B<CounterAdd> interpret the
-submatch as an integer using L<strtoll(3)>. B<CounterInc> does not use the
-submatch at all and it may be omitted in this case.
+number, using L<strtod(3)>. The B<Counter*> and B<AbsoluteSet> types interpret
+the submatch as an unsigned integer using L<strtoull(3)>. The B<Derive*> types
+interpret the submatch as a signed integer using L<strtoll(3)>. B<CounterInc>
+and B<DeriveInc> do not use the submatch at all and it may be omitted in this
+case.
 
 =item B<Type> I<Type>
 

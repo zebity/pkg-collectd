@@ -12,9 +12,6 @@
 /* Wether or not to use the esmtp library */
 #undef COLLECT_LIBESMTP
 
-/* Wether or not to use the pcap library */
-#undef COLLECT_LIBPCAP
-
 /* Define if endianflip is needed to convert to x86 representation. */
 #undef FP_LAYOUT_NEED_ENDIANFLIP
 
@@ -546,6 +543,9 @@
 
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
+
+/* Define to 1 if you have the <pcap-bpf.h> header file. */
+#undef HAVE_PCAP_BPF_H
 
 /* Define to 1 if you have the <pcap.h> header file. */
 #undef HAVE_PCAP_H
@@ -1212,6 +1212,9 @@
 /* Define to 1 if you have the <yajl/yajl_parse.h> header file. */
 #undef HAVE_YAJL_YAJL_PARSE_H
 
+/* Define to 1 if you have the <yajl/yajl_version.h> header file. */
+#undef HAVE_YAJL_YAJL_VERSION_H
+
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
 
@@ -1320,6 +1323,9 @@
 
 /* Define to enable reentrancy interfaces. */
 #undef _REENTRANT
+
+/* Define to use the thread-safe version of errno under AIX. */
+#undef _THREAD_SAFE_ERRNO
 
 /* Define to enforce X/Open 6 (XSI) compliance. */
 #undef _XOPEN_SOURCE

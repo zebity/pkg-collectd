@@ -2,6 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(collectd, m4_esyscmd(./version-gen.sh))
 AC_CONFIG_SRCDIR(src/collectd.c)
 AC_CONFIG_HEADERS(src/config.h)
+AC_CONFIG_AUX_DIR([libltdl/config])
 
 m4_ifdef([LT_PACKAGE_VERSION],
 	# libtool >= 2.2
@@ -90,6 +91,10 @@ fi
 if test "x$ac_system" = "xSolaris"
 then
 	AC_DEFINE(_POSIX_PTHREAD_SEMANTICS, 1, [Define to enforce POSIX thread semantics under Solaris.])
+fi
+if test "x$ac_system" = "xAIX"
+then
+	AC_DEFINE(_THREAD_SAFE_ERRNO, 1, [Define to use the thread-safe version of errno under AIX.])
 fi
 
 # Where to install .pc files.
@@ -1633,7 +1638,8 @@ then
 	[
 		with_libiptc="yes"
 		with_own_libiptc="yes"
-	])
+	],
+	[-lip4tc -lip6tc])
 fi
 # The system wide version failed for some reason. Check if we have the required
 # headers to build the shipped version.
@@ -2552,19 +2558,13 @@ then
 fi
 if test "x$with_libpcap" = "xyes"
 then
-	AC_CHECK_HEADERS(pcap.h,
-	[
-		AC_DEFINE(HAVE_PCAP_H, 1, [Define to 1 if you have the <pcap.h> header file.])
-	], [with_libpcap="no (pcap.h not found)"])
+	AC_CHECK_HEADERS(pcap.h,,
+			 [with_libpcap="no (pcap.h not found)"])
 fi
 if test "x$with_libpcap" = "xyes"
 then
-	collect_libpcap=1
-else
-	collect_libpcap=0
+	AC_CHECK_HEADERS(pcap-bpf.h)
 fi
-AC_DEFINE_UNQUOTED(COLLECT_LIBPCAP, [$collect_libpcap],
-	[Wether or not to use the pcap library])
 AM_CONDITIONAL(BUILD_WITH_LIBPCAP, test "x$with_libpcap" = "xyes")
 # }}}
 
@@ -3387,7 +3387,7 @@ AM_CONDITIONAL(BUILD_WITH_LIBTOKYOTYRANT, test "x$with_libtokyotyrant" = "xyes")
 with_libupsclient_config=""
 with_libupsclient_cflags=""
 with_libupsclient_libs=""
-AC_ARG_WITH(libupsclient, [AS_HELP_STRING([--with-libupsclient@<:@=PREFIX@:>@], [Path to the Net-SNMPD library.])],
+AC_ARG_WITH(libupsclient, [AS_HELP_STRING([--with-libupsclient@<:@=PREFIX@:>@], [Path to the upsclient library.])],
 [
 	if test "x$withval" = "xno"
 	then
@@ -3609,6 +3609,7 @@ then
 	CPPFLAGS="$CPPFLAGS $with_libyajl_cppflags"
 
 	AC_CHECK_HEADERS(yajl/yajl_parse.h, [with_libyajl="yes"], [with_libyajl="no (yajl/yajl_parse.h not found)"])
+	AC_CHECK_HEADERS(yajl/yajl_version.h)
 
 	CPPFLAGS="$SAVE_CPPFLAGS"
 fi

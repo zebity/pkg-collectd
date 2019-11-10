@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PERL 5"
-.TH COLLECTD-PERL 5 "2010-07-09" "4.10.1" "collectd"
+.TH COLLECTD-PERL 5 "2011-10-14" "4.10.4" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -133,8 +133,10 @@
 collectd\-perl \- Documentation of collectd's \f(CW\*(C`perl plugin\*(C'\fR
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 7
-\&  LoadPlugin perl
+.Vb 9
+\&  <LoadPlugin perl>
+\&    Globals true
+\&  </LoadPlugin>
 \&  # ...
 \&  <Plugin perl>
 \&    IncludeDir "/path/to/perl/plugins"
@@ -154,6 +156,12 @@ interface to collectd's plugin system. This makes it possible to write plugins
 for collectd in Perl. This is a lot more efficient than executing a
 Perl-script every time you want to read a value with the \f(CW\*(C`exec plugin\*(C'\fR (see
 \&\fIcollectd\-exec\fR\|(5)) and provides a lot more functionality, too.
+.PP
+When loading the \f(CW\*(C`perl plugin\*(C'\fR, the \fBGlobals\fR option should be enabled.
+Else, the perl plugin will fail to load any Perl modules implemented in C,
+which includes, amongst many others, the \fBthreads\fR module used by the plugin
+itself. See the documentation of the \fBGlobals\fR option in \fIcollectd.conf\fR\|(5)
+for details.
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
 .IP "\fBLoadPlugin\fR \fIPlugin\fR" 4

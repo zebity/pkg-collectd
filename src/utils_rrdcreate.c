@@ -153,7 +153,7 @@ static int rra_get (char ***ret, const value_list_t *vl, /* {{{ */
       if (rra_num >= rra_max)
         break;
 
-      status = ssnprintf (buffer, sizeof (buffer), "RRA:%s:%3.1f:%u:%u",
+      status = ssnprintf (buffer, sizeof (buffer), "RRA:%s:%.10f:%u:%u",
           rra_types[j], cfg->xff, cdp_len, cdp_num);
 
       if ((status < 0) || ((size_t) status >= sizeof (buffer)))
@@ -398,10 +398,9 @@ int cu_rrd_create_file (const char *filename, /* {{{ */
   memcpy (argv + ds_num, rra_def, rra_num * sizeof (char *));
   argv[ds_num + rra_num] = NULL;
 
-  assert (vl->time > 10);
   status = srrd_create (filename,
       (cfg->stepsize > 0) ? cfg->stepsize : vl->interval,
-      vl->time - 10,
+      (vl->time > 10) ? (vl->time - 10) : vl->time,
       argc, (const char **) argv);
 
   free (argv);

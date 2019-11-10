@@ -121,13 +121,6 @@
 #  define ARG_MAX 4096
 #endif
 
-static const char *config_keys[] =
-{
-	"Process",
-	"ProcessMatch"
-};
-static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
-
 typedef struct procstat_entry_s
 {
 	unsigned long id;
@@ -520,42 +513,61 @@ static void ps_list_reset (void)
 }
 
 /* put all pre-defined 'Process' names from config to list_head_g tree */
-static int ps_config (const char *key, const char *value)
+static int ps_config (oconfig_item_t *ci)
 {
-	if (strcasecmp (key, "Process") == 0)
-	{
-		ps_list_register (value, NULL);
-	}
-	else if (strcasecmp (key, "ProcessMatch") == 0)
-	{
-		char *new_val;
-		char *fields[3];
-		int fields_num;
+	int i;
 
-		new_val = strdup (value);
-		if (new_val == NULL) {
-			ERROR ("processes plugin: strdup failed when processing "
-					"`ProcessMatch %s'.", value);
-			return (1);
-		}
+	for (i = 0; i < ci->children_num; ++i) {
+		oconfig_item_t *c = ci->children + i;
 
-		fields_num = strsplit (new_val, fields,
-				STATIC_ARRAY_SIZE (fields));
-		if (fields_num != 2)
+		if (strcasecmp (c->key, "Process") == 0)
 		{
-			ERROR ("processes plugin: `ProcessMatch' needs exactly "
-					"two string arguments.");
-			sfree (new_val);
-			return (1);
+			if ((c->values_num != 1)
+					|| (OCONFIG_TYPE_STRING != c->values[0].type)) {
+				ERROR ("processes plugin: `Process' expects exactly "
+						"one string argument (got %i).",
+						c->values_num);
+				continue;
+			}
+
+			if (c->children_num != 0) {
+				WARNING ("processes plugin: the `Process' config option "
+						"does not expect any child elements -- ignoring "
+						"content (%i elements) of the <Process '%s'> block.",
+						c->children_num, c->values[0].value.string);
+			}
+
+			ps_list_register (c->values[0].value.string, NULL);
 		}
-		ps_list_register (fields[0], fields[1]);
-		sfree (new_val);
-	}
-	else
-	{
-		ERROR ("processes plugin: The `%s' configuration option is not "
-				"understood and will be ignored.", key);
-		return (-1);
+		else if (strcasecmp (c->key, "ProcessMatch") == 0)
+		{
+			if ((c->values_num != 2)
+					|| (OCONFIG_TYPE_STRING != c->values[0].type)
+					|| (OCONFIG_TYPE_STRING != c->values[1].type))
+			{
+				ERROR ("processes plugin: `ProcessMatch' needs exactly "
+						"two string arguments (got %i).",
+						c->values_num);
+				continue;
+			}
+
+			if (c->children_num != 0) {
+				WARNING ("processes plugin: the `ProcessMatch' config option "
+						"does not expect any child elements -- ignoring "
+						"content (%i elements) of the <ProcessMatch '%s' '%s'> "
+						"block.", c->children_num, c->values[0].value.string,
+						c->values[1].value.string);
+			}
+
+			ps_list_register (c->values[0].value.string,
+					c->values[1].value.string);
+		}
+		else
+		{
+			ERROR ("processes plugin: The `%s' configuration option is not "
+					"understood and will be ignored.", c->key);
+			continue;
+		}
 	}
 
 	return (0);
@@ -871,7 +883,6 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 
 	int   i;
 
-	int   ppid;
 	int   name_len;
 
 	long long unsigned cpu_user_counter;
@@ -909,7 +920,6 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 	fields[1][name_len] = '\0';
 	strncpy (ps->name, fields[1], PROCSTAT_NAME_LEN);
 
-	ppid = atoi (fields[3]);
 
 	*state = fields[2][0];
 
@@ -999,13 +1009,18 @@ static char *ps_get_cmdline (pid_t pid, char *name, char *buf, size_t buf_len)
 	if ((pid < 1) || (NULL == buf) || (buf_len < 2))
 		return NULL;
 
-	ssnprintf (file, sizeof (file), "/proc/%u/cmdline", pid);
+	ssnprintf (file, sizeof (file), "/proc/%u/cmdline",
+		       	(unsigned int) pid);
 
+	errno = 0;
 	fd = open (file, O_RDONLY);
 	if (fd < 0) {
 		char errbuf[4096];
-		WARNING ("processes plugin: Failed to open `%s': %s.", file,
-				sstrerror (errno, errbuf, sizeof (errbuf)));
+		/* ENOENT means the process exited while we were handling it.
+		 * Don't complain about this, it only fills the logs. */
+		if (errno != ENOENT)
+			WARNING ("processes plugin: Failed to open `%s': %s.", file,
+					sstrerror (errno, errbuf, sizeof (errbuf)));
 		return NULL;
 	}
 
@@ -1020,7 +1035,7 @@ static char *ps_get_cmdline (pid_t pid, char *name, char *buf, size_t buf_len)
 		status = read (fd, (void *)buf_ptr, len);
 
 		if (status < 0) {
-			char errbuf[4096];
+			char errbuf[1024];
 
 			if ((EAGAIN == errno) || (EINTR == errno))
 				continue;
@@ -1589,9 +1604,9 @@ static int ps_read (void)
 	procs = kvm_getprocs(kd, KERN_PROC_ALL, 0, &count);
 	if (procs == NULL)
 	{
-		kvm_close (kd);
 		ERROR ("processes plugin: Cannot get kvm processes list: %s",
 				kvm_geterr(kd));
+		kvm_close (kd);
 		return (0);
 	}
 
@@ -1824,8 +1839,7 @@ static int ps_read (void)
 
 void module_register (void)
 {
-	plugin_register_config ("processes", ps_config,
-			config_keys, config_keys_num);
+	plugin_register_complex_config ("processes", ps_config);
 	plugin_register_init ("processes", ps_init);
 	plugin_register_read ("processes", ps_read);
 } /* void module_register */

@@ -1,3 +1,77 @@
+2011-10-14, Version 4.10.4
+	* collectd: A mutex leak has been fixed in the meta data code. Thanks
+	  to Rafal Lesniak for his patch.
+	* collectd: Compatibility fixes for GCC 4.6 have been applied. Thanks
+	  to Peter Green for his patch.
+	* csv plugin: The line buffer size has been increased. Thanks to Colin
+	  McCabe for the patch.
+	* curl_json plugin: Don't use the "parent" node to build the type
+	  instance, if it is empty. Compatibility with libyajl 2 has been
+	  added. Thanks to "spupykin" of the Arch Linux project for the initial
+	  code.
+	* iptables plugin: Fix linking with some versions of libiptc.
+	* irq plugin: Fix support for interrupts under Linux. The old code
+	  assumed that interrupts have a numeric value -- this is no longer
+	  true for Linux. Thanks to Bostjan Skufca for implementing this.
+	* notify_desktop plugin: Compatibility with libnotify 0.7 has been
+	  added. Thanks to Samuli Suominen for his patch.
+	* processes plugin: Fix handling of regular expressions containing
+	  spaces. Thanks for Sebastian Harl for fixing this.
+	* rrdtool, rrdcached plugins: Improve precision of the XFF parameter.
+	  Previously, values like 0.999 would have been rounded to 1.0. Thanks
+	  to Francois-Xavier Bourlet for fixing this.
+	* Various plugin: Set a multi-threading flag in libcurl. Thanks to Mike
+	  Flisher for the fix.
+
+2011-03-26, Version 4.10.3
+	* Documentation: Several updates and additions. Thanks to Sebastian Harl.
+	* collectd: Build issues (compiler warnings) have been fixed. Thanks to
+	  Bruno Prémont.
+	* collectd: Threshold subsection: Handling of NAN values in the
+	  percentage calculation has been fixed.
+	* collectd, java plugin, ntpd plugin: Several diagnostic messages have
+	  been improved.
+	* curl_json plugin: Handling of arrays has been fixed.
+	* libvirt plugin: A bug in reading the virtual CPU statistics has been
+	  fixed. Thanks to “JLPC” for reporting this problem.
+	* modbus plugin: Compatibility with libmodbus 2.0.3 has been restored.
+	* processes plugin: Potentially erroneous behavior has been fixed in an
+	  error handling case.
+	* python plugin: Fix dispatching of values from Python scripts to
+	  collectd. Thanks to Gregory Szorc for finding and fixing this
+	  problem.
+
+2010-11-27, Version 4.10.2
+	* Documentation: Various documentation fixes.
+	* collectd: If including one configuration file fails, continue with
+	  the rest of the configuration if possible.
+	* collectd: Fix a bug in the read function scheduling. In rare cases
+	  read functions may not have been called as often as requested.
+	* collectd: Concurrency issues with errno(3) under AIX have been
+	  fixed: A thread-safe version of errno has to be requested under AIX.
+	  Thanks to Aurélien Reynaud for his patch.
+	* collectd: A left-over hard-coded 2 has been replaced by the
+	  configurable timeout value.
+	* curl, memcachec, tail plugins: Fix handling of "DERIVE" data
+	  sources. Matching the end of a string has been improved; thanks to
+	  Sebastian Harl for the patch.
+	* curl_json plugin: Fix a problem when parsing 64bit integers. Reading
+	  JSON data from non-HTTP sources has been fixed.
+	* netapp plugin: Pass the interval setting to the dispatch function.
+	  Restore compatibility to NetApp Release 7.3. Thanks to Sven Trenkel
+	  for the patch.
+	* network plugin: Be less verbose about unchecked signatures, in order
+	  to prevent spamming the logs.
+	* notify_email plugin: Concurrency problems have been fixed.
+	* python plugin: Set "sys.argv", since many scripts don't expect that
+	  it may not be set. Thanks to Sven Trenkel for the patch.
+	* rrdtool, rrdcached plugin: Fix a too strict assertion when creating
+	  RRD files.
+	* swap plugin: A bug which lead to incorrect I/O values has been
+	  fixed.
+	* value match: A minor memory leak has been fixed. Thanks to Sven
+	  Trenkel for the patch.
+
 2010-07-09, Version 4.10.1
 	* Build system: Checking for "strtok_r" under Solaris has been fixed.
 	* Portability: Fixes for Solaris 8 have been applied. Thanks to
@@ -74,6 +148,49 @@
 	  Paul Sadauskas for his patch.
 	* regex match: The "Invert" option has been added. Thanks to Julien
 	  Ammous for his patch.
+
+2011-03-26, Version 4.9.5
+	* Documentation: Several updates and additions. Thanks to Sebastian Harl.
+	* collectd: Build issues (compiler warnings) have been fixed. Thanks to
+	  Bruno Prémont.
+	* collectd: Threshold subsection: Handling of NAN values in the
+	  percentage calculation has been fixed.
+	* collectd, java plugin, ntpd plugin: Several diagnostic messages have
+	  been improved.
+	* libvirt plugin: A bug in reading the virtual CPU statistics has been
+	  fixed. Thanks to “JLPC” for reporting this problem.
+	* processes plugin: Potentially erroneous behavior has been fixed in an
+	  error handling case.
+	* python plugin: Fix dispatching of values from Python scripts to
+	  collectd. Thanks to Gregory Szorc for finding and fixing this
+	  problem.
+
+2010-11-27, Version 4.9.4
+	* Documentation: Various documentation fixes.
+	* collectd: If including one configuration file fails, continue with
+	  the rest of the configuration if possible.
+	* collectd: Fix a bug in the read function scheduling. In rare cases
+	  read functions may not have been called as often as requested.
+	* collectd: Concurrency issues with errno(3) under AIX have been
+	  fixed: A thread-safe version of errno has to be requested under AIX.
+	  Thanks to Aurélien Reynaud for his patch.
+	* curl, memcachec, tail plugins: Fix handling of "DERIVE" data
+	  sources. Matching the end of a string has been improved; thanks to
+	  Sebastian Harl for the patch.
+	* curl_json plugin: Fix a problem when parsing 64bit integers. Reading
+	  JSON data from non-HTTP sources has been fixed.
+	* netapp plugin: Pass the interval setting to the dispatch function.
+	  Restore compatibility to NetApp Release 7.3. Thanks to Sven Trenkel
+	  for the patch.
+	* network plugin: Be less verbose about unchecked signatures, in order
+	  to prevent spamming the logs.
+	* notify_email plugin: Concurrency problems have been fixed.
+	* python plugin: Set "sys.argv", since many scripts don't expect that
+	  it may not be set. Thanks to Sven Trenkel for the patch.
+	* rrdtool, rrdcached plugin: Fix a too strict assertion when creating
+	  RRD files.
+	* value match: A minor memory leak has been fixed. Thanks to Sven
+	  Trenkel for the patch.
 
 2010-07-09, Version 4.9.3
 	* Build system: Checking for "strtok_r" under Solaris has been fixed.

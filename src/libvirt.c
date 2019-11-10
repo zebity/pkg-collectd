@@ -295,21 +295,31 @@ lv_read (void)
     for (i = 0; i < nr_domains; ++i) {
         virDomainInfo info;
         virVcpuInfoPtr vinfo = NULL;
+        int status;
         int j;
 
-        if (virDomainGetInfo (domains[i], &info) != 0)
+        status = virDomainGetInfo (domains[i], &info);
+        if (status != 0)
+        {
+            ERROR ("libvirt plugin: virDomainGetInfo failed with status %i.",
+                    status);
             continue;
+        }
 
         cpu_submit (info.cpuTime, t, domains[i], "virt_cpu_total");
 
-        vinfo = malloc (info.nrVirtCpu * sizeof vinfo[0]);
+        vinfo = malloc (info.nrVirtCpu * sizeof (vinfo[0]));
         if (vinfo == NULL) {
             ERROR ("libvirt plugin: malloc failed.");
             continue;
         }
 
-        if (virDomainGetVcpus (domains[i], vinfo, info.nrVirtCpu,
-                    NULL, 0) != 0) {
+        status = virDomainGetVcpus (domains[i], vinfo, info.nrVirtCpu,
+                /* cpu map = */ NULL, /* cpu map length = */ 0);
+        if (status < 0)
+        {
+            ERROR ("libvirt plugin: virDomainGetVcpus failed with status %i.",
+                    status);
             free (vinfo);
             continue;
         }
@@ -655,8 +665,6 @@ init_value_list (value_list_t *vl, time_t t, virDomainPtr dom)
     int i, n;
     const char *name;
     char uuid[VIR_UUID_STRING_BUFLEN];
-    char  *host_ptr;
-    size_t host_len;
 
     vl->time = t;
     vl->interval = interval_g;
@@ -664,8 +672,6 @@ init_value_list (value_list_t *vl, time_t t, virDomainPtr dom)
     sstrncpy (vl->plugin, "libvirt", sizeof (vl->plugin));
 
     vl->host[0] = '\0';
-    host_ptr = vl->host;
-    host_len = sizeof (vl->host);
 
     /* Construct the hostname field according to HostnameFormat. */
     for (i = 0; i < HF_MAX_FIELDS; ++i) {

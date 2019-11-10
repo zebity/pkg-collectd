@@ -68,8 +68,9 @@ class Collectd():
         """
         numvalues = self._cmd('GETTHRESHOLD "%s"' % identifier)
         lines = []
-        if numvalues:
-            lines = self._readlines(numvalues)
+        if not numvalues or numvalues < 0:
+            raise KeyError("Identifier '%s' not found" % identifier)
+        lines = self._readlines(numvalues)
         return lines
 
     def getval(self, identifier, flush_after=True):
@@ -83,8 +84,9 @@ class Collectd():
         """
         numvalues = self._cmd('GETVAL "%s"' % identifier)
         lines = []
-        if numvalues:
-            lines = self._readlines(numvalues)
+        if not numvalues or numvalues < 0:
+            raise KeyError("Identifier '%s' not found" % identifier)
+        lines = self._readlines(numvalues)
         if flush_after:
             self.flush(identifiers=[identifier])
         return lines
@@ -172,8 +174,8 @@ class Collectd():
                 print "[socket] connected to %s" % self.path
             return sock
         except socket.error, (errno, errstr):
-            sys.stderror.write("[error] Connecting to socket failed: [%d] %s"
-                               % (errno, errstr))
+            sys.stderr.write("[error] Connecting to socket failed: [%d] %s"
+                             % (errno, errstr))
             return None
 
     def _readline(self):
@@ -193,8 +195,8 @@ class Collectd():
                     buf.append(data)
             return ''.join(buf)
         except socket.error, (errno, errstr):
-            sys.stderror.write("[error] Reading from socket failed: [%d] %s"
-                               % (errno, errstr))
+            sys.stderr.write("[error] Reading from socket failed: [%d] %s"
+                             % (errno, errstr))
             self._sock = self._connect()
             return None
 
@@ -218,8 +220,8 @@ class Collectd():
         try:
             self._sock.close()
         except socket.error, (errno, errstr):
-            sys.stderror.write("[error] Closing socket failed: [%d] %s"
-                               % (errno, errstr))
+            sys.stderr.write("[error] Closing socket failed: [%d] %s"
+                             % (errno, errstr))
 
 
 if __name__ == '__main__':

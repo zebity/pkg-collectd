@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2010-07-09" "4.10.1" "collectd"
+.TH COLLECTD.CONF 5 "2011-10-14" "4.10.4" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -182,6 +182,34 @@ directory for the daemon.
 .IX Item "LoadPlugin Plugin"
 Loads the plugin \fIPlugin\fR. There must be at least one such line or \fBcollectd\fR
 will be mostly useless.
+.Sp
+Starting with collectd 4.9, this may also be a block in which further options
+affecting the behavior of \fBLoadPlugin\fR may be specified. The following
+options are allowed inside a \fBLoadPlugin\fR block:
+.Sp
+.Vb 3
+\&  <LoadPlugin perl>
+\&    Globals true
+\&  </LoadPlugin>
+.Ve
+.RS 4
+.IP "\fBGlobals\fR \fBtrue|false\fR" 4
+.IX Item "Globals true|false"
+If enabled, collectd will export all global symbols of the plugin (and of all
+libraries loaded as dependencies of the plugin) and, thus, makes those symbols
+available for resolving unresolved symbols in subsequently loaded plugins if
+that is supported by your system. By default, this is disabled.
+.Sp
+This is useful (or possibly even required), e.\ g., when loading a plugin
+that embeds some scripting language into the daemon (e.\ g. the \f(CW\*(C`perl\*(C'\fR
+or \f(CW\*(C`python\*(C'\fR plugins). Scripting languages usually provide means to load
+extensions written in C. Those extensions require symbols provided by the
+interpreter, which is loaded as a dependency of the respective collectd
+plugin. See the documentation of those plugins (e.\ g.,
+\&\fIcollectd\-perl\fR\|(5) or \fIcollectd\-python\fR\|(5)) for details.
+.RE
+.RS 4
+.RE
 .IP "\fBInclude\fR \fIPath\fR" 4
 .IX Item "Include Path"
 If \fIPath\fR points to a file, includes that file. If \fIPath\fR points to a
@@ -224,6 +252,10 @@ Set one or more files that contain the data-set descriptions. See
 Configures the interval in which to query the read plugins. Obviously smaller
 values lead to a higher system load produced by collectd, while higher values
 lead to more coarse statistics.
+.Sp
+\&\fBWarning:\fR You should set this once and then never touch it again. If you do,
+\&\fIyou will have to delete all your \s-1RRD\s0 files\fR or know some serious RRDtool
+magic! (Assuming you're using the \fIRRDtool\fR or \fIRRDCacheD\fR plugin.)
 .IP "\fBTimeout\fR \fIIterations\fR" 4
 .IX Item "Timeout Iterations"
 Consider a value list \*(L"missing\*(R" when no update has been read or received for
@@ -1779,8 +1811,10 @@ Hostname of the database server. Defaults to \fBlocalhost\fR.
 .IP "\fBUser\fR \fIUsername\fR" 4
 .IX Item "User Username"
 Username to use when connecting to the database. The user does not have to be
-granted any privileges (which is synonym to granting the \f(CW\*(C`USAGE\*(C'\fR privilege).
-Any existing MySQL user will do.
+granted any privileges (which is synonym to granting the \f(CW\*(C`USAGE\*(C'\fR privilege),
+unless you want to collectd replication statistics (see \fBMasterStats\fR and
+\&\fBSlaveStats\fR below). In this case, the user needs the \f(CW\*(C`REPLICATION CLIENT\*(C'\fR
+(or \f(CW\*(C`SUPER\*(C'\fR) privileges. Else, any existing MySQL user will do.
 .IP "\fBPassword\fR \fIPassword\fR" 4
 .IX Item "Password Password"
 Password needed to log into the database.
@@ -1811,7 +1845,9 @@ Otherwise, use the \fBPort\fR option above. See the documentation for the
 .IP "\fBSlaveStats\fR \fItrue|false\fR" 4
 .IX Item "SlaveStats true|false"
 .PD
-Enable the collection of master / slave statistics in a replication setup.
+Enable the collection of master / slave statistics in a replication setup. In
+order to be able to get access to these statistics, the user needs special
+privileges. See the \fBUser\fR documentation above.
 .IP "\fBSlaveNotifications\fR \fItrue|false\fR" 4
 .IX Item "SlaveNotifications true|false"
 If enabled, the plugin sends a notification if the replication slave I/O and /
@@ -2514,7 +2550,8 @@ and are checked by default depends on the distribution you use.
 This plugin sends a desktop notification to a notification daemon, as defined
 in the Desktop Notification Specification. To actually display the
 notifications, \fBnotification-daemon\fR is required and \fBcollectd\fR has to be
-able to access the X server.
+able to access the X server (i.\ e., the \f(CW\*(C`DISPLAY\*(C'\fR and \f(CW\*(C`XAUTHORITY\*(C'\fR
+environment variables have to be set correctly) and the D\-Bus message bus.
 .PP
 The Desktop Notification Specification can be found at
 <http://www.galago\-project.org/specs/notification/>.
@@ -3835,23 +3872,41 @@ Use the greatest number only.
 Use the last number found.
 .IP "\fBCounterSet\fR" 4
 .IX Item "CounterSet"
-The matched number is a counter. Simply sets the internal counter to this
-value.
+.PD 0
+.IP "\fBDeriveSet\fR" 4
+.IX Item "DeriveSet"
+.IP "\fBAbsoluteSet\fR" 4
+.IX Item "AbsoluteSet"
+.PD
+The matched number is a counter. Simply \fIsets\fR the internal counter to this
+value. Variants exist for \f(CW\*(C`COUNTER\*(C'\fR, \f(CW\*(C`DERIVE\*(C'\fR, and \f(CW\*(C`ABSOLUTE\*(C'\fR data sources.
 .IP "\fBCounterAdd\fR" 4
 .IX Item "CounterAdd"
-Add the matched value to the internal counter.
+.PD 0
+.IP "\fBDeriveAdd\fR" 4
+.IX Item "DeriveAdd"
+.PD
+Add the matched value to the internal counter. In case of \fBDeriveAdd\fR, the
+matched number may be negative, which will effectively subtract from the
+internal counter.
 .IP "\fBCounterInc\fR" 4
 .IX Item "CounterInc"
-Increase the internal counter by one. This \fBDSType\fR is the only one that does
-not use the matched subexpression, but simply counts the number of matched
+.PD 0
+.IP "\fBDeriveInc\fR" 4
+.IX Item "DeriveInc"
+.PD
+Increase the internal counter by one. These \fBDSType\fR are the only ones that do
+not use the matched subexpression, but simply count the number of matched
 lines. Thus, you may use a regular expression without submatch in this case.
 .RE
 .RS 4
 .Sp
 As you'd expect the \fBGauge*\fR types interpret the submatch as a floating point
-number, using \fIstrtod\fR\|(3). The \fBCounterSet\fR and \fBCounterAdd\fR interpret the
-submatch as an integer using \fIstrtoll\fR\|(3). \fBCounterInc\fR does not use the
-submatch at all and it may be omitted in this case.
+number, using \fIstrtod\fR\|(3). The \fBCounter*\fR and \fBAbsoluteSet\fR types interpret
+the submatch as an unsigned integer using \fIstrtoull\fR\|(3). The \fBDerive*\fR types
+interpret the submatch as a signed integer using \fIstrtoll\fR\|(3). \fBCounterInc\fR
+and \fBDeriveInc\fR do not use the submatch at all and it may be omitted in this
+case.
 .RE
 .IP "\fBType\fR \fIType\fR" 4
 .IX Item "Type Type"
