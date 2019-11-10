@@ -685,7 +685,7 @@ The B<curl_xml plugin> uses B<libcurl> (L<http://curl.haxx.se/>) and B<libxml2>
  </Plugin>
 
 In the B<Plugin> block, there may be one or more B<URL> blocks, each defining a
-URL to be fetched via HTTP (using libcurl). Within each B<URL> block there are
+URL to be fetched using libcurl. Within each B<URL> block there are
 options which specify the connection parameters, for example authentication
 information, and one or more B<XPath> blocks.
 
@@ -2502,10 +2502,18 @@ The default IPv6 multicast group is C<ff18::efc0:4a42>. The default IPv4
 multicast group is C<239.192.74.66>. The default I<UDP> port is B<25826>.
 
 Both, B<Server> and B<Listen> can be used as single option or as block. When
-used as block, given options are valid for this socket only. For example:
+used as block, given options are valid for this socket only. The following
+example will export the metrics twice: Once to an "internal" server (without
+encryption and signing) and one to an external server (with cryptographic
+signature):
 
  <Plugin "network">
+   # Export to an internal server
+   # (demonstrates usage without additional options)
    Server "collectd.internal.tld"
+   
+   # Export to an external server
+   # (demonstrates usage with signature options)
    <Server "collectd.external.tld">
      SecurityLevel "sign"
      Username "myhostname"
@@ -4695,6 +4703,34 @@ If set to B<true>, the minimum and maximum values given are interpreted as
 percentage value, relative to the other data sources. This is helpful for
 example for the "df" type, where you may want to issue a warning when less than
 5E<nbsp>% of the total space is available. Defaults to B<false>.
+
+=item B<Hits> I<Number>
+
+Delay creating the notification until the threshold has been passed I<Number>
+times. When a notification has been generated, or when a subsequent value is
+inside the threshold, the counter is reset. If, for example, a value is
+collected once every 10E<nbsp>seconds and B<Hits> is set to 3, a notification
+will be dispatched at most once every 30E<nbsp>seconds.
+
+This is useful when short bursts are not a problem. If, for example, 100% CPU
+usage for up to a minute is normal (and data is collected every
+10E<nbsp>seconds), you could set B<Hits> to B<6> to account for this.
+
+=item B<Hysteresis> I<Number>
+
+When set to non-zero, a hysteresis value is applied when checking minimum and
+maximum bounds. This is useful for values that increase slowly and fluctuate a
+bit while doing so. When these values come close to the threshold, they may
+"flap", i.e. switch between failure / warning case and okay case repeatedly.
+
+If, for example, the threshold is configures as
+
+  WarningMax 100.0
+  Hysteresis 1.0
+
+then a I<Warning> notification is created when the value exceeds I<101> and the
+corresponding I<Okay> notification is only created once the value falls below
+I<99>, thus avoiding the "flapping".
 
 =back
 

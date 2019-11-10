@@ -351,6 +351,43 @@ static _Bool check_send_okay (const value_list_t *vl) /* {{{ */
   return (!received);
 } /* }}} _Bool check_send_okay */
 
+static _Bool check_notify_received (const notification_t *n) /* {{{ */
+{
+  notification_meta_t *ptr;
+
+  for (ptr = n->meta; ptr != NULL; ptr = ptr->next)
+    if ((strcmp ("network:received", ptr->name) == 0)
+        && (ptr->type == NM_TYPE_BOOLEAN))
+      return ((_Bool) ptr->nm_value.nm_boolean);
+
+  return (0);
+} /* }}} _Bool check_notify_received */
+
+static _Bool check_send_notify_okay (const notification_t *n) /* {{{ */
+{
+  static c_complain_t complain_forwarding = C_COMPLAIN_INIT_STATIC;
+  _Bool received = 0;
+
+  if (n->meta == NULL)
+    return (1);
+
+  received = check_notify_received (n);
+
+  if (network_config_forward && received)
+  {
+    c_complain_once (LOG_ERR, &complain_forwarding,
+        "network plugin: A notification has been received via the network "
+        "forwarding if enabled. Forwarding of notifications is currently "
+        "not supported, because there is not loop-deteciton available. "
+        "Please contact the collectd mailing list if you need this "
+        "feature.");
+  }
+
+  /* By default, only *send* value lists that were not *received* by the
+   * network plugin. */
+  return (!received);
+} /* }}} _Bool check_send_notify_okay */
+
 static int network_dispatch_values (value_list_t *vl, /* {{{ */
     const char *username)
 {
@@ -405,7 +442,7 @@ static int network_dispatch_values (value_list_t *vl, /* {{{ */
     }
   }
 
-  plugin_dispatch_values (vl);
+  plugin_dispatch_values_secure (vl);
   stats_values_dispatched++;
 
   meta_data_destroy (vl->meta);
@@ -413,6 +450,29 @@ static int network_dispatch_values (value_list_t *vl, /* {{{ */
 
   return (0);
 } /* }}} int network_dispatch_values */
+
+static int network_dispatch_notification (notification_t *n) /* {{{ */
+{
+  int status;
+
+  assert (n->meta == NULL);
+
+  status = plugin_notification_meta_add_boolean (n, "network:received", 1);
+  if (status != 0)
+  {
+    ERROR ("network plugin: plugin_notification_meta_add_boolean failed.");
+    plugin_notification_meta_free (n->meta);
+    n->meta = NULL;
+    return (status);
+  }
+
+  status = plugin_dispatch_notification (n);
+
+  plugin_notification_meta_free (n->meta);
+  n->meta = NULL;
+
+  return (status);
+} /* }}} int network_dispatch_notification */
 
 #if HAVE_LIBGCRYPT
 static gcry_cipher_hd_t network_get_aes256_cypher (sockent_t *se, /* {{{ */
@@ -704,7 +764,7 @@ static int parse_part_values (void **ret_buffer, size_t *ret_buffer_len,
 
 	exp_size = 3 * sizeof (uint16_t)
 		+ pkg_numval * (sizeof (uint8_t) + sizeof (value_t));
-	if ((buffer_len < 0) || (buffer_len < exp_size))
+	if (buffer_len < exp_size)
 	{
 		WARNING ("network plugin: parse_part_values: "
 				"Packet too short: "
@@ -789,7 +849,7 @@ static int parse_part_number (void **ret_buffer, size_t *ret_buffer_len,
 
 	uint16_t pkg_length;
 
-	if ((buffer_len < 0) || ((size_t) buffer_len < exp_size))
+	if (buffer_len < exp_size)
 	{
 		WARNING ("network plugin: parse_part_number: "
 				"Packet too short: "
@@ -828,7 +888,7 @@ static int parse_part_string (void **ret_buffer, size_t *ret_buffer_len,
 
 	uint16_t pkg_length;
 
-	if ((buffer_len < 0) || (buffer_len < header_size))
+	if (buffer_len < header_size)
 	{
 		WARNING ("network plugin: parse_part_string: "
 				"Packet too short: "
@@ -1464,7 +1524,7 @@ static int parse_packet (sockent_t *se, /* {{{ */
 			}
 			else
 			{
-				plugin_dispatch_notification (&n);
+				network_dispatch_notification (&n);
 			}
 		}
 		else if (pkg_type == TYPE_SEVERITY)
@@ -1683,9 +1743,9 @@ static int network_set_interface (const sockent_t *se, const struct addrinfo *ai
 	}
 
 	/* else: Not a multicast interface. */
-#if defined(HAVE_IF_INDEXTONAME) && HAVE_IF_INDEXTONAME && defined(SO_BINDTODEVICE)
 	if (se->interface != 0)
 	{
+#if defined(HAVE_IF_INDEXTONAME) && HAVE_IF_INDEXTONAME && defined(SO_BINDTODEVICE)
 		char interface_name[IFNAMSIZ];
 
 		if (if_indextoname (se->interface, interface_name) == NULL)
@@ -1702,19 +1762,20 @@ static int network_set_interface (const sockent_t *se, const struct addrinfo *ai
 					sstrerror (errno, errbuf, sizeof (errbuf)));
 			return (-1);
 		}
-	}
 /* #endif HAVE_IF_INDEXTONAME && SO_BINDTODEVICE */
 
 #else
-	WARNING ("network plugin: Cannot set the interface on a unicast "
+		WARNING ("network plugin: Cannot set the interface on a unicast "
 			"socket because "
 # if !defined(SO_BINDTODEVICE)
-			"the the \"SO_BINDTODEVICE\" socket option "
+			"the \"SO_BINDTODEVICE\" socket option "
 # else
 			"the \"if_indextoname\" function "
 # endif
 			"is not available on your system.");
 #endif
+
+	}
 
 	return (0);
 } /* }}} network_set_interface */
@@ -3068,15 +3129,17 @@ static int network_config (oconfig_item_t *ci) /* {{{ */
 } /* }}} int network_config */
 
 static int network_notification (const notification_t *n,
-		user_data_t __attribute__((unused)) *user_data)
+    user_data_t __attribute__((unused)) *user_data)
 {
   char  buffer[network_config_packet_size];
   char *buffer_ptr = buffer;
   int   buffer_free = sizeof (buffer);
   int   status;
 
-  memset (buffer, '\0', sizeof (buffer));
+  if (!check_send_notify_okay (n))
+    return (0);
 
+  memset (buffer, 0, sizeof (buffer));
 
   status = write_part_number (&buffer_ptr, &buffer_free, TYPE_TIME,
       (uint64_t) n->time);
@@ -3091,7 +3154,7 @@ static int network_notification (const notification_t *n,
   if (strlen (n->host) > 0)
   {
     status = write_part_string (&buffer_ptr, &buffer_free, TYPE_HOST,
-	n->host, strlen (n->host));
+        n->host, strlen (n->host));
     if (status != 0)
       return (-1);
   }
@@ -3099,7 +3162,7 @@ static int network_notification (const notification_t *n,
   if (strlen (n->plugin) > 0)
   {
     status = write_part_string (&buffer_ptr, &buffer_free, TYPE_PLUGIN,
-	n->plugin, strlen (n->plugin));
+        n->plugin, strlen (n->plugin));
     if (status != 0)
       return (-1);
   }
@@ -3107,8 +3170,8 @@ static int network_notification (const notification_t *n,
   if (strlen (n->plugin_instance) > 0)
   {
     status = write_part_string (&buffer_ptr, &buffer_free,
-	TYPE_PLUGIN_INSTANCE,
-	n->plugin_instance, strlen (n->plugin_instance));
+        TYPE_PLUGIN_INSTANCE,
+        n->plugin_instance, strlen (n->plugin_instance));
     if (status != 0)
       return (-1);
   }
@@ -3116,7 +3179,7 @@ static int network_notification (const notification_t *n,
   if (strlen (n->type) > 0)
   {
     status = write_part_string (&buffer_ptr, &buffer_free, TYPE_TYPE,
-	n->type, strlen (n->type));
+        n->type, strlen (n->type));
     if (status != 0)
       return (-1);
   }
@@ -3124,7 +3187,7 @@ static int network_notification (const notification_t *n,
   if (strlen (n->type_instance) > 0)
   {
     status = write_part_string (&buffer_ptr, &buffer_free, TYPE_TYPE_INSTANCE,
-	n->type_instance, strlen (n->type_instance));
+        n->type_instance, strlen (n->type_instance));
     if (status != 0)
       return (-1);
   }
@@ -3217,13 +3280,13 @@ static int network_stats_read (void) /* {{{ */
 	vl.values[0].counter = (counter_t) copy_octets_rx;
 	vl.values[1].counter = (counter_t) copy_octets_tx;
 	sstrncpy (vl.type, "if_octets", sizeof (vl.type));
-	plugin_dispatch_values (&vl);
+	plugin_dispatch_values_secure (&vl);
 
 	/* Packets received / send */
 	vl.values[0].counter = (counter_t) copy_packets_rx;
 	vl.values[1].counter = (counter_t) copy_packets_tx;
 	sstrncpy (vl.type, "if_packets", sizeof (vl.type));
-	plugin_dispatch_values (&vl);
+	plugin_dispatch_values_secure (&vl);
 
 	/* Values (not) dispatched and (not) send */
 	sstrncpy (vl.type, "total_values", sizeof (vl.type));
@@ -3232,28 +3295,28 @@ static int network_stats_read (void) /* {{{ */
 	vl.values[0].derive = (derive_t) copy_values_dispatched;
 	sstrncpy (vl.type_instance, "dispatch-accepted",
 			sizeof (vl.type_instance));
-	plugin_dispatch_values (&vl);
+	plugin_dispatch_values_secure (&vl);
 
 	vl.values[0].derive = (derive_t) copy_values_not_dispatched;
 	sstrncpy (vl.type_instance, "dispatch-rejected",
 			sizeof (vl.type_instance));
-	plugin_dispatch_values (&vl);
+	plugin_dispatch_values_secure (&vl);
 
 	vl.values[0].derive = (derive_t) copy_values_sent;
 	sstrncpy (vl.type_instance, "send-accepted",
 			sizeof (vl.type_instance));
-	plugin_dispatch_values (&vl);
+	plugin_dispatch_values_secure (&vl);
 
 	vl.values[0].derive = (derive_t) copy_values_not_sent;
 	sstrncpy (vl.type_instance, "send-rejected",
 			sizeof (vl.type_instance));
-	plugin_dispatch_values (&vl);
+	plugin_dispatch_values_secure (&vl);
 
 	/* Receive queue length */
 	vl.values[0].gauge = (gauge_t) copy_receive_list_length;
 	sstrncpy (vl.type, "queue_length", sizeof (vl.type));
 	vl.type_instance[0] = 0;
-	plugin_dispatch_values (&vl);
+	plugin_dispatch_values_secure (&vl);
 
 	return (0);
 } /* }}} int network_stats_read */

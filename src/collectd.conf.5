@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2011-10-14" "4.10.4" "collectd"
+.TH COLLECTD.CONF 5 "2012-04-01" "4.10.7" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -743,7 +743,7 @@ The \fBcurl_xml plugin\fR uses \fBlibcurl\fR (<http://curl.haxx.se/>) and \fBlib
 .Ve
 .PP
 In the \fBPlugin\fR block, there may be one or more \fB\s-1URL\s0\fR blocks, each defining a
-\&\s-1URL\s0 to be fetched via \s-1HTTP\s0 (using libcurl). Within each \fB\s-1URL\s0\fR block there are
+\&\s-1URL\s0 to be fetched using libcurl. Within each \fB\s-1URL\s0\fR block there are
 options which specify the connection parameters, for example authentication
 information, and one or more \fBXPath\fR blocks.
 .PP
@@ -2360,11 +2360,19 @@ The default IPv6 multicast group is \f(CW\*(C`ff18::efc0:4a42\*(C'\fR. The defau
 multicast group is \f(CW239.192.74.66\fR. The default \fI\s-1UDP\s0\fR port is \fB25826\fR.
 .PP
 Both, \fBServer\fR and \fBListen\fR can be used as single option or as block. When
-used as block, given options are valid for this socket only. For example:
+used as block, given options are valid for this socket only. The following
+example will export the metrics twice: Once to an \*(L"internal\*(R" server (without
+encryption and signing) and one to an external server (with cryptographic
+signature):
 .PP
-.Vb 8
+.Vb 4
 \& <Plugin "network">
+\&   # Export to an internal server
+\&   # (demonstrates usage without additional options)
 \&   Server "collectd.internal.tld"
+\&   
+\&   # Export to an external server
+\&   # (demonstrates usage with signature options)
 \&   <Server "collectd.external.tld">
 \&     SecurityLevel "sign"
 \&     Username "myhostname"
@@ -4287,6 +4295,34 @@ If set to \fBtrue\fR, the minimum and maximum values given are interpreted as
 percentage value, relative to the other data sources. This is helpful for
 example for the \*(L"df\*(R" type, where you may want to issue a warning when less than
 5\ % of the total space is available. Defaults to \fBfalse\fR.
+.IP "\fBHits\fR \fINumber\fR" 4
+.IX Item "Hits Number"
+Delay creating the notification until the threshold has been passed \fINumber\fR
+times. When a notification has been generated, or when a subsequent value is
+inside the threshold, the counter is reset. If, for example, a value is
+collected once every 10\ seconds and \fBHits\fR is set to 3, a notification
+will be dispatched at most once every 30\ seconds.
+.Sp
+This is useful when short bursts are not a problem. If, for example, 100% \s-1CPU\s0
+usage for up to a minute is normal (and data is collected every
+10\ seconds), you could set \fBHits\fR to \fB6\fR to account for this.
+.IP "\fBHysteresis\fR \fINumber\fR" 4
+.IX Item "Hysteresis Number"
+When set to non-zero, a hysteresis value is applied when checking minimum and
+maximum bounds. This is useful for values that increase slowly and fluctuate a
+bit while doing so. When these values come close to the threshold, they may
+\&\*(L"flap\*(R", i.e. switch between failure / warning case and okay case repeatedly.
+.Sp
+If, for example, the threshold is configures as
+.Sp
+.Vb 2
+\&  WarningMax 100.0
+\&  Hysteresis 1.0
+.Ve
+.Sp
+then a \fIWarning\fR notification is created when the value exceeds \fI101\fR and the
+corresponding \fIOkay\fR notification is only created once the value falls below
+\&\fI99\fR, thus avoiding the \*(L"flapping\*(R".
 .SH "FILTER CONFIGURATION"
 .IX Header "FILTER CONFIGURATION"
 Starting with collectd 4.6 there is a powerful filtering infrastructure
