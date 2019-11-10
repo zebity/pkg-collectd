@@ -62,6 +62,9 @@ Features
       Values gathered by a custom program or script.
       See collectd-exec(5).
 
+    - filecount
+      Count the number of files in directories.
+
     - hddtemp
       Harddisk temperatures using hddtempd.
 
@@ -132,6 +135,10 @@ Features
       Network UPS tools: UPS current, voltage, power, charge, utilisation,
       temperature, etc. See upsd(8).
 
+    - onewire (EXPERIMENTAL!)
+      Read onewire sensors using the owcapu library of the owfs project.
+      Please read in collectd.conf(5) why this plugin is experimental.
+
     - perl
       The perl plugin implements a Perl-interpreter into collectd. You can
       write your own plugins in Perl and return arbitrary values using this
@@ -140,6 +147,10 @@ Features
     - ping
       Network latency: Time to reach the default gateway or another given
       host.
+
+    - postgresql
+      PostgreSQL database statistics: active server connections, transaction
+      numbers, block IO, table row manipulations.
 
     - processes
       Process counts: Number of running, sleeping, zombie, ... processes.
@@ -230,6 +241,16 @@ Features
 
   * Notifications can be handled by the following plugins:
 
+    - notify_desktop
+      Send a desktop notification to a notification daemon, as defined in
+      the Desktop Notification Specification. To actually display the
+      notifications, notification-daemon is required.
+      See http://www.galago-project.org/specs/notification/.
+
+    - notify_email
+      Send an E-mail with the notification message to the configured
+      recipients.
+
     - exec
       Execute a program or script to handle the notification.
       See collectd-exec(5).
@@ -315,8 +336,15 @@ Prerequisites
     used and should be found in various implementations for hopefully all
     platforms.
 
+  * CoreFoundation.framework and IOKit.framework (optional)
+    For compiling on Darwin in general and the `apple_sensors' plugin in
+    particular.
+
   * libcurl (optional)
     If you want to use the `apache', `ascent', or `nginx' plugin.
+
+  * libesmtp (optional)
+    For the `notify_email' plugin.
 
   * libhal (optional)
     If present, the uuid plugin will check for UUID from HAL.
@@ -333,9 +361,16 @@ Prerequisites
   * libnetsnmp (optional)
     For the `snmp' plugin.
 
+  * libnotify (optional)
+    For the `notify_desktop' plugin.
+
   * liboping (optional, if not found a version shipped with this distribution
     can be used)
     Used by the `ping' plugin to send and receive ICMP packets.
+
+  * libowcapi (optional)
+    Used by the `onewire' plugin to read values from onewire sensors (or the
+    owserver(1) daemon).
 
   * libpcap (optional)
     Used to capture packets by the `dns' plugin.
@@ -344,37 +379,36 @@ Prerequisites
     Obviously used by the `perl' plugin. The library has to be compiled with
     ithread support (introduced in Perl 5.6.0).
 
+  * libpq (optional)
+    The PostgreSQL C client library used by the `postgresql' plugin.
+
   * librrd (optional; headers and library; rrdtool 1.0 and 1.2 both work fine)
     If built without `librrd' the resulting binary will be `client only', i.e.
     will send its values via multicast and not create any RRD files itself.
     Alternatively you can chose to write CSV-files (Comma Separated Values)
     instead.
 
+  * librt, libsocket, libkstat, libdevinfo (optional)
+    Various standard Solaris libraries which provide system functions.
+
   * libsensors (optional)
     To read from `lm_sensors', see the `sensors' plugin.
 
-  * libstatgrab may be used to collect statistics on systems other than Linux
-    and/or Solaris. Note that CPU- and disk-statistics, while being provided
-    by this library, are not supported in collectd right now..
+  * libstatgrab (optional) may be used to collect statistics on systems other
+    than Linux and/or Solaris. Note that CPU- and disk-statistics, while being
+    provided by this library, are not supported in collectd right now..
     <http://www.i-scream.org/libstatgrab/> 
 
   * libupsclient/nut (optional)
     For the `nut' plugin which queries nut's `upsd'.
-
-  * libxmms (optional)
-
-  * librt, libsocket, libkstat, libdevinfo
-    Various standard Solaris libraries which provide system functions.
-
-  * CoreFoundation.framework and IOKit.framework
-    For compiling on Darwin in general and the `apple_sensors' plugin in
-    particular.
 
   * libvirt (optional)
     Collect statistics from virtual machines.
 
   * libxml2 (optional)
     Parse XML data. This is needed for the `ascent' and `libvirt' plugins.
+
+  * libxmms (optional)
 
 
 Configuring / Compiling / Installing
@@ -389,9 +423,11 @@ Configuring / Compiling / Installing
   disable all plugins whose requirements cannot be fulfilled (any other plugin
   will be enabled). To enable a plugin, install missing dependencies (see
   section `Prerequisites' above) and rerun `configure'. If you specify the
-  `--enable-<plugin>' configure option, you can force the plugin to be built.
-  This will most likely fail though unless you're working in a very unusual
-  setup and you really know what you're doing.
+  `--enable-<plugin>' configure option, the script will fail if the depen-
+  dencies for the specified plugin are not met. If you specify the
+  `--disable-<plugin>' configure option, the plugin will not be built. Both
+  options are meant for package maintainers and should not be used in everyday
+  situations.
 
   By default, collectd will be installed into `/opt/collectd'. You can adjust
   this setting by specifying the `--prefix' configure option - see INSTALL for

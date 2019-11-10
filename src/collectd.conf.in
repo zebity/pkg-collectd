@@ -13,6 +13,19 @@ FQDNLookup   true
 #Interval     10
 #ReadThreads  5
 
+@BUILD_PLUGIN_LOGFILE_TRUE@LoadPlugin logfile
+@BUILD_PLUGIN_SYSLOG_TRUE@LoadPlugin syslog
+
+#<Plugin logfile>
+#	LogLevel info
+#	File STDOUT
+#	Timestamp true
+#</Plugin>
+
+#<Plugin syslog>
+#	LogLevel info
+#</Plugin>
+
 @BUILD_PLUGIN_APACHE_TRUE@LoadPlugin apache
 @BUILD_PLUGIN_APCUPS_TRUE@LoadPlugin apcups
 @BUILD_PLUGIN_APPLE_SENSORS_TRUE@LoadPlugin apple_sensors
@@ -27,6 +40,7 @@ FQDNLookup   true
 @BUILD_PLUGIN_EMAIL_TRUE@LoadPlugin email
 @BUILD_PLUGIN_ENTROPY_TRUE@LoadPlugin entropy
 @BUILD_PLUGIN_EXEC_TRUE@LoadPlugin exec
+@BUILD_PLUGIN_FILECOUNT_TRUE@LoadPlugin filecount
 @BUILD_PLUGIN_HDDTEMP_TRUE@LoadPlugin hddtemp
 @BUILD_PLUGIN_INTERFACE_TRUE@LoadPlugin interface
 @BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
@@ -35,7 +49,6 @@ FQDNLookup   true
 @BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
 @BUILD_PLUGIN_LIBVIRT_TRUE@LoadPlugin libvirt
 @BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
-@BUILD_PLUGIN_LOGFILE_TRUE@LoadPlugin logfile
 @BUILD_PLUGIN_MBMON_TRUE@LoadPlugin mbmon
 @BUILD_PLUGIN_MEMCACHED_TRUE@LoadPlugin memcached
 @BUILD_PLUGIN_MEMORY_TRUE@LoadPlugin memory
@@ -45,10 +58,14 @@ FQDNLookup   true
 @BUILD_PLUGIN_NETWORK_TRUE@LoadPlugin network
 @BUILD_PLUGIN_NFS_TRUE@LoadPlugin nfs
 @BUILD_PLUGIN_NGINX_TRUE@LoadPlugin nginx
+@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@LoadPlugin notify_desktop
+@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@LoadPlugin notify_email
 @BUILD_PLUGIN_NTPD_TRUE@LoadPlugin ntpd
 @BUILD_PLUGIN_NUT_TRUE@LoadPlugin nut
+@BUILD_PLUGIN_ONEWIRE_TRUE@LoadPlugin onewire
 @BUILD_PLUGIN_PERL_TRUE@LoadPlugin perl
 @BUILD_PLUGIN_PING_TRUE@LoadPlugin ping
+@BUILD_PLUGIN_POSTGRESQL_TRUE@LoadPlugin postgresql
 @BUILD_PLUGIN_POWERDNS_TRUE@LoadPlugin powerdns
 @BUILD_PLUGIN_PROCESSES_TRUE@LoadPlugin processes
 @BUILD_PLUGIN_RRDTOOL_TRUE@LoadPlugin rrdtool
@@ -56,11 +73,11 @@ FQDNLookup   true
 @BUILD_PLUGIN_SERIAL_TRUE@LoadPlugin serial
 @BUILD_PLUGIN_SNMP_TRUE@LoadPlugin snmp
 @BUILD_PLUGIN_SWAP_TRUE@LoadPlugin swap
-@BUILD_PLUGIN_SYSLOG_TRUE@LoadPlugin syslog
 @BUILD_PLUGIN_TAIL_TRUE@LoadPlugin tail
 @BUILD_PLUGIN_TAPE_TRUE@LoadPlugin tape
 @BUILD_PLUGIN_TCPCONNS_TRUE@LoadPlugin tcpconns
 @BUILD_PLUGIN_TEAMSPEAK2_TRUE@LoadPlugin teamspeak2
+@BUILD_PLUGIN_THERMAL_TRUE@LoadPlugin thermal
 @BUILD_PLUGIN_UNIXSOCK_TRUE@LoadPlugin unixsock
 @BUILD_PLUGIN_USERS_TRUE@LoadPlugin users
 @BUILD_PLUGIN_UUID_TRUE@LoadPlugin uuid
@@ -123,6 +140,15 @@ FQDNLookup   true
 #	NotificationExec "user:group" "/path/to/exec"
 #</Plugin>
 
+#<Plugin filecount>
+#	<Directory "/path/to/dir">
+#		Instance "foodir"
+#		Name "*.conf"
+#		MTime "-5m"
+#		Size "+10k"
+#	</Directory>
+#</Plugin>
+
 @BUILD_PLUGIN_HDDTEMP_TRUE@<Plugin hddtemp>
 #	Host "127.0.0.1"
 #	Port "7634"
@@ -153,12 +179,6 @@ FQDNLookup   true
 #	InterfaceDevice "name:device"
 #	IgnoreSelected false
 #	HostnameFormat name
-#</Plugin>
-
-#<Plugin logfile>
-#	LogLevel info
-#	File STDOUT
-#	Timestamp true
 #</Plugin>
 
 #<Plugin mbmon>
@@ -204,6 +224,24 @@ FQDNLookup   true
 #	CACert "/etc/ssl/ca.crt"
 #</Plugin>
 
+#<Plugin notify_desktop>
+#	OkayTimeout 1000
+#	WarningTimeout 5000
+#	FailureTimeout 0
+#</Plugin>
+
+#<Plugin notify_email>
+#       SMTPServer "localhost"
+#	SMTPPort 25
+#	SMTPUser "my-username"
+#	SMTPPassword "my-password"
+#	From "collectd@main0server.com"
+#	# <WARNING/FAILURE/OK> on <hostname>. beware! do not use not more than two %s in this string!!!
+#	Subject "Aaaaaa!! %s on %s!!!!!"
+#	Recipient "email1@domain1.net"
+#	Recipient "email2@domain2.com"
+#</Plugin>
+
 #<Plugin ntpd>
 #	Host "localhost"
 #	Port 123
@@ -214,16 +252,52 @@ FQDNLookup   true
 #	UPS "upsname@hostname:port"
 #</Plugin>
 
+#<Plugin onewire>
+#	Device "-s localhost:4304"
+#	Sensor "F10FCA000800"
+#	IgnoreSelected false
+#</Plugin>
+
 #<Plugin perl>
 #	IncludeDir "/my/include/path"
 #	BaseName "Collectd::Plugin"
 #	EnableDebugger ""
 #	LoadPlugin foo
+#
+#	<Plugin foo>
+#		Foo "Bar"
+#		Qux "Baz"
+#	</Plugin>
 #</Plugin>
 
 #<Plugin ping>
 #	Host "host.foo.bar"
 #	TTL 255
+#</Plugin>
+
+#<Plugin postgresql>
+#	<Query magic>
+#		Query "SELECT magic, spells FROM wizard WHERE host = $1;"
+#		Param hostname
+#		Column gauge magic
+#		Column counter spells
+#	</Query>
+#
+#	<Database foo>
+#		Host "hostname"
+#		Port 5432
+#		User "username"
+#		Password "secret"
+#
+#		SSLMode "prefer"
+#		KRBSrvName "kerberos_service_name"
+#
+#		Query magic
+#	</Database>
+#
+#	<Database bar>
+#		Service "service_name"
+#	</Database>
 #</Plugin>
 
 #<Plugin powerdns>
@@ -299,10 +373,6 @@ FQDNLookup   true
 #   </Host>
 #</Plugin>
 
-#<Plugin syslog>
-#	LogLevel info
-#</Plugin>
-
 #<Plugin "tail">
 #  <File "/var/log/exim4/mainlog">
 #    Instance "exim"
@@ -331,6 +401,12 @@ FQDNLookup   true
 #	Host "127.0.0.1"
 #	Port "51234"
 #	Server "8767"
+#</Plugin>
+
+#<Plugin thermal>
+#	ForceUseProcfs false
+#	Device "THRM"
+#	IgnoreSelected false
 #</Plugin>
 
 #<Plugin unixsock>

@@ -124,8 +124,7 @@ static int net_open (char *host, int port)
 	assert ((port > 0x00000000) && (port <= 0x0000FFFF));
 
 	/* Convert the port to a string */
-	snprintf (port_str, 8, "%i", port);
-	port_str[7] = '\0';
+	ssnprintf (port_str, sizeof (port_str), "%i", port);
 
 	/* Resolve name */
 	memset ((void *) &ai_hints, '\0', sizeof (ai_hints));
@@ -376,9 +375,10 @@ static void apc_submit_generic (char *type, char *type_inst, double value)
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "apcups", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));
-	strncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static void apc_submit (struct apc_detail_s *apcups_detail)

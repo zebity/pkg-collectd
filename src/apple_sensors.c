@@ -91,9 +91,10 @@ static void as_submit (const char *type, const char *type_instance,
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "apple_sensors", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static int as_read (void)
@@ -146,10 +147,10 @@ static int as_read (void)
 		if (CFGetTypeID (property) != CFStringGetTypeID ())
 			continue;
 		if (!CFStringGetCString (property,
-					type, 128,
+					type, sizeof (type),
 					kCFStringEncodingASCII))
 			continue;
-		type[127] = '\0';
+		type[sizeof (type) - 1] = '\0';
 
 		/* Copy the sensor location. This will be used as `instance'. */
 		property = NULL;
@@ -160,10 +161,10 @@ static int as_read (void)
 		if (CFGetTypeID (property) != CFStringGetTypeID ())
 			continue;
 		if (!CFStringGetCString (property,
-					inst, 128,
+					inst, sizeof (inst),
 					kCFStringEncodingASCII))
 			continue;
-		inst[127] = '\0';
+		inst[sizeof (inst) - 1] = '\0';
 		for (i = 0; i < 128; i++)
 		{
 			if (inst[i] == '\0')

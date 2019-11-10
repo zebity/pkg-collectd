@@ -390,9 +390,7 @@ static void *open_connection (void *arg)
 	}
 
 	addr.sun_family = AF_UNIX;
-
-	strncpy (addr.sun_path, path, (size_t)(UNIX_PATH_MAX - 1));
-	addr.sun_path[UNIX_PATH_MAX - 1] = '\0';
+	sstrncpy (addr.sun_path, path, (size_t)(UNIX_PATH_MAX - 1));
 
 	errno = 0;
 	if (-1 == bind (connector_socket, (struct sockaddr *)&addr,
@@ -655,9 +653,10 @@ static void email_submit (const char *type, const char *type_instance, gauge_t v
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "email", sizeof (vl.plugin));
-	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void email_submit */
 
 /* Copy list l1 to list l2. l2 may partly exist already, but it is assumed

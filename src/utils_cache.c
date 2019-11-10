@@ -156,13 +156,12 @@ static int uc_send_notification (const char *name)
     return (-1);
   }
 
-  snprintf (n.message, sizeof (n.message),
+  ssnprintf (n.message, sizeof (n.message),
       "%s has not been updated for %i seconds.", name,
       (int) (n.time - ce->last_update));
 
   pthread_mutex_unlock (&cache_lock);
 
-  n.message[sizeof (n.message) - 1] = '\0';
   plugin_dispatch_notification (&n);
 
   return (0);
@@ -299,6 +298,7 @@ int uc_check_timeout (void)
 	ERROR ("uc_check_timeout: c_avl_remove (%s) failed.", keys[i]);
       }
       sfree (keys[i]);
+      sfree (key);
       cache_free (ce);
     }
     else if (status == 1) /* persist */
@@ -325,7 +325,7 @@ int uc_check_timeout (void)
     }
     else
     {
-      WARNING ("uc_check_timeout: ut_check_interesting (%s) returned ",
+      WARNING ("uc_check_timeout: ut_check_interesting (%s) returned "
 	  "invalid status %i.",
 	  keys[i], status);
     }
@@ -450,10 +450,9 @@ int uc_update (const data_set_t *ds, const value_list_t *vl)
   n.severity = NOTIF_OKAY;
   n.time = vl->time;
 
-  snprintf (n.message, sizeof (n.message),
+  ssnprintf (n.message, sizeof (n.message),
       "Received a value for %s. It was missing for %u seconds.",
       name, (unsigned int) update_delay);
-  n.message[sizeof (n.message) - 1] = '\0';
 
   plugin_dispatch_notification (&n);
 
@@ -524,7 +523,7 @@ gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
   if (ret_num != ds->ds_num)
   {
     ERROR ("utils_cache: uc_get_rate: ds[%s] has %i values, "
-	"but uc_get_rate_by_name returned %i.",
+	"but uc_get_rate_by_name returned %zu.",
 	ds->type, ds->ds_num, ret_num);
     sfree (ret);
     return (NULL);

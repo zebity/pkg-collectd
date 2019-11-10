@@ -182,12 +182,12 @@ static void submit (int cpu_num, const char *type_instance, counter_t value)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "cpu", sizeof (vl.plugin));
-	snprintf (vl.plugin_instance, sizeof (vl.type_instance),
+	ssnprintf (vl.plugin_instance, sizeof (vl.type_instance),
 			"%i", cpu_num);
-	vl.plugin_instance[DATA_MAX_NAME_LEN - 1] = '\0';
+	sstrncpy (vl.type, "cpu", sizeof (vl.type));
 	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values ("cpu", &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static int cpu_read (void)

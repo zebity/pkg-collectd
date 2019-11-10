@@ -9,6 +9,9 @@
 /* wether or not to enable feature getifaddrs under Linux */
 #undef COLLECT_GETIFADDRS
 
+/* Wether or not to use the esmtp library */
+#undef COLLECT_LIBESMTP
+
 /* Wether or not to use the pcap library */
 #undef COLLECT_LIBPCAP
 
@@ -166,6 +169,12 @@
 /* Define to 1 if you have the <kvm.h> header file. */
 #undef HAVE_KVM_H
 
+/* Define to 1 if you have the esmtp library (-lesmtp). */
+#undef HAVE_LIBESMTP
+
+/* Define to 1 if you have the <libesmtp.h> header file. */
+#undef HAVE_LIBESMTP_H
+
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
@@ -181,8 +190,17 @@
 /* Define to 1 if you have the 'kstat' library (-lkstat) */
 #undef HAVE_LIBKSTAT
 
-/* Define to 1 if you have the 'kvm' library (-lkvm) */
-#undef HAVE_LIBKVM
+/* Define to 1 if you have the 'kvm' library with the 'kvm_getprocs' symbol
+   (-lkvm) */
+#undef HAVE_LIBKVM_GETPROCS
+
+/* Define to 1 if you have the 'kvm' library with the 'kvm_getswapinfo' symbol
+   (-lkvm) */
+#undef HAVE_LIBKVM_GETSWAPINFO
+
+/* Define to 1 if you have the 'kvm' library with the 'kvm_nlist' symbol
+   (-lkvm) */
+#undef HAVE_LIBKVM_NLIST
 
 /* Define to 1 if you have the <libnetlink.h> header file. */
 #undef HAVE_LIBNETLINK_H
@@ -192,6 +210,9 @@
 
 /* Define if libperl is present and usable. */
 #undef HAVE_LIBPERL
+
+/* Define to 1 if you have the <libpq-fe.h> header file. */
+#undef HAVE_LIBPQ_FE_H
 
 /* Wether or not to use pthread (POSIX threads) library */
 #undef HAVE_LIBPTHREAD
@@ -387,6 +408,9 @@
 /* Define to 1 if you have the `openlog' function. */
 #undef HAVE_OPENLOG
 
+/* Define to 1 if you have the <owcapi.h> header file. */
+#undef HAVE_OWCAPI_H
+
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
@@ -437,6 +461,9 @@
 
 /* Define to 1 if the exec plugin is enabled. */
 #undef HAVE_PLUGIN_EXEC
+
+/* Define to 1 if the filecount plugin is enabled. */
+#undef HAVE_PLUGIN_FILECOUNT
 
 /* Define to 1 if the hddtemp plugin is enabled. */
 #undef HAVE_PLUGIN_HDDTEMP
@@ -492,17 +519,29 @@
 /* Define to 1 if the nginx plugin is enabled. */
 #undef HAVE_PLUGIN_NGINX
 
+/* Define to 1 if the notify_desktop plugin is enabled. */
+#undef HAVE_PLUGIN_NOTIFY_DESKTOP
+
+/* Define to 1 if the notify_email plugin is enabled. */
+#undef HAVE_PLUGIN_NOTIFY_EMAIL
+
 /* Define to 1 if the ntpd plugin is enabled. */
 #undef HAVE_PLUGIN_NTPD
 
 /* Define to 1 if the nut plugin is enabled. */
 #undef HAVE_PLUGIN_NUT
 
+/* Define to 1 if the onewire plugin is enabled. */
+#undef HAVE_PLUGIN_ONEWIRE
+
 /* Define to 1 if the perl plugin is enabled. */
 #undef HAVE_PLUGIN_PERL
 
 /* Define to 1 if the ping plugin is enabled. */
 #undef HAVE_PLUGIN_PING
+
+/* Define to 1 if the postgresql plugin is enabled. */
+#undef HAVE_PLUGIN_POSTGRESQL
 
 /* Define to 1 if the powerdns plugin is enabled. */
 #undef HAVE_PLUGIN_POWERDNS
@@ -539,6 +578,9 @@
 
 /* Define to 1 if the teamspeak2 plugin is enabled. */
 #undef HAVE_PLUGIN_TEAMSPEAK2
+
+/* Define to 1 if the thermal plugin is enabled. */
+#undef HAVE_PLUGIN_THERMAL
 
 /* Define to 1 if the unixsock plugin is enabled. */
 #undef HAVE_PLUGIN_UNIXSOCK
@@ -620,6 +662,9 @@
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdbool.h> header file. */
+#undef HAVE_STDBOOL_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H

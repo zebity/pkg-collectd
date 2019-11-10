@@ -50,7 +50,7 @@ static int loop = 0;
 static void *do_flush (void *arg)
 {
 	INFO ("Flushing all data.");
-	plugin_flush_all (-1);
+	plugin_flush (NULL, -1, NULL);
 	INFO ("Finished flushing all data.");
 	pthread_exit (NULL);
 	return NULL;
@@ -90,8 +90,7 @@ static int init_hostname (void)
 	str = global_option_get ("Hostname");
 	if (str != NULL)
 	{
-		strncpy (hostname_g, str, sizeof (hostname_g));
-		hostname_g[sizeof (hostname_g) - 1] = '\0';
+		sstrncpy (hostname_g, str, sizeof (hostname_g));
 		return (0);
 	}
 
@@ -127,8 +126,7 @@ static int init_hostname (void)
 		if (ai_ptr->ai_canonname == NULL)
 			continue;
 
-		strncpy (hostname_g, ai_ptr->ai_canonname, sizeof (hostname_g));
-		hostname_g[sizeof (hostname_g) - 1] = '\0';
+		sstrncpy (hostname_g, ai_ptr->ai_canonname, sizeof (hostname_g));
 		break;
 	}
 

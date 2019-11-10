@@ -127,17 +127,29 @@ static int memcached_query_daemon (char *buffer, int buffer_size) /* {{{ */
 
 	{
 		struct pollfd p;
-		int n;
+		int status;
 
+		memset (&p, 0, sizeof (p));
 		p.fd = fd;
-		p.events = POLLIN|POLLERR|POLLHUP;
+		p.events = POLLIN | POLLERR | POLLHUP;
 		p.revents = 0;
 
-		n = poll(&p, 1, 3);
-
-		if (n <= 0) {
-			ERROR ("memcached: poll() failed or timed out");
-			return -1;
+		status = poll (&p, /* nfds = */ 1, /* timeout = */ 1000 * interval_g);
+		if (status <= 0)
+		{
+			if (status == 0)
+			{
+				ERROR ("memcached: poll(2) timed out after %i seconds.", interval_g);
+			}
+			else
+			{
+				char errbuf[1024];
+				ERROR ("memcached: poll(2) failed: %s",
+						sstrerror (errno, errbuf, sizeof (errbuf)));
+			}
+			shutdown (fd, SHUT_RDWR);
+			close (fd);
+			return (-1);
 		}
 	}
 
@@ -200,11 +212,10 @@ static int memcached_config (const char *key, const char *value) /* {{{ */
 	} else if (strcasecmp (key, "Port") == 0) {
 		int port = (int) (atof (value));
 		if ((port > 0) && (port <= 65535)) {
-			snprintf (memcached_port, sizeof (memcached_port), "%i", port);
+			ssnprintf (memcached_port, sizeof (memcached_port), "%i", port);
 		} else {
-			strncpy (memcached_port, value, sizeof (memcached_port));
+			sstrncpy (memcached_port, value, sizeof (memcached_port));
 		}
-		memcached_port[sizeof (memcached_port) - 1] = '\0';
 	} else {
 		return -1;
 	}
@@ -226,13 +237,11 @@ static void submit_counter (const char *type, const char *type_inst,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "memcached", sizeof (vl.plugin));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 	if (type_inst != NULL)
-	{
-		strncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
-		vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-	}
+		sstrncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void memcached_submit_cmd */
 /* }}} */
 
@@ -250,13 +259,11 @@ static void submit_counter2 (const char *type, const char *type_inst,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "memcached", sizeof (vl.plugin));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 	if (type_inst != NULL)
-	{
-		strncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
-		vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-	}
+		sstrncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void memcached_submit_cmd */
 /* }}} */
 
@@ -273,13 +280,11 @@ static void submit_gauge (const char *type, const char *type_inst,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "memcached", sizeof (vl.plugin));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 	if (type_inst != NULL)
-	{
-		strncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
-		vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-	}
+		sstrncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 }
 /* }}} */
 
@@ -297,13 +302,11 @@ static void submit_gauge2 (const char *type, const char *type_inst,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "memcached", sizeof (vl.plugin));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 	if (type_inst != NULL)
-	{
-		strncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
-		vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-	}
+		sstrncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 }
 /* }}} */
 

@@ -51,8 +51,9 @@ static void users_submit (gauge_t value)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "users", sizeof (vl.plugin));
+	sstrncpy (vl.type, "users", sizeof (vl.plugin));
 
-	plugin_dispatch_values ("users", &vl);
+	plugin_dispatch_values (&vl);
 } /* void users_submit */
 
 static int users_read (void)

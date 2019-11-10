@@ -124,20 +124,17 @@ static void nut_submit (nut_ups_t *ups, const char *type,
   vl.values = values;
   vl.values_len = STATIC_ARRAY_SIZE (values);
   vl.time = time (NULL);
-  strncpy (vl.host,
+  sstrncpy (vl.host,
       (strcasecmp (ups->hostname, "localhost") == 0)
       ? hostname_g
       : ups->hostname,
       sizeof (vl.host));
   sstrncpy (vl.plugin, "nut", sizeof (vl.plugin));
-  strncpy (vl.plugin_instance, ups->upsname, sizeof (vl.plugin_instance));
-  strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+  sstrncpy (vl.plugin_instance, ups->upsname, sizeof (vl.plugin_instance));
+  sstrncpy (vl.type, type, sizeof (vl.type));
+  sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-  vl.host[sizeof (vl.host) - 1] = '\0';
-  vl.plugin_instance[sizeof (vl.plugin_instance) - 1] = '\0';
-  vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-
-  plugin_dispatch_values (type, &vl);
+  plugin_dispatch_values (&vl);
 } /* void nut_submit */
 
 static int nut_read_one (nut_ups_t *ups)

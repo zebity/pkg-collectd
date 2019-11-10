@@ -71,10 +71,11 @@ static void tape_submit (const char *plugin_instance,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "tape", sizeof (vl.plugin));
-	strncpy (vl.plugin_instance, plugin_instance,
+	sstrncpy (vl.plugin_instance, plugin_instance,
 			sizeof (vl.plugin_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void tape_submit */
 
 static int tape_read (void)

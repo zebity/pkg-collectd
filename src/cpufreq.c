@@ -37,7 +37,7 @@ static int cpufreq_init (void)
 
 	while (1)
 	{
-		status = snprintf (filename, sizeof (filename),
+		status = ssnprintf (filename, sizeof (filename),
 				"/sys/devices/system/cpu/cpu%d/cpufreq/"
 				"scaling_cur_freq", num_cpu);
 		if ((status < 1) || ((unsigned int)status >= sizeof (filename)))
@@ -70,10 +70,11 @@ static void cpufreq_submit (int cpu_num, double value)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "cpufreq", sizeof (vl.plugin));
-	snprintf (vl.type_instance, sizeof (vl.type_instance),
+	sstrncpy (vl.type, "cpufreq", sizeof (vl.type));
+	ssnprintf (vl.type_instance, sizeof (vl.type_instance),
 			"%i", cpu_num);
 
-	plugin_dispatch_values ("cpufreq", &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static int cpufreq_read (void)
@@ -87,7 +88,7 @@ static int cpufreq_read (void)
 
 	for (i = 0; i < num_cpu; i++)
 	{
-		status = snprintf (filename, sizeof (filename),
+		status = ssnprintf (filename, sizeof (filename),
 				"/sys/devices/system/cpu/cpu%d/cpufreq/"
 				"scaling_cur_freq", i);
 		if ((status < 1) || ((unsigned int)status >= sizeof (filename)))

@@ -56,6 +56,9 @@
 #if HAVE_STDINT_H
 # include <stdint.h>
 #endif
+#if HAVE_STDBOOL_H
+# include <stdbool.h>
+#endif
 #if HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -236,6 +239,10 @@
 #define PLUGINDIR PREFIX "/lib/" PACKAGE_NAME
 #endif
 
+#ifndef PKGDATADIR
+#define PKGDATADIR PREFIX "/share/" PACKAGE_NAME
+#endif
+
 #ifndef COLLECTD_GRP_NAME
 # define COLLECTD_GRP_NAME "collectd"
 #endif
@@ -247,7 +254,7 @@
 # define __attribute__(x) /**/
 #endif
 
-#if __GNUC__
+#if defined(COLLECT_DEBUG) && COLLECT_DEBUG && defined(__GNUC__) && __GNUC__
 # pragma GCC poison strcpy strcat strtok
 #endif
 
@@ -258,7 +265,7 @@
  * included.
  */
 #ifndef DONT_POISON_SPRINTF_YET
-# if __GNUC__
+# if defined(COLLECT_DEBUG) && COLLECT_DEBUG && defined(__GNUC__) && __GNUC__
 #  pragma GCC poison sprintf
 # endif
 #endif

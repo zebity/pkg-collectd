@@ -45,9 +45,11 @@ static int value_list_to_string (char *buffer, int buffer_len,
 	int i;
 	gauge_t *rates = NULL;
 
+	assert (0 == strcmp (ds->type, vl->type));
+
 	memset (buffer, '\0', buffer_len);
 
-	status = snprintf (buffer, buffer_len, "%u", (unsigned int) vl->time);
+	status = ssnprintf (buffer, buffer_len, "%u", (unsigned int) vl->time);
 	if ((status < 1) || (status >= buffer_len))
 		return (-1);
 	offset = status;
@@ -62,7 +64,7 @@ static int value_list_to_string (char *buffer, int buffer_len,
 		{
 			if (store_rates == 0)
 			{
-				status = snprintf (buffer + offset,
+				status = ssnprintf (buffer + offset,
 						buffer_len - offset,
 						",%llu",
 						vl->values[i].counter);
@@ -77,14 +79,14 @@ static int value_list_to_string (char *buffer, int buffer_len,
 							"uc_get_rate failed.");
 					return (-1);
 				}
-				status = snprintf (buffer + offset,
+				status = ssnprintf (buffer + offset,
 						buffer_len - offset,
 						",%lf", rates[i]);
 			}
 		}
 		else /* if (ds->ds[i].type == DS_TYPE_GAUGE) */
 		{
-			status = snprintf (buffer + offset, buffer_len - offset,
+			status = ssnprintf (buffer + offset, buffer_len - offset,
 					",%lf", vl->values[i].gauge);
 		}
 
@@ -107,37 +109,39 @@ static int value_list_to_filename (char *buffer, int buffer_len,
 	int offset = 0;
 	int status;
 
+	assert (0 == strcmp (ds->type, vl->type));
+
 	if (datadir != NULL)
 	{
-		status = snprintf (buffer + offset, buffer_len - offset,
+		status = ssnprintf (buffer + offset, buffer_len - offset,
 				"%s/", datadir);
 		if ((status < 1) || (status >= buffer_len - offset))
 			return (-1);
 		offset += status;
 	}
 
-	status = snprintf (buffer + offset, buffer_len - offset,
+	status = ssnprintf (buffer + offset, buffer_len - offset,
 			"%s/", vl->host);
 	if ((status < 1) || (status >= buffer_len - offset))
 		return (-1);
 	offset += status;
 
 	if (strlen (vl->plugin_instance) > 0)
-		status = snprintf (buffer + offset, buffer_len - offset,
+		status = ssnprintf (buffer + offset, buffer_len - offset,
 				"%s-%s/", vl->plugin, vl->plugin_instance);
 	else
-		status = snprintf (buffer + offset, buffer_len - offset,
+		status = ssnprintf (buffer + offset, buffer_len - offset,
 				"%s/", vl->plugin);
 	if ((status < 1) || (status >= buffer_len - offset))
 		return (-1);
 	offset += status;
 
 	if (strlen (vl->type_instance) > 0)
-		status = snprintf (buffer + offset, buffer_len - offset,
-				"%s-%s", ds->type, vl->type_instance);
+		status = ssnprintf (buffer + offset, buffer_len - offset,
+				"%s-%s", vl->type, vl->type_instance);
 	else
-		status = snprintf (buffer + offset, buffer_len - offset,
-				"%s", ds->type);
+		status = ssnprintf (buffer + offset, buffer_len - offset,
+				"%s", vl->type);
 	if ((status < 1) || (status >= buffer_len - offset))
 		return (-1);
 	offset += status;
@@ -241,6 +245,11 @@ static int csv_write (const data_set_t *ds, const value_list_t *vl)
 	int          csv_fd;
 	struct flock fl;
 	int          status;
+
+	if (0 != strcmp (ds->type, vl->type)) {
+		ERROR ("csv plugin: DS type does not match value list type");
+		return -1;
+	}
 
 	if (value_list_to_filename (filename, sizeof (filename), ds, vl) != 0)
 		return (-1);

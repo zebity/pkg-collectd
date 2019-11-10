@@ -111,10 +111,10 @@ static void memory_submit (const char *type_instance, gauge_t value)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "memory", sizeof (vl.plugin));
-	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
-	vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
+	sstrncpy (vl.type, "memory", sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values ("memory", &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static int memory_read (void)
@@ -319,7 +319,7 @@ static int memory_read (void)
 	if ((ios = sg_get_mem_stats ()) != NULL)
 	{
 		memory_submit ("used",   ios->used);
-		memory_submit ("cached", ios->cached);
+		memory_submit ("cached", ios->cache);
 		memory_submit ("free",   ios->free);
 	}
 #endif /* HAVE_LIBSTATGRAB */

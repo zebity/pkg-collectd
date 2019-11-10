@@ -31,14 +31,17 @@
 #endif
 
 #define sfree(ptr) \
-	if((ptr) != NULL) { \
-		free(ptr); \
-	} \
-	(ptr) = NULL
+	do { \
+		if((ptr) != NULL) { \
+			free(ptr); \
+		} \
+		(ptr) = NULL; \
+	} while (0)
 
 #define STATIC_ARRAY_SIZE(a) (sizeof (a) / sizeof (*(a)))
 
 char *sstrncpy (char *dest, const char *src, size_t n);
+int ssnprintf (char *dest, size_t n, const char *format, ...);
 char *sstrdup(const char *s);
 void *smalloc(size_t size);
 char *sstrerror (int errnum, char *buf, size_t buflen);
@@ -199,4 +202,11 @@ int notification_init (notification_t *n, int severity, const char *message,
 	notification_init (n, NOTIF_FAILURE, NULL, \
 			(vl)->host, (vl)->plugin, (vl)->plugin_instance, \
 			(ds)->type, (vl)->type_instance)
+
+typedef int (*dirwalk_callback_f)(const char *dirname, const char *filename,
+		void *user_data);
+int walk_directory (const char *dir, dirwalk_callback_f callback,
+		void *user_data);
+int read_file_contents (const char *filename, char *buf, int bufsize);
+
 #endif /* COMMON_H */

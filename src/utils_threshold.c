@@ -184,9 +184,8 @@ static int ut_config_type_instance (threshold_t *th, oconfig_item_t *ci)
     return (-1);
   }
 
-  strncpy (th->type_instance, ci->values[0].value.string,
+  sstrncpy (th->type_instance, ci->values[0].value.string,
       sizeof (th->type_instance));
-  th->type_instance[sizeof (th->type_instance) - 1] = '\0';
 
   return (0);
 } /* int ut_config_type_instance */
@@ -284,8 +283,7 @@ static int ut_config_type (const threshold_t *th_orig, oconfig_item_t *ci)
   }
 
   memcpy (&th, th_orig, sizeof (th));
-  strncpy (th.type, ci->values[0].value.string, sizeof (th.type));
-  th.type[sizeof (th.type) - 1] = '\0';
+  sstrncpy (th.type, ci->values[0].value.string, sizeof (th.type));
 
   th.warning_min = NAN;
   th.warning_max = NAN;
@@ -340,9 +338,8 @@ static int ut_config_plugin_instance (threshold_t *th, oconfig_item_t *ci)
     return (-1);
   }
 
-  strncpy (th->plugin_instance, ci->values[0].value.string,
+  sstrncpy (th->plugin_instance, ci->values[0].value.string,
       sizeof (th->plugin_instance));
-  th->plugin_instance[sizeof (th->plugin_instance) - 1] = '\0';
 
   return (0);
 } /* int ut_config_plugin_instance */
@@ -369,8 +366,7 @@ static int ut_config_plugin (const threshold_t *th_orig, oconfig_item_t *ci)
   }
 
   memcpy (&th, th_orig, sizeof (th));
-  strncpy (th.plugin, ci->values[0].value.string, sizeof (th.plugin));
-  th.plugin[sizeof (th.plugin) - 1] = '\0';
+  sstrncpy (th.plugin, ci->values[0].value.string, sizeof (th.plugin));
 
   for (i = 0; i < ci->children_num; i++)
   {
@@ -417,8 +413,7 @@ static int ut_config_host (const threshold_t *th_orig, oconfig_item_t *ci)
   }
 
   memcpy (&th, th_orig, sizeof (th));
-  strncpy (th.host, ci->values[0].value.string, sizeof (th.host));
-  th.host[sizeof (th.host) - 1] = '\0';
+  sstrncpy (th.host, ci->values[0].value.string, sizeof (th.host));
 
   for (i = 0; i < ci->children_num; i++)
   {
@@ -501,46 +496,45 @@ int ut_config (const oconfig_item_t *ci)
  */
 /* }}} */
 
-static threshold_t *threshold_search (const data_set_t *ds,
-    const value_list_t *vl)
+static threshold_t *threshold_search (const value_list_t *vl)
 {
   threshold_t *th;
 
   if ((th = threshold_get (vl->host, vl->plugin, vl->plugin_instance,
-	  ds->type, vl->type_instance)) != NULL)
+	  vl->type, vl->type_instance)) != NULL)
     return (th);
   else if ((th = threshold_get (vl->host, vl->plugin, vl->plugin_instance,
-	  ds->type, NULL)) != NULL)
+	  vl->type, NULL)) != NULL)
     return (th);
   else if ((th = threshold_get (vl->host, vl->plugin, NULL,
-	  ds->type, vl->type_instance)) != NULL)
+	  vl->type, vl->type_instance)) != NULL)
     return (th);
   else if ((th = threshold_get (vl->host, vl->plugin, NULL,
-	  ds->type, NULL)) != NULL)
+	  vl->type, NULL)) != NULL)
     return (th);
   else if ((th = threshold_get (vl->host, "", NULL,
-	  ds->type, vl->type_instance)) != NULL)
+	  vl->type, vl->type_instance)) != NULL)
     return (th);
   else if ((th = threshold_get (vl->host, "", NULL,
-	  ds->type, NULL)) != NULL)
+	  vl->type, NULL)) != NULL)
     return (th);
   else if ((th = threshold_get ("", vl->plugin, vl->plugin_instance,
-	  ds->type, vl->type_instance)) != NULL)
+	  vl->type, vl->type_instance)) != NULL)
     return (th);
   else if ((th = threshold_get ("", vl->plugin, vl->plugin_instance,
-	  ds->type, NULL)) != NULL)
+	  vl->type, NULL)) != NULL)
     return (th);
   else if ((th = threshold_get ("", vl->plugin, NULL,
-	  ds->type, vl->type_instance)) != NULL)
+	  vl->type, vl->type_instance)) != NULL)
     return (th);
   else if ((th = threshold_get ("", vl->plugin, NULL,
-	  ds->type, NULL)) != NULL)
+	  vl->type, NULL)) != NULL)
     return (th);
   else if ((th = threshold_get ("", "", NULL,
-	  ds->type, vl->type_instance)) != NULL)
+	  vl->type, vl->type_instance)) != NULL)
     return (th);
   else if ((th = threshold_get ("", "", NULL,
-	  ds->type, NULL)) != NULL)
+	  vl->type, NULL)) != NULL)
     return (th);
 
   return (NULL);
@@ -597,35 +591,43 @@ static int ut_report_state (const data_set_t *ds,
 
   n.time = vl->time;
 
-  status = snprintf (buf, bufsize, "Host %s, plugin %s",
+  status = ssnprintf (buf, bufsize, "Host %s, plugin %s",
       vl->host, vl->plugin);
   buf += status;
   bufsize -= status;
 
   if (vl->plugin_instance[0] != '\0')
   {
-    status = snprintf (buf, bufsize, " (instance %s)",
+    status = ssnprintf (buf, bufsize, " (instance %s)",
 	vl->plugin_instance);
     buf += status;
     bufsize -= status;
   }
 
-  status = snprintf (buf, bufsize, " type %s", ds->type);
+  status = ssnprintf (buf, bufsize, " type %s", vl->type);
   buf += status;
   bufsize -= status;
 
   if (vl->type_instance[0] != '\0')
   {
-    status = snprintf (buf, bufsize, " (instance %s)",
+    status = ssnprintf (buf, bufsize, " (instance %s)",
 	vl->type_instance);
     buf += status;
     bufsize -= status;
   }
 
+  plugin_notification_meta_add_string (&n, "DataSource",
+      ds->ds[ds_index].name);
+  plugin_notification_meta_add_double (&n, "CurrentValue", values[ds_index]);
+  plugin_notification_meta_add_double (&n, "WarningMin", th->warning_min);
+  plugin_notification_meta_add_double (&n, "WarningMax", th->warning_max);
+  plugin_notification_meta_add_double (&n, "FailureMin", th->failure_min);
+  plugin_notification_meta_add_double (&n, "FailureMax", th->failure_max);
+
   /* Send an okay notification */
   if (state == STATE_OKAY)
   {
-    status = snprintf (buf, bufsize, ": All data sources are within range again.");
+    status = ssnprintf (buf, bufsize, ": All data sources are within range again.");
     buf += status;
     bufsize -= status;
   }
@@ -641,7 +643,7 @@ static int ut_report_state (const data_set_t *ds,
     {
       if (!isnan (min) && !isnan (max))
       {
-	status = snprintf (buf, bufsize, ": Data source \"%s\" is currently "
+	status = ssnprintf (buf, bufsize, ": Data source \"%s\" is currently "
 	    "%f. That is within the %s region of %f and %f.",
 	    ds->ds[ds_index].name, values[ds_index],
 	    (state == STATE_ERROR) ? "failure" : "warning",
@@ -649,7 +651,7 @@ static int ut_report_state (const data_set_t *ds,
       }
       else
       {
-	status = snprintf (buf, bufsize, ": Data source \"%s\" is currently "
+	status = ssnprintf (buf, bufsize, ": Data source \"%s\" is currently "
 	    "%f. That is %s the %s threshold of %f.",
 	    ds->ds[ds_index].name, values[ds_index],
 	    isnan (min) ? "below" : "above",
@@ -659,7 +661,7 @@ static int ut_report_state (const data_set_t *ds,
     }
     else /* is not inverted */
     {
-      status = snprintf (buf, bufsize, ": Data source \"%s\" is currently "
+      status = ssnprintf (buf, bufsize, ": Data source \"%s\" is currently "
 	  "%f. That is %s the %s threshold of %f.",
 	  ds->ds[ds_index].name, values[ds_index],
 	  (values[ds_index] < min) ? "below" : "above",
@@ -672,6 +674,7 @@ static int ut_report_state (const data_set_t *ds,
 
   plugin_dispatch_notification (&n);
 
+  plugin_notification_meta_free (&n);
   return (0);
 } /* }}} int ut_report_state */
 
@@ -783,7 +786,7 @@ int ut_check_threshold (const data_set_t *ds, const value_list_t *vl)
   /* Is this lock really necessary? So far, thresholds are only inserted at
    * startup. -octo */
   pthread_mutex_lock (&threshold_lock);
-  th = threshold_search (ds, vl);
+  th = threshold_search (vl);
   pthread_mutex_unlock (&threshold_lock);
   if (th == NULL)
     return (0);
@@ -859,33 +862,26 @@ int ut_check_interesting (const char *name)
   if (status != 0)
   {
     ERROR ("ut_check_interesting: parse_identifier failed.");
+    sfree (name_copy);
     return (-1);
   }
 
   memset (&ds, '\0', sizeof (ds));
   memset (&vl, '\0', sizeof (vl));
 
-  strncpy (vl.host, host, sizeof (vl.host));
-  vl.host[sizeof (vl.host) - 1] = '\0';
-  strncpy (vl.plugin, plugin, sizeof (vl.plugin));
-  vl.plugin[sizeof (vl.plugin) - 1] = '\0';
+  sstrncpy (vl.host, host, sizeof (vl.host));
+  sstrncpy (vl.plugin, plugin, sizeof (vl.plugin));
   if (plugin_instance != NULL)
-  {
-    strncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
-    vl.plugin_instance[sizeof (vl.plugin_instance) - 1] = '\0';
-  }
-  strncpy (ds.type, type, sizeof (ds.type));
-  ds.type[sizeof (ds.type) - 1] = '\0';
+    sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
+  sstrncpy (ds.type, type, sizeof (ds.type));
+  sstrncpy (vl.type, type, sizeof (vl.type));
   if (type_instance != NULL)
-  {
-    strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
-    vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-  }
+    sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
   sfree (name_copy);
   host = plugin = plugin_instance = type = type_instance = NULL;
 
-  th = threshold_search (&ds, &vl);
+  th = threshold_search (&vl);
   if (th == NULL)
     return (0);
   if ((th->flags & UT_FLAG_PERSIST) == 0)

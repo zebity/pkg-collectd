@@ -53,8 +53,9 @@ static void load_submit (gauge_t snum, gauge_t mnum, gauge_t lnum)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "load", sizeof (vl.plugin));
+	sstrncpy (vl.type, "load", sizeof (vl.type));
 
-	plugin_dispatch_values ("load", &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static int load_read (void)

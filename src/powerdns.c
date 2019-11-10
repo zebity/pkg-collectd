@@ -45,10 +45,10 @@
 #endif
 #define FUNC_ERROR(func) do { char errbuf[1024]; ERROR ("powerdns plugin: %s failed: %s", func, sstrerror (errno, errbuf, sizeof (errbuf))); } while (0)
 
-#define SERVER_SOCKET  "/var/run/pdns.controlsocket"
+#define SERVER_SOCKET  LOCALSTATEDIR"/run/pdns.controlsocket"
 #define SERVER_COMMAND "SHOW *"
 
-#define RECURSOR_SOCKET  "/var/run/pdns_recursor.controlsocket"
+#define RECURSOR_SOCKET  LOCALSTATEDIR"/run/pdns_recursor.controlsocket"
 #define RECURSOR_COMMAND "get noerror-answers nxdomain-answers " \
   "servfail-answers sys-msec user-msec qa-latency cache-entries cache-hits " \
   "cache-misses questions"
@@ -320,11 +320,12 @@ static void submit (const char *plugin_instance, /* {{{ */
   vl.time = time (NULL);
   sstrncpy (vl.host, hostname_g, sizeof (vl.host));
   sstrncpy (vl.plugin, "powerdns", sizeof (vl.plugin));
+  sstrncpy (vl.type, type, sizeof (vl.type));
   if (type_instance != NULL)
     sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
   sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
 
-  plugin_dispatch_values (type, &vl);
+  plugin_dispatch_values (&vl);
 } /* }}} static void submit */
 
 static int powerdns_get_data_dgram (list_item_t *item, /* {{{ */
@@ -349,10 +350,9 @@ static int powerdns_get_data_dgram (list_item_t *item, /* {{{ */
 
   memset (&sa_unix, 0, sizeof (sa_unix));
   sa_unix.sun_family = AF_UNIX;
-  strncpy (sa_unix.sun_path,
+  sstrncpy (sa_unix.sun_path,
       (local_sockpath != NULL) ? local_sockpath : PDNS_LOCAL_SOCKPATH,
       sizeof (sa_unix.sun_path));
-  sa_unix.sun_path[sizeof (sa_unix.sun_path) - 1] = 0;
 
   status = unlink (sa_unix.sun_path);
   if ((status != 0) && (errno != ENOENT))
@@ -860,7 +860,8 @@ static int powerdns_config_add_server (oconfig_item_t *ci) /* {{{ */
     }
 
     item->sockaddr.sun_family = AF_UNIX;
-    sstrncpy (item->sockaddr.sun_path, socket_temp, UNIX_PATH_MAX);
+    sstrncpy (item->sockaddr.sun_path, socket_temp,
+      sizeof (item->sockaddr.sun_path));
 
     e = llentry_create (item->instance, item);
     if (e == NULL)

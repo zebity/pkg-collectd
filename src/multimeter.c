@@ -218,8 +218,9 @@ static void multimeter_submit (double value)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "multimeter", sizeof (vl.plugin));
+	sstrncpy (vl.type, "multimeter", sizeof (vl.type));
 
-	plugin_dispatch_values ("multimeter", &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static int multimeter_read (void)

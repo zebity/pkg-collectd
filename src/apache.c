@@ -146,7 +146,7 @@ static int init (void)
 	{
 		int status;
 
-		status = snprintf (credentials, sizeof (credentials), "%s:%s",
+		status = ssnprintf (credentials, sizeof (credentials), "%s:%s",
 				user, (pass == NULL) ? "" : pass);
 		if (status >= sizeof (credentials))
 		{
@@ -155,7 +155,6 @@ static int init (void)
 					"truncated.");
 			return (-1);
 		}
-		credentials[sizeof (credentials) - 1] = '\0';
 
 		curl_easy_setopt (curl, CURLOPT_USERPWD, credentials);
 	}
@@ -202,15 +201,13 @@ static void submit_counter (const char *type, const char *type_instance,
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "apache", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 
 	if (type_instance != NULL)
-	{
-		strncpy (vl.type_instance, type_instance,
+		sstrncpy (vl.type_instance, type_instance,
 				sizeof (vl.type_instance));
-		vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-	}
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void submit_counter */
 
 static void submit_gauge (const char *type, const char *type_instance,
@@ -227,15 +224,13 @@ static void submit_gauge (const char *type, const char *type_instance,
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "apache", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
 
 	if (type_instance != NULL)
-	{
-		strncpy (vl.type_instance, type_instance,
+		sstrncpy (vl.type_instance, type_instance,
 				sizeof (vl.type_instance));
-		vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
-	}
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void submit_counter */
 
 static void submit_scoreboard (char *buf)

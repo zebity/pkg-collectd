@@ -57,7 +57,18 @@ use Carp (qw(cluck confess));
 use IO::Socket::UNIX;
 use Regexp::Common (qw(number));
 
+our $Debug = 0;
+
 return (1);
+
+sub _debug
+{
+	if (!$Debug)
+	{
+		return;
+	}
+	print @_;
+}
 
 sub _create_socket
 {
@@ -71,7 +82,7 @@ sub _create_socket
 	return ($sock);
 } # _create_socket
 
-=head1 VALUE IDENTIFIER
+=head1 VALUE IDENTIFIERS
 
 The values in the collectd are identified using an five-tuple (host, plugin,
 plugin-instance, type, type-instance) where only plugin-instance and
@@ -134,6 +145,22 @@ sub _parse_identifier
 	return ($ident);
 } # _parse_identifier
 
+sub _escape_argument
+{
+	my $string = shift;
+
+	if ($string =~ m/^\w+$/)
+	{
+		return ("$string");
+	}
+
+	$string =~ s#\\#\\\\#g;
+	$string =~ s#"#\\"#g;
+	$string = "\"$string\"";
+
+	return ($string);
+}
+
 =head1 PUBLIC METHODS
 
 =over 4
@@ -175,7 +202,7 @@ sub getval
 	my %args = @_;
 
 	my $status;
-	my $fh = $obj->{'sock'} or confess;
+	my $fh = $obj->{'sock'} or confess ('object has no filehandle');
 	my $msg;
 	my $identifier;
 
@@ -183,13 +210,13 @@ sub getval
 
 	$identifier = _create_identifier (\%args) or return;
 
-	$msg = "GETVAL $identifier\n";
-	#print "-> $msg";
-	send ($fh, $msg, 0) or confess ("send: $!");
+	$msg = 'GETVAL ' . _escape_argument ($identifier) . "\n";
+	_debug "-> $msg";
+	print $fh $msg;
 
-	$msg = undef;
-	recv ($fh, $msg, 1024, 0) or confess ("recv: $!");
-	#print "<- $msg";
+	$msg = <$fh>;
+	chomp ($msg);
+	_debug "<- $msg\n";
 
 	($status, $msg) = split (' ', $msg, 2);
 	if ($status <= 0)
@@ -198,9 +225,12 @@ sub getval
 		return;
 	}
 
-	for (split (' ', $msg))
+	for (my $i = 0; $i < $status; $i++)
 	{
-		my $entry = $_;
+		my $entry = <$fh>;
+		chomp ($entry);
+		_debug "<- $entry\n";
+
 		if ($entry =~ m/^(\w+)=NaN$/)
 		{
 			$ret->{$1} = undef;
@@ -219,8 +249,8 @@ sub getval
 Submits a value-list to the daemon. If the B<time> argument is omitted
 C<time()> is used. The required argument B<values> is a reference to an array
 of values that is to be submitted. The number of values must match the number
-of values expected for the given B<type> (see L<VALUE IDENTIFIER>), though this
-is checked by the daemon, not the Perl module. Also, gauge data-sources
+of values expected for the given B<type> (see L<VALUE IDENTIFIERS>), though
+this is checked by the daemon, not the Perl module. Also, gauge data-sources
 (e.E<nbsp>g. system-load) may be C<undef>. Returns true upon success and false
 otherwise.
 
@@ -236,6 +266,13 @@ sub putval
 	my $msg;
 	my $identifier;
 	my $values;
+	my $interval = "";
+
+	if (defined $args{'interval'})
+	{
+		$interval = ' interval='
+		. _escape_argument ($args{'interval'});
+	}
 
 	$identifier = _create_identifier (\%args) or return;
 	if (!$args{'values'})
@@ -254,12 +291,16 @@ sub putval
 		$values = join (':', $time, map { defined ($_) ? $_ : 'U' } (@{$args{'values'}}));
 	}
 
-	$msg = "PUTVAL $identifier $values\n";
-	#print "-> $msg";
-	send ($fh, $msg, 0) or confess ("send: $!");
-	$msg = undef;
-	recv ($fh, $msg, 1024, 0) or confess ("recv: $!");
-	#print "<- $msg";
+	$msg = 'PUTVAL '
+	. _escape_argument ($identifier)
+	. $interval
+	. ' ' . _escape_argument ($values) . "\n";
+	_debug "-> $msg";
+	print $fh $msg;
+
+	$msg = <$fh>;
+	chomp ($msg);
+	_debug "<- $msg\n";
 
 	($status, $msg) = split (' ', $msg, 2);
 	return (1) if ($status == 0);
@@ -284,10 +325,12 @@ sub listval
 	my $status;
 	my $fh = $obj->{'sock'} or confess;
 
-	$msg = "LISTVAL\n";
-	send ($fh, $msg, 0) or confess ("send: $!");
+	_debug "LISTVAL\n";
+	print $fh "LISTVAL\n";
 
 	$msg = <$fh>;
+	chomp ($msg);
+	_debug "<- $msg\n";
 	($status, $msg) = split (' ', $msg, 2);
 	if ($status < 0)
 	{
@@ -302,6 +345,7 @@ sub listval
 
 		$msg = <$fh>;
 		chomp ($msg);
+		_debug "<- $msg\n";
 
 		($time, $ident) = split (' ', $msg, 2);
 
@@ -356,7 +400,6 @@ sub putnotif
 	my $fh = $obj->{'sock'} or confess;
 
 	my $msg; # message sent to the socket
-	my $opt_msg; # message of the notification
 	
 	if (!$args{'message'})
 	{
@@ -382,16 +425,16 @@ sub putnotif
 		$args{'time'} = time ();
 	}
 	
-	$opt_msg = $args{'message'};
-	delete ($args{'message'});
-
 	$msg = 'PUTNOTIF '
-	. join (' ', map { $_ . '=' . $args{$_} } (keys %args))
-	. " message=$opt_msg\n";
+	. join (' ', map { $_ . '=' . _escape_argument ($args{$_}) } (keys %args))
+	. "\n";
 
-	send ($fh, $msg, 0) or confess ("send: $!");
-	$msg = undef;
-	recv ($fh, $msg, 1024, 0) or confess ("recv: $!");
+	_debug "-> $msg";
+	print $fh $msg;
+
+	$msg = <$fh>;
+	chomp ($msg);
+	_debug "<- $msg\n";
 
 	($status, $msg) = split (' ', $msg, 2);
 	return (1) if ($status == 0);
@@ -400,7 +443,7 @@ sub putnotif
 	return;
 } # putnotif
 
-=item I<$obj>-E<gt>B<flush> (B<timeout> =E<gt> I<$timeout>, B<plugins> =E<gt> [...]);
+=item I<$obj>-E<gt>B<flush> (B<timeout> =E<gt> I<$timeout>, B<plugins> =E<gt> [...], B<identifier>  =E<gt> [...]);
 
 Flush cached data.
 
@@ -415,7 +458,14 @@ flushed.
 
 =item B<plugins>
 
-If this option is specified, only the selected plugins will be flushed. 
+If this option is specified, only the selected plugins will be flushed. The
+argument is a reference to an array of strings.
+
+=item B<identifier>
+
+If this option is specified, only the given identifier(s) will be flushed. The
+argument is a reference to an array of identifiers. Identifiers, in this case,
+are hash references and have the members as outlined in L<VALUE IDENTIFIERS>.
 
 =back
 
@@ -431,7 +481,7 @@ sub flush
 	my $status = 0;
 	my $msg    = "FLUSH";
 
-	if ($args{'timeout'})
+	if (defined ($args{'timeout'}))
 	{
 		$msg .= " timeout=" . $args{'timeout'};
 	}
@@ -444,16 +494,54 @@ sub flush
 		}
 	}
 
+	if ($args{'identifier'})
+	{
+		for (@{$args{'identifier'}})
+		{
+			my $identifier = $_;
+			my $ident_str;
+
+			if (ref ($identifier) ne 'HASH')
+			{
+				cluck ("The argument of the `identifier' "
+					. "option must be an array reference "
+					. "of hash references.");
+				return;
+			}
+
+			$ident_str = _create_identifier ($identifier);
+			if (!$ident_str)
+			{
+				return;
+			}
+
+			$msg .= ' identifier=' . _escape_argument ($ident_str);
+		}
+	}
+
 	$msg .= "\n";
 
-	send ($fh, $msg, 0) or confess ("send: $!");
-	$msg = undef;
-	recv ($fh, $msg, 1024, 0) or confess ("recv: $!");
+	_debug "-> $msg";
+	print $fh $msg;
+
+	$msg = <$fh>;
+	chomp ($msg);
+	_debug "<- $msg\n";
 
 	($status, $msg) = split (' ', $msg, 2);
 	return (1) if ($status == 0);
 
 	$obj->{'error'} = $msg;
+	return;
+}
+
+sub error
+{
+	my $obj = shift;
+	if ($obj->{'error'})
+	{
+		return ($obj->{'error'});
+	}
 	return;
 }
 

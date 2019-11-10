@@ -59,10 +59,11 @@ static void traffic_submit (const char *plugin_instance,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
-	strncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
-	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+	sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
+	sstrncpy (vl.type, "if_octets", sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values ("if_octets", &vl);
+	plugin_dispatch_values (&vl);
 } /* void traffic_submit */
 
 static void load_submit (const char *plugin_instance,
@@ -80,9 +81,10 @@ static void load_submit (const char *plugin_instance,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
-	strncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
+	sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
+	sstrncpy (vl.type, "load", sizeof (vl.type));
 
-	plugin_dispatch_values ("load", &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static void submit_gauge (const char *plugin_instance, const char *type,
@@ -99,10 +101,11 @@ static void submit_gauge (const char *plugin_instance, const char *type,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
-	strncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
-	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+	sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void submit_gauge */
 
 static inline long long __get_sock_bytes(const char *s)
@@ -185,8 +188,9 @@ static int vserver_read (void)
 			continue;
 
 		/* socket message accounting */
-		len = snprintf (file, BUFSIZE, PROCDIR "/%s/cacct", dent->d_name);
-		if ((len < 0) || (len >= BUFSIZE))
+		len = ssnprintf (file, sizeof (file),
+				PROCDIR "/%s/cacct", dent->d_name);
+		if ((len < 0) || (len >= sizeof (file)))
 			continue;
 
 		if (NULL == (fh = fopen (file, "r")))
@@ -232,8 +236,9 @@ static int vserver_read (void)
 		}
 
 		/* thread information and load */
-		len = snprintf (file, BUFSIZE, PROCDIR "/%s/cvirt", dent->d_name);
-		if ((len < 0) || (len >= BUFSIZE))
+		len = ssnprintf (file, sizeof (file),
+				PROCDIR "/%s/cvirt", dent->d_name);
+		if ((len < 0) || (len >= sizeof (file)))
 			continue;
 
 		if (NULL == (fh = fopen (file, "r")))
@@ -284,8 +289,9 @@ static int vserver_read (void)
 		}
 
 		/* processes and memory usage */
-		len = snprintf (file, BUFSIZE, PROCDIR "/%s/limit", dent->d_name);
-		if ((len < 0) || (len >= BUFSIZE))
+		len = ssnprintf (file, sizeof (file),
+				PROCDIR "/%s/limit", dent->d_name);
+		if ((len < 0) || (len >= sizeof (file)))
 			continue;
 
 		if (NULL == (fh = fopen (file, "r")))

@@ -36,7 +36,7 @@
 #include <EXTERN.h>
 #include <perl.h>
 
-#if __GNUC__
+#if defined(COLLECT_DEBUG) && COLLECT_DEBUG && defined(__GNUC__) && __GNUC__
 # pragma GCC poison sprintf
 #endif
 
@@ -71,6 +71,7 @@
 
 #define PLUGIN_TYPES    7
 
+#define PLUGIN_CONFIG   254
 #define PLUGIN_DATASET  255
 
 #define log_debug(...) DEBUG ("perl: " __VA_ARGS__)
@@ -84,8 +85,7 @@ void boot_DynaLoader (PerlInterpreter *, CV *);
 static XS (Collectd_plugin_register_ds);
 static XS (Collectd_plugin_unregister_ds);
 static XS (Collectd_plugin_dispatch_values);
-static XS (Collectd_plugin_flush_one);
-static XS (Collectd_plugin_flush_all);
+static XS (Collectd__plugin_flush);
 static XS (Collectd_plugin_dispatch_notification);
 static XS (Collectd_plugin_log);
 static XS (Collectd_call_by_name);
@@ -139,8 +139,7 @@ static struct {
 	{ "Collectd::plugin_register_data_set",   Collectd_plugin_register_ds },
 	{ "Collectd::plugin_unregister_data_set", Collectd_plugin_unregister_ds },
 	{ "Collectd::plugin_dispatch_values",     Collectd_plugin_dispatch_values },
-	{ "Collectd::plugin_flush_one",           Collectd_plugin_flush_one },
-	{ "Collectd::plugin_flush_all",           Collectd_plugin_flush_all },
+	{ "Collectd::_plugin_flush",              Collectd__plugin_flush },
 	{ "Collectd::plugin_dispatch_notification",
 		Collectd_plugin_dispatch_notification },
 	{ "Collectd::plugin_log",                 Collectd_plugin_log },
@@ -160,6 +159,7 @@ struct {
 	{ "Collectd::TYPE_LOG",        PLUGIN_LOG },
 	{ "Collectd::TYPE_NOTIF",      PLUGIN_NOTIF },
 	{ "Collectd::TYPE_FLUSH",      PLUGIN_FLUSH },
+	{ "Collectd::TYPE_CONFIG",     PLUGIN_CONFIG },
 	{ "Collectd::TYPE_DATASET",    PLUGIN_DATASET },
 	{ "Collectd::DS_TYPE_COUNTER", DS_TYPE_COUNTER },
 	{ "Collectd::DS_TYPE_GAUGE",   DS_TYPE_GAUGE },
@@ -216,8 +216,7 @@ static int hv2data_source (pTHX_ HV *hash, data_source_t *ds)
 		return -1;
 
 	if (NULL != (tmp = hv_fetch (hash, "name", 4, 0))) {
-		strncpy (ds->name, SvPV_nolen (*tmp), DATA_MAX_NAME_LEN);
-		ds->name[DATA_MAX_NAME_LEN - 1] = '\0';
+		sstrncpy (ds->name, SvPV_nolen (*tmp), sizeof (ds->name));
 	}
 	else {
 		log_err ("hv2data_source: No DS name given.");
@@ -379,6 +378,10 @@ static int value_list2hv (pTHX_ value_list_t *vl, data_set_t *ds, HV *hash)
 				newSVpv (vl->plugin_instance, 0), 0))
 			return -1;
 
+	if ('\0' != vl->type[0])
+		if (NULL == hv_store (hash, "type", 4, newSVpv (vl->type, 0), 0))
+			return -1;
+
 	if ('\0' != vl->type_instance[0])
 		if (NULL == hv_store (hash, "type_instance", 13,
 				newSVpv (vl->type_instance, 0), 0))
@@ -423,6 +426,81 @@ static int notification2hv (pTHX_ notification_t *n, HV *hash)
 	return 0;
 } /* static int notification2hv (notification_t *, HV *) */
 
+static int oconfig_item2hv (pTHX_ oconfig_item_t *ci, HV *hash)
+{
+	int i;
+
+	AV *values;
+	AV *children;
+
+	if (NULL == hv_store (hash, "key", 3, newSVpv (ci->key, 0), 0))
+		return -1;
+
+	values = newAV ();
+	if (0 < ci->values_num)
+		av_extend (values, ci->values_num);
+
+	if (NULL == hv_store (hash, "values", 6, newRV_noinc ((SV *)values), 0)) {
+		av_clear (values);
+		av_undef (values);
+		return -1;
+	}
+
+	for (i = 0; i < ci->values_num; ++i) {
+		SV *value;
+
+		switch (ci->values[i].type) {
+			case OCONFIG_TYPE_STRING:
+				value = newSVpv (ci->values[i].value.string, 0);
+				break;
+			case OCONFIG_TYPE_NUMBER:
+				value = newSVnv ((NV)ci->values[i].value.number);
+				break;
+			case OCONFIG_TYPE_BOOLEAN:
+				value = ci->values[i].value.boolean ? &PL_sv_yes : &PL_sv_no;
+				break;
+			default:
+				log_err ("oconfig_item2hv: Invalid value type %i.",
+						ci->values[i].type);
+				value = &PL_sv_undef;
+		}
+
+		if (NULL == av_store (values, i, value)) {
+			sv_free (value);
+			return -1;
+		}
+	}
+
+	/* ignoring 'parent' member which is uninteresting in this case */
+
+	children = newAV ();
+	if (0 < ci->children_num)
+		av_extend (children, ci->children_num);
+
+	if (NULL == hv_store (hash, "children", 8, newRV_noinc ((SV *)children), 0)) {
+		av_clear (children);
+		av_undef (children);
+		return -1;
+	}
+
+	for (i = 0; i < ci->children_num; ++i) {
+		HV *child = newHV ();
+
+		if (0 != oconfig_item2hv (aTHX_ ci->children + i, child)) {
+			hv_clear (child);
+			hv_undef (child);
+			return -1;
+		}
+
+		if (NULL == av_store (children, i, newRV_noinc ((SV *)child))) {
+			hv_clear (child);
+			hv_undef (child);
+			return -1;
+		}
+	}
+	return 0;
+} /* static int oconfig_item2hv (pTHX_ oconfig_item_t *, HV *) */
+
 /*
  * Internal functions.
  */
@@ -430,12 +508,11 @@ static int notification2hv (pTHX_ notification_t *n, HV *hash)
 static char *get_module_name (char *buf, size_t buf_len, const char *module) {
 	int status = 0;
 	if (base_name[0] == '\0')
-		status = snprintf (buf, buf_len, "%s", module);
+		status = ssnprintf (buf, buf_len, "%s", module);
 	else
-		status = snprintf (buf, buf_len, "%s::%s", base_name, module);
+		status = ssnprintf (buf, buf_len, "%s::%s", base_name, module);
 	if ((status < 0) || ((unsigned int)status >= buf_len))
 		return (NULL);
-	buf[buf_len - 1] = '\0';
 	return (buf);
 } /* char *get_module_name */
 
@@ -481,8 +558,7 @@ static int pplugin_register_data_set (pTHX_ char *name, AV *dataset)
 				ds[i].name, ds[i].type, ds[i].min, ds[i].max);
 	}
 
-	strncpy (set->type, name, DATA_MAX_NAME_LEN);
-	set->type[DATA_MAX_NAME_LEN - 1] = '\0';
+	sstrncpy (set->type, name, sizeof (set->type));
 
 	set->ds_num = len + 1;
 	set->ds = ds;
@@ -517,7 +593,7 @@ static int pplugin_unregister_data_set (char *name)
  *   type_instance   => $tinstance,
  * }
  */
-static int pplugin_dispatch_values (pTHX_ char *name, HV *values)
+static int pplugin_dispatch_values (pTHX_ HV *values)
 {
 	value_list_t list = VALUE_LIST_INIT;
 	value_t      *val = NULL;
@@ -526,8 +602,15 @@ static int pplugin_dispatch_values (pTHX_ char *name, HV *values)
 
 	int ret = 0;
 
-	if ((NULL == name) || (NULL == values))
+	if (NULL == values)
 		return -1;
+
+	if (NULL == (tmp = hv_fetch (values, "type", 4, 0))) {
+		log_err ("pplugin_dispatch_values: No type given.");
+		return -1;
+	}
+
+	sstrncpy (list.type, SvPV_nolen (*tmp), sizeof (list.type));
 
 	if ((NULL == (tmp = hv_fetch (values, "values", 6, 0)))
 			|| (! (SvROK (*tmp) && (SVt_PVAV == SvTYPE (SvRV (*tmp)))))) {
@@ -544,7 +627,8 @@ static int pplugin_dispatch_values (pTHX_ char *name, HV *values)
 
 		val = (value_t *)smalloc (len * sizeof (value_t));
 
-		list.values_len = av2value (aTHX_ name, (AV *)SvRV (*tmp), val, len);
+		list.values_len = av2value (aTHX_ list.type, (AV *)SvRV (*tmp),
+				val, len);
 		list.values = val;
 
 		if (-1 == list.values_len) {
@@ -561,29 +645,24 @@ static int pplugin_dispatch_values (pTHX_ char *name, HV *values)
 	}
 
 	if (NULL != (tmp = hv_fetch (values, "host", 4, 0))) {
-		strncpy (list.host, SvPV_nolen (*tmp), DATA_MAX_NAME_LEN);
-		list.host[DATA_MAX_NAME_LEN - 1] = '\0';
+		sstrncpy (list.host, SvPV_nolen (*tmp), sizeof (list.host));
 	}
 	else {
 		sstrncpy (list.host, hostname_g, sizeof (list.host));
 	}
 
-	if (NULL != (tmp = hv_fetch (values, "plugin", 6, 0))) {
-		strncpy (list.plugin, SvPV_nolen (*tmp), DATA_MAX_NAME_LEN);
-		list.plugin[DATA_MAX_NAME_LEN - 1] = '\0';
-	}
+	if (NULL != (tmp = hv_fetch (values, "plugin", 6, 0)))
+		sstrncpy (list.plugin, SvPV_nolen (*tmp), sizeof (list.plugin));
 
-	if (NULL != (tmp = hv_fetch (values, "plugin_instance", 15, 0))) {
-		strncpy (list.plugin_instance, SvPV_nolen (*tmp), DATA_MAX_NAME_LEN);
-		list.plugin_instance[DATA_MAX_NAME_LEN - 1] = '\0';
-	}
+	if (NULL != (tmp = hv_fetch (values, "plugin_instance", 15, 0)))
+		sstrncpy (list.plugin_instance, SvPV_nolen (*tmp),
+				sizeof (list.plugin_instance));
 
-	if (NULL != (tmp = hv_fetch (values, "type_instance", 13, 0))) {
-		strncpy (list.type_instance, SvPV_nolen (*tmp), DATA_MAX_NAME_LEN);
-		list.type_instance[DATA_MAX_NAME_LEN - 1] = '\0';
-	}
+	if (NULL != (tmp = hv_fetch (values, "type_instance", 13, 0)))
+		sstrncpy (list.type_instance, SvPV_nolen (*tmp),
+				sizeof (list.type_instance));
 
-	ret = plugin_dispatch_values (name, &list);
+	ret = plugin_dispatch_values (&list);
 
 	sfree (val);
 	return ret;
@@ -626,31 +705,25 @@ static int pplugin_dispatch_notification (pTHX_ HV *notif)
 		n.time = time (NULL);
 
 	if (NULL != (tmp = hv_fetch (notif, "message", 7, 0)))
-		strncpy (n.message, SvPV_nolen (*tmp), sizeof (n.message));
-	n.message[sizeof (n.message) - 1] = '\0';
+		sstrncpy (n.message, SvPV_nolen (*tmp), sizeof (n.message));
 
 	if (NULL != (tmp = hv_fetch (notif, "host", 4, 0)))
-		strncpy (n.host, SvPV_nolen (*tmp), sizeof (n.host));
+		sstrncpy (n.host, SvPV_nolen (*tmp), sizeof (n.host));
 	else
-		strncpy (n.host, hostname_g, sizeof (n.host));
-	n.host[sizeof (n.host) - 1] = '\0';
+		sstrncpy (n.host, hostname_g, sizeof (n.host));
 
 	if (NULL != (tmp = hv_fetch (notif, "plugin", 6, 0)))
-		strncpy (n.plugin, SvPV_nolen (*tmp), sizeof (n.plugin));
-	n.plugin[sizeof (n.plugin) - 1] = '\0';
+		sstrncpy (n.plugin, SvPV_nolen (*tmp), sizeof (n.plugin));
 
 	if (NULL != (tmp = hv_fetch (notif, "plugin_instance", 15, 0)))
-		strncpy (n.plugin_instance, SvPV_nolen (*tmp),
+		sstrncpy (n.plugin_instance, SvPV_nolen (*tmp),
 				sizeof (n.plugin_instance));
-	n.plugin_instance[sizeof (n.plugin_instance) - 1] = '\0';
 
 	if (NULL != (tmp = hv_fetch (notif, "type", 4, 0)))
-		strncpy (n.type, SvPV_nolen (*tmp), sizeof (n.type));
-	n.type[sizeof (n.type) - 1] = '\0';
+		sstrncpy (n.type, SvPV_nolen (*tmp), sizeof (n.type));
 
 	if (NULL != (tmp = hv_fetch (notif, "type_instance", 13, 0)))
-		strncpy (n.type_instance, SvPV_nolen (*tmp), sizeof (n.type_instance));
-	n.type_instance[sizeof (n.type_instance) - 1] = '\0';
+		sstrncpy (n.type_instance, SvPV_nolen (*tmp), sizeof (n.type_instance));
 	return plugin_dispatch_notification (&n);
 } /* static int pplugin_dispatch_notification (HV *) */
 
@@ -699,6 +772,7 @@ static int pplugin_call_all (pTHX_ int type, ...)
 		 *   time   => $time,
 		 *   host   => $hostname,
 		 *   plugin => $plugin,
+		 *   type   => $type,
 		 *   plugin_instance => $instance,
 		 *   type_instance   => $type_instance
 		 * };
@@ -770,8 +844,10 @@ static int pplugin_call_all (pTHX_ int type, ...)
 	else if (PLUGIN_FLUSH == type) {
 		/*
 		 * $_[0] = $timeout;
+		 * $_[1] = $identifier;
 		 */
 		XPUSHs (sv_2mortal (newSViv (va_arg (ap, int))));
+		XPUSHs (sv_2mortal (newSVpv (va_arg (ap, char *), 0)));
 	}
 
 	PUTBACK;
@@ -874,33 +950,43 @@ static XS (Collectd_plugin_unregister_ds)
  */
 static XS (Collectd_plugin_dispatch_values)
 {
-	SV *values = NULL;
+	SV *values     = NULL;
+	int values_idx = 0;
 
 	int ret = 0;
 
 	dXSARGS;
 
-	if (2 != items) {
-		log_err ("Usage: Collectd::plugin_dispatch_values(name, values)");
+	if (2 == items) {
+		log_warn ("Collectd::plugin_dispatch_values with two arguments "
+				"is deprecated - pass the type through values->{type}.");
+		values_idx = 1;
+	}
+	else if (1 != items) {
+		log_err ("Usage: Collectd::plugin_dispatch_values(values)");
 		XSRETURN_EMPTY;
 	}
 
-	log_debug ("Collectd::plugin_dispatch_values: "
-			"name = \"%s\", values=\"%s\"",
-			SvPV_nolen (ST (0)), SvPV_nolen (ST (1)));
+	log_debug ("Collectd::plugin_dispatch_values: values=\"%s\"",
+			SvPV_nolen (ST (values_idx)));
 
-	values = ST (1);
+	values = ST (values_idx);
 
 	if (! (SvROK (values) && (SVt_PVHV == SvTYPE (SvRV (values))))) {
 		log_err ("Collectd::plugin_dispatch_values: Invalid values.");
 		XSRETURN_EMPTY;
 	}
 
-	if ((NULL == ST (0)) || (NULL == values))
+	if (((2 == items) && (NULL == ST (0))) || (NULL == values))
 		XSRETURN_EMPTY;
 
-	ret = pplugin_dispatch_values (aTHX_ SvPV_nolen (ST (0)),
-			(HV *)SvRV (values));
+	if ((2 == items) && (NULL == hv_store ((HV *)SvRV (values), "type", 4,
+			newSVsv (ST (0)), 0))) {
+		log_err ("Collectd::plugin_dispatch_values: Could not store type.");
+		XSRETURN_EMPTY;
+	}
+
+	ret = pplugin_dispatch_values (aTHX_ (HV *)SvRV (values));
 
 	if (0 == ret)
 		XSRETURN_YES;
@@ -909,52 +995,47 @@ static XS (Collectd_plugin_dispatch_values)
 } /* static XS (Collectd_plugin_dispatch_values) */
 
 /*
- * Collectd::plugin_flush_one (timeout, name).
+ * Collectd::_plugin_flush (plugin, timeout, identifier).
+ *
+ * plugin:
+ *   name of the plugin to flush
  *
  * timeout:
  *   timeout to use when flushing the data
  *
- * name:
- *   name of the plugin to flush
+ * identifier:
+ *   data-set identifier to flush
  */
-static XS (Collectd_plugin_flush_one)
+static XS (Collectd__plugin_flush)
 {
+	char *plugin  = NULL;
+	int   timeout = -1;
+	char *id      = NULL;
+
 	dXSARGS;
 
-	if (2 != items) {
-		log_err ("Usage: Collectd::plugin_flush_one(timeout, name)");
+	if (3 != items) {
+		log_err ("Usage: Collectd::_plugin_flush(plugin, timeout, id)");
 		XSRETURN_EMPTY;
 	}
 
-	log_debug ("Collectd::plugin_flush_one: timeout = %i, name = \"%s\"",
-			(int)SvIV (ST (0)), SvPV_nolen (ST (1)));
+	if (SvOK (ST (0)))
+		plugin = SvPV_nolen (ST (0));
 
-	if (0 == plugin_flush_one ((int)SvIV (ST (0)), SvPV_nolen (ST (1))))
+	if (SvOK (ST (1)))
+		timeout = (int)SvIV (ST (1));
+
+	if (SvOK (ST (2)))
+		id = SvPV_nolen (ST (2));
+
+	log_debug ("Collectd::_plugin_flush: plugin = \"%s\", timeout = %i, "
+			"id = \"%s\"", plugin, timeout, id);
+
+	if (0 == plugin_flush (plugin, timeout, id))
 		XSRETURN_YES;
 	else
 		XSRETURN_EMPTY;
-} /* static XS (Collectd_plugin_flush_one) */
-
-/*
- * Collectd::plugin_flush_all (timeout).
- *
- * timeout:
- *   timeout to use when flushing the data
- */
-static XS (Collectd_plugin_flush_all)
-{
-	dXSARGS;
-
-	if (1 != items) {
-		log_err ("Usage: Collectd::plugin_flush_all(timeout)");
-		XSRETURN_EMPTY;
-	}
-
-	log_debug ("Collectd::plugin_flush_all: timeout = %i", (int)SvIV (ST (0)));
-
-	plugin_flush_all ((int)SvIV (ST (0)));
-	XSRETURN_YES;
-} /* static XS (Collectd_plugin_flush_all) */
+} /* static XS (Collectd__plugin_flush) */
 
 /*
  * Collectd::plugin_dispatch_notification (notif).
@@ -1261,7 +1342,7 @@ static int perl_notify (const notification_t *notif)
 	return pplugin_call_all (aTHX_ PLUGIN_NOTIF, notif);
 } /* static int perl_notify (const notification_t *) */
 
-static int perl_flush (const int timeout)
+static int perl_flush (int timeout, const char *identifier)
 {
 	dTHX;
 
@@ -1277,7 +1358,7 @@ static int perl_flush (const int timeout)
 
 		aTHX = t->interp;
 	}
-	return pplugin_call_all (aTHX_ PLUGIN_FLUSH, timeout);
+	return pplugin_call_all (aTHX_ PLUGIN_FLUSH, timeout, identifier);
 } /* static int perl_flush (const int) */
 
 static int perl_shutdown (void)
@@ -1358,8 +1439,7 @@ static int g_pv_get (pTHX_ SV *var, MAGIC *mg)
 static int g_pv_set (pTHX_ SV *var, MAGIC *mg)
 {
 	char *pv = mg->mg_ptr;
-	strncpy (pv, SvPV_nolen (var), DATA_MAX_NAME_LEN);
-	pv[DATA_MAX_NAME_LEN - 1] = '\0';
+	sstrncpy (pv, SvPV_nolen (var), DATA_MAX_NAME_LEN);
 	return 0;
 } /* static int g_pv_set (pTHX_ SV *, MAGIC *) */
 
@@ -1481,7 +1561,9 @@ static int init_pi (int argc, char **argv)
 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
 	if (0 != perl_parse (aTHX_ xs_init, argc, argv, NULL)) {
-		log_err ("init_pi: Unable to bootstrap Collectd.");
+		SV *err = get_sv ("@", 1);
+		log_err ("init_pi: Unable to bootstrap Collectd: %s",
+				SvPV_nolen (err));
 
 		perl_destruct (perl_threads->head->interp);
 		perl_free (perl_threads->head->interp);
@@ -1560,8 +1642,7 @@ static int perl_config_basename (pTHX_ oconfig_item_t *ci)
 	value = ci->values[0].value.string;
 
 	log_debug ("perl_config: Setting plugin basename to \"%s\"", value);
-	strncpy (base_name, value, sizeof (base_name));
-	base_name[sizeof (base_name) - 1] = '\0';
+	sstrncpy (base_name, value, sizeof (base_name));
 	return 0;
 } /* static int perl_config_basename (oconfig_item_it *) */
 
@@ -1644,32 +1725,99 @@ static int perl_config_includedir (pTHX_ oconfig_item_t *ci)
 	return 0;
 } /* static int perl_config_includedir (oconfig_item_it *) */
 
+/*
+ * <Plugin> block
+ */
+static int perl_config_plugin (pTHX_ oconfig_item_t *ci)
+{
+	int retvals = 0;
+	int ret     = 0;
+
+	char *plugin;
+	HV   *config;
+
+	dSP;
+
+	if ((1 != ci->values_num) || (OCONFIG_TYPE_STRING != ci->values[0].type)) {
+		log_err ("LoadPlugin expects a single string argument.");
+		return 1;
+	}
+
+	plugin = ci->values[0].value.string;
+	config = newHV ();
+
+	if (0 != oconfig_item2hv (aTHX_ ci, config)) {
+		hv_clear (config);
+		hv_undef (config);
+
+		log_err ("Unable to convert configuration to a Perl hash value.");
+		config = Nullhv;
+	}
+
+	ENTER;
+	SAVETMPS;
+
+	PUSHMARK (SP);
+
+	XPUSHs (sv_2mortal (newSVpv (plugin, 0)));
+	XPUSHs (sv_2mortal (newRV_noinc ((SV *)config)));
+
+	PUTBACK;
+
+	retvals = call_pv ("Collectd::_plugin_dispatch_config", G_SCALAR);
+
+	SPAGAIN;
+	if (0 < retvals) {
+		SV *tmp = POPs;
+		if (! SvTRUE (tmp))
+			ret = 1;
+	}
+	else
+		ret = 1;
+
+	PUTBACK;
+	FREETMPS;
+	LEAVE;
+	return ret;
+} /* static int perl_config_plugin (oconfig_item_it *) */
+
 static int perl_config (oconfig_item_t *ci)
 {
+	int status = 0;
 	int i = 0;
 
-	dTHX;
-
-	/* dTHX does not get any valid values in case Perl
-	 * has not been initialized */
-	if (NULL == perl_threads)
-		aTHX = NULL;
+	dTHXa (NULL);
 
 	for (i = 0; i < ci->children_num; ++i) {
 		oconfig_item_t *c = ci->children + i;
+		int current_status;
+
+		if (NULL != perl_threads)
+			aTHX = PERL_GET_CONTEXT;
 
 		if (0 == strcasecmp (c->key, "LoadPlugin"))
-			perl_config_loadplugin (aTHX_ c);
+			current_status = perl_config_loadplugin (aTHX_ c);
 		else if (0 == strcasecmp (c->key, "BaseName"))
-			perl_config_basename (aTHX_ c);
+			current_status = perl_config_basename (aTHX_ c);
 		else if (0 == strcasecmp (c->key, "EnableDebugger"))
-			perl_config_enabledebugger (aTHX_ c);
+			current_status = perl_config_enabledebugger (aTHX_ c);
 		else if (0 == strcasecmp (c->key, "IncludeDir"))
-			perl_config_includedir (aTHX_ c);
+			current_status = perl_config_includedir (aTHX_ c);
+		else if (0 == strcasecmp (c->key, "Plugin"))
+			current_status = perl_config_plugin (aTHX_ c);
 		else
 			log_warn ("Ignoring unknown config key \"%s\".", c->key);
+
+		/* fatal error - it's up to perl_config_* to clean up */
+		if (0 > current_status) {
+			log_err ("Configuration failed with a fatal error - "
+					"plugin disabled!");
+			return current_status;
+		}
+
+		status += current_status;
 	}
-	return 0;
+	return status;
 } /* static int perl_config (oconfig_item_t *) */
 
 void module_register (void)

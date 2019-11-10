@@ -246,7 +246,7 @@ static int cache_flush (void)
 	return (0);
 } /* int cache_flush */
 
-static int cache_check (const char *type, const value_list_t *vl)
+static int cache_check (const value_list_t *vl)
 {
 	char key[1024];
 	time_t *value = NULL;
@@ -256,7 +256,7 @@ static int cache_check (const char *type, const value_list_t *vl)
 		return (-1);
 
 	if (format_name (key, sizeof (key), vl->host, vl->plugin,
-				vl->plugin_instance, type, vl->type_instance))
+				vl->plugin_instance, vl->type, vl->type_instance))
 		return (-1);
 
 	pthread_mutex_lock (&cache_lock);
@@ -678,14 +678,12 @@ static int parse_packet (void *buffer, int buffer_len)
 	int status;
 
 	value_list_t vl = VALUE_LIST_INIT;
-	char type[DATA_MAX_NAME_LEN];
 	notification_t n;
 
 	DEBUG ("network plugin: parse_packet: buffer = %p; buffer_len = %i;",
 			buffer, buffer_len);
 
 	memset (&vl, '\0', sizeof (vl));
-	memset (&type, '\0', sizeof (type));
 	memset (&n, '\0', sizeof (n));
 	status = 0;
 
@@ -722,10 +720,10 @@ static int parse_packet (void *buffer, int buffer_len)
 			if ((vl.time > 0)
 					&& (strlen (vl.host) > 0)
 					&& (strlen (vl.plugin) > 0)
-					&& (strlen (type) > 0)
-					&& (cache_check (type, &vl) == 0))
+					&& (strlen (vl.type) > 0)
+					&& (cache_check (&vl) == 0))
 			{
-				plugin_dispatch_values (type, &vl);
+				plugin_dispatch_values (&vl);
 			}
 			else
 			{
@@ -782,9 +780,9 @@ static int parse_packet (void *buffer, int buffer_len)
 		else if (pkg_type == TYPE_TYPE)
 		{
 			status = parse_part_string (&buffer, &buffer_len,
-					type, sizeof (type));
+					vl.type, sizeof (vl.type));
 			if (status == 0)
-				sstrncpy (n.type, type, sizeof (n.type));
+				sstrncpy (n.type, vl.type, sizeof (n.type));
 		}
 		else if (pkg_type == TYPE_TYPE_INSTANCE)
 		{
@@ -1441,12 +1439,12 @@ static int add_to_buffer (char *buffer, int buffer_size,
 		sstrncpy (vl_def->plugin_instance, vl->plugin_instance, sizeof (vl_def->plugin_instance));
 	}
 
-	if (strcmp (type_def, ds->type) != 0)
+	if (strcmp (type_def, vl->type) != 0)
 	{
 		if (write_part_string (&buffer, &buffer_size, TYPE_TYPE,
-					ds->type, strlen (ds->type)) != 0)
+					vl->type, strlen (vl->type)) != 0)
 			return (-1);
-		sstrncpy (type_def, ds->type, sizeof (type_def));
+		sstrncpy (type_def, vl->type, sizeof (type_def));
 	}
 
 	if (strcmp (vl_def->type_instance, vl->type_instance) != 0)
@@ -1483,7 +1481,7 @@ static int network_write (const data_set_t *ds, const value_list_t *vl)
 	/* If the value is already in the cache, we have received it via the
 	 * network. We write it again if forwarding is activated. It's then in
 	 * the cache and should we receive it again we will ignore it. */
-	status = cache_check (ds->type, vl);
+	status = cache_check (vl);
 	if ((network_config_forward == 0)
 			&& (status != 0))
 		return (0);
@@ -1550,7 +1548,10 @@ static int network_config (const char *key, const char *val)
 		fields_num = strsplit (val_cpy, fields, 3);
 		if ((fields_num != 1)
 				&& (fields_num != 2))
+		{
+			sfree (val_cpy);
 			return (1);
+		}
 		else if (fields_num == 2)
 		{
 			if ((service = strchr (fields[1], '.')) != NULL)
@@ -1563,6 +1564,8 @@ static int network_config (const char *key, const char *val)
 			network_add_listen_socket (node, service);
 		else
 			network_add_sending_socket (node, service);
+
+		sfree (val_cpy);
 	}
 	else if (strcasecmp ("TimeToLive", key) == 0)
 	{
@@ -1767,7 +1770,14 @@ static int network_init (void)
 	return (0);
 } /* int network_init */
 
-static int network_flush (int timeout)
+/* 
+ * The flush option of the network plugin cannot flush individual identifiers.
+ * All the values are added to a buffer and sent when the buffer is full, the
+ * requested value may or may not be in there, it's not worth finding out. We
+ * just send the buffer if `flush'  is called - if the requested value was in
+ * there, good. If not, well, then there is nothing to flush.. -octo
+ */
+static int network_flush (int timeout, const char *identifier)
 {
 	pthread_mutex_lock (&send_buffer_lock);
 

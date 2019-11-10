@@ -56,10 +56,10 @@ static kstat_t *ksp;
 /* No global variables */
 /* #endif defined(VM_SWAPUSAGE) */
 
-#elif HAVE_LIBKVM
+#elif HAVE_LIBKVM_GETSWAPINFO
 static kvm_t *kvm_obj = NULL;
 int kvm_pagesize;
-/* #endif HAVE_LIBKVM */
+/* #endif HAVE_LIBKVM_GETSWAPINFO */
 
 #elif HAVE_LIBSTATGRAB
 /* No global variables */
@@ -86,7 +86,7 @@ static int swap_init (void)
 	/* No init stuff */
 /* #endif defined(VM_SWAPUSAGE) */
 
-#elif HAVE_LIBKVM
+#elif HAVE_LIBKVM_GETSWAPINFO
 	if (kvm_obj != NULL)
 	{
 		kvm_close (kvm_obj);
@@ -105,7 +105,7 @@ static int swap_init (void)
 		ERROR ("swap plugin: kvm_open failed.");
 		return (-1);
 	}
-/* #endif HAVE_LIBKVM */
+/* #endif HAVE_LIBKVM_GETSWAPINFO */
 
 #elif HAVE_LIBSTATGRAB
 	/* No init stuff */
@@ -126,9 +126,10 @@ static void swap_submit (const char *type_instance, double value)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "swap", sizeof (vl.plugin));
-	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+	sstrncpy (vl.type, "swap", sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values ("swap", &vl);
+	plugin_dispatch_values (&vl);
 } /* void swap_submit */
 
 static int swap_read (void)
@@ -259,7 +260,7 @@ static int swap_read (void)
 	swap_submit ("free", sw_usage.xsu_avail);
 /* #endif VM_SWAPUSAGE */
 
-#elif HAVE_LIBKVM
+#elif HAVE_LIBKVM_GETSWAPINFO
 	struct kvm_swap data_s;
 	int             status;
 
@@ -285,7 +286,7 @@ static int swap_read (void)
 
 	swap_submit ("used", used);
 	swap_submit ("free", free);
-/* #endif HAVE_LIBKVM */
+/* #endif HAVE_LIBKVM_GETSWAPINFO */
 
 #elif HAVE_LIBSTATGRAB
 	sg_swap_stats *swap;

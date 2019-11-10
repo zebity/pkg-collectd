@@ -301,9 +301,10 @@ static void submit_counter (const char *type, const char *type_instance,
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "dns", sizeof (vl.plugin));
-	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+	sstrncpy (vl.type, type, sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void submit_counter */
 
 static void submit_octets (counter_t queries, counter_t responses)
@@ -319,8 +320,9 @@ static void submit_octets (counter_t queries, counter_t responses)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "dns", sizeof (vl.plugin));
+	sstrncpy (vl.type, "dns_octets", sizeof (vl.type));
 
-	plugin_dispatch_values ("dns_octets", &vl);
+	plugin_dispatch_values (&vl);
 } /* void submit_counter */
 
 static int dns_read (void)

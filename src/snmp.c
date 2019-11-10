@@ -198,7 +198,8 @@ static int csnmp_config_add_data_instance (data_definition_t *dd, oconfig_item_t
   else
   {
     /* Instance is a simple string */
-    strncpy (dd->instance.string, ci->values[0].value.string, DATA_MAX_NAME_LEN - 1);
+    sstrncpy (dd->instance.string, ci->values[0].value.string,
+	sizeof (dd->instance.string));
   }
 
   return (0);
@@ -716,13 +717,61 @@ static value_t csnmp_value_list_to_value (struct variable_list *vl, int type,
     temp += (uint32_t) vl->val.counter64->low;
     DEBUG ("snmp plugin: Parsed int64 value is %"PRIu64".", temp);
   }
+  else if (vl->type == ASN_OCTET_STR)
+  {
+    /* We'll handle this later.. */
+  }
   else
   {
     WARNING ("snmp plugin: I don't know the ASN type `%i'", (int) vl->type);
     defined = 0;
   }
 
-  if (type == DS_TYPE_COUNTER)
+  if (vl->type == ASN_OCTET_STR)
+  {
+    char *endptr;
+
+    endptr = NULL;
+    if (vl->val.string != NULL)
+    {
+      char string[64];
+      size_t string_length;
+
+      string_length = sizeof (string) - 1;
+      if (vl->val_len < string_length)
+	string_length = vl->val_len;
+
+      /* The strings we get from the Net-SNMP library may not be null
+       * terminated. That is why we're using `membpy' here and not `strcpy'.
+       * `string_length' is set to `vl->val_len' which holds the length of the
+       * string.  -octo */
+      memcpy (string, vl->val.string, string_length);
+      string[string_length] = 0;
+
+      if (type == DS_TYPE_COUNTER)
+      {
+	ret.counter = (counter_t) strtoll (string, &endptr, /* base = */ 0);
+	DEBUG ("snmp plugin: csnmp_value_list_to_value: String to counter: %s -> %llu",
+	    string, (unsigned long long) ret.counter);
+      }
+      else if (type == DS_TYPE_GAUGE)
+      {
+	ret.gauge = (gauge_t) strtod (string, &endptr);
+	DEBUG ("snmp plugin: csnmp_value_list_to_value: String to gauge: %s -> %g",
+	    string, (double) ret.gauge);
+      }
+    }
+
+    /* Check if an error occurred */
+    if ((vl->val.string == NULL) || (endptr == (char *) vl->val.string))
+    {
+      if (type == DS_TYPE_COUNTER)
+	ret.counter = 0;
+      else if (type == DS_TYPE_GAUGE)
+	ret.gauge = NAN;
+    }
+  }
+  else if (type == DS_TYPE_COUNTER)
   {
     ret.counter = temp;
   }
@@ -829,15 +878,15 @@ static int csnmp_instance_list_add (csnmp_list_instances_t **head,
     char *ptr;
     size_t instance_len;
 
+    memset (il->instance, 0, sizeof (il->instance));
     instance_len = sizeof (il->instance) - 1;
     if (instance_len > vb->val_len)
       instance_len = vb->val_len;
 
-    strncpy (il->instance, (char *) ((vb->type == ASN_OCTET_STR)
+    sstrncpy (il->instance, (char *) ((vb->type == ASN_OCTET_STR)
 	  ? vb->val.string
 	  : vb->val.bitstring),
-	instance_len);
-    il->instance[instance_len] = '\0';
+	instance_len + 1);
 
     for (ptr = il->instance; *ptr != '\0'; ptr++)
     {
@@ -851,10 +900,9 @@ static int csnmp_instance_list_add (csnmp_list_instances_t **head,
   else
   {
     value_t val = csnmp_value_list_to_value (vb, DS_TYPE_COUNTER, 1.0, 0.0);
-    snprintf (il->instance, sizeof (il->instance),
+    ssnprintf (il->instance, sizeof (il->instance),
 	"%llu", val.counter);
   }
-  il->instance[sizeof (il->instance) - 1] = '\0';
 
   /* TODO: Debugging output */
 
@@ -907,8 +955,7 @@ static int csnmp_dispatch_table (host_definition_t *host, data_definition_t *dat
     return (-1);
   }
 
-  strncpy (vl.host, host->name, sizeof (vl.host));
-  vl.host[sizeof (vl.host) - 1] = '\0';
+  sstrncpy (vl.host, host->name, sizeof (vl.host));
   sstrncpy (vl.plugin, "snmp", sizeof (vl.plugin));
 
   vl.interval = host->interval;
@@ -972,30 +1019,28 @@ static int csnmp_dispatch_table (host_definition_t *host, data_definition_t *dat
 	|| (instance_list_ptr->subid == value_table_ptr[0]->subid));
 #endif
 
+    sstrncpy (vl.type, data->type, sizeof (vl.type));
+
     {
       char temp[DATA_MAX_NAME_LEN];
 
       if (instance_list_ptr == NULL)
-	snprintf (temp, sizeof (temp), "%u",
-	    (uint32_t) subid);
+	ssnprintf (temp, sizeof (temp), "%u", (uint32_t) subid);
       else
-	strncpy (temp, instance_list_ptr->instance,
-	    sizeof (temp));
-      temp[sizeof (temp) - 1] = '\0';
+	sstrncpy (temp, instance_list_ptr->instance, sizeof (temp));
 
       if (data->instance_prefix == NULL)
-	strncpy (vl.type_instance, temp, sizeof (vl.type_instance));
+	sstrncpy (vl.type_instance, temp, sizeof (vl.type_instance));
       else
-	snprintf (vl.type_instance, sizeof (vl.type_instance), "%s%s",
+	ssnprintf (vl.type_instance, sizeof (vl.type_instance), "%s%s",
 	    data->instance_prefix, temp);
-      vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
     }
 
     for (i = 0; i < data->values_len; i++)
       vl.values[i] = value_table_ptr[i]->value;
 
     /* If we get here `vl.type_instance' and all `vl.values' have been set */
-    plugin_dispatch_values (data->type, &vl);
+    plugin_dispatch_values (&vl);
 
     subid++;
   } /* while (have_more != 0) */
@@ -1120,10 +1165,6 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
     vb = res->variables;
     if (vb == NULL)
     {
-      if (res != NULL)
-	snmp_free_pdu (res);
-      res = NULL;
-
       status = -1;
       break;
     }
@@ -1132,10 +1173,7 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
      * subtree */
     if (csnmp_check_res_left_subtree (host, data, res) != 0)
     {
-      if (res != NULL)
-	snmp_free_pdu (res);
-      res = NULL;
-
+      status = 0;
       break;
     }
 
@@ -1157,11 +1195,7 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
 	  (vb != NULL) && (vb->next_variable != NULL);
 	  vb = vb->next_variable)
 	/* do nothing */;
-      if (vb == NULL)
-      {
-	status = -1;
-	break;
-      }
+      assert (vb != NULL);
 
       /* Copy OID to oid_list[data->values_len] */
       memcpy (oid_list[data->values_len].oid, vb->name,
@@ -1223,6 +1257,10 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
       snmp_free_pdu (res);
     res = NULL;
   } /* while (status == 0) */
+
+  if (res != NULL)
+    snmp_free_pdu (res);
+  res = NULL;
 
   if (status == 0)
     csnmp_dispatch_table (host, data, instance_list, value_table);
@@ -1299,11 +1337,10 @@ static int csnmp_read_value (host_definition_t *host, data_definition_t *data)
       vl.values[i].gauge = NAN;
   }
 
-  strncpy (vl.host, host->name, sizeof (vl.host));
-  vl.host[sizeof (vl.host) - 1] = '\0';
+  sstrncpy (vl.host, host->name, sizeof (vl.host));
   sstrncpy (vl.plugin, "snmp", sizeof (vl.plugin));
-  strncpy (vl.type_instance, data->instance.string, sizeof (vl.type_instance));
-  vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
+  sstrncpy (vl.type, data->type, sizeof (vl.type));
+  sstrncpy (vl.type_instance, data->instance.string, sizeof (vl.type_instance));
 
   vl.interval = host->interval;
 
@@ -1361,8 +1398,8 @@ static int csnmp_read_value (host_definition_t *host, data_definition_t *data)
     snmp_free_pdu (res);
   res = NULL;
 
-  DEBUG ("snmp plugin: -> plugin_dispatch_values (%s, &vl);", data->type);
-  plugin_dispatch_values (data->type, &vl);
+  DEBUG ("snmp plugin: -> plugin_dispatch_values (&vl);");
+  plugin_dispatch_values (&vl);
   sfree (vl.values);
 
   return (0);

@@ -74,12 +74,13 @@ struct value_list_s
 	char     host[DATA_MAX_NAME_LEN];
 	char     plugin[DATA_MAX_NAME_LEN];
 	char     plugin_instance[DATA_MAX_NAME_LEN];
+	char     type[DATA_MAX_NAME_LEN];
 	char     type_instance[DATA_MAX_NAME_LEN];
 };
 typedef struct value_list_s value_list_t;
 
-#define VALUE_LIST_INIT { NULL, 0, 0, interval_g, "localhost", "", "", "" }
-#define VALUE_LIST_STATIC { NULL, 0, 0, 0, "localhost", "", "", "" }
+#define VALUE_LIST_INIT { NULL, 0, 0, interval_g, "localhost", "", "", "", "" }
+#define VALUE_LIST_STATIC { NULL, 0, 0, 0, "localhost", "", "", "", "" }
 
 struct data_source_s
 {
@@ -98,6 +99,30 @@ struct data_set_s
 };
 typedef struct data_set_s data_set_t;
 
+enum notification_meta_type_e
+{
+	NM_TYPE_STRING,
+	NM_TYPE_SIGNED_INT,
+	NM_TYPE_UNSIGNED_INT,
+	NM_TYPE_DOUBLE,
+	NM_TYPE_BOOLEAN
+};
+
+typedef struct notification_meta_s
+{
+	char name[DATA_MAX_NAME_LEN];
+	enum notification_meta_type_e type;
+	union
+	{
+		const char *value_string;
+		int64_t value_signed_int;
+		uint64_t value_unsigned_int;
+		double value_double;
+		bool value_boolean;
+	};
+	struct notification_meta_s *next;
+} notification_meta_t;
+
 typedef struct notification_s
 {
 	int    severity;
@@ -108,6 +133,7 @@ typedef struct notification_s
 	char   plugin_instance[DATA_MAX_NAME_LEN];
 	char   type[DATA_MAX_NAME_LEN];
 	char   type_instance[DATA_MAX_NAME_LEN];
+	notification_meta_t *meta;
 } notification_t;
 
 /*
@@ -150,10 +176,9 @@ int plugin_load (const char *name);
 
 void plugin_init_all (void);
 void plugin_read_all (void);
-void plugin_flush_all (int timeout);
 void plugin_shutdown_all (void);
 
-int plugin_flush_one (int timeout, const char *name);
+int plugin_flush (const char *plugin, int timeout, const char *identifier);
 
 /*
  * The `plugin_register_*' functions are used to make `config', `init',
@@ -172,7 +197,7 @@ int plugin_register_read (const char *name,
 int plugin_register_write (const char *name,
 		int (*callback) (const data_set_t *ds, const value_list_t *vl));
 int plugin_register_flush (const char *name,
-		int (*callback) (const int));
+		int (*callback) (const int timeout, const char *identifier));
 int plugin_register_shutdown (char *name,
 		int (*callback) (void));
 int plugin_register_data_set (const data_set_t *ds);
@@ -204,11 +229,10 @@ int plugin_unregister_notification (const char *name);
  *  write-functions.
  *
  * ARGUMENTS
- *  `name'      Name/type of the data-set that describe the values in `vl'.
  *  `vl'        Value list of the values that have been read by a `read'
  *              function.
  */
-int plugin_dispatch_values (const char *name, value_list_t *vl);
+int plugin_dispatch_values (value_list_t *vl);
 
 int plugin_dispatch_notification (const notification_t *notif);
 
@@ -226,5 +250,26 @@ void plugin_log (int level, const char *format, ...)
 #endif /* ! COLLECT_DEBUG */
 
 const data_set_t *plugin_get_ds (const char *name);
+
+int plugin_notification_meta_add_string (notification_t *n,
+    const char *name,
+    const char *value);
+int plugin_notification_meta_add_signed_int (notification_t *n,
+    const char *name,
+    int64_t value);
+int plugin_notification_meta_add_unsigned_int (notification_t *n,
+    const char *name,
+    uint64_t value);
+int plugin_notification_meta_add_double (notification_t *n,
+    const char *name,
+    double value);
+int plugin_notification_meta_add_boolean (notification_t *n,
+    const char *name,
+    bool value);
+
+int plugin_notification_meta_copy (notification_t *dst,
+    const notification_t *src);
+
+int plugin_notification_meta_free (notification_t *n);
 
 #endif /* PLUGIN_H */

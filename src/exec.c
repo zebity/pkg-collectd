@@ -170,10 +170,9 @@ static int exec_config_exec (oconfig_item_t *ci) /* {{{ */
   {
     char *tmp = strrchr (ci->values[1].value.string, '/');
     if (tmp == NULL)
-      strncpy (buffer, ci->values[1].value.string, sizeof (buffer));
+      sstrncpy (buffer, ci->values[1].value.string, sizeof (buffer));
     else
-      strncpy (buffer, tmp + 1, sizeof (buffer));
-    buffer[sizeof (buffer) - 1] = '\0';
+      sstrncpy (buffer, tmp + 1, sizeof (buffer));
   }
   pl->argv[0] = strdup (buffer);
   if (pl->argv[0] == NULL)
@@ -196,17 +195,16 @@ static int exec_config_exec (oconfig_item_t *ci) /* {{{ */
     {
       if (ci->values[i + 1].type == OCONFIG_TYPE_NUMBER)
       {
-	snprintf (buffer, sizeof (buffer), "%lf",
+	ssnprintf (buffer, sizeof (buffer), "%lf",
 	    ci->values[i + 1].value.number);
       }
       else
       {
 	if (ci->values[i + 1].value.boolean)
-	  strncpy (buffer, "true", sizeof (buffer));
+	  sstrncpy (buffer, "true", sizeof (buffer));
 	else
-	  strncpy (buffer, "false", sizeof (buffer));
+	  sstrncpy (buffer, "false", sizeof (buffer));
       }
-      buffer[sizeof (buffer) - 1] = '\0';
 
       pl->argv[i] = strdup (buffer);
     }
@@ -492,19 +490,19 @@ static int fork_child (program_list_t *pl, int *fd_in, int *fd_out, int *fd_err)
 
 static int parse_line (char *buffer) /* {{{ */
 {
-  char *fields[256];
-  int fields_num;
-
-  fields[0] = "PUTVAL";
-  fields_num = strsplit (buffer, fields + 1, STATIC_ARRAY_SIZE(fields) - 1);
-
-  if (strcasecmp (fields[1], "putval") == 0)
-    return (handle_putval (stdout, fields + 1, fields_num));
-  else if (strcasecmp (fields[1], "putnotif") == 0)
-    return (handle_putnotif (stdout, fields + 1, fields_num));
-
-  /* compatibility code */
-  return (handle_putval (stdout, fields, fields_num + 1));
+  if (strncasecmp ("PUTVAL", buffer, strlen ("PUTVAL")) == 0)
+    return (handle_putval (stdout, buffer));
+  else if (strncasecmp ("PUTNOTIF", buffer, strlen ("PUTNOTIF")) == 0)
+    return (handle_putnotif (stdout, buffer));
+  else
+  {
+    /* For backwards compatibility */
+    char tmp[1220];
+    /* Let's annoy the user a bit.. */
+    INFO ("exec plugin: Prepending `PUTVAL' to this line: %s", buffer);
+    ssnprintf (tmp, sizeof (tmp), "PUTVAL %s", buffer);
+    return (handle_putval (stdout, tmp));
+  }
 } /* int parse_line }}} */
 
 static void *exec_read_one (void *arg) /* {{{ */
@@ -639,7 +637,8 @@ static void *exec_read_one (void *arg) /* {{{ */
 static void *exec_notification_one (void *arg) /* {{{ */
 {
   program_list_t *pl = ((program_list_and_notification_t *) arg)->pl;
-  const notification_t *n = &((program_list_and_notification_t *) arg)->n;
+  notification_t *n = &((program_list_and_notification_t *) arg)->n;
+  notification_meta_t *meta;
   int fd;
   FILE *fh;
   int pid;
@@ -688,6 +687,21 @@ static void *exec_notification_one (void *arg) /* {{{ */
   if (strlen (n->type_instance) > 0)
     fprintf (fh, "TypeInstance: %s\n", n->type_instance);
 
+  for (meta = n->meta; meta != NULL; meta = meta->next)
+  {
+    if (meta->type == NM_TYPE_STRING)
+      fprintf (fh, "%s: %s\n", meta->name, meta->value_string);
+    else if (meta->type == NM_TYPE_SIGNED_INT)
+      fprintf (fh, "%s: %"PRIi64"\n", meta->name, meta->value_signed_int);
+    else if (meta->type == NM_TYPE_UNSIGNED_INT)
+      fprintf (fh, "%s: %"PRIu64"\n", meta->name, meta->value_unsigned_int);
+    else if (meta->type == NM_TYPE_DOUBLE)
+      fprintf (fh, "%s: %e\n", meta->name, meta->value_double);
+    else if (meta->type == NM_TYPE_BOOLEAN)
+      fprintf (fh, "%s: %s\n", meta->name,
+	  meta->value_boolean ? "true" : "false");
+  }
+
   fprintf (fh, "\n%s\n", n->message);
 
   fflush (fh);
@@ -698,6 +712,7 @@ static void *exec_notification_one (void *arg) /* {{{ */
   DEBUG ("exec plugin: Child %i exited with status %i.",
       pid, status);
 
+  plugin_notification_meta_free (n);
   sfree (arg);
   pthread_exit ((void *) 0);
   return (NULL);
@@ -773,6 +788,11 @@ static int exec_notification (const notification_t *n)
 
     pln->pl = pl;
     memcpy (&pln->n, n, sizeof (notification_t));
+
+    /* Set the `meta' member to NULL, otherwise `plugin_notification_meta_copy'
+     * will run into an endless loop. */
+    pln->n.meta = NULL;
+    plugin_notification_meta_copy (&pln->n, n);
 
     pthread_attr_init (&attr);
     pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);

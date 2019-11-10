@@ -136,12 +136,14 @@ static void tss2_submit_gauge (const char *plugin_instance,
 	if (plugin_instance != NULL)
 		sstrncpy (vl.plugin_instance, plugin_instance,
 				sizeof (vl.plugin_instance));
-	
+
+	sstrncpy (vl.type, type, sizeof (vl.type));
+
 	if (type_instance != NULL)
 		sstrncpy (vl.type_instance, type_instance,
 				sizeof (vl.type_instance));
 	
-	plugin_dispatch_values (type, &vl);
+	plugin_dispatch_values (&vl);
 } /* void tss2_submit_gauge */
 
 static void tss2_submit_io (const char *plugin_instance, const char *type,
@@ -165,8 +167,10 @@ static void tss2_submit_io (const char *plugin_instance, const char *type,
 	if (plugin_instance != NULL)
 		sstrncpy (vl.plugin_instance, plugin_instance,
 				sizeof (vl.plugin_instance));
-	
-	plugin_dispatch_values (type, &vl);
+
+	sstrncpy (vl.type, type, sizeof (vl.type));
+
+	plugin_dispatch_values (&vl);
 } /* void tss2_submit_gauge */
 
 static void tss2_close_socket (void)
@@ -372,8 +376,7 @@ static int tss2_select_vserver (FILE *read_fh, FILE *write_fh, vserver_list_t *v
 	int status;
 
 	/* Send request */
-	snprintf (command, sizeof (command), "sel %i\r\n", vserver->port);
-	command[sizeof (command) - 1] = 0;
+	ssnprintf (command, sizeof (command), "sel %i\r\n", vserver->port);
 
 	status = tss2_send_request (write_fh, command);
 	if (status != 0)
@@ -527,9 +530,8 @@ static int tss2_read_vserver (vserver_list_t *vserver)
 	else
 	{
 		/* Request server information */
-		snprintf (plugin_instance, sizeof (plugin_instance), "vserver%i",
+		ssnprintf (plugin_instance, sizeof (plugin_instance), "vserver%i",
 				vserver->port);
-		plugin_instance[sizeof (plugin_instance) - 1] = 0;
 
 		/* Select the server */
 		status = tss2_select_vserver (read_fh, write_fh, vserver);

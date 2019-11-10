@@ -30,7 +30,11 @@ section-start or -end. Empty lines and everything after the hash-symbol `#' is
 ignored. Values are either string, enclosed in double-quotes,
 (floating-point-)numbers or a boolean expression, i.E<nbsp>e. either B<true> or
 B<false>. String containing of only alphanumeric characters and underscores do
-not need to be quoted.
+not need to be quoted. Lines may be wrapped by using `\' as the last character
+before the newline. This allows long lines to be split into multiple lines.
+Quoted strings may be wrapped as well. However, those are treated special in
+that whitespace at the beginning of the following lines will be ignored, which
+allows for nicely indenting the wrapped lines.
 
 The configuration is read and processed in order, i.E<nbsp>e. from top to
 bottom. So the plugins are loaded in the order listed in this config file. It
@@ -232,6 +236,19 @@ Optional user name needed for authentication.
 
 Optional password needed for authentication.
 
+=item B<VerifyPeer> B<true|false>
+
+Enable or disable peer SSL certificate verification. See
+L<http://curl.haxx.se/docs/sslcerts.html> for details. Enabled by default.
+
+=item B<VerifyHost> B<true|false>
+
+Enable or disable peer host name verification. If enabled, the plugin checks
+if the C<Common Name> or a C<Subject Alternate Name> field of the SSL
+certificate matches the host name provided by the B<URL> option. If this
+identity check fails, the connection is aborted. Obviously, only works when
+connecting to a SSL enabled server. Enabled by default.
+
 =item B<CACert> I<File>
 
 File that holds one or more SSL certificates. If you want to use HTTPS you will
@@ -403,6 +420,79 @@ expected from them. This is documented in great detail in L<collectd-exec(5)>.
 
 =back
 
+=head2 Plugin C<filecount>
+
+The C<filecount> plugin counts the number of files in a certain directory (and
+its subdirectories) and their combined size. The configuration is very straight
+forward:
+
+  <Plugin "filecount">
+    <Directory "/var/qmail/queue/mess">
+      Instance "qmail-message"
+    </Directory>
+    <Directory "/var/qmail/queue/todo">
+      Instance "qmail-todo"
+    </Directory>
+    <Directory "/var/lib/php5">
+      Instance "php5-sessions"
+      Name "sess_*"
+    </Directory>
+  </Plugin>
+
+The example above counts the number of files in QMail's queue directories and
+the number of PHP5 sessions. Jfiy: The "todo" queue holds the messages that
+QMail has not yet looked at, the "message" queue holds the messages that were
+classified into "local" and "remote".
+
+As you can see, the configuration consists of one or more C<Directory> blocks,
+each of which specifies a directory in which to count the files. Within those
+blocks, the following options are recognized:
+
+=over 4
+
+=item B<Instance> I<Instance>
+
+Sets the plugin instance to I<Instance>. That instance name must be unique, but
+it's your responsibility, the plugin doesn't check for that. If not given, the
+instance is set to the directory name with all slashes replaced by underscores
+and all leading underscores removed.
+
+=item B<Name> I<Pattern>
+
+Only count files that match I<Pattern>, where I<Pattern> is a shell-like
+wildcard as understood by L<fnmatch(3)>. Only the B<filename> is checked
+against the pattern, not the entire path. In case this makes it easier for you:
+This option has been named after the B<-name> parameter to L<find(1)>.
+
+=item B<MTime> I<Age>
+
+Count only files of a specific age: If I<Age> is greater than zero, only files
+that haven't been touched in the last I<Age> seconds are counted. If I<Age> is
+a negative number, this is inversed. For example, if B<-60> is specified, only
+files that have been modified in the last minute will be counted.
+
+The number can also be followed by a "multiplier" to easily specify a larger
+timespan. When given in this notation, the argument must in quoted, i.E<nbsp>e.
+must be passed as string. So the B<-60> could also be written as B<"-1m"> (one
+minute). Valid multipliers are C<s> (second), C<m> (minute), C<h> (hour), C<d>
+(day), C<w> (week), and C<y> (year). There is no "month" multiplier. You can
+also specify fractional numbers, e.E<nbsp>g. B<"0.5d"> is identical to
+B<"12h">.
+
+=item B<Size> I<Size>
+
+Count only files of a specific size. When I<Size> is a positive number, only
+files that are at least this big are counted. If I<Size> is a negative number,
+this is inversed, i.E<nbsp>e. only files smaller than the absolute value of
+I<Size> are counted.
+
+As with the B<MTime> option, a "multiplier" may be added. For a detailed
+description see above. Valid multipliers here are C<b> (byte), C<k> (kilobyte),
+C<m> (megabyte), C<g> (gigabyte), C<t> (terabyte), and C<p> (petabyte). Please
+note that there are 1000 bytes in a kilobyte, not 1024.
+
+=back
+
 =head2 Plugin C<hddtemp>
 
 To get values from B<hddtemp> collectd connects to B<localhost> (127.0.0.1),
@@ -450,8 +540,40 @@ similar interfaces. Thus, you can use the B<Interface>-option to pick the
 interfaces you're interested in. Sometimes, however, it's easier/preferred
 to collect all interfaces I<except> a few ones. This option enables you to
 do that: By setting B<IgnoreSelected> to I<true> the effect of
-B<Interface> is inversed: All selected interfaces are ignored and all
+B<Interface> is inverted: All selected interfaces are ignored and all
 other interfaces are collected.
+
+=back
+
+=head2 Plugin C<ipmi>
+
+=over 4
+
+=item B<Sensor> I<Sensor>
+
+Selects sensors to collect or to ignore, depending on B<IgnoreSelected>.
+
+=item B<IgnoreSelected> I<true>|I<false>
+
+If no configuration if given, the B<ipmi> plugin will collect data from all
+sensors found of type "temperature", "voltage", "current" and "fanspeed".
+This option enables you to do that: By setting B<IgnoreSelected> to I<true>
+the effect of B<Sensor> is inverted: All selected sensors are ignored and
+all other sensors are collected.
+
+=item B<NotifySensorAdd> I<true>|I<false>
+
+If a sensor appears after initialization time of a minute a notification
+is sent.
+
+=item B<NotifySensorRemove> I<true>|I<false>
+
+If a sensor disappears a notification is sent.
+
+=item B<NotifySensorNotPresent> I<true>|I<false>
+
+If you have for example dual power supply and one of them is (un)plugged then
+a notification is sent.
 
 =back
 
@@ -490,7 +612,7 @@ irqs. This may not be practical, especially if no interrupts happen. Thus, you
 can use the B<Irq>-option to pick the interrupt you're interested in.
 Sometimes, however, it's easier/preferred to collect all interrupts I<except> a
 few ones. This option enables you to do that: By setting B<IgnoreSelected> to
-I<true> the effect of B<Irq> is inversed: All selected interrupts are ignored
+I<true> the effect of B<Irq> is inverted: All selected interrupts are ignored
 and all other interrupts are collected.
 
 =back
@@ -749,7 +871,7 @@ Here are some examples to help you understand the above text more easily:
 The behaviour is the same as with all other similar plugins: If nothing is
 selected at all, everything is collected. If some things are selected using the
 options described above, only these statistics are collected. If you set
-B<IgnoreSelected> to B<true>, this behavior is inversed, i.E<nbsp>e. the
+B<IgnoreSelected> to B<true>, this behavior is inverted, i.E<nbsp>e. the
 specified statistics will not be collected.
 
 =back
@@ -857,6 +979,32 @@ and are checked by default depends on the distribution you use.
 
 =back
 
+=head2 Plugin C<notify_desktop>
+
+This plugin sends a desktop notification to a notification daemon, as defined
+in the Desktop Notification Specification. To actually display the
+notifications, B<notification-daemon> is required and B<collectd> has to be
+able to access the X server.
+
+The Desktop Notification Specification can be found at
+L<http://www.galago-project.org/specs/notification/>.
+
+=over 4
+
+=item B<OkayTimeout> I<timeout>
+
+=item B<WarningTimeout> I<timeout>
+
+=item B<FailureTimeout> I<timeout>
+
+Set the I<timeout>, in milliseconds, after which to expire the notification
+for C<OKAY>, C<WARNING> and C<FAILURE> severities respectively. If zero has
+been specified, the displayed notification will not be closed at all - the
+user has to do so herself. These options default to 5000. If a negative number
+has been specified, the default is used as well.
+
+=back
+
 =head2 Plugin C<ntpd>
 
 =over 4
@@ -889,6 +1037,68 @@ L<upsc(8)>.
 
 =back
 
+=head2 Plugin C<onewire>
+
+B<EXPERIMENTAL!> See notes below.
+
+The C<onewire> plugin uses the B<owcapi> library from the B<owfs> project
+L<http://owfs.org/> to read sensors connected via the onewire bus.
+
+Currently only temperature sensors (sensors with the family code C<10>,
+e.E<nbsp>g. DS1820, DS18S20, DS1920) can be read. If you have other sensors you
+would like to have included, please send a sort request to the mailing list.
+
+Hubs (the DS2409 chips) are working, but read the note, why this plugin is
+experimental, below.
+
+=over 4
+
+=item B<Device> I<Device>
+
+Sets the device to read the values from. This can either be a "real" hardware
+device, such as a serial port or an USB port, or the address of the
+L<owserver(1)> socket, usually B<localhost:4304>.
+
+Though the documentation claims to automatically recognize the given address
+format, with versionE<nbsp>2.7p4 we had to specify the type explicitly. So
+with that version, the following configuration worked for us:
+
+  <Plugin onewire>
+    Device "-s localhost:4304"
+  </Plugin>
+
+This directive is B<required> and does not have a default value.
+
+=item B<Sensor> I<Sensor>
+
+Selects sensors to collect or to ignore, depending on B<IgnoreSelected>, see
+below. Sensors are specified without the family byte at the beginning, to you'd
+use C<F10FCA000800>, and B<not> include the leading C<10.> family byte and
+point.
+
+=item B<IgnoreSelected> I<true>|I<false>
+
+If no configuration if given, the B<onewire> plugin will collect data from all
+sensors found. This may not be practical, especially if sensors are added and
+removed regularly. Sometimes, however, it's easier/preferred to collect only
+specific sensors or all sensors I<except> a few specified ones. This option
+enables you to do that: By setting B<IgnoreSelected> to I<true> the effect of
+B<Sensor> is inverted: All selected interfaces are ignored and all other
+interfaces are collected.
+
+=back
+
+B<EXPERIMENTAL!> The C<onewire> plugin is experimental, because it doesn't yet
+work with big setups. It works with one sensor being attached to one
+controller, but as soon as you throw in a couple more senors and maybe a hub
+or two, reading all values will take more than ten seconds (the default
+interval). We will probably add some separate thread for reading the sensors
+and some cache or something like that, but it's not done yet. We will try to
+maintain backwards compatibility in the future, but we can't probmise. So in
+short: If it works for you: Great! But kaap in mind that the config I<might>
+change, though this is unlikely. Oh, and if you want to help improving this
+plugin, just send a short notice to the mailing list. ThanksE<nbsp>:)
+
 =head2 Plugin C<perl>
 
 This plugin embeds a Perl-interpreter into collectd and provides an interface
@@ -906,6 +1116,241 @@ multiple hosts.
 =item B<TTL> I<0-255>
 
 Sets the Time-To-Live of generated ICMP packets.
+
+=back
+
+=head2 Plugin C<postgresql>
+
+The C<postgresql> plugin queries statistics from PostgreSQL databases. It
+keeps a persistent connection to all configured databases and tries to
+reconnect if the connection has been interrupted. A database is configured by
+specifying a B<Database> block as described below. The default statistics are
+collected from PostgreSQL's B<statistics collector> which thus has to be
+enabled for this plugin to work correctly. This should usually be the case by
+default. See the section "The Statistics Collector" of the B<PostgreSQL
+Documentation> for details.
+
+By specifying custom database queries using a B<Query> block as described
+below, you may collect any data that is available from some PostgreSQL
+database. This way, you are able to access statistics of external daemons
+which are available in a PostgreSQL database or use future or special
+statistics provided by PostgreSQL without the need to upgrade your collectd
+installation.
+
+The B<PostgreSQL Documentation> manual can be found at
+L<http://www.postgresql.org/docs/manuals/>.
+
+  <Plugin postgresql>
+    <Query magic>
+      Query "SELECT magic, spells FROM wizard WHERE host = $1;"
+      Param hostname
+      Column gauge magic
+      Column counter spells
+    </Query>
+
+    <Database foo>
+      Host "hostname"
+      Port "5432"
+      User "username"
+      Password "secret"
+      SSLMode "prefer"
+      KRBSrvName "kerberos_service_name"
+      Query magic
+    </Database>
+    <Database bar>
+      Service "service_name"
+    </Database>
+  </Plugin>
+
+The B<Query> block defines one database query which may later be used by a
+database definition. It accepts a single mandatory argument which specifies
+the name of the query. The names of all queries have to be unique. The
+following configuration options are available to define the query:
+
+=over 4
+
+=item B<Query> I<sql query>
+
+Specify the I<sql query> which the plugin should execute. The string may
+contain the tokens B<$1>, B<$2>, etc. which are used to reference the first,
+second, etc. parameter. The value of the parameters is specified by the
+B<Param> configuration option - see below for details. To include a literal
+B<$> character followed by a number, surround it with single quotes (B<'>).
+
+Any SQL command which may return data (such as C<SELECT> or C<SHOW>) is
+allowed. Note, however, that only a single command may be used. Semicolons are
+allowed as long as a single non-empty command has been specified only.
+
+=item B<Param> I<hostname>|I<database>|I<username>
+
+Specify the parameters which should be passed to the SQL query. The parameters
+are referred to in the SQL query as B<$1>, B<$2>, etc. in the same order as
+they appear in the configuration file. The value of the parameter is
+determined depending on the value of the B<Param> option as follows:
+
+=over 4
+
+=item I<hostname>
+
+The configured hostname of the database connection. If a UNIX domain socket is
+used, the parameter expands to "localhost".
+
+=item I<database>
+
+The name of the database of the current connection.
+
+=item I<username>
+
+The username used to connect to the database.
+
+=back
+
+Please note that parameters are only supported by PostgreSQL's protocol
+version 3 and above which was introduced in version 7.4 of PostgreSQL.
+
+=item B<Column> I<type> [I<type instance>]
+
+Specify the I<type> and optional I<type instance> used to dispatch the value
+of each result column. Detailed information about types and their
+configuration can be found in L<types.db(5)>. The number and order of the
+B<Column> options has to match the columns of the query result.
+
+=item B<MinPGVersion> I<version>
+
+=item B<MaxPGVersion> I<version>
+
+Specify the minimum or maximum version of PostgreSQL that this query should be
+used with. Some statistics might only be available with certain versions of
+PostgreSQL. This allows you to specify multiple queries with the same name but
+which apply to different versions, thus allowing you to use the same
+configuration in a heterogeneous environment.
+
+The I<version> has to be specified as the concatenation of the major, minor
+and patch-level versions, each represented as two-decimal-digit numbers. For
+example, version 8.2.3 will become 80203.
+
+=back
+
+The following predefined queries are available (the definitions can be found
+in the F<postgresql_default.conf> file which, by default, is available at
+C<I<prefix>/share/collectd/>):
+
+=over 4
+
+=item B<backends>
+
+This query collects the number of backends, i.E<nbsp>e. the number of
+connected clients.
+
+=item B<transactions>
+
+This query collects the numbers of committed and rolled-back transactions of
+the user tables.
+
+=item B<queries>
+
+This query collects the numbers of various table modifications (i.E<nbsp>e.
+insertions, updates, deletions) of the user tables.
+
+=item B<query_plans>
+
+This query collects the numbers of various table scans and returned tuples of
+the user tables.
+
+=item B<table_states>
+
+This query collects the numbers of live and dead rows in the user tables.
+
+=item B<disk_io>
+
+This query collects disk block access counts for user tables.
+
+=item B<disk_usage>
+
+This query collects the on-disk size of the database in bytes.
+
+=back
+
+The B<Database> block defines one PostgreSQL database for which to collect
+statistics. It accepts a single mandatory argument which specifies the
+database name. None of the other options are required. PostgreSQL will use
+default values as documented in the section "CONNECTING TO A DATABASE" in the
+L<psql(1)> manpage. However, be aware that those defaults may be influenced by
+the user collectd is run as and special environment variables. See the manpage
+for details.
+
+=over 4
+
+=item B<Host> I<hostname>
+
+Specify the hostname or IP of the PostgreSQL server to connect to. If the
+value begins with a slash, it is interpreted as the directory name in which to
+look for the UNIX domain socket.
+
+This option is also used to determine the hostname that is associated with a
+collected data set. If it has been omitted or either begins with with a slash
+or equals B<localhost> it will be replaced with the global hostname definition
+of collectd. Any other value will be passed literally to collectd when
+dispatching values. Also see the global B<Hostname> and B<FQDNLookup> options.
+
+=item B<Port> I<port>
+
+Specify the TCP port or the local UNIX domain socket file extension of the
+server.
+
+=item B<User> I<username>
+
+Specify the username to be used when connecting to the server.
+
+=item B<Password> I<password>
+
+Specify the password to be used when connecting to the server.
+
+=item B<SSLMode> I<disable>|I<allow>|I<prefer>|I<require>
+
+Specify whether to use an SSL connection when contacting the server. The
+following modes are supported:
+
+=over 4
+
+=item I<disable>
+
+Do not use SSL at all.
+
+=item I<allow>
+
+First, try to connect without using SSL. If that fails, try using SSL.
+
+=item I<prefer> (default)
+
+First, try to connect using SSL. If that fails, try without using SSL.
+
+=item I<require>
+
+Use SSL only.
+
+=back
+
+=item B<KRBSrvName> I<kerberos_service_name>
+
+Specify the Kerberos service name to use when authenticating with Kerberos 5
+or GSSAPI. See the sections "Kerberos authentication" and "GSSAPI" of the
+B<PostgreSQL Documentation> for details.
+
+=item B<Service> I<service_name>
+
+Specify the PostgreSQL service name to use for additional parameters. That
+service has to be defined in F<pg_service.conf> and holds additional
+connection parameters. See the section "The Connection Service File" in the
+B<PostgreSQL Documentation> for details.
+
+=item B<Query> I<query>
+
+Specify a I<query> which should be executed for the database connection. This
+may be any of the predefined or user-defined queries. If no such option is
+given, it defaults to "backends", "transactions", "queries", "query_plans",
+"table_states", "disk_io" and "disk_usage". Else, the specified queries are
+used only.
 
 =back
 
@@ -1027,9 +1472,9 @@ In this case please file a bug report with the collectd team.
 =item B<Socket> I<Path>
 
 Configures the path to the UNIX domain socket to be used when connecting to the
-daemon. By default C</var/run/pdns.controlsocket> will be used for an
-authoritative server and C</var/run/pdns_recursor.controlsocket> will be used
-for the recursor.
+daemon. By default C<${localstatedir}/run/pdns.controlsocket> will be used for
+an authoritative server and C<${localstatedir}/run/pdns_recursor.controlsocket>
+will be used for the recursor.
 
 =back
 
@@ -1113,7 +1558,7 @@ Set the "XFiles Factor". The default is 0.1. If unsure, don't set this option.
 
 =item B<CacheFlush> I<Seconds>
 
-When the C<rrdtool plugin> uses a cache (by setting B<CacheTimeout>, see below)
+When the C<rrdtool> plugin uses a cache (by setting B<CacheTimeout>, see below)
 it writes all values for a certain RRD-file if the oldest value is older than
 (or equal to) the number of seconds specified. If some RRD-file is not updated
 anymore for some reason (the computer was shut down, the network is broken,
@@ -1131,6 +1576,30 @@ save values in a cache, as described above. Writing multiple values at once
 reduces IO-operations and thus lessens the load produced by updating the files.
 The trade off is that the graphs kind of "drag behind" and that more memory is
 used.
+
+=item B<WritesPerSecond> B<Updates>
+
+When collecting many statistics with collectd and the C<rrdtool> plugin, you
+will run serious performance problems. The B<CacheFlush> setting and the
+internal update queue assert that collectd continues to work just fine even
+under heavy load, but the system may become very unresponsive and slow. This is
+a problem especially if you create graphs from the RRD files on the same
+machine, for example using the C<graph.cgi> script included in the
+C<contrib/collection3/> directory.
+
+This setting is designed for very large setups. Setting this option to a value
+between 25 and 80 updates per second, depending on your hardware, will leave
+the server responsive enough to draw graphs even while all the cached values
+are written to disk. Flushed values, i.E<nbsp>e. values that are forced to disk
+by the B<FLUSH> command, are B<not> effected by this limit. They are still
+written as fast as possible, so that web frontends have up to date data when
+generating graphs.
+
+For example: If you have 100,000 RRD files and set B<WritesPerSecond> to 30
+updates per second, writing all values to disk will take approximately
+56E<nbsp>minutes. Together with the flushing ability that's integrated into
+"collection3" you'll end up with a responsive and fast system, up to date
+graphs and basically a "backup" of your values every hour.
 
 =back
 
@@ -1160,7 +1629,7 @@ sensors. This may not be practical, especially for uninteresting sensors.
 Thus, you can use the B<Sensor>-option to pick the sensors you're interested
 in. Sometimes, however, it's easier/preferred to collect all sensors I<except> a
 few ones. This option enables you to do that: By setting B<IgnoreSelected> to
-I<true> the effect of B<Sensor> is inversed: All selected sensors are ignored
+I<true> the effect of B<Sensor> is inverted: All selected sensors are ignored
 and all other sensors are collected.
 
 =back
@@ -1204,7 +1673,7 @@ user using (extended) regular expressions, as described in L<regex(7)>.
       <Match>
       	Regex "\\<R=local_user\\>"
 	DSType "CounterInc"
-	Type "email_count"
+	Type "counter"
 	Instance "local_user"
       </Match>
     </File>
@@ -1323,6 +1792,8 @@ This option, although numeric, needs to be a string, i.E<nbsp>e. you B<must>
 use quotes around it! If no such statement is given only global information
 will be collected.
 
+=back
+
 =head2 Plugin C<tcpconns>
 
 The C<tcpconns plugin> counts the number of currently established TCP
@@ -1332,8 +1803,6 @@ for which a listening socket is opened. You can use the following options to
 fine-tune the ports you are interested in:
 
 =over 4
-
-=back
 
 =item B<ListeningPorts> I<true>|I<false>
 
@@ -1360,6 +1829,32 @@ connections a local service has opened to remote services, e.E<nbsp>g. how many
 connections a mail server or news server has to other mail or news servers, or
 how many connections a web proxy holds to web servers. You have to give the
 port in numeric form.
+
+=back
+
+=head2 Plugin C<thermal>
+
+=over 4
+
+=item B<ForceUseProcfs> I<true>|I<false>
+
+By default, the C<thermal> plugin tries to read the statistics from the Linux
+C<sysfs> interface. If that is not available, the plugin falls back to the
+C<procfs> interface. By setting this option to I<true>, you can force the
+plugin to use the latter. This option defaults to I<false>.
+
+=item B<Device> I<Device>
+
+Selects the name of the thermal device that you want to collect or ignore,
+depending on the value of the B<IgnoreSelected> option. This option may be
+used multiple times to specify a list of devices.
+
+=item B<IgnoreSelected> I<true>|I<false>
+
+Invert the selection: If set to true, all devices B<except> the ones that
+match the device names specified by the B<Device> option are collected. By
+default only selected devices are collected if a selection is made. If no
+selection is configured at all, B<all> devices are selected.
 
 =back
 
@@ -1477,6 +1972,9 @@ hosts sends it's CPU statistics to the server every 60 seconds, a notification
 will be dispatched after about 120 seconds. It may take a little longer because
 the timeout is checked only once each B<Interval> on the server.
 
+When a value comes within range again or is received after it was missing, an
+"OKAY-notification" is dispatched.
+
 Here is a configuration example to get you started. Read below for more
 information.
 
@@ -1587,6 +2085,7 @@ L<types.db(5)>,
 L<hddtemp(8)>,
 L<kstat(3KSTAT)>,
 L<mbmon(1)>,
+L<psql(1)>,
 L<rrdtool(1)>,
 L<sensors(1)>
 

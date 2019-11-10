@@ -45,10 +45,25 @@ case $host_os in
 	*darwin*)
 	ac_system="Darwin"
 	;;
+	*openbsd*)
+	ac_system="OpenBSD"
+	;;
 	*)
 	ac_system="unknown"
 esac
 AC_MSG_RESULT([$ac_system])
+
+if test "x$ac_system" = "xLinux"
+then
+	AC_ARG_VAR([KERNEL_DIR], [path to Linux kernel sources])
+	if test -z "$KERNEL_DIR"
+	then
+		KERNEL_DIR="/lib/modules/`uname -r`/source"
+	fi
+
+	KERNEL_CFLAGS="-I$KERNEL_DIR/include"
+	AC_SUBST(KERNEL_CFLAGS)
+fi
 
 #
 # Checks for header files.
@@ -57,7 +72,7 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_DIRENT
 
-AC_CHECK_HEADERS(stdint.h stdio.h errno.h math.h stdarg.h syslog.h fcntl.h signal.h assert.h sys/types.h sys/socket.h sys/select.h poll.h netdb.h arpa/inet.h sys/resource.h sys/param.h kstat.h regex.h sys/ioctl.h endian.h sys/isa_defs.h)
+AC_CHECK_HEADERS(stdio.h stdint.h stdbool.h errno.h math.h stdarg.h syslog.h fcntl.h signal.h assert.h sys/types.h sys/socket.h sys/select.h poll.h netdb.h arpa/inet.h sys/resource.h sys/param.h kstat.h regex.h sys/ioctl.h endian.h sys/isa_defs.h)
 
 # For ping library
 AC_CHECK_HEADERS(netinet/in_systm.h, [], [],
@@ -278,8 +293,13 @@ have_net_ip_vs_h="no"
 have_ip_vs_h="no"
 if test "x$ac_system" = "xLinux"
 then
+	SAVE_CFLAGS=$CFLAGS
+	CFLAGS="$CFLAGS $KERNEL_CFLAGS"
+
 	AC_CHECK_HEADERS(net/ip_vs.h, [have_net_ip_vs_h="yes"])
 	AC_CHECK_HEADERS(ip_vs.h, [have_ip_vs_h="yes"])
+
+	CFLAGS=$SAVE_CFLAGS
 fi
 
 # For quota module
@@ -1215,12 +1235,33 @@ then
   AC_SUBST(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 fi
 
-AC_CHECK_LIB(kvm, kvm_getswapinfo, [with_libkvm="yes"], [with_libkvm="no"])
-if test "x$with_libkvm" = "xyes"
+with_libkvm="no"
+AC_CHECK_LIB(kvm, kvm_getprocs, [with_kvm_getprocs="yes"], [with_kvm_getprocs="no"])
+if test "x$with_kvm_getprocs" = "xyes"
 then
-	AC_DEFINE(HAVE_LIBKVM, 1, [Define to 1 if you have the 'kvm' library (-lkvm)])
+	AC_DEFINE(HAVE_LIBKVM_GETPROCS, 1,
+		  [Define to 1 if you have the 'kvm' library with the 'kvm_getprocs' symbol (-lkvm)])
+	with_libkvm="yes"
 fi
-AM_CONDITIONAL(BUILD_WITH_LIBKVM, test "x$with_libkvm" = "xyes")
+AM_CONDITIONAL(BUILD_WITH_LIBKVM_GETPROCS, test "x$with_kvm_getprocs" = "xyes")
+
+AC_CHECK_LIB(kvm, kvm_getswapinfo, [with_kvm_getswapinfo="yes"], [with_kvm_getswapinfo="no"])
+if test "x$with_kvm_getswapinfo" = "xyes"
+then
+	AC_DEFINE(HAVE_LIBKVM_GETSWAPINFO, 1,
+		  [Define to 1 if you have the 'kvm' library with the 'kvm_getswapinfo' symbol (-lkvm)])
+	with_libkvm="yes"
+fi
+AM_CONDITIONAL(BUILD_WITH_LIBKVM_GETSWAPINFO, test "x$with_kvm_getswapinfo" = "xyes")
+
+AC_CHECK_LIB(kvm, kvm_nlist, [with_kvm_nlist="yes"], [with_kvm_nlist="no"])
+if test "x$with_kvm_nlist" = "xyes"
+then
+	AC_DEFINE(HAVE_LIBKVM_NLIST, 1,
+		  [Define to 1 if you have the 'kvm' library with the 'kvm_nlist' symbol (-lkvm)])
+	with_libkvm="yes"
+fi
+AM_CONDITIONAL(BUILD_WITH_LIBKVM_NLIST, test "x$with_kvm_nlist" = "xyes")
 
 with_sensors_cflags=""
 with_sensors_ldflags=""
@@ -1450,6 +1491,52 @@ fi
 AM_CONDITIONAL(BUILD_WITH_LIBOPING, test "x$with_liboping" = "xyes")
 AM_CONDITIONAL(BUILD_WITH_OWN_LIBOPING, test "x$with_own_liboping" = "xyes")
 
+with_libowcapi_cppflags=""
+with_libowcapi_libs="-lowcapi"
+AC_ARG_WITH(libowcapi, [AS_HELP_STRING([--with-libowcapi@<:@=PREFIX@:>@], [Path to libowcapi.])],
+[
+	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+	then
+		with_libowcapi_cppflags="-I$withval/include"
+		with_libowcapi_libs="-L$withval/lib -lowcapi"
+		with_libowcapi="yes"
+	else
+		with_libowcapi="$withval"
+	fi
+],
+[
+	with_libowcapi="yes"
+])
+if test "x$with_libowcapi" = "xyes"
+then
+	SAVE_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$with_libowcapi_cppflags"
+	
+	AC_CHECK_HEADERS(owcapi.h, [with_libowcapi="yes"], [with_libowcapi="no (owcapi.h not found)"])
+
+	CPPFLAGS="$SAVE_CPPFLAGS"
+fi
+if test "x$with_libowcapi" = "xyes"
+then
+	SAVE_LDFLAGS="$LDFLAGS"
+	SAVE_CPPFLAGS="$CPPFLAGS"
+	LDFLAGS="$with_libowcapi_libs"
+	CPPFLAGS="$with_libowcapi_cppflags"
+	
+	AC_CHECK_LIB(owcapi, OW_get, [with_libowcapi="yes"], [with_libowcapi="no (libowcapi not found)"])
+
+	LDFLAGS="$SAVE_LDFLAGS"
+	CPPFLAGS="$SAVE_CPPFLAGS"
+fi
+if test "x$with_libowcapi" = "xyes"
+then
+	BUILD_WITH_LIBOWCAPI_CPPFLAGS="$with_libowcapi_cppflags"
+	BUILD_WITH_LIBOWCAPI_LIBS="$with_libowcapi_libs"
+	AC_SUBST(BUILD_WITH_LIBOWCAPI_CPPFLAGS)
+	AC_SUBST(BUILD_WITH_LIBOWCAPI_LIBS)
+fi
+
+
 AC_ARG_WITH(libpcap, [AS_HELP_STRING([--with-libpcap@<:@=PREFIX@:>@], [Path to libpcap.])],
 [
 	if test "x$withval" != "xno" && test "x$withval" != "xyes"
@@ -1488,10 +1575,52 @@ AC_DEFINE_UNQUOTED(COLLECT_LIBPCAP, [$collect_libpcap],
 	[Wether or not to use the pcap library])
 AM_CONDITIONAL(BUILD_WITH_LIBPCAP, test "x$with_libpcap" = "xyes")
 
+AC_ARG_WITH(libesmtp, [AS_HELP_STRING([--with-libesmtp@<:@=PREFIX@:>@], [Path to libesmtp.])],
+[
+	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+	then
+		LDFLAGS="$LDFLAGS -L$withval/lib"
+		CPPFLAGS="$CPPFLAGS -I$withval/include -D_THREAD_SAFE"
+		with_libesmtp="yes"
+	else
+		with_libesmtp="$withval"
+	fi
+],
+[
+	with_libesmtp="yes"
+])
+if test "x$with_libesmtp" = "xyes"
+then
+	AC_CHECK_LIB(esmtp, smtp_create_session,
+	[
+		AC_DEFINE(HAVE_LIBESMTP, 1, [Define to 1 if you have the esmtp library (-lesmtp).])
+	], [with_libesmtp="no (libesmtp not found)"])
+fi
+if test "x$with_libesmtp" = "xyes"
+then
+	AC_CHECK_HEADERS(libesmtp.h,
+	[
+		AC_DEFINE(HAVE_LIBESMTP_H, 1, [Define to 1 if you have the <libesmtp.h> header file.])
+	], [with_libesmtp="no (libesmtp.h not found)"])
+fi
+if test "x$with_libesmtp" = "xyes"
+then
+	collect_libesmtp=1
+else
+	collect_libesmtp=0
+fi
+AC_DEFINE_UNQUOTED(COLLECT_LIBESMTP, [$collect_libesmtp],
+	[Wether or not to use the esmtp library])
+AM_CONDITIONAL(BUILD_WITH_LIBESMTP, test "x$with_libesmtp" = "xyes")
+
 perl_interpreter="perl"
 AC_ARG_WITH(libperl, [AS_HELP_STRING([--with-libperl@<:@=PREFIX@:>@], [Path to libperl.])],
 [
-	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+ 	if test -x "$withval"
+	then
+		perl_interpreter="$withval"
+		with_libperl="yes"
+	else if test "x$withval" != "xno" && test "x$withval" != "xyes"
 	then
 		LDFLAGS="$LDFLAGS -L$withval/lib"
 		CPPFLAGS="$CPPFLAGS -I$withval/include"
@@ -1499,7 +1628,7 @@ AC_ARG_WITH(libperl, [AS_HELP_STRING([--with-libperl@<:@=PREFIX@:>@], [Path to l
 		with_libperl="yes"
 	else
 		with_libperl="$withval"
-	fi
+	fi; fi
 ],
 [
 	with_libperl="yes"
@@ -1509,7 +1638,7 @@ AC_MSG_CHECKING([for perl])
 perl_interpreter=`which "$perl_interpreter" 2> /dev/null`
 if test -x "$perl_interpreter"
 then
-	AC_MSG_RESULT([yes])
+	AC_MSG_RESULT([yes ($perl_interpreter)])
 else
 	perl_interpreter=""
 	AC_MSG_RESULT([no])
@@ -1532,13 +1661,14 @@ then
     AC_LINK_IFELSE(
       AC_LANG_PROGRAM(
       [[
+#define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
       ]],
       [[
-       PerlInterpreter *perl = NULL;
-       Perl_load_module (perl, PERL_LOADMOD_NOIMPORT,
+       dTHX;
+       load_module (PERL_LOADMOD_NOIMPORT,
 			 newSVpv ("Collectd::Plugin::FooBar", 24),
 			 Nullsv);
       ]]),
@@ -1599,15 +1729,6 @@ then
 	LDFLAGS=$SAVE_LDFLAGS
 fi
 
-if test "x$ac_system" = "xLinux"
-then
-	AC_ARG_VAR([KERNEL_DIR], [path to Linux kernel sources])
-	if test -z "$KERNEL_DIR"
-	then
-		KERNEL_DIR="/lib/modules/`uname -r`/source"
-	fi
-fi
-
 with_own_libiptc="no"
 AC_ARG_WITH(libiptc, [AS_HELP_STRING([--with-libiptc@<:@=PREFIX@:>@], [Path to libiptc.])],
 [
@@ -1653,7 +1774,7 @@ fi
 if test "x$with_libiptc" = "xyes"
 then
 	SAVE_CFLAGS=$CFLAGS
-	CFLAGS="$CFLAGS -I$KERNEL_DIR/include"
+	CFLAGS="$CFLAGS $KERNEL_CFLAGS"
 
 	AC_CHECK_HEADERS(linux/netfilter_ipv4/ip_tables.h linux/netfilter_ipv6/ip6_tables.h, [],
 	[
@@ -1736,6 +1857,10 @@ then
 	AC_SUBST(BUILD_WITH_LIBSNMP_LIBS)
 fi
 AM_CONDITIONAL(BUILD_WITH_LIBNETSNMP, test "x$with_libnetsnmp" = "xyes")
+
+PKG_CHECK_MODULES([LIBNOTIFY], [libnotify],
+		[with_libnotify="yes"],
+		[with_libnotify="no ($LIBNOTIFY_PKG_ERRORS)"])
 
 with_libupsclient="no (pkg-config isn't available)"
 with_libupsclient_cflags=""
@@ -2060,6 +2185,93 @@ then
 	AC_SUBST(BUILD_WITH_OPENIPMI_LIBS)
 fi
 
+dnl Check for libpq.
+with_pg_config="pg_config"
+with_libpq_includedir=""
+with_libpq_libdir=""
+with_libpq_cppflags=""
+with_libpq_ldflags=""
+AC_ARG_WITH(libpq, [AS_HELP_STRING([--with-libpq@<:@=PREFIX@:>@],
+	[Path to libpq.])],
+[
+	if test "x$withval" = "xno"
+	then
+		with_libpq="no"
+	else if test "x$withval" = "xyes"
+	then
+		with_libpq="yes"
+	else
+		if test -f "$withval" && test -x "$withval";
+		then
+			with_pg_config="$withval"
+		else if test -x "$withval/bin/pg_config"
+		then
+			with_pg_config="$withval/bin/pg_config"
+		fi; fi
+		with_libpq="yes"
+	fi; fi
+],
+[
+	with_libpq="yes"
+])
+if test "x$with_libpq" = "xyes"
+then
+	with_libpq_includedir=`$with_pg_config --includedir 2> /dev/null`
+	pg_config_status=$?
+
+	if test $pg_config_status -eq 0
+	then
+		if test -n "$with_libpq_includedir"; then
+			for dir in $with_libpq_includedir; do
+				with_libpq_cppflags="$with_libpq_cppflags -I$dir"
+			done
+		fi
+	else
+		AC_MSG_WARN([$with_pg_config returned with status $pg_config_status])
+	fi
+
+	SAVE_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $with_libpq_cppflags"
+
+	AC_CHECK_HEADERS(libpq-fe.h, [],
+		[with_libpq="no (libpq-fe.h not found)"], [])
+
+	CPPFLAGS="$SAVE_CPPFLAGS"
+fi
+if test "x$with_libpq" = "xyes"
+then
+	with_libpq_libdir=`$with_pg_config --libdir 2> /dev/null`
+	pg_config_status=$?
+
+	if test $pg_config_status -eq 0
+	then
+		if test -n "$with_libpq_libdir"; then
+			for dir in $with_libpq_libdir; do
+				with_libpq_ldflags="$with_libpq_ldflags -L$dir"
+			done
+		fi
+	else
+		AC_MSG_WARN([$with_pg_config returned with status $pg_config_status])
+	fi
+
+	SAVE_LDFLAGS="$LDFLAGS"
+	LDFLAGS="$LDFLAGS $with_libpq_ldflags"
+
+	AC_CHECK_LIB(pq, PQconnectdb,
+		[with_libpq="yes"],
+		[with_libpq="no (symbol 'PQconnectdb' not found)"])
+
+	LDFLAGS="$SAVE_LDFLAGS"
+fi
+if test "x$with_libpq" = "xyes"
+then
+	BUILD_WITH_LIBPQ_CPPFLAGS="$with_libpq_cppflags"
+	BUILD_WITH_LIBPQ_LDFLAGS="$with_libpq_ldflags"
+	AC_SUBST(BUILD_WITH_LIBPQ_CPPFLAGS)
+	AC_SUBST(BUILD_WITH_LIBPQ_LDFLAGS)
+fi
+AM_CONDITIONAL(BUILD_WITH_LIBPQ, test "x$with_libpq" = "xyes")
+
 dnl Check for libvirt and libxml2 libraries.
 with_libxml2="no (pkg-config isn't available)"
 with_libxml2_cflags=""
@@ -2267,7 +2479,13 @@ AC_DEFUN(
     ])
     if test "x$enable_plugin" = "xyes"
     then
-	    AC_DEFINE([HAVE_PLUGIN_]my_toupper([$1]), 1, [Define to 1 if the $1 plugin is enabled.])
+	    if test "x$2" = "xyes"
+	    then
+		    AC_DEFINE([HAVE_PLUGIN_]my_toupper([$1]), 1, [Define to 1 if the $1 plugin is enabled.])
+	    else # User passed "yes" but dependency checking yielded "no" => Dependency problem.
+		    dependency_error="yes"
+		    enable_plugin="no (dependency error)"
+	    fi
     fi
     AM_CONDITIONAL([BUILD_PLUGIN_]my_toupper([$1]), test "x$enable_plugin" = "xyes")
     enable_$1="$enable_plugin"
@@ -2281,6 +2499,7 @@ AC_COLLECTD([debug],     [enable],  [feature], [debugging])
 AC_COLLECTD([daemon],    [disable], [feature], [daemon mode])
 AC_COLLECTD([getifaddrs],[enable],  [feature], [getifaddrs under Linux])
 
+dependency_error="no"
 plugin_ascent="no"
 plugin_battery="no"
 plugin_cpu="no"
@@ -2303,6 +2522,7 @@ plugin_serial="no"
 plugin_swap="no"
 plugin_tape="no"
 plugin_tcpconns="no"
+plugin_thermal="no"
 plugin_users="no"
 plugin_vmem="no"
 plugin_vserver="no"
@@ -2325,6 +2545,7 @@ then
 	plugin_serial="yes"
 	plugin_swap="yes"
 	plugin_tcpconns="yes"
+	plugin_thermal="yes"
 	plugin_vmem="yes"
 	plugin_vserver="yes"
 	plugin_wireless="yes"
@@ -2333,6 +2554,11 @@ then
 	then
 		plugin_ipvs="yes"
 	fi
+fi
+
+if test "x$ac_system" = "xOpenBSD"
+then
+	plugin_tcpconns="yes"
 fi
 
 # Mac OS X devices
@@ -2431,9 +2657,19 @@ then
 	plugin_processes="yes"
 fi
 
-if test "x$with_libkvm" = "xyes"
+if test "x$with_kvm_getprocs" = "xyes"
+then
+	plugin_processes="yes"
+fi
+
+if test "x$with_kvm_getswapinfo" = "xyes"
 then
 	plugin_swap="yes"
+fi
+
+if test "x$with_kvm_nlist" = "xyes"
+then
+	plugin_tcpconns="yes"
 fi
 
 if test "x$have_getutent" = "xyes"
@@ -2458,12 +2694,14 @@ AC_PLUGIN([battery],     [$plugin_battery],    [Battery statistics])
 AC_PLUGIN([cpu],         [$plugin_cpu],        [CPU usage statistics])
 AC_PLUGIN([cpufreq],     [$plugin_cpufreq],    [CPU frequency statistics])
 AC_PLUGIN([csv],         [yes],                [CSV output plugin])
+AC_PLUGIN([notify_desktop], [$with_libnotify], [Desktop notifications])
 AC_PLUGIN([df],          [$plugin_df],         [Filesystem usage statistics])
 AC_PLUGIN([disk],        [$plugin_disk],       [Disk usage statistics])
 AC_PLUGIN([dns],         [$with_libpcap],      [DNS traffic analysis])
 AC_PLUGIN([email],       [yes],                [EMail statistics])
 AC_PLUGIN([entropy],     [$plugin_entropy],    [Entropy statistics])
 AC_PLUGIN([exec],        [yes],                [Execution of external programs])
+AC_PLUGIN([filecount],   [yes],                [Count files in directories])
 AC_PLUGIN([hddtemp],     [yes],                [Query hddtempd])
 AC_PLUGIN([interface],   [$plugin_interface],  [Interface traffic statistics])
 AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
@@ -2482,10 +2720,13 @@ AC_PLUGIN([netlink],     [$with_libnetlink],   [Enhanced Linux network statistic
 AC_PLUGIN([network],     [yes],                [Network communication plugin])
 AC_PLUGIN([nfs],         [$plugin_nfs],        [NFS statistics])
 AC_PLUGIN([nginx],       [$with_libcurl],      [nginx statistics])
+AC_PLUGIN([notify_email], [$with_libesmtp],    [Email notifier])
 AC_PLUGIN([ntpd],        [yes],                [NTPd statistics])
 AC_PLUGIN([nut],         [$with_libupsclient], [Network UPS tools statistics])
+AC_PLUGIN([onewire],     [$with_libowcapi],    [OneWire sensor statistics])
 AC_PLUGIN([perl],        [$plugin_perl],       [Embed a Perl interpreter])
 AC_PLUGIN([ping],        [$with_liboping],     [Network latency statistics])
+AC_PLUGIN([postgresql],  [$with_libpq],        [PostgreSQL database statistics])
 AC_PLUGIN([powerdns],    [yes],                [PowerDNS statistics])
 AC_PLUGIN([processes],   [$plugin_processes],  [Process statistics])
 AC_PLUGIN([rrdtool],     [$with_rrdtool],      [RRDTool output plugin])
@@ -2498,6 +2739,7 @@ AC_PLUGIN([tail],        [yes],                [Parsing of logfiles])
 AC_PLUGIN([tape],        [$plugin_tape],       [Tape drive statistics])
 AC_PLUGIN([tcpconns],    [$plugin_tcpconns],   [TCP connection statistics])
 AC_PLUGIN([teamspeak2],  [yes],                [TeamSpeak2 server statistics])
+AC_PLUGIN([thermal],     [$plugin_thermal],    [Linux ACPI thermal zone statistics])
 AC_PLUGIN([unixsock],    [yes],                [Unixsock communication plugin])
 AC_PLUGIN([users],       [$plugin_users],      [User statistics])
 AC_PLUGIN([uuid],        [yes],                [UUID as hostname plugin])
@@ -2579,90 +2821,103 @@ cat <<EOF;
 
 Configuration:
   Libraries:
-    libcurl . . . . . . $with_libcurl
-    libiokit  . . . . . $with_libiokit
-    libiptc . . . . . . $with_libiptc
-    libkstat  . . . . . $with_kstat
-    libkvm  . . . . . . $with_libkvm
-    libmysql  . . . . . $with_libmysql
-    libnetlink  . . . . $with_libnetlink
-    libnetsnmp  . . . . $with_libnetsnmp
-    liboconfig  . . . . $with_liboconfig
-    libopenipmi . . . . $with_libopenipmipthread
-    liboping  . . . . . $with_liboping
-    libpcap . . . . . . $with_libpcap
-    libperl . . . . . . $with_libperl
-    libpthread  . . . . $with_libpthread
-    librrd  . . . . . . $with_rrdtool
-    libsensors  . . . . $with_lm_sensors
-    libstatgrab . . . . $with_libstatgrab
-    libupsclient  . . . $with_libupsclient
-    libvirt . . . . . . $with_libvirt
-    libxml2 . . . . . . $with_libxml2
-    libxmms . . . . . . $with_libxmms
+    libcurl . . . . . . . $with_libcurl
+    libesmtp  . . . . . . $with_libesmtp
+    libiokit  . . . . . . $with_libiokit
+    libiptc . . . . . . . $with_libiptc
+    libkstat  . . . . . . $with_kstat
+    libkvm  . . . . . . . $with_libkvm
+    libmysql  . . . . . . $with_libmysql
+    libnetlink  . . . . . $with_libnetlink
+    libnetsnmp  . . . . . $with_libnetsnmp
+    libnotify . . . . . . $with_libnotify
+    liboconfig  . . . . . $with_liboconfig
+    libopenipmi . . . . . $with_libopenipmipthread
+    liboping  . . . . . . $with_liboping
+    libpcap . . . . . . . $with_libpcap
+    libperl . . . . . . . $with_libperl
+    libpthread  . . . . . $with_libpthread
+    libpq . . . . . . . . $with_libpq
+    librrd  . . . . . . . $with_rrdtool
+    libsensors  . . . . . $with_lm_sensors
+    libstatgrab . . . . . $with_libstatgrab
+    libupsclient  . . . . $with_libupsclient
+    libvirt . . . . . . . $with_libvirt
+    libxml2 . . . . . . . $with_libxml2
+    libxmms . . . . . . . $with_libxmms
 
   Features:
-    daemon mode . . . . $enable_daemon
-    debug . . . . . . . $enable_debug
+    daemon mode . . . . . $enable_daemon
+    debug . . . . . . . . $enable_debug
 
   Bindings:
-    perl  . . . . . . . $with_perl_bindings
+    perl  . . . . . . . . $with_perl_bindings
 
   Modules:
-    apache  . . . . . . $enable_apache
-    apcups  . . . . . . $enable_apcups
-    apple_sensors . . . $enable_apple_sensors
-    ascent  . . . . . . $enable_ascent
-    battery . . . . . . $enable_battery
-    cpu . . . . . . . . $enable_cpu
-    cpufreq . . . . . . $enable_cpufreq
-    csv . . . . . . . . $enable_csv
-    df  . . . . . . . . $enable_df
-    disk  . . . . . . . $enable_disk
-    dns . . . . . . . . $enable_dns
-    email . . . . . . . $enable_email
-    entropy . . . . . . $enable_entropy
-    exec  . . . . . . . $enable_exec
-    hddtemp . . . . . . $enable_hddtemp
-    interface . . . . . $enable_interface
-    iptables  . . . . . $enable_iptables
-    ipmi  . . . . . . . $enable_ipmi
-    ipvs  . . . . . . . $enable_ipvs
-    irq . . . . . . . . $enable_irq
-    libvirt . . . . . . $enable_libvirt
-    load  . . . . . . . $enable_load
-    logfile . . . . . . $enable_logfile
-    mbmon . . . . . . . $enable_mbmon
-    memcached . . . . . $enable_memcached
-    memory  . . . . . . $enable_memory
-    multimeter  . . . . $enable_multimeter
-    mysql . . . . . . . $enable_mysql
-    netlink . . . . . . $enable_netlink
-    network . . . . . . $enable_network
-    nfs . . . . . . . . $enable_nfs
-    nginx . . . . . . . $enable_nginx
-    ntpd  . . . . . . . $enable_ntpd
-    nut . . . . . . . . $enable_nut
-    perl  . . . . . . . $enable_perl
-    ping  . . . . . . . $enable_ping
-    powerdns  . . . . . $enable_powerdns
-    processes . . . . . $enable_processes
-    rrdtool . . . . . . $enable_rrdtool
-    sensors . . . . . . $enable_sensors
-    serial  . . . . . . $enable_serial
-    snmp  . . . . . . . $enable_snmp
-    swap  . . . . . . . $enable_swap
-    syslog  . . . . . . $enable_syslog
-    tail  . . . . . . . $enable_tail
-    tape  . . . . . . . $enable_tape
-    tcpconns  . . . . . $enable_tcpconns
-    teamspeak2  . . . . $enable_teamspeak2
-    unixsock  . . . . . $enable_unixsock
-    users . . . . . . . $enable_users
-    uuid  . . . . . . . $enable_uuid
-    vmem  . . . . . . . $enable_vmem
-    vserver . . . . . . $enable_vserver
-    wireless  . . . . . $enable_wireless
-    xmms  . . . . . . . $enable_xmms
+    apache  . . . . . . . $enable_apache
+    apcups  . . . . . . . $enable_apcups
+    apple_sensors . . . . $enable_apple_sensors
+    ascent  . . . . . . . $enable_ascent
+    battery . . . . . . . $enable_battery
+    cpu . . . . . . . . . $enable_cpu
+    cpufreq . . . . . . . $enable_cpufreq
+    csv . . . . . . . . . $enable_csv
+    df  . . . . . . . . . $enable_df
+    disk  . . . . . . . . $enable_disk
+    dns . . . . . . . . . $enable_dns
+    email . . . . . . . . $enable_email
+    entropy . . . . . . . $enable_entropy
+    exec  . . . . . . . . $enable_exec
+    filecount . . . . . . $enable_filecount
+    hddtemp . . . . . . . $enable_hddtemp
+    interface . . . . . . $enable_interface
+    iptables  . . . . . . $enable_iptables
+    ipmi  . . . . . . . . $enable_ipmi
+    ipvs  . . . . . . . . $enable_ipvs
+    irq . . . . . . . . . $enable_irq
+    libvirt . . . . . . . $enable_libvirt
+    load  . . . . . . . . $enable_load
+    logfile . . . . . . . $enable_logfile
+    mbmon . . . . . . . . $enable_mbmon
+    memcached . . . . . . $enable_memcached
+    memory  . . . . . . . $enable_memory
+    multimeter  . . . . . $enable_multimeter
+    mysql . . . . . . . . $enable_mysql
+    netlink . . . . . . . $enable_netlink
+    network . . . . . . . $enable_network
+    nfs . . . . . . . . . $enable_nfs
+    nginx . . . . . . . . $enable_nginx
+    notify_desktop  . . . $enable_notify_desktop
+    notify_email  . . . . $enable_notify_email
+    ntpd  . . . . . . . . $enable_ntpd
+    nut . . . . . . . . . $enable_nut
+    onewire . . . . . . . $enable_onewire
+    perl  . . . . . . . . $enable_perl
+    ping  . . . . . . . . $enable_ping
+    postgresql  . . . . . $enable_postgresql
+    powerdns  . . . . . . $enable_powerdns
+    processes . . . . . . $enable_processes
+    rrdtool . . . . . . . $enable_rrdtool
+    sensors . . . . . . . $enable_sensors
+    serial  . . . . . . . $enable_serial
+    snmp  . . . . . . . . $enable_snmp
+    swap  . . . . . . . . $enable_swap
+    syslog  . . . . . . . $enable_syslog
+    tail  . . . . . . . . $enable_tail
+    tape  . . . . . . . . $enable_tape
+    tcpconns  . . . . . . $enable_tcpconns
+    teamspeak2  . . . . . $enable_teamspeak2
+    thermal . . . . . . . $enable_thermal
+    unixsock  . . . . . . $enable_unixsock
+    users . . . . . . . . $enable_users
+    uuid  . . . . . . . . $enable_uuid
+    vmem  . . . . . . . . $enable_vmem
+    vserver . . . . . . . $enable_vserver
+    wireless  . . . . . . $enable_wireless
+    xmms  . . . . . . . . $enable_xmms
 
 EOF
+
+if test "x$dependency_error" = "xyes"; then
+	AC_MSG_ERROR("Some plugins are missing dependencies - see above summary for details")
+fi

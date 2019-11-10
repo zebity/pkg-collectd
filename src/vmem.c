@@ -50,10 +50,11 @@ static void submit (const char *plugin_instance, const char *type,
   sstrncpy (vl.plugin, "vmem", sizeof (vl.plugin));
   if (plugin_instance != NULL)
     sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
+  sstrncpy (vl.type, type, sizeof (vl.type));
   if (type_instance != NULL)
     sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-  plugin_dispatch_values (type, &vl);
+  plugin_dispatch_values (&vl);
 } /* void vmem_submit */
 
 static void submit_two (const char *plugin_instance, const char *type,

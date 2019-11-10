@@ -223,11 +223,10 @@ static int hddtemp_config (const char *key, const char *value)
 	{
 		int port = (int) (atof (value));
 		if ((port > 0) && (port <= 65535))
-			snprintf (hddtemp_port, sizeof (hddtemp_port),
+			ssnprintf (hddtemp_port, sizeof (hddtemp_port),
 					"%i", port);
 		else
-			strncpy (hddtemp_port, value, sizeof (hddtemp_port));
-		hddtemp_port[sizeof (hddtemp_port) - 1] = '\0';
+			sstrncpy (hddtemp_port, value, sizeof (hddtemp_port));
 	}
 	else if (strcasecmp (key, "TranslateDevicename") == 0)
 	{
@@ -430,7 +429,7 @@ static char *hddtemp_get_major_minor (char *drive)
 	if ((ret = (char *) malloc (128 * sizeof (char))) == NULL)
 		return (NULL);
 
-	if (snprintf (ret, 128, "%i-%i", list->major, list->minor) >= 128)
+	if (ssnprintf (ret, 128, "%i-%i", list->major, list->minor) >= 128)
 	{
 		free (ret);
 		return (NULL);
@@ -451,9 +450,10 @@ static void hddtemp_submit (char *type_instance, double value)
 	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "hddtemp", sizeof (vl.plugin));
-	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+	sstrncpy (vl.type, "temperature", sizeof (vl.type));
+	sstrncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-	plugin_dispatch_values ("temperature", &vl);
+	plugin_dispatch_values (&vl);
 }
 
 static int hddtemp_read (void)

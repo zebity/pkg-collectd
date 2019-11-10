@@ -94,7 +94,8 @@ data-sets is available in the B<types.db> file.
 
 The I<OptionList> is an optional list of I<Options>, where each option is a
 key-value-pair. A list of currently understood options can be found below, all
-other options will be ignored.
+other options will be ignored. Values that contain spaces must be quoted with
+double quotes.
 
 I<Valuelist> is a colon-separated list of the time and the values, each either
 an integer if the data-source is a counter, or a double if the data-source is
@@ -142,10 +143,9 @@ Valid options are:
 =item B<message=>I<Message> (B<REQUIRED>)
 
 Sets the message of the notification. This is the message that will be made
-accessible to the user, so it should contain some useful information. This
-option must be the last option because the rest of the line will be its value,
-even if there are spaces and equal-signs following it! This option is
-mandatory.
+accessible to the user, so it should contain some useful information. As with
+all options: If the message includes spaces, it must be quoted with double
+quotes. This option is mandatory.
 
 =item B<severity=failure>|B<warning>|B<okay> (B<REQUIRED>)
 
@@ -183,19 +183,25 @@ Example:
   -> | PUTNOTIF type=temperature severity=warning time=1201094702 message=The roof is on fire!
   <- | 0 Success
 
-=item B<FLUSH> [B<timeout=>I<Timeout>] [B<plugin=>I<Plugin> [...]]
+=item B<FLUSH> [B<timeout=>I<Timeout>] [B<plugin=>I<Plugin> [...]] [B<identifier=>I<Ident> [...]]
 
 Flushes all cached data older than I<Timeout> seconds. If no timeout has been
-specified, it defaults to -1 which causes all data to be flushed. B<timeout>
-may be specified multiple times - each occurrence applies to plugins listed
-afterwards.
+specified, it defaults to -1 which causes all data to be flushed.
 
-If specified, only specific plugins are flushed. Otherwise all plugins
-providing a flush callback are flushed.
+If the B<plugin> option has been specified, only the I<Plugin> plugin will be
+flushed. You can have multiple B<plugin> options to flush multiple plugins in
+one go. If the B<plugin> option is not given all plugins providing a flush
+callback will be flushed.
+
+If the B<identifier> option is given only the specified values will be flushed.
+This is meant to be used by graphing or displaying frontends which want to have
+the lastest values for a specific graph. Again, you can specify the
+B<identifier> option multiple times to flush several values. If this option is
+not specified at all, all values will be flushed.
 
 Example:
-  -> | FLUSH
-  <- | 0 Done
+  -> | FLUSH plugin=rrdtool identifier=localhost/df/df-root identifier=localhost/df/df-var
+  <- | 0 Done: 2 successful, 0 errors
 
 =back
 
@@ -206,13 +212,15 @@ Value or value-lists are identified in a uniform fashion:
 I<Hostname>/I<Plugin>/I<Type>
 
 Where I<Plugin> and I<Type> are both either of type "I<Name>" or
-"I<Name>-I<Instance>". This sounds more complicated than it is, so here are
+"I<Name>-I<Instance>". If the identifier includes spaces, it must be quoted
+using double quotes. This sounds more complicated than it is, so here are
 some examples:
 
   myhost/cpu-0/cpu-user
   myhost/load/load
   myhost/memory/memory-used
   myhost/disk-sda/disk_octets
+  "myups/snmp/temperature-Outlet 1"
 
 =head1 ABSTRACTION LAYER
 
