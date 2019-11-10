@@ -26,9 +26,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_rrdcreate.h"
+#include "utils/common/common.h"
+#include "utils/rrdcreate/rrdcreate.h"
 
 #undef HAVE_CONFIG_H
 #include <rrd.h>
@@ -37,48 +37,40 @@
 /*
  * Private variables
  */
-static char *datadir = NULL;
-static char *daemon_address = NULL;
-static _Bool config_create_files = 1;
-static _Bool config_collect_stats = 1;
-static rrdcreate_config_t rrdcreate_config = {
-    /* stepsize = */ 0,
-    /* heartbeat = */ 0,
-    /* rrarows = */ 1200,
-    /* xff = */ 0.1,
-
-    /* timespans = */ NULL,
-    /* timespans_num = */ 0,
-
-    /* consolidation_functions = */ NULL,
-    /* consolidation_functions_num = */ 0,
-
-    /* async = */ 0};
+static char *datadir;
+static char *daemon_address;
+static bool config_create_files = true;
+static bool config_collect_stats = true;
+static rrdcreate_config_t rrdcreate_config = {.stepsize = 0,
+                                              .heartbeat = 0,
+                                              .rrarows = 1200,
+                                              .xff = 0.1,
+                                              .timespans = NULL,
+                                              .timespans_num = 0,
+                                              .consolidation_functions = NULL,
+                                              .consolidation_functions_num = 0,
+                                              .async = 0};
 
 /*
  * Prototypes.
  */
 static int rc_write(const data_set_t *ds, const value_list_t *vl,
-                    user_data_t __attribute__((unused)) * user_data);
+                    __attribute__((unused)) user_data_t *ud);
 static int rc_flush(__attribute__((unused)) cdtime_t timeout,
                     const char *identifier,
                     __attribute__((unused)) user_data_t *ud);
 
 static int value_list_to_string(char *buffer, int buffer_len,
                                 const data_set_t *ds, const value_list_t *vl) {
-  int offset;
-  int status;
-  time_t t;
-
-  assert(0 == strcmp(ds->type, vl->type));
+  assert(strcmp(ds->type, vl->type) == 0);
 
   memset(buffer, '\0', buffer_len);
 
-  t = CDTIME_T_TO_TIME_T(vl->time);
-  status = snprintf(buffer, buffer_len, "%lu", (unsigned long)t);
+  int status =
+      ssnprintf(buffer, buffer_len, "%.6f", CDTIME_T_TO_DOUBLE(vl->time));
   if ((status < 1) || (status >= buffer_len))
     return -1;
-  offset = status;
+  int offset = status;
 
   for (size_t i = 0; i < ds->ds_num; i++) {
     if ((ds->ds[i].type != DS_TYPE_COUNTER) &&
@@ -88,17 +80,17 @@ static int value_list_to_string(char *buffer, int buffer_len,
       return -1;
 
     if (ds->ds[i].type == DS_TYPE_COUNTER) {
-      status = snprintf(buffer + offset, buffer_len - offset, ":%llu",
-                        vl->values[i].counter);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":%" PRIu64,
+                         (uint64_t)vl->values[i].counter);
     } else if (ds->ds[i].type == DS_TYPE_GAUGE) {
-      status = snprintf(buffer + offset, buffer_len - offset, ":%f",
-                        vl->values[i].gauge);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":%f",
+                         vl->values[i].gauge);
     } else if (ds->ds[i].type == DS_TYPE_DERIVE) {
-      status = snprintf(buffer + offset, buffer_len - offset, ":%" PRIi64,
-                        vl->values[i].derive);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":%" PRIi64,
+                         vl->values[i].derive);
     } else /* if (ds->ds[i].type == DS_TYPE_ABSOLUTE) */ {
-      status = snprintf(buffer + offset, buffer_len - offset, ":%" PRIu64,
-                        vl->values[i].absolute);
+      status = ssnprintf(buffer + offset, buffer_len - offset, ":%" PRIu64,
+                         vl->values[i].absolute);
     }
 
     if ((status < 1) || (status >= (buffer_len - offset)))
@@ -113,8 +105,6 @@ static int value_list_to_string(char *buffer, int buffer_len,
 static int value_list_to_filename(char *buffer, size_t buffer_size,
                                   value_list_t const *vl) {
   char const suffix[] = ".rrd";
-  int status;
-  size_t len;
 
   if (datadir != NULL) {
     size_t datadir_len = strlen(datadir) + 1;
@@ -124,17 +114,17 @@ static int value_list_to_filename(char *buffer, size_t buffer_size,
 
     sstrncpy(buffer, datadir, buffer_size);
     buffer[datadir_len - 1] = '/';
-    buffer[datadir_len] = 0;
+    buffer[datadir_len] = '\0';
 
     buffer += datadir_len;
     buffer_size -= datadir_len;
   }
 
-  status = FORMAT_VL(buffer, buffer_size, vl);
+  int status = FORMAT_VL(buffer, buffer_size, vl);
   if (status != 0)
     return status;
 
-  len = strlen(buffer);
+  size_t len = strlen(buffer);
   assert(len < buffer_size);
   buffer += len;
   buffer_size -= len;
@@ -147,10 +137,9 @@ static int value_list_to_filename(char *buffer, size_t buffer_size,
 } /* int value_list_to_filename */
 
 static int rc_config_get_int_positive(oconfig_item_t const *ci, int *ret) {
-  int status;
   int tmp = 0;
 
-  status = cf_util_get_int(ci, &tmp);
+  int status = cf_util_get_int(ci, &tmp);
   if (status != 0)
     return status;
   if (tmp < 0)
@@ -161,8 +150,6 @@ static int rc_config_get_int_positive(oconfig_item_t const *ci, int *ret) {
 } /* int rc_config_get_int_positive */
 
 static int rc_config_get_xff(oconfig_item_t const *ci, double *ret) {
-  double value;
-
   if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_NUMBER)) {
     ERROR("rrdcached plugin: The \"%s\" needs exactly one numeric argument "
           "in the range [0.0, 1.0)",
@@ -170,7 +157,7 @@ static int rc_config_get_xff(oconfig_item_t const *ci, double *ret) {
     return EINVAL;
   }
 
-  value = ci->values[0].value.number;
+  double value = ci->values[0].value.number;
   if ((value >= 0.0) && (value < 1.0)) {
     *ret = value;
     return 0;
@@ -183,14 +170,12 @@ static int rc_config_get_xff(oconfig_item_t const *ci, double *ret) {
 } /* int rc_config_get_xff */
 
 static int rc_config_add_timespan(int timespan) {
-  int *tmp;
-
   if (timespan <= 0)
     return EINVAL;
 
-  tmp = realloc(rrdcreate_config.timespans,
-                sizeof(*rrdcreate_config.timespans) *
-                    (rrdcreate_config.timespans_num + 1));
+  int *tmp = realloc(rrdcreate_config.timespans,
+                     sizeof(*rrdcreate_config.timespans) *
+                         (rrdcreate_config.timespans_num + 1));
   if (tmp == NULL)
     return ENOMEM;
   rrdcreate_config.timespans = tmp;
@@ -262,12 +247,10 @@ static int rc_config(oconfig_item_t *ci) {
 } /* int rc_config */
 
 static int try_reconnect(void) {
-  int status;
-
   rrdc_disconnect();
 
   rrd_clear_error();
-  status = rrdc_connect(daemon_address);
+  int status = rrdc_connect(daemon_address);
   if (status != 0) {
     ERROR("rrdcached plugin: Failed to reconnect to RRDCacheD "
           "at %s: %s (status=%d)",
@@ -282,9 +265,6 @@ static int try_reconnect(void) {
 } /* int try_reconnect */
 
 static int rc_read(void) {
-  int status;
-  rrdc_stats_t *head;
-  _Bool retried = 0;
 
   value_list_t vl = VALUE_LIST_INIT;
   vl.values = &(value_t){.gauge = NAN};
@@ -302,13 +282,16 @@ static int rc_read(void) {
   sstrncpy(vl.plugin, "rrdcached", sizeof(vl.plugin));
 
   rrd_clear_error();
-  status = rrdc_connect(daemon_address);
+  int status = rrdc_connect(daemon_address);
   if (status != 0) {
     ERROR("rrdcached plugin: Failed to connect to RRDCacheD "
           "at %s: %s (status=%d)",
           daemon_address, rrd_get_error(), status);
     return -1;
   }
+
+  rrdc_stats_t *head;
+  bool retried = false;
 
   while (42) {
     /* The RRD client lib does not provide any means for checking a
@@ -320,7 +303,7 @@ static int rc_read(void) {
       break;
 
     if (!retried) {
-      retried = 1;
+      retried = true;
       if (try_reconnect() == 0)
         continue;
       /* else: report the error and fail */
@@ -390,9 +373,8 @@ static int rc_write(const data_set_t *ds, const value_list_t *vl,
                     user_data_t __attribute__((unused)) * user_data) {
   char filename[PATH_MAX];
   char values[512];
-  char *values_array[2];
   int status;
-  _Bool retried = 0;
+  bool retried = false;
 
   if (daemon_address == NULL) {
     ERROR("rrdcached plugin: daemon_address == NULL.");
@@ -415,18 +397,13 @@ static int rc_write(const data_set_t *ds, const value_list_t *vl,
     return -1;
   }
 
-  values_array[0] = values;
-  values_array[1] = NULL;
-
   if (config_create_files) {
     struct stat statbuf;
 
     status = stat(filename, &statbuf);
     if (status != 0) {
       if (errno != ENOENT) {
-        char errbuf[1024];
-        ERROR("rrdcached plugin: stat (%s) failed: %s", filename,
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+        ERROR("rrdcached plugin: stat (%s) failed: %s", filename, STRERRNO);
         return -1;
       }
 
@@ -448,6 +425,11 @@ static int rc_write(const data_set_t *ds, const value_list_t *vl,
     return -1;
   }
 
+  char *values_array[2] = {
+      [0] = values,
+      [1] = NULL,
+  };
+
   while (42) {
     /* The RRD client lib does not provide any means for checking a
      * connection, hence we'll have to retry upon failed operations. */
@@ -457,7 +439,7 @@ static int rc_write(const data_set_t *ds, const value_list_t *vl,
       break;
 
     if (!retried) {
-      retried = 1;
+      retried = true;
       if (try_reconnect() == 0)
         continue;
       /* else: report the error and fail */
@@ -474,26 +456,26 @@ static int rc_write(const data_set_t *ds, const value_list_t *vl,
 static int rc_flush(__attribute__((unused)) cdtime_t timeout, /* {{{ */
                     const char *identifier,
                     __attribute__((unused)) user_data_t *ud) {
-  char filename[PATH_MAX + 1];
-  int status;
-  _Bool retried = 0;
-
   if (identifier == NULL)
     return EINVAL;
 
+  char filename[PATH_MAX + 1];
+
   if (datadir != NULL)
-    snprintf(filename, sizeof(filename), "%s/%s.rrd", datadir, identifier);
+    ssnprintf(filename, sizeof(filename), "%s/%s.rrd", datadir, identifier);
   else
-    snprintf(filename, sizeof(filename), "%s.rrd", identifier);
+    ssnprintf(filename, sizeof(filename), "%s.rrd", identifier);
 
   rrd_clear_error();
-  status = rrdc_connect(daemon_address);
+  int status = rrdc_connect(daemon_address);
   if (status != 0) {
     ERROR("rrdcached plugin: Failed to connect to RRDCacheD "
           "at %s: %s (status=%d)",
           daemon_address, rrd_get_error(), status);
     return -1;
   }
+
+  bool retried = false;
 
   while (42) {
     /* The RRD client lib does not provide any means for checking a
@@ -504,7 +486,7 @@ static int rc_flush(__attribute__((unused)) cdtime_t timeout, /* {{{ */
       break;
 
     if (!retried) {
-      retried = 1;
+      retried = true;
       if (try_reconnect() == 0)
         continue;
       /* else: report the error and fail */

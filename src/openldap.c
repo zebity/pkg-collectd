@@ -28,8 +28,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if defined(__APPLE__)
 #pragma clang diagnostic push
@@ -47,10 +47,10 @@ struct cldap_s /* {{{ */
   char *password;
   char *cacert;
   char *host;
-  _Bool starttls;
+  bool starttls;
   int timeout;
   char *url;
-  _Bool verifyhost;
+  bool verifyhost;
   int version;
 
   LDAP *ld;
@@ -105,12 +105,12 @@ static int cldap_init_host(cldap_t *st) /* {{{ */
   if (st->cacert != NULL)
     ldap_set_option(st->ld, LDAP_OPT_X_TLS_CACERTFILE, st->cacert);
 
-  if (st->verifyhost == 0) {
+  if (st->verifyhost == false) {
     int never = LDAP_OPT_X_TLS_NEVER;
     ldap_set_option(st->ld, LDAP_OPT_X_TLS_REQUIRE_CERT, &never);
   }
 
-  if (st->starttls != 0) {
+  if (st->starttls) {
     rc = ldap_start_tls_s(st->ld, NULL, NULL);
     if (rc != LDAP_SUCCESS) {
       ERROR("openldap plugin: Failed to start tls on %s: %s", st->url,
@@ -306,8 +306,8 @@ static int cldap_read_host(user_data_t *ud) /* {{{ */
         if ((olmbdb_list =
                  ldap_get_values_len(st->ld, e, "olmBDBEntryCache")) != NULL) {
           olmbdb_data = *olmbdb_list[0];
-          snprintf(typeinst, sizeof(typeinst), "bdbentrycache-%s",
-                   nc_data.bv_val);
+          ssnprintf(typeinst, sizeof(typeinst), "bdbentrycache-%s",
+                    nc_data.bv_val);
           cldap_submit_gauge("cache_size", typeinst, atoll(olmbdb_data.bv_val),
                              st);
           ldap_value_free_len(olmbdb_list);
@@ -316,7 +316,8 @@ static int cldap_read_host(user_data_t *ud) /* {{{ */
         if ((olmbdb_list = ldap_get_values_len(st->ld, e, "olmBDBDNCache")) !=
             NULL) {
           olmbdb_data = *olmbdb_list[0];
-          snprintf(typeinst, sizeof(typeinst), "bdbdncache-%s", nc_data.bv_val);
+          ssnprintf(typeinst, sizeof(typeinst), "bdbdncache-%s",
+                    nc_data.bv_val);
           cldap_submit_gauge("cache_size", typeinst, atoll(olmbdb_data.bv_val),
                              st);
           ldap_value_free_len(olmbdb_list);
@@ -325,8 +326,8 @@ static int cldap_read_host(user_data_t *ud) /* {{{ */
         if ((olmbdb_list = ldap_get_values_len(st->ld, e, "olmBDBIDLCache")) !=
             NULL) {
           olmbdb_data = *olmbdb_list[0];
-          snprintf(typeinst, sizeof(typeinst), "bdbidlcache-%s",
-                   nc_data.bv_val);
+          ssnprintf(typeinst, sizeof(typeinst), "bdbidlcache-%s",
+                    nc_data.bv_val);
           cldap_submit_gauge("cache_size", typeinst, atoll(olmbdb_data.bv_val),
                              st);
           ldap_value_free_len(olmbdb_list);
@@ -397,9 +398,9 @@ static int cldap_config_add(oconfig_item_t *ci) /* {{{ */
     return status;
   }
 
-  st->starttls = 0;
+  st->starttls = false;
   st->timeout = (long)CDTIME_T_TO_TIME_T(plugin_get_interval());
-  st->verifyhost = 1;
+  st->verifyhost = true;
   st->version = LDAP_VERSION3;
 
   for (int i = 0; i < ci->children_num; i++) {
@@ -462,16 +463,17 @@ static int cldap_config_add(oconfig_item_t *ci) /* {{{ */
 
   char callback_name[3 * DATA_MAX_NAME_LEN] = {0};
 
-  snprintf(callback_name, sizeof(callback_name), "openldap/%s/%s",
-           (st->host != NULL) ? st->host : hostname_g,
-           (st->name != NULL) ? st->name : "default");
+  ssnprintf(callback_name, sizeof(callback_name), "openldap/%s/%s",
+            (st->host != NULL) ? st->host : hostname_g,
+            (st->name != NULL) ? st->name : "default");
 
   return plugin_register_complex_read(/* group = */ NULL,
                                       /* name      = */ callback_name,
                                       /* callback  = */ cldap_read_host,
                                       /* interval  = */ 0,
                                       &(user_data_t){
-                                          .data = st, .free_func = cldap_free,
+                                          .data = st,
+                                          .free_func = cldap_free,
                                       });
 } /* }}} int cldap_config_add */
 

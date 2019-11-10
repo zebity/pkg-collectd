@@ -21,8 +21,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <libaquaero5.h>
 
@@ -30,7 +30,7 @@
  * Private variables
  */
 /* Default values for contacting daemon */
-static char *conf_device = NULL;
+static char *conf_device;
 
 static int aquaero_config(oconfig_item_t *ci) {
   for (int i = 0; i < ci->children_num; i++) {
@@ -81,8 +81,8 @@ static void aquaero_submit_array(const char *type,
     if (value_array[i] == AQ5_FLOAT_UNDEF)
       continue;
 
-    snprintf(type_instance, sizeof(type_instance), "%s%d", type_instance_prefix,
-             i + 1);
+    ssnprintf(type_instance, sizeof(type_instance), "%s%d",
+              type_instance_prefix, i + 1);
     aquaero_submit(type, type_instance, value_array[i]);
   }
 }
@@ -94,19 +94,15 @@ static int aquaero_read(void) {
   char type_instance[DATA_MAX_NAME_LEN];
 
   if (libaquaero5_poll(conf_device, &aq_data, &err_msg) < 0) {
-    char errbuf[1024];
     ERROR("aquaero plugin: Failed to poll device \"%s\": %s (%s)",
-          conf_device ? conf_device : "default", err_msg,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+          conf_device ? conf_device : "default", err_msg, STRERRNO);
     return -1;
   }
 
   if (libaquaero5_getsettings(conf_device, &aq_sett, &err_msg) < 0) {
-    char errbuf[1024];
     ERROR("aquaero plugin: Failed to get settings "
           "for device \"%s\": %s (%s)",
-          conf_device ? conf_device : "default", err_msg,
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+          conf_device ? conf_device : "default", err_msg, STRERRNO);
     return -1;
   }
 
@@ -134,7 +130,7 @@ static int aquaero_read(void) {
         (aq_data.fan_vrm_temp[i] != AQ5_FLOAT_UNDEF))
       continue;
 
-    snprintf(type_instance, sizeof(type_instance), "fan%d", i + 1);
+    ssnprintf(type_instance, sizeof(type_instance), "fan%d", i + 1);
 
     aquaero_submit("fanspeed", type_instance, aq_data.fan_rpm[i]);
     aquaero_submit("percent", type_instance, aq_data.fan_duty[i]);
@@ -143,7 +139,7 @@ static int aquaero_read(void) {
 
     /* Report the voltage reglator module (VRM) temperature with a
      * different type instance. */
-    snprintf(type_instance, sizeof(type_instance), "fan%d-vrm", i + 1);
+    ssnprintf(type_instance, sizeof(type_instance), "fan%d-vrm", i + 1);
     aquaero_submit("temperature", type_instance, aq_data.fan_vrm_temp[i]);
   }
 

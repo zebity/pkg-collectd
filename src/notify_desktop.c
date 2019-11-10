@@ -30,8 +30,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <glib.h>
 #include <libnotify/notify.h>
@@ -93,16 +93,16 @@ static int c_notify(const notification_t *n,
     timeout = fail_timeout;
   }
 
-  snprintf(summary, sizeof(summary), "collectd %s notification",
-           (NOTIF_FAILURE == n->severity)
-               ? "FAILURE"
-               : (NOTIF_WARNING == n->severity)
-                     ? "WARNING"
-                     : (NOTIF_OKAY == n->severity) ? "OKAY" : "UNKNOWN");
+  ssnprintf(summary, sizeof(summary), "collectd %s notification",
+            (NOTIF_FAILURE == n->severity)
+                ? "FAILURE"
+                : (NOTIF_WARNING == n->severity)
+                      ? "WARNING"
+                      : (NOTIF_OKAY == n->severity) ? "OKAY" : "UNKNOWN");
 
   notification = notify_notification_new(summary, n->message, NULL
 #if NOTIFY_CHECK_VERSION(0, 7, 0)
-                                         );
+  );
 #else
                                          ,
                                          NULL);

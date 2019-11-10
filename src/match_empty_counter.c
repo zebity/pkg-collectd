@@ -26,8 +26,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "filter_chain.h"
+#include "utils/common/common.h"
 
 /*
  * internal helper functions
@@ -73,9 +73,9 @@ static int mec_match(__attribute__((unused)) const data_set_t *ds, /* {{{ */
 } /* }}} int mec_match */
 
 void module_register(void) {
-  fc_register_match(
-      "empty_counter",
-      (match_proc_t){
-          .create = mec_create, .destroy = mec_destroy, .match = mec_match,
-      });
+  fc_register_match("empty_counter", (match_proc_t){
+                                         .create = mec_create,
+                                         .destroy = mec_destroy,
+                                         .match = mec_match,
+                                     });
 } /* module_register */

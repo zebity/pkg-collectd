@@ -22,8 +22,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if !HAVE_LIBKSTAT
 #error "No applicable input method."
@@ -36,7 +36,7 @@
 #define MAX_NUMTAPE 256
 extern kstat_ctl_t *kc;
 static kstat_t *ksp[MAX_NUMTAPE];
-static int numtape = 0;
+static int numtape;
 
 static int tape_init(void) {
   kstat_t *ksp_chain;
@@ -63,7 +63,8 @@ static void tape_submit(const char *plugin_instance, const char *type,
                         derive_t read, derive_t write) {
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.derive = read}, {.derive = write},
+      {.derive = read},
+      {.derive = write},
   };
 
   vl.values = values;

@@ -88,9 +88,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_ignorelist.h"
+#include "utils/common/common.h"
+#include "utils/ignorelist/ignorelist.h"
 
 #include <dirent.h>
 #include <sys/ioctl.h>
@@ -99,8 +99,8 @@
 #error "No applicable input method."
 #endif
 
-#include <linux/wireless.h>
 #include "madwifi.h"
+#include <linux/wireless.h>
 
 struct stat_spec {
   uint16_t flags;
@@ -347,10 +347,10 @@ static const char *config_keys[] = {"Interface", "IgnoreSelected", "Source",
                                     "MiscAdd",   "MiscRemove",     "MiscSet"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static ignorelist_t *ignorelist = NULL;
+static ignorelist_t *ignorelist;
 
 static int use_sysfs = 1;
-static int init_state = 0;
+static int init_state;
 
 static inline int item_watched(int i) {
   assert(i >= 0);
@@ -534,7 +534,8 @@ static void submit_derive(const char *dev, const char *type, const char *ti1,
 static void submit_derive2(const char *dev, const char *type, const char *ti1,
                            const char *ti2, derive_t val1, derive_t val2) {
   value_t values[] = {
-      {.derive = val1}, {.derive = val2},
+      {.derive = val1},
+      {.derive = val2},
   };
 
   submit(dev, type, ti1, ti2, values, STATIC_ARRAY_SIZE(values));

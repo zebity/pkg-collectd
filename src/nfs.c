@@ -24,8 +24,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if HAVE_KSTAT_H
 #include <kstat.h>
@@ -33,9 +33,9 @@
 
 static const char *config_keys[] = {"ReportV2", "ReportV3", "ReportV4"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
-static _Bool report_v2 = 1;
-static _Bool report_v3 = 1;
-static _Bool report_v4 = 1;
+static bool report_v2 = true;
+static bool report_v3 = true;
+static bool report_v4 = true;
 
 /*
 see /proc/net/rpc/nfs
@@ -322,7 +322,7 @@ static int nfs_config(const char *key, const char *value) {
 
 #if KERNEL_LINUX
 static int nfs_init(void) { return 0; }
-/* #endif KERNEL_LINUX */
+  /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
 static int nfs_init(void) {
@@ -397,7 +397,7 @@ static int nfs_submit_fields_safe(int nfs_version, const char *instance,
                                   size_t proc_names_num) {
   if (fields_num != proc_names_num) {
     WARNING("nfs plugin: Wrong number of fields for "
-            "NFSv%i %s statistics. Expected %zu, got %zu.",
+            "NFSv%i %s statistics. Expected %" PRIsz ", got %" PRIsz ".",
             nfs_version, instance, proc_names_num, fields_num);
     return EINVAL;
   }
@@ -409,7 +409,7 @@ static int nfs_submit_fields_safe(int nfs_version, const char *instance,
 
 static int nfs_submit_nfs4_server(const char *instance, char **fields,
                                   size_t fields_num) {
-  static int suppress_warning = 0;
+  static int suppress_warning;
   size_t proc4x_names_num;
 
   switch (fields_num) {
@@ -421,7 +421,7 @@ static int nfs_submit_nfs4_server(const char *instance, char **fields,
   default:
     if (!suppress_warning) {
       WARNING("nfs plugin: Unexpected number of fields for "
-              "NFSv4 %s statistics: %zu. ",
+              "NFSv4 %s statistics: %" PRIsz ". ",
               instance, fields_num);
     }
 
@@ -451,7 +451,7 @@ static int nfs_submit_nfs4_client(const char *instance, char **fields,
                                   size_t fields_num) {
   size_t proc40_names_num, proc4x_names_num;
 
-  static int suppress_warning = 0;
+  static int suppress_warning;
 
   switch (fields_num) {
   case 34:
@@ -486,9 +486,8 @@ static int nfs_submit_nfs4_client(const char *instance, char **fields,
     break;
   default:
     if (!suppress_warning) {
-      WARNING("nfs plugin: Unexpected number of "
-              "fields for NFSv4 %s "
-              "statistics: %zu. ",
+      WARNING("nfs plugin: Unexpected number of fields for NFSv4 %s "
+              "statistics: %" PRIsz ". ",
               instance, fields_num);
     }
 
@@ -595,7 +594,7 @@ static int nfs_read(void) {
 
   return 0;
 }
-/* #endif KERNEL_LINUX */
+  /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
 static int nfs_read(void) {

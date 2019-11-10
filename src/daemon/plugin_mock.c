@@ -39,7 +39,9 @@ char *hostname_g = "example.com";
 void plugin_set_dir(const char *dir) { /* nop */
 }
 
-int plugin_load(const char *name, _Bool global) { return ENOTSUP; }
+int plugin_load(const char *name, bool global) { return ENOTSUP; }
+
+bool plugin_is_loaded(const char *name) { return false; }
 
 int plugin_register_config(const char *name,
                            int (*callback)(const char *key, const char *val),
@@ -56,7 +58,26 @@ int plugin_register_init(const char *name, plugin_init_cb callback) {
   return ENOTSUP;
 }
 
-int plugin_register_read(const char *name, int (*callback)(void)) {
+int plugin_register_read(__attribute__((unused)) const char *name,
+                         __attribute__((unused)) int (*callback)(void)) {
+  return ENOTSUP;
+}
+
+int plugin_register_write(__attribute__((unused)) const char *name,
+                          __attribute__((unused)) plugin_write_cb callback,
+                          __attribute__((unused)) user_data_t const *ud) {
+  return ENOTSUP;
+}
+
+int plugin_register_flush(__attribute__((unused)) const char *name,
+                          __attribute__((unused)) plugin_flush_cb callback,
+                          __attribute__((unused))
+                          user_data_t const *user_data) {
+  return ENOTSUP;
+}
+
+int plugin_register_missing(const char *name, plugin_missing_cb callback,
+                            user_data_t const *ud) {
   return ENOTSUP;
 }
 
@@ -73,7 +94,91 @@ int plugin_register_shutdown(const char *name, int (*callback)(void)) {
 
 int plugin_register_data_set(const data_set_t *ds) { return ENOTSUP; }
 
+int plugin_register_notification(__attribute__((unused)) const char *name,
+                                 __attribute__((unused))
+                                 plugin_notification_cb callback,
+                                 __attribute__((unused))
+                                 user_data_t const *user_data) {
+  return ENOTSUP;
+}
+
+#define DECLARE_UNREGISTER(t)                                                  \
+  int plugin_unregister_##t(__attribute__((unused)) char const *name) {        \
+    return ENOTSUP;                                                            \
+  }
+DECLARE_UNREGISTER(config)
+DECLARE_UNREGISTER(complex_config)
+DECLARE_UNREGISTER(init)
+DECLARE_UNREGISTER(read)
+DECLARE_UNREGISTER(read_group)
+DECLARE_UNREGISTER(write)
+DECLARE_UNREGISTER(flush)
+DECLARE_UNREGISTER(missing)
+DECLARE_UNREGISTER(shutdown)
+DECLARE_UNREGISTER(data_set)
+DECLARE_UNREGISTER(log)
+DECLARE_UNREGISTER(notification)
+
 int plugin_dispatch_values(value_list_t const *vl) { return ENOTSUP; }
+
+int plugin_dispatch_notification(__attribute__((unused))
+                                 const notification_t *notif) {
+  return ENOTSUP;
+}
+
+int plugin_notification_meta_add_string(__attribute__((unused))
+                                        notification_t *n,
+                                        __attribute__((unused))
+                                        const char *name,
+                                        __attribute__((unused))
+                                        const char *value) {
+  return ENOTSUP;
+}
+
+int plugin_notification_meta_add_signed_int(__attribute__((unused))
+                                            notification_t *n,
+                                            __attribute__((unused))
+                                            const char *name,
+                                            __attribute__((unused))
+                                            int64_t value) {
+  return ENOTSUP;
+}
+
+int plugin_notification_meta_add_unsigned_int(__attribute__((unused))
+                                              notification_t *n,
+                                              __attribute__((unused))
+                                              const char *name,
+                                              __attribute__((unused))
+                                              uint64_t value) {
+  return ENOTSUP;
+}
+
+int plugin_notification_meta_add_double(__attribute__((unused))
+                                        notification_t *n,
+                                        __attribute__((unused))
+                                        const char *name,
+                                        __attribute__((unused)) double value) {
+  return ENOTSUP;
+}
+
+int plugin_notification_meta_add_boolean(__attribute__((unused))
+                                         notification_t *n,
+                                         __attribute__((unused))
+                                         const char *name,
+                                         __attribute__((unused)) _Bool value) {
+  return ENOTSUP;
+}
+
+int plugin_notification_meta_copy(__attribute__((unused)) notification_t *dst,
+                                  __attribute__((unused))
+                                  const notification_t *src) {
+  return ENOTSUP;
+}
+
+int plugin_notification_meta_free(__attribute__((unused))
+                                  notification_meta_t *n) {
+  return ENOTSUP;
+}
 
 int plugin_flush(const char *plugin, cdtime_t timeout, const char *identifier) {
   return ENOTSUP;
@@ -99,6 +204,17 @@ void plugin_log(int level, char const *format, ...) {
   printf("plugin_log (%i, \"%s\");\n", level, buffer);
 }
 
+void daemon_log(int level, char const *format, ...) {
+  char buffer[1024];
+  va_list ap;
+
+  va_start(ap, format);
+  vsnprintf(buffer, sizeof(buffer), format, ap);
+  va_end(ap);
+
+  printf("daemon_log (%i, \"%s\");\n", level, buffer);
+}
+
 void plugin_init_ctx(void) { /* nop */
 }
 
@@ -115,6 +231,14 @@ plugin_ctx_t plugin_set_ctx(plugin_ctx_t ctx) {
 }
 
 cdtime_t plugin_get_interval(void) { return mock_context.interval; }
+
+int plugin_thread_create(__attribute__((unused)) pthread_t *thread,
+                         __attribute__((unused)) const pthread_attr_t *attr,
+                         __attribute__((unused)) void *(*start_routine)(void *),
+                         __attribute__((unused)) void *arg,
+                         __attribute__((unused)) char const *name) {
+  return ENOTSUP;
+}
 
 /* TODO(octo): this function is actually from filter_chain.h, but in order not
  * to tumble down that rabbit hole, we're declaring it here. A better solution

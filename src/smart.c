@@ -26,9 +26,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_ignorelist.h"
+#include "utils/common/common.h"
+#include "utils/ignorelist/ignorelist.h"
 
 #include <atasmart.h>
 #include <libudev.h>
@@ -42,9 +42,9 @@ static const char *config_keys[] = {"Disk", "IgnoreSelected", "IgnoreSleepMode",
 
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static ignorelist_t *ignorelist = NULL;
-static int ignore_sleep_mode = 0;
-static int use_serial = 0;
+static ignorelist_t *ignorelist;
+static int ignore_sleep_mode;
+static int use_serial;
 
 static int smart_config(const char *key, const char *value) {
   if (ignorelist == NULL)
@@ -116,9 +116,9 @@ static void handle_attribute(SkDisk *d, const SkSmartAttributeParsedData *a,
     sstrncpy(notif.host, hostname_g, sizeof(notif.host));
     sstrncpy(notif.plugin_instance, name, sizeof(notif.plugin_instance));
     sstrncpy(notif.type_instance, a->name, sizeof(notif.type_instance));
-    snprintf(notif.message, sizeof(notif.message),
-             "attribute %s is below allowed threshold (%d < %d)", a->name,
-             a->current_value, a->threshold);
+    ssnprintf(notif.message, sizeof(notif.message),
+              "attribute %s is below allowed threshold (%d < %d)", a->name,
+              a->current_value, a->threshold);
     plugin_dispatch_notification(&notif);
   }
 }

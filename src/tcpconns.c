@@ -59,8 +59,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if defined(__OpenBSD__)
 #define HAVE_KVM_GETFILES 1
@@ -76,7 +76,6 @@
 #endif
 
 #if KERNEL_LINUX
-#include <asm/types.h>
 #include <linux/netlink.h>
 #if HAVE_LINUX_INET_DIAG_H
 #include <linux/inet_diag.h>
@@ -206,7 +205,7 @@ static const char *tcp_state[] = {"CLOSED",    "LISTEN",      "SYN_SENT",
                                   "FIN_WAIT2", "TIME_WAIT"};
 
 static kvm_t *kvmd;
-static u_long inpcbtable_off = 0;
+static u_long inpcbtable_off;
 struct inpcbtable *inpcbtable_ptr = NULL;
 
 #define TCP_STATE_LISTEN 1
@@ -262,9 +261,9 @@ static const char *config_keys[] = {"ListeningPorts", "LocalPort", "RemotePort",
                                     "AllPortsSummary"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static int port_collect_listening = 0;
-static int port_collect_total = 0;
-static port_entry_t *port_list_head = NULL;
+static int port_collect_listening;
+static int port_collect_total;
+static port_entry_t *port_list_head;
 static uint32_t count_total[TCP_STATE_MAX + 1];
 
 #if KERNEL_LINUX
@@ -272,7 +271,7 @@ static uint32_t count_total[TCP_STATE_MAX + 1];
 /* This depends on linux inet_diag_req because if this structure is missing,
  * sequence_number is useless and we get a compilation warning.
  */
-static uint32_t sequence_number = 0;
+static uint32_t sequence_number;
 #endif
 
 static enum { SRC_DUNNO, SRC_NETLINK, SRC_PROC } linux_source = SRC_DUNNO;
@@ -414,7 +413,7 @@ static int conn_handle_ports(uint16_t port_local, uint16_t port_remote,
 #if TCP_STATE_MIN > 0
       || (state < TCP_STATE_MIN)
 #endif
-          ) {
+  ) {
     NOTICE("tcpconns plugin: Ignoring connection with "
            "unknown state 0x%02" PRIx8 ".",
            state);
@@ -459,7 +458,7 @@ static int conn_read_netlink(void) {
   if (fd < 0) {
     ERROR("tcpconns plugin: conn_read_netlink: socket(AF_NETLINK, SOCK_RAW, "
           "NETLINK_INET_DIAG) failed: %s",
-          sstrerror(errno, buf, sizeof(buf)));
+          STRERRNO);
     return -1;
   }
 
@@ -490,7 +489,7 @@ static int conn_read_netlink(void) {
 
   if (sendmsg(fd, &msg, 0) < 0) {
     ERROR("tcpconns plugin: conn_read_netlink: sendmsg(2) failed: %s",
-          sstrerror(errno, buf, sizeof(buf)));
+          STRERRNO);
     close(fd);
     return -1;
   }
@@ -499,7 +498,6 @@ static int conn_read_netlink(void) {
   iov.iov_len = sizeof(buf);
 
   while (1) {
-    int status;
     struct nlmsghdr *h;
 
     memset(&msg, 0, sizeof(msg));
@@ -508,13 +506,13 @@ static int conn_read_netlink(void) {
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
 
-    status = recvmsg(fd, (void *)&msg, /* flags = */ 0);
+    ssize_t status = recvmsg(fd, (void *)&msg, /* flags = */ 0);
     if (status < 0) {
       if ((errno == EINTR) || (errno == EAGAIN))
         continue;
 
       ERROR("tcpconns plugin: conn_read_netlink: recvmsg(2) failed: %s",
-            sstrerror(errno, buf, sizeof(buf)));
+            STRERRNO);
       close(fd);
       return -1;
     } else if (status == 0) {
@@ -575,11 +573,11 @@ static int conn_handle_line(char *buffer) {
 
   uint8_t state;
 
-  int buffer_len = strlen(buffer);
+  size_t buffer_len = strlen(buffer);
 
   while ((buffer_len > 0) && (buffer[buffer_len - 1] < 32))
     buffer[--buffer_len] = '\0';
-  if (buffer_len <= 0)
+  if (buffer_len == 0)
     return -1;
 
   fields_len = strsplit(buffer, fields, STATIC_ARRAY_SIZE(fields));
@@ -632,10 +630,10 @@ static int conn_read_file(const char *file) {
 
   return 0;
 } /* int conn_read_file */
-/* #endif KERNEL_LINUX */
+  /* #endif KERNEL_LINUX */
 
 #elif HAVE_SYSCTLBYNAME
-/* #endif HAVE_SYSCTLBYNAME */
+  /* #endif HAVE_SYSCTLBYNAME */
 
 #elif HAVE_LIBKVM_NLIST
 #endif /* HAVE_LIBKVM_NLIST */
@@ -731,7 +729,7 @@ static int conn_read(void) {
 
   return 0;
 } /* int conn_read */
-/* #endif KERNEL_LINUX */
+  /* #endif KERNEL_LINUX */
 
 #elif HAVE_SYSCTLBYNAME
 static int conn_read(void) {
@@ -850,8 +848,8 @@ static int conn_read(void) {
 
   return 0;
 }
-/* int conn_read */
-/* #endif HAVE_KVM_GETFILES */
+  /* int conn_read */
+  /* #endif HAVE_KVM_GETFILES */
 
 #elif HAVE_LIBKVM_NLIST
 static int kread(u_long addr, void *buf, int size) {
@@ -968,7 +966,7 @@ static int conn_read(void) {
 
   return 0;
 }
-/* #endif HAVE_LIBKVM_NLIST */
+  /* #endif HAVE_LIBKVM_NLIST */
 
 #elif KERNEL_AIX
 

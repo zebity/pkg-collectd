@@ -31,10 +31,12 @@
 
 #include "collectd/lcc_features.h"
 #include "collectd/network_parse.h"
+#include "globals.h"
 
 #include <errno.h>
 #include <math.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -67,7 +69,7 @@ static int network_parse(void *data, size_t data_size, lcc_security_level_t sl,
                          lcc_network_parse_options_t const *opts);
 
 #if HAVE_GCRYPT_H
-static int init_gcrypt() {
+static int init_gcrypt(void) {
   /* http://lists.gnupg.org/pipermail/gcrypt-devel/2003-August/000458.html
    * Because you can't know in a library whether another library has
    * already initialized the library */
@@ -152,11 +154,12 @@ static int parse_string(void *payload, size_t payload_size, char *out,
                         size_t out_size) {
   char *in = payload;
 
-  if ((payload_size < 1) || (in[payload_size - 1] != 0) ||
+  if ((payload_size < 1) || (in[payload_size - 1] != '\0') ||
       (payload_size > out_size))
     return EINVAL;
 
-  strncpy(out, in, out_size);
+  strncpy(out, in, out_size - 1);
+  out[out_size - 1] = '\0';
   return 0;
 }
 
@@ -219,7 +222,7 @@ static int parse_time(uint16_t type, void *payload, size_t payload_size,
 
 static double ntohd(double val) /* {{{ */
 {
-  static int config = 0;
+  static int config;
 
   union {
     uint8_t byte[8];
@@ -290,7 +293,8 @@ static double ntohd(double val) /* {{{ */
 static int parse_values(void *payload, size_t payload_size,
                         lcc_value_list_t *state) {
   buffer_t *b = &(buffer_t){
-      .data = payload, .len = payload_size,
+      .data = payload,
+      .len = payload_size,
   };
 
   uint16_t n;
@@ -301,8 +305,8 @@ static int parse_values(void *payload, size_t payload_size,
     return EINVAL;
 
   state->values_len = (size_t)n;
-  state->values = calloc(sizeof(*state->values), state->values_len);
-  state->values_types = calloc(sizeof(*state->values_types), state->values_len);
+  state->values = calloc(state->values_len, sizeof(*state->values));
+  state->values_types = calloc(state->values_len, sizeof(*state->values_types));
   if ((state->values == NULL) || (state->values_types == NULL)) {
     return ENOMEM;
   }
@@ -398,7 +402,8 @@ static int parse_sign_sha256(void *signature, size_t signature_len,
   }
 
   buffer_t *b = &(buffer_t){
-      .data = signature, .len = signature_len,
+      .data = signature,
+      .len = signature_len,
   };
 
   uint8_t hash[32];
@@ -434,7 +439,7 @@ static int decrypt_aes256(buffer_t *b, void *iv, size_t iv_size,
   uint8_t pwhash[32] = {0};
   gcry_md_hash_buffer(GCRY_MD_SHA256, pwhash, password, strlen(password));
 
-  fprintf(stderr, "sizeof(iv) = %zu\n", sizeof(iv));
+  fprintf(stderr, "sizeof(iv) = %" PRIsz "\n", sizeof(iv));
   if (gcry_cipher_setkey(cipher, pwhash, sizeof(pwhash)) ||
       gcry_cipher_setiv(cipher, iv, iv_size) ||
       gcry_cipher_decrypt(cipher, b->data, b->len, /* in = */ NULL,
@@ -456,7 +461,8 @@ static int parse_encrypt_aes256(void *data, size_t data_size,
   }
 
   buffer_t *b = &(buffer_t){
-      .data = data, .len = data_size,
+      .data = data,
+      .len = data_size,
   };
 
   uint16_t username_len;
@@ -505,7 +511,8 @@ static int parse_encrypt_aes256(void *data, size_t data_size,
 static int network_parse(void *data, size_t data_size, lcc_security_level_t sl,
                          lcc_network_parse_options_t const *opts) {
   buffer_t *b = &(buffer_t){
-      .data = data, .len = data_size,
+      .data = data,
+      .len = data_size,
   };
 
   lcc_value_list_t state = {0};
@@ -519,7 +526,7 @@ static int network_parse(void *data, size_t data_size, lcc_security_level_t sl,
 
     if ((sz < 5) || (((size_t)sz - 4) > b->len)) {
       DEBUG("lcc_network_parse(): invalid 'sz' field: sz = %" PRIu16
-            ", b->len = %zu\n",
+            ", b->len = %" PRIsz "\n",
             sz, b->len);
       return EINVAL;
     }

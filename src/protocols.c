@@ -26,9 +26,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_ignorelist.h"
+#include "utils/common/common.h"
+#include "utils/ignorelist/ignorelist.h"
 
 #if !KERNEL_LINUX
 #error "No applicable input method."
@@ -41,11 +41,12 @@
  * Global variables
  */
 static const char *config_keys[] = {
-    "Value", "IgnoreSelected",
+    "Value",
+    "IgnoreSelected",
 };
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static ignorelist_t *values_list = NULL;
+static ignorelist_t *values_list;
 
 /*
  * Functions
@@ -58,7 +59,6 @@ static void submit(const char *protocol_name, const char *str_key,
 
   status = parse_value(str_value, &value, DS_TYPE_DERIVE);
   if (status != 0) {
-    ERROR("protocols plugin: Parsing string as integer failed: %s", str_value);
     return;
   }
 
@@ -87,8 +87,7 @@ static int read_file(const char *path) {
 
   fh = fopen(path, "r");
   if (fh == NULL) {
-    ERROR("protocols plugin: fopen (%s) failed: %s.", path,
-          sstrerror(errno, key_buffer, sizeof(key_buffer)));
+    ERROR("protocols plugin: fopen (%s) failed: %s.", path, STRERRNO);
     return -1;
   }
 
@@ -156,8 +155,8 @@ static int read_file(const char *path) {
       if (values_list != NULL) {
         char match_name[2 * DATA_MAX_NAME_LEN];
 
-        snprintf(match_name, sizeof(match_name), "%s:%s", key_buffer,
-                 key_fields[i]);
+        ssnprintf(match_name, sizeof(match_name), "%s:%s", key_buffer,
+                  key_fields[i]);
 
         if (ignorelist_match(values_list, match_name))
           continue;

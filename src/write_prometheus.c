@@ -26,9 +26,9 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
-#include "utils_avltree.h"
+#include "utils/avltree/avltree.h"
+#include "utils/common/common.h"
 #include "utils_complain.h"
 #include "utils_time.h"
 
@@ -54,12 +54,13 @@
 static c_avl_tree_t *metrics;
 static pthread_mutex_t metrics_lock = PTHREAD_MUTEX_INITIALIZER;
 
+static char *httpd_host = NULL;
 static unsigned short httpd_port = 9103;
 static struct MHD_Daemon *httpd;
 
 static cdtime_t staleness_delta = PROMETHEUS_DEFAULT_STALENESS_DELTA;
 
-/* Unfortunately, protoc-c doesn't export it's implementation of varint, so we
+/* Unfortunately, protoc-c doesn't export its implementation of varint, so we
  * need to implement our own. */
 static size_t varint(uint8_t buffer[static VARINT_UINT32_BYTES],
                      uint32_t value) {
@@ -155,7 +156,8 @@ static char *format_labels(char *buffer, size_t buffer_size,
 #define LABEL_BUFFER_SIZE (LABEL_KEY_SIZE + LABEL_VALUE_SIZE + 4)
 
   char *labels[3] = {
-      (char[LABEL_BUFFER_SIZE]){0}, (char[LABEL_BUFFER_SIZE]){0},
+      (char[LABEL_BUFFER_SIZE]){0},
+      (char[LABEL_BUFFER_SIZE]){0},
       (char[LABEL_BUFFER_SIZE]){0},
   };
 
@@ -163,8 +165,8 @@ static char *format_labels(char *buffer, size_t buffer_size,
    * know that they are sane. */
   for (size_t i = 0; i < m->n_label; i++) {
     char value[LABEL_VALUE_SIZE];
-    snprintf(labels[i], LABEL_BUFFER_SIZE, "%s=\"%s\"", m->label[i]->name,
-             escape_label_value(value, sizeof(value), m->label[i]->value));
+    ssnprintf(labels[i], LABEL_BUFFER_SIZE, "%s=\"%s\"", m->label[i]->name,
+              escape_label_value(value, sizeof(value), m->label[i]->value));
   }
 
   strjoin(buffer, buffer_size, labels, m->n_label, ",");
@@ -182,13 +184,13 @@ static void format_text(ProtobufCBuffer *buffer) {
   while (c_avl_iterator_next(iter, (void *)&unused_name, (void *)&fam) == 0) {
     char line[1024]; /* 4x DATA_MAX_NAME_LEN? */
 
-    snprintf(line, sizeof(line), "# HELP %s %s\n", fam->name, fam->help);
+    ssnprintf(line, sizeof(line), "# HELP %s %s\n", fam->name, fam->help);
     buffer->append(buffer, strlen(line), (uint8_t *)line);
 
-    snprintf(line, sizeof(line), "# TYPE %s %s\n", fam->name,
-             (fam->type == IO__PROMETHEUS__CLIENT__METRIC_TYPE__GAUGE)
-                 ? "gauge"
-                 : "counter");
+    ssnprintf(line, sizeof(line), "# TYPE %s %s\n", fam->name,
+              (fam->type == IO__PROMETHEUS__CLIENT__METRIC_TYPE__GAUGE)
+                  ? "gauge"
+                  : "counter");
     buffer->append(buffer, strlen(line), (uint8_t *)line);
 
     for (size_t i = 0; i < fam->n_metric; i++) {
@@ -198,17 +200,17 @@ static void format_text(ProtobufCBuffer *buffer) {
 
       char timestamp_ms[24] = "";
       if (m->has_timestamp_ms)
-        snprintf(timestamp_ms, sizeof(timestamp_ms), " %" PRIi64,
-                 m->timestamp_ms);
+        ssnprintf(timestamp_ms, sizeof(timestamp_ms), " %" PRIi64,
+                  m->timestamp_ms);
 
       if (fam->type == IO__PROMETHEUS__CLIENT__METRIC_TYPE__GAUGE)
-        snprintf(line, sizeof(line), "%s{%s} " GAUGE_FORMAT "%s\n", fam->name,
-                 format_labels(labels, sizeof(labels), m), m->gauge->value,
-                 timestamp_ms);
+        ssnprintf(line, sizeof(line), "%s{%s} " GAUGE_FORMAT "%s\n", fam->name,
+                  format_labels(labels, sizeof(labels), m), m->gauge->value,
+                  timestamp_ms);
       else /* if (fam->type == IO__PROMETHEUS__CLIENT__METRIC_TYPE__COUNTER) */
-        snprintf(line, sizeof(line), "%s{%s} %.0f%s\n", fam->name,
-                 format_labels(labels, sizeof(labels), m), m->counter->value,
-                 timestamp_ms);
+        ssnprintf(line, sizeof(line), "%s{%s} %.0f%s\n", fam->name,
+                  format_labels(labels, sizeof(labels), m), m->counter->value,
+                  timestamp_ms);
 
       buffer->append(buffer, strlen(line), (uint8_t *)line);
     }
@@ -216,8 +218,8 @@ static void format_text(ProtobufCBuffer *buffer) {
   c_avl_iterator_destroy(iter);
 
   char server[1024];
-  snprintf(server, sizeof(server), "\n# collectd/write_prometheus %s at %s\n",
-           PACKAGE_VERSION, hostname_g);
+  ssnprintf(server, sizeof(server), "\n# collectd/write_prometheus %s at %s\n",
+            PACKAGE_VERSION, hostname_g);
   buffer->append(buffer, strlen(server), (uint8_t *)server);
 
   pthread_mutex_unlock(&metrics_lock);
@@ -244,9 +246,8 @@ static int http_handler(void *cls, struct MHD_Connection *connection,
 
   char const *accept = MHD_lookup_connection_value(connection, MHD_HEADER_KIND,
                                                    MHD_HTTP_HEADER_ACCEPT);
-  _Bool want_proto =
-      (accept != NULL) &&
-      (strstr(accept, "application/vnd.google.protobuf") != NULL);
+  bool want_proto = (accept != NULL) &&
+                    (strstr(accept, "application/vnd.google.protobuf") != NULL);
 
   uint8_t scratch[4096] = {0};
   ProtobufCBufferSimple simple = PROTOBUF_C_BUFFER_SIMPLE_INIT(scratch);
@@ -635,7 +636,7 @@ metric_family_create(char *name, data_set_t const *ds, value_list_t const *vl,
   msg->name = name;
 
   char help[1024];
-  snprintf(
+  ssnprintf(
       help, sizeof(help),
       "write_prometheus plugin: '%s' Type: '%s', Dstype: '%s', Dsname: '%s'",
       vl->plugin, vl->type, DS_TYPE_TO_STRING(ds->ds[ds_index].type),
@@ -689,7 +690,7 @@ static char *metric_family_name(data_set_t const *ds, value_list_t const *vl,
  * necessary. */
 static Io__Prometheus__Client__MetricFamily *
 metric_family_get(data_set_t const *ds, value_list_t const *vl, size_t ds_index,
-                  _Bool allocate) {
+                  bool allocate) {
   char *name = metric_family_name(ds, vl, ds_index);
   if (name == NULL) {
     ERROR("write_prometheus plugin: Allocating metric family name failed.");
@@ -722,7 +723,7 @@ metric_family_get(data_set_t const *ds, value_list_t const *vl, size_t ds_index,
 
   int status = c_avl_insert(metrics, fam->name, fam);
   if (status != 0) {
-    ERROR("write_prometheus plugin: Adding \"%s\" failed.", name);
+    ERROR("write_prometheus plugin: Adding \"%s\" failed.", fam->name);
     metric_family_destroy(fam);
     return NULL;
   }
@@ -744,10 +745,10 @@ static void prom_logger(__attribute__((unused)) void *arg, char const *fmt,
 static int prom_open_socket(int addrfamily) {
   /* {{{ */
   char service[NI_MAXSERV];
-  snprintf(service, sizeof(service), "%hu", httpd_port);
+  ssnprintf(service, sizeof(service), "%hu", httpd_port);
 
   struct addrinfo *res;
-  int status = getaddrinfo(NULL, service,
+  int status = getaddrinfo(httpd_host, service,
                            &(struct addrinfo){
                                .ai_flags = AI_PASSIVE | AI_ADDRCONFIG,
                                .ai_family = addrfamily,
@@ -760,15 +761,18 @@ static int prom_open_socket(int addrfamily) {
 
   int fd = -1;
   for (struct addrinfo *ai = res; ai != NULL; ai = ai->ai_next) {
-    fd = socket(ai->ai_family, ai->ai_socktype | SOCK_CLOEXEC, 0);
+    int flags = ai->ai_socktype;
+#ifdef SOCK_CLOEXEC
+    flags |= SOCK_CLOEXEC;
+#endif
+
+    fd = socket(ai->ai_family, flags, 0);
     if (fd == -1)
       continue;
 
-    int tmp = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &tmp, sizeof(tmp)) != 0) {
-      char errbuf[1024];
-      WARNING("write_prometheus: setsockopt(SO_REUSEADDR) failed: %s",
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) != 0) {
+      WARNING("write_prometheus plugin: setsockopt(SO_REUSEADDR) failed: %s",
+              STRERRNO);
       close(fd);
       fd = -1;
       continue;
@@ -786,6 +790,15 @@ static int prom_open_socket(int addrfamily) {
       continue;
     }
 
+    char str_node[NI_MAXHOST];
+    char str_service[NI_MAXSERV];
+
+    getnameinfo(ai->ai_addr, ai->ai_addrlen, str_node, sizeof(str_node),
+                str_service, sizeof(str_service),
+                NI_NUMERICHOST | NI_NUMERICSERV);
+
+    INFO("write_prometheus plugin: Listening on [%s]:%s.", str_node,
+         str_service);
     break;
   }
 
@@ -800,7 +813,9 @@ static struct MHD_Daemon *prom_start_daemon() {
   if (fd == -1)
     fd = prom_open_socket(PF_INET);
   if (fd == -1) {
-    ERROR("write_prometheus plugin: Opening a listening socket failed.");
+    ERROR("write_prometheus plugin: Opening a listening socket for [%s]:%hu "
+          "failed.",
+          (httpd_host != NULL) ? httpd_host : "::", httpd_port);
     return NULL;
   }
 
@@ -847,7 +862,15 @@ static int prom_config(oconfig_item_t *ci) {
   for (int i = 0; i < ci->children_num; i++) {
     oconfig_item_t *child = ci->children + i;
 
-    if (strcasecmp("Port", child->key) == 0) {
+    if (strcasecmp("Host", child->key) == 0) {
+#if MHD_VERSION >= 0x00090000
+      cf_util_get_string(child, &httpd_host);
+#else
+      ERROR("write_prometheus plugin: Option `Host' not supported. Please "
+            "upgrade libmicrohttpd to at least 0.9.0");
+      return -1;
+#endif
+    } else if (strcasecmp("Port", child->key) == 0) {
       int status = cf_util_get_port_number(child);
       if (status > 0)
         httpd_port = (unsigned short)status;
@@ -875,7 +898,6 @@ static int prom_init() {
   if (httpd == NULL) {
     httpd = prom_start_daemon();
     if (httpd == NULL) {
-      ERROR("write_prometheus plugin: MHD_start_daemon() failed.");
       return -1;
     }
     DEBUG("write_prometheus plugin: Successfully started microhttpd %s",
@@ -891,7 +913,7 @@ static int prom_write(data_set_t const *ds, value_list_t const *vl,
 
   for (size_t i = 0; i < ds->ds_num; i++) {
     Io__Prometheus__Client__MetricFamily *fam =
-        metric_family_get(ds, vl, i, /* allocate = */ 1);
+        metric_family_get(ds, vl, i, /* allocate = */ true);
     if (fam == NULL)
       continue;
 
@@ -918,7 +940,7 @@ static int prom_missing(value_list_t const *vl,
 
   for (size_t i = 0; i < ds->ds_num; i++) {
     Io__Prometheus__Client__MetricFamily *fam =
-        metric_family_get(ds, vl, i, /* allocate = */ 0);
+        metric_family_get(ds, vl, i, /* allocate = */ false);
     if (fam == NULL)
       continue;
 
@@ -967,6 +989,8 @@ static int prom_shutdown() {
     metrics = NULL;
   }
   pthread_mutex_unlock(&metrics_lock);
+
+  sfree(httpd_host);
 
   return 0;
 }

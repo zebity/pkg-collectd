@@ -28,8 +28,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <unistd.h>
 
@@ -55,31 +55,31 @@
 #include <sys/protosw.h>
 #endif /* HAVE_PERFSTAT */
 
-static _Bool report_relative_load = 0;
+static bool report_relative_load;
 
 static const char *config_keys[] = {"ReportRelative"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
 static int load_config(const char *key, const char *value) {
-  if (strcasecmp(key, "ReportRelative") == 0)
+  if (strcasecmp(key, "ReportRelative") == 0) {
 #ifdef _SC_NPROCESSORS_ONLN
-    report_relative_load = IS_TRUE(value) ? 1 : 0;
+    report_relative_load = IS_TRUE(value);
 #else
     WARNING("load plugin: The \"ReportRelative\" configuration "
             "is not available, because I can't determine the "
             "number of CPUS on this system. Sorry.");
 #endif
+    return 0;
+  }
   return -1;
 }
 static void load_submit(gauge_t snum, gauge_t mnum, gauge_t lnum) {
   int cores = 0;
-  char errbuf[1024];
 
 #ifdef _SC_NPROCESSORS_ONLN
   if (report_relative_load) {
     if ((cores = sysconf(_SC_NPROCESSORS_ONLN)) < 1) {
-      WARNING("load: sysconf failed : %s",
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+      WARNING("load: sysconf failed : %s", STRERRNO);
     }
   }
 #endif
@@ -91,7 +91,9 @@ static void load_submit(gauge_t snum, gauge_t mnum, gauge_t lnum) {
 
   value_list_t vl = VALUE_LIST_INIT;
   value_t values[] = {
-      {.gauge = snum}, {.gauge = mnum}, {.gauge = lnum},
+      {.gauge = snum},
+      {.gauge = mnum},
+      {.gauge = lnum},
   };
 
   vl.values = values;
@@ -114,11 +116,9 @@ static int load_read(void) {
   if (getloadavg(load, 3) == 3)
     load_submit(load[LOADAVG_1MIN], load[LOADAVG_5MIN], load[LOADAVG_15MIN]);
   else {
-    char errbuf[1024];
-    WARNING("load: getloadavg failed: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("load: getloadavg failed: %s", STRERRNO);
   }
-/* #endif HAVE_GETLOADAVG */
+    /* #endif HAVE_GETLOADAVG */
 
 #elif defined(KERNEL_LINUX)
   gauge_t snum, mnum, lnum;
@@ -129,21 +129,18 @@ static int load_read(void) {
   int numfields;
 
   if ((loadavg = fopen("/proc/loadavg", "r")) == NULL) {
-    char errbuf[1024];
-    WARNING("load: fopen: %s", sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("load: fopen: %s", STRERRNO);
     return -1;
   }
 
   if (fgets(buffer, 16, loadavg) == NULL) {
-    char errbuf[1024];
-    WARNING("load: fgets: %s", sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("load: fgets: %s", STRERRNO);
     fclose(loadavg);
     return -1;
   }
 
   if (fclose(loadavg)) {
-    char errbuf[1024];
-    WARNING("load: fclose: %s", sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("load: fclose: %s", STRERRNO);
   }
 
   numfields = strsplit(buffer, fields, 8);
@@ -156,7 +153,7 @@ static int load_read(void) {
   lnum = atof(fields[2]);
 
   load_submit(snum, mnum, lnum);
-/* #endif KERNEL_LINUX */
+  /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBSTATGRAB
   gauge_t snum, mnum, lnum;
@@ -169,7 +166,7 @@ static int load_read(void) {
   mnum = ls->min5;
   lnum = ls->min15;
   load_submit(snum, mnum, lnum);
-/* #endif HAVE_LIBSTATGRAB */
+  /* #endif HAVE_LIBSTATGRAB */
 
 #elif HAVE_PERFSTAT
   gauge_t snum, mnum, lnum;
@@ -177,9 +174,7 @@ static int load_read(void) {
 
   if (perfstat_cpu_total(NULL, &cputotal, sizeof(perfstat_cpu_total_t), 1) <
       0) {
-    char errbuf[1024];
-    WARNING("load: perfstat_cpu : %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("load: perfstat_cpu : %s", STRERRNO);
     return -1;
   }
 
@@ -187,7 +182,7 @@ static int load_read(void) {
   mnum = (float)cputotal.loadavg[1] / (float)(1 << SBITS);
   lnum = (float)cputotal.loadavg[2] / (float)(1 << SBITS);
   load_submit(snum, mnum, lnum);
-/* #endif HAVE_PERFSTAT */
+  /* #endif HAVE_PERFSTAT */
 
 #else
 #error "No applicable input method."

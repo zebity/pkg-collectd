@@ -26,14 +26,14 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if KERNEL_LINUX
 static const char *config_keys[] = {"Verbose"};
 static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 
-static int verbose_output = 0;
+static int verbose_output;
 /* #endif KERNEL_LINUX */
 
 #else
@@ -60,7 +60,8 @@ static void submit(const char *plugin_instance, const char *type,
 static void submit_two(const char *plugin_instance, const char *type,
                        const char *type_instance, derive_t c0, derive_t c1) {
   value_t values[] = {
-      {.derive = c0}, {.derive = c1},
+      {.derive = c0},
+      {.derive = c1},
   };
 
   submit(plugin_instance, type, type_instance, values,
@@ -104,9 +105,7 @@ static int vmem_read(void) {
 
   fh = fopen("/proc/vmstat", "r");
   if (fh == NULL) {
-    char errbuf[1024];
-    ERROR("vmem plugin: fopen (/proc/vmstat) failed: %s",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+    ERROR("vmem plugin: fopen (/proc/vmstat) failed: %s", STRERRNO);
     return -1;
   }
 

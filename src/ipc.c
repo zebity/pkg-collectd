@@ -28,8 +28,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #if KERNEL_LINUX
 /* _GNU_SOURCE is needed for struct shm_info.used_ids on musl libc */
@@ -119,10 +119,9 @@ static int ipc_read_sem(void) /* {{{ */
 
   status = semctl(/* id = */ 0, /* num = */ 0, SEM_INFO, arg);
   if (status == -1) {
-    char errbuf[1024];
     ERROR("ipc plugin: semctl(2) failed: %s. "
           "Maybe the kernel is not configured for semaphores?",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+          STRERRNO);
     return -1;
   }
 
@@ -139,10 +138,9 @@ static int ipc_read_shm(void) /* {{{ */
 
   status = shmctl(/* id = */ 0, SHM_INFO, (void *)&shm_info);
   if (status == -1) {
-    char errbuf[1024];
     ERROR("ipc plugin: shmctl(2) failed: %s. "
           "Maybe the kernel is not configured for shared memory?",
-          sstrerror(errno, errbuf, sizeof(errbuf)));
+          STRERRNO);
     return -1;
   }
 
@@ -175,8 +173,8 @@ static int ipc_init(void) /* {{{ */
   pagesize_g = sysconf(_SC_PAGESIZE);
   return 0;
 }
-/* }}} */
-/* #endif KERNEL_LINUX */
+  /* }}} */
+  /* #endif KERNEL_LINUX */
 
 #elif KERNEL_AIX
 static caddr_t ipc_get_info(cid_t cid, int cmd, int version, int stsize,
@@ -187,9 +185,7 @@ static caddr_t ipc_get_info(cid_t cid, int cmd, int version, int stsize,
 
   if (get_ipc_info(cid, cmd, version, buff, &size) < 0) {
     if (errno != ENOSPC) {
-      char errbuf[1024];
-      WARNING("ipc plugin: get_ipc_info: %s",
-              sstrerror(errno, errbuf, sizeof(errbuf)));
+      WARNING("ipc plugin: get_ipc_info: %s", STRERRNO);
       return NULL;
     }
   }
@@ -211,9 +207,7 @@ static caddr_t ipc_get_info(cid_t cid, int cmd, int version, int stsize,
   }
 
   if (get_ipc_info(cid, cmd, version, buff, &size) < 0) {
-    char errbuf[1024];
-    WARNING("ipc plugin: get_ipc_info: %s",
-            sstrerror(errno, errbuf, sizeof(errbuf)));
+    WARNING("ipc plugin: get_ipc_info: %s", STRERRNO);
     free(buff);
     return NULL;
   }

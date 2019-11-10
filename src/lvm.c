@@ -23,8 +23,8 @@
 
 #include "collectd.h"
 
-#include "common.h"
 #include "plugin.h"
+#include "utils/common/common.h"
 
 #include <lvm2app.h>
 
@@ -81,7 +81,8 @@ static void report_lv_utilization(lv_t lv, char const *vg_name,
     return;
   used_bytes = lv_size * (used_percent_unscaled * PERCENT_SCALE_FACTOR);
 
-  snprintf(plugin_instance, sizeof(plugin_instance), "%s-%s", vg_name, lv_name);
+  ssnprintf(plugin_instance, sizeof(plugin_instance), "%s-%s", vg_name,
+            lv_name);
   lvm_submit(plugin_instance, "used", used_bytes);
   lvm_submit(plugin_instance, "free", lv_size - used_bytes);
 }
