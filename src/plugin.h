@@ -223,7 +223,8 @@ void plugin_set_dir (const char *dir);
  *  and a value below zero if an error occurs.
  *
  * NOTES
- *  No attempt is made to re-load an already loaded module.
+ *  Re-loading an already loaded module is detected and zero is returned in
+ *  this case.
  */
 int plugin_load (const char *name, uint32_t flags);
 
@@ -326,8 +327,7 @@ int plugin_unregister_notification (const char *name);
  *  `vl'        Value list of the values that have been read by a `read'
  *              function.
  */
-int plugin_dispatch_values (value_list_t *vl);
-int plugin_dispatch_values_secure (const value_list_t *vl);
+int plugin_dispatch_values (value_list_t const *vl);
 int plugin_dispatch_missing (const value_list_t *vl);
 
 int plugin_dispatch_notification (const notification_t *notif);

@@ -373,7 +373,7 @@ static int init_host (apache_t *st) /* {{{ */
 		return (-1);
 	}
 
-	curl_easy_setopt (st->curl, CURLOPT_NOSIGNAL, 1);
+	curl_easy_setopt (st->curl, CURLOPT_NOSIGNAL, 1L);
 	curl_easy_setopt (st->curl, CURLOPT_WRITEFUNCTION, apache_curl_callback);
 	curl_easy_setopt (st->curl, CURLOPT_WRITEDATA, st);
 
@@ -425,24 +425,25 @@ static int init_host (apache_t *st) /* {{{ */
 	}
 
 	curl_easy_setopt (st->curl, CURLOPT_URL, st->url);
-	curl_easy_setopt (st->curl, CURLOPT_FOLLOWLOCATION, 1);
+	curl_easy_setopt (st->curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt (st->curl, CURLOPT_MAXREDIRS, 50L);
 
 	if (st->verify_peer != 0)
 	{
-		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYPEER, 1);
+		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYPEER, 1L);
 	}
 	else
 	{
-		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYPEER, 0L);
 	}
 
 	if (st->verify_host != 0)
 	{
-		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYHOST, 2);
+		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYHOST, 2L);
 	}
 	else
 	{
-		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_easy_setopt (st->curl, CURLOPT_SSL_VERIFYHOST, 0L);
 	}
 
 	if (st->cacert != NULL)
@@ -611,7 +612,7 @@ static int apache_read_host (user_data_t *user_data) /* {{{ */
 	assert (st->curl != NULL);
 
 	st->apache_buffer_fill = 0;
-	if (curl_easy_perform (st->curl) != 0)
+	if (curl_easy_perform (st->curl) != CURLE_OK)
 	{
 		ERROR ("apache: curl_easy_perform failed: %s",
 				st->apache_curl_error);

@@ -539,7 +539,7 @@ static int ascent_init (void) /* {{{ */
     return (-1);
   }
 
-  curl_easy_setopt (curl, CURLOPT_NOSIGNAL, 1);
+  curl_easy_setopt (curl, CURLOPT_NOSIGNAL, 1L);
   curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, ascent_curl_callback);
   curl_easy_setopt (curl, CURLOPT_USERAGENT, PACKAGE_NAME"/"PACKAGE_VERSION);
   curl_easy_setopt (curl, CURLOPT_ERRORBUFFER, ascent_curl_error);
@@ -561,17 +561,18 @@ static int ascent_init (void) /* {{{ */
   }
 
   curl_easy_setopt (curl, CURLOPT_URL, url);
-  curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1);
+  curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt (curl, CURLOPT_MAXREDIRS, 50L);
 
   if ((verify_peer == NULL) || IS_TRUE (verify_peer))
-    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 1);
+    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 1L);
   else
-    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
   if ((verify_host == NULL) || IS_TRUE (verify_host))
-    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 2L);
   else
-    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_easy_setopt (curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
   if (cacert != NULL)
     curl_easy_setopt (curl, CURLOPT_CAINFO, cacert);
@@ -596,7 +597,7 @@ static int ascent_read (void) /* {{{ */
   }
 
   ascent_buffer_fill = 0;
-  if (curl_easy_perform (curl) != 0)
+  if (curl_easy_perform (curl) != CURLE_OK)
   {
     ERROR ("ascent plugin: curl_easy_perform failed: %s",
         ascent_curl_error);

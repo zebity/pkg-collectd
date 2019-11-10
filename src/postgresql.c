@@ -381,9 +381,6 @@ static int c_psql_check_connection (c_psql_database_t *db)
 		c_psql_connect (db);
 	}
 
-	/* "ping" */
-	PQclear (PQexec (db->conn, "SELECT 42;"));
-
 	if (CONNECTION_OK != PQstatus (db->conn)) {
 		PQreset (db->conn);
 
@@ -523,6 +520,12 @@ static int c_psql_exec_query (c_psql_database_t *db, udb_query_t *q,
 
 	if (PGRES_TUPLES_OK != PQresultStatus (res)) {
 		pthread_mutex_lock (&db->db_lock);
+
+		if ((CONNECTION_OK != PQstatus (db->conn))
+				&& (0 == c_psql_check_connection (db))) {
+			PQclear (res);
+			return c_psql_exec_query (db, q, prep_area);
+		}
 
 		log_err ("Failed to execute SQL query: %s",
 				PQerrorMessage (db->conn));
@@ -971,7 +974,7 @@ static int c_psql_flush (cdtime_t timeout,
 	size_t i;
 
 	if ((ud != NULL) && (ud->data != NULL)) {
-		dbs = (c_psql_database_t **)&ud->data;
+		dbs = (void *)&ud->data;
 		dbs_num = 1;
 	}
 
