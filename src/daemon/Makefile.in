@@ -120,13 +120,18 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libcommon_la_LIBADD =
+am__DEPENDENCIES_1 =
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+libcommon_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_libcommon_la_OBJECTS = common.lo
 libcommon_la_OBJECTS = $(am_libcommon_la_OBJECTS)
 libheap_la_LIBADD =
 am_libheap_la_OBJECTS = utils_heap.lo
 libheap_la_OBJECTS = $(am_libheap_la_OBJECTS)
-libplugin_mock_la_LIBADD =
+libplugin_mock_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_libplugin_mock_la_OBJECTS = plugin_mock.lo utils_cache_mock.lo \
 	utils_time_mock.lo
 libplugin_mock_la_OBJECTS = $(am_libplugin_mock_la_OBJECTS)
@@ -145,11 +150,6 @@ am_collectd_OBJECTS = collectd-collectd.$(OBJEXT) \
 	collectd-types_list.$(OBJEXT) \
 	collectd-utils_threshold.$(OBJEXT)
 collectd_OBJECTS = $(am_collectd_OBJECTS)
-am__DEPENDENCIES_1 =
-am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
 @BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_3 =  \
 @BUILD_WITH_LIBSTATGRAB_TRUE@	$(am__DEPENDENCIES_1)
 @BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__DEPENDENCIES_4 =  \
@@ -496,6 +496,7 @@ BUILD_WITH_LIBROUTEROS_CPPFLAGS = @BUILD_WITH_LIBROUTEROS_CPPFLAGS@
 BUILD_WITH_LIBROUTEROS_LDFLAGS = @BUILD_WITH_LIBROUTEROS_LDFLAGS@
 BUILD_WITH_LIBRRD_CFLAGS = @BUILD_WITH_LIBRRD_CFLAGS@
 BUILD_WITH_LIBRRD_LDFLAGS = @BUILD_WITH_LIBRRD_LDFLAGS@
+BUILD_WITH_LIBRRD_LIBS = @BUILD_WITH_LIBRRD_LIBS@
 BUILD_WITH_LIBSENSORS_CFLAGS = @BUILD_WITH_LIBSENSORS_CFLAGS@
 BUILD_WITH_LIBSENSORS_LDFLAGS = @BUILD_WITH_LIBSENSORS_LDFLAGS@
 BUILD_WITH_LIBSIGROK_CFLAGS = @BUILD_WITH_LIBSIGROK_CFLAGS@
@@ -509,6 +510,7 @@ BUILD_WITH_LIBTOKYOTYRANT_LDFLAGS = @BUILD_WITH_LIBTOKYOTYRANT_LDFLAGS@
 BUILD_WITH_LIBTOKYOTYRANT_LIBS = @BUILD_WITH_LIBTOKYOTYRANT_LIBS@
 BUILD_WITH_LIBUDEV_CFLAGS = @BUILD_WITH_LIBUDEV_CFLAGS@
 BUILD_WITH_LIBUDEV_LDFLAGS = @BUILD_WITH_LIBUDEV_LDFLAGS@
+BUILD_WITH_LIBUDEV_LIBS = @BUILD_WITH_LIBUDEV_LIBS@
 BUILD_WITH_LIBUPSCLIENT_CFLAGS = @BUILD_WITH_LIBUPSCLIENT_CFLAGS@
 BUILD_WITH_LIBUPSCLIENT_LIBS = @BUILD_WITH_LIBUPSCLIENT_LIBS@
 BUILD_WITH_LIBVARNISH_CFLAGS = @BUILD_WITH_LIBVARNISH_CFLAGS@
@@ -644,6 +646,8 @@ PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
+RRD_CFLAGS = @RRD_CFLAGS@
+RRD_LIBS = @RRD_LIBS@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -725,8 +729,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 noinst_LTLIBRARIES = libavltree.la libcommon.la libheap.la libplugin_mock.la
 libavltree_la_SOURCES = utils_avltree.c utils_avltree.h
 libcommon_la_SOURCES = common.c common.h
+libcommon_la_LIBADD = $(COMMON_LIBS)
 libheap_la_SOURCES = utils_heap.c utils_heap.h
 libplugin_mock_la_SOURCES = plugin_mock.c utils_cache_mock.c utils_time_mock.c
+libplugin_mock_la_LIBADD = $(COMMON_LIBS)
 collectd_SOURCES = collectd.c collectd.h \
 		   configfile.c configfile.h \
 		   filter_chain.c filter_chain.h \

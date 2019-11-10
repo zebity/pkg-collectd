@@ -53,8 +53,6 @@ oconfig_item_t *oconfig_parse_fh (FILE *fh)
   yyset_in (fh);
 
   if (NULL == c_file) {
-    int status;
-
     status = snprintf (file, sizeof (file), "<fd#%d>", fileno (fh));
 
     if ((status < 0) || (status >= sizeof (file))) {
@@ -196,7 +194,7 @@ oconfig_item_t *oconfig_clone (const oconfig_item_t *ci_orig)
   return (ci_copy);
 } /* oconfig_item_t *oconfig_clone */
 
-void oconfig_free_all (oconfig_item_t *ci)
+static void oconfig_free_all (oconfig_item_t *ci)
 {
   int i;
 

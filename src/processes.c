@@ -128,7 +128,13 @@
 #  undef SAVE_FOB_64
 #endif
 
+# include <sys/user.h>
 # include <dirent.h>
+
+#ifndef MAXCOMLEN
+#  define MAXCOMLEN 16
+#endif
+
 /* #endif KERNEL_SOLARIS */
 
 #else
@@ -306,7 +312,9 @@ static void ps_list_register (const char *name, const char *regexp)
 					"`ProcessMatch' with the same name. "
 					"All but the first setting will be "
 					"ignored.");
+#if HAVE_REGEX_H
 			sfree (new->re);
+#endif
 			sfree (new);
 			return;
 		}
@@ -548,6 +556,12 @@ static int ps_config (oconfig_item_t *ci)
 {
 	int i;
 
+#if KERNEL_LINUX
+	const size_t max_procname_len = 15;
+#elif KERNEL_SOLARIS || KERNEL_FREEBSD
+	const size_t max_procname_len = MAXCOMLEN -1;
+#endif
+
 	for (i = 0; i < ci->children_num; ++i) {
 		oconfig_item_t *c = ci->children + i;
 
@@ -567,6 +581,15 @@ static int ps_config (oconfig_item_t *ci)
 						"content (%i elements) of the <Process '%s'> block.",
 						c->children_num, c->values[0].value.string);
 			}
+
+#if KERNEL_LINUX || KERNEL_SOLARIS || KERNEL_FREEBSD
+			if (strlen (c->values[0].value.string) > max_procname_len) {
+				WARNING ("processes plugin: this platform has a %zu character limit "
+						"to process names. The `Process \"%s\"' option will "
+						"not work as expected.",
+						max_procname_len, c->values[0].value.string);
+			}
+#endif
 
 			ps_list_register (c->values[0].value.string, NULL);
 		}
@@ -779,14 +802,14 @@ static void ps_submit_fork_rate (derive_t value)
 
 /* ------- additional functions for KERNEL_LINUX/HAVE_THREAD_INFO ------- */
 #if KERNEL_LINUX
-static int ps_read_tasks (int pid)
+static int ps_read_tasks (long pid)
 {
 	char           dirname[64];
 	DIR           *dh;
 	struct dirent *ent;
 	int count = 0;
 
-	ssnprintf (dirname, sizeof (dirname), "/proc/%i/task", pid);
+	ssnprintf (dirname, sizeof (dirname), "/proc/%li/task", pid);
 
 	if ((dh = opendir (dirname)) == NULL)
 	{
@@ -807,7 +830,7 @@ static int ps_read_tasks (int pid)
 } /* int *ps_read_tasks */
 
 /* Read advanced virtual memory data from /proc/pid/status */
-static procstat_t *ps_read_vmem (int pid, procstat_t *ps)
+static procstat_t *ps_read_vmem (long pid, procstat_t *ps)
 {
 	FILE *fh;
 	char buffer[1024];
@@ -818,7 +841,7 @@ static procstat_t *ps_read_vmem (int pid, procstat_t *ps)
 	char *fields[8];
 	int numfields;
 
-	ssnprintf (filename, sizeof (filename), "/proc/%i/status", pid);
+	ssnprintf (filename, sizeof (filename), "/proc/%li/status", pid);
 	if ((fh = fopen (filename, "r")) == NULL)
 		return (NULL);
 
@@ -869,7 +892,7 @@ static procstat_t *ps_read_vmem (int pid, procstat_t *ps)
 	return (ps);
 } /* procstat_t *ps_read_vmem */
 
-static procstat_t *ps_read_io (int pid, procstat_t *ps)
+static procstat_t *ps_read_io (long pid, procstat_t *ps)
 {
 	FILE *fh;
 	char buffer[1024];
@@ -878,7 +901,7 @@ static procstat_t *ps_read_io (int pid, procstat_t *ps)
 	char *fields[8];
 	int numfields;
 
-	ssnprintf (filename, sizeof (filename), "/proc/%i/io", pid);
+	ssnprintf (filename, sizeof (filename), "/proc/%li/io", pid);
 	if ((fh = fopen (filename, "r")) == NULL)
 		return (NULL);
 
@@ -924,7 +947,7 @@ static procstat_t *ps_read_io (int pid, procstat_t *ps)
 	return (ps);
 } /* procstat_t *ps_read_io */
 
-int ps_read_process (int pid, procstat_t *ps, char *state)
+static int ps_read_process (long pid, procstat_t *ps, char *state)
 {
 	char  filename[64];
 	char  buffer[1024];
@@ -947,7 +970,7 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 
 	memset (ps, 0, sizeof (procstat_t));
 
-	ssnprintf (filename, sizeof (filename), "/proc/%i/stat", pid);
+	ssnprintf (filename, sizeof (filename), "/proc/%li/stat", pid);
 
 	buffer_len = read_file_contents (filename,
 			buffer, sizeof(buffer) - 1);
@@ -992,9 +1015,9 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 	fields_len = strsplit (buffer_ptr, fields, STATIC_ARRAY_SIZE (fields));
 	if (fields_len < 22)
 	{
-		DEBUG ("processes plugin: ps_read_process (pid = %i):"
+		DEBUG ("processes plugin: ps_read_process (pid = %li):"
 				" `%s' has only %i fields..",
-				(int) pid, filename, fields_len);
+				pid, filename, fields_len);
 		return (-1);
 	}
 
@@ -1018,7 +1041,7 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 	/* Leave the rest at zero if this is only a zombi */
 	if (ps->num_proc == 0)
 	{
-		DEBUG ("processes plugin: This is only a zombie: pid = %i; "
+		DEBUG ("processes plugin: This is only a zombie: pid = %li; "
 				"name = %s;", pid, ps->name);
 		return (0);
 	}
@@ -1049,7 +1072,7 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 		/* No VMem data */
 		ps->vmem_data = -1;
 		ps->vmem_code = -1;
-		DEBUG("ps_read_process: did not get vmem data for pid %i",pid);
+		DEBUG("ps_read_process: did not get vmem data for pid %li", pid);
 	}
 
 	ps->cpu_user_counter = cpu_user_counter;
@@ -1066,14 +1089,14 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 		ps->io_syscr = -1;
 		ps->io_syscw = -1;
 
-		DEBUG("ps_read_process: not get io data for pid %i",pid);
+		DEBUG("ps_read_process: not get io data for pid %li", pid);
 	}
 
 	/* success */
 	return (0);
 } /* int ps_read_process (...) */
 
-static char *ps_get_cmdline (pid_t pid, char *name, char *buf, size_t buf_len)
+static char *ps_get_cmdline (long pid, char *name, char *buf, size_t buf_len)
 {
 	char  *buf_ptr;
 	size_t len;
@@ -1086,8 +1109,7 @@ static char *ps_get_cmdline (pid_t pid, char *name, char *buf, size_t buf_len)
 	if ((pid < 1) || (NULL == buf) || (buf_len < 2))
 		return NULL;
 
-	ssnprintf (file, sizeof (file), "/proc/%u/cmdline",
-		       	(unsigned int) pid);
+	ssnprintf (file, sizeof (file), "/proc/%li/cmdline", pid);
 
 	errno = 0;
 	fd = open (file, O_RDONLY);
@@ -1168,7 +1190,7 @@ static char *ps_get_cmdline (pid_t pid, char *name, char *buf, size_t buf_len)
 	return buf;
 } /* char *ps_get_cmdline (...) */
 
-static int read_fork_rate ()
+static int read_fork_rate (void)
 {
 	FILE *proc_stat;
 	char buffer[1024];
@@ -1215,8 +1237,8 @@ static int read_fork_rate ()
 #endif /*KERNEL_LINUX */
 
 #if KERNEL_SOLARIS
-static const char *ps_get_cmdline (long pid, /* {{{ */
-		char *buffer, size_t buffer_size)
+static char *ps_get_cmdline (long pid, char *name __attribute__((unused)), /* {{{ */
+    char *buffer, size_t buffer_size)
 {
 	char path[PATH_MAX];
 	psinfo_t info;
@@ -1282,6 +1304,10 @@ static int ps_read_process(long pid, procstat_t *ps, char *state)
 		ps->num_proc = 0;
 		ps->num_lwp = 0;
 		*state = (char) 'Z';
+
+		sfree(myStatus);
+		sfree(myInfo);
+		sfree(myUsage);
 		return (0);
 	} else {
 		ps->num_proc = 1;
@@ -1704,7 +1730,7 @@ static int ps_read (void)
 
 	struct dirent *ent;
 	DIR           *proc;
-	int            pid;
+	long           pid;
 
 	char cmdline[CMDLINE_BUFFER_SIZE];
 
@@ -1731,7 +1757,7 @@ static int ps_read (void)
 		if (!isdigit (ent->d_name[0]))
 			continue;
 
-		if ((pid = atoi (ent->d_name)) < 1)
+		if ((pid = atol (ent->d_name)) < 1)
 			continue;
 
 		status = ps_read_process (pid, &ps, &state);
@@ -2046,9 +2072,6 @@ static int ps_read (void)
 			pse.io_syscr = -1;
 			pse.io_syscw = -1;
 
-			pse.cswitch_vol = -1;
-			pse.cswitch_invol = -1;
-
 			ps_list_add (procs[i].p_comm, have_cmdline ? cmdline : NULL, &pse);
 
 			switch (procs[i].p_stat)
@@ -2291,9 +2314,6 @@ static int ps_read (void)
 		pse.io_syscr = ps.io_syscr;
 		pse.io_syscw = ps.io_syscw;
 
-		pse.cswitch_vol = -1;
-		pse.cswitch_invol = -1;
-
 		switch (state)
 		{
 			case 'R': running++;  break;
@@ -2308,7 +2328,7 @@ static int ps_read (void)
 
 
 		ps_list_add (ps.name,
-				ps_get_cmdline (pid, cmdline, sizeof (cmdline)),
+				ps_get_cmdline (pid, ps.name, cmdline, sizeof (cmdline)),
 				&pse);
 	} /* while(readdir) */
 	closedir (proc);
