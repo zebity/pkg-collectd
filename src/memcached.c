@@ -234,7 +234,6 @@ static void submit_counter (const char *type, const char *type_inst,
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "memcached", sizeof (vl.plugin));
 	sstrncpy (vl.type, type, sizeof (vl.type));
@@ -321,6 +320,8 @@ static int memcached_read (void) /* {{{ */
 
 	gauge_t bytes_used = NAN;
 	gauge_t bytes_total = NAN;
+	gauge_t hits = NAN;
+	gauge_t gets = NAN;
 	counter_t rusage_user = 0;
 	counter_t rusage_syst = 0;
 	counter_t octets_rx = 0;
@@ -430,6 +431,8 @@ static int memcached_read (void) /* {{{ */
 		{
 			const char *name = fields[1] + 4;
 			submit_counter ("memcached_command", name, atoll (fields[2]));
+			if (strcmp (name, "get") == 0)
+				gets = atof (fields[2]);
 		}
 
 		/*
@@ -438,6 +441,7 @@ static int memcached_read (void) /* {{{ */
 		else if (FIELD_IS ("get_hits"))
 		{
 			submit_counter ("memcached_ops", "hits", atoll (fields[2]));
+			hits = atof (fields[2]);
 		}
 		else if (FIELD_IS ("get_misses"))
 		{
@@ -470,6 +474,16 @@ static int memcached_read (void) /* {{{ */
 	if ((octets_rx != 0) || (octets_tx != 0))
 		submit_counter2 ("memcached_octets", NULL, octets_rx, octets_tx);
 	
+	if (!isnan (gets) && !isnan (hits))
+	{
+		gauge_t rate = NAN;
+
+		if (gets != 0.0)
+			rate = 100.0 * hits / gets;
+
+		submit_gauge ("percent", "hitratio", rate);
+	}
+
 	return 0;
 }
 /* }}} */

@@ -47,7 +47,7 @@ kstat_ctl_t *kc;
 
 static int loop = 0;
 
-static void *do_flush (void *arg)
+static void *do_flush (void __attribute__((unused)) *arg)
 {
 	INFO ("Flushing all data.");
 	plugin_flush (NULL, -1, NULL);
@@ -56,17 +56,17 @@ static void *do_flush (void *arg)
 	return NULL;
 }
 
-static void sig_int_handler (int signal)
+static void sig_int_handler (int __attribute__((unused)) signal)
 {
 	loop++;
 }
 
-static void sig_term_handler (int signal)
+static void sig_term_handler (int __attribute__((unused)) signal)
 {
 	loop++;
 }
 
-static void sig_usr1_handler (int signal)
+static void sig_usr1_handler (int __attribute__((unused)) signal)
 {
 	pthread_t      thread;
 	pthread_attr_t attr;
@@ -244,7 +244,7 @@ static void update_kstat (void)
 /* TODO
  * Remove all settings but `-f' and `-C'
  */
-static void exit_usage (void)
+static void exit_usage (int status)
 {
 	printf ("Usage: "PACKAGE" [OPTIONS]\n\n"
 			
@@ -253,6 +253,7 @@ static void exit_usage (void)
 			"    -C <file>       Configuration file.\n"
 			"                    Default: "CONFIGFILE"\n"
 			"    -t              Test config and exit.\n"
+			"    -T              Test plugin read and exit.\n"
 			"    -P <file>       PID-file.\n"
 			"                    Default: "PIDFILE"\n"
 #if COLLECT_DAEMON
@@ -266,8 +267,8 @@ static void exit_usage (void)
 			"\n"PACKAGE" "VERSION", http://collectd.org/\n"
 			"by Florian octo Forster <octo@verplant.org>\n"
 			"for contributions see `AUTHORS'\n");
-	exit (0);
-} /* static void exit_usage (char *name) */
+	exit (status);
+} /* static void exit_usage (int status) */
 
 static int do_init (void)
 {
@@ -300,6 +301,7 @@ static int do_loop (void)
 {
 	struct timeval tv_now;
 	struct timeval tv_next;
+	struct timeval tv_wait;
 	struct timespec ts_wait;
 
 	while (loop == 0)
@@ -330,13 +332,16 @@ static int do_loop (void)
 			return (-1);
 		}
 
-		if (timeval_sub_timespec (&tv_next, &tv_now, &ts_wait) != 0)
+		if (timeval_cmp (tv_next, tv_now, &tv_wait) <= 0)
 		{
-			WARNING ("Not sleeping because "
-					"`timeval_sub_timespec' returned "
-					"non-zero!");
+			WARNING ("Not sleeping because the next interval is "
+					"%i.%06i seconds in the past!",
+					(int) tv_wait.tv_sec, (int) tv_wait.tv_usec);
 			continue;
 		}
+
+		ts_wait.tv_sec  = tv_wait.tv_sec;
+		ts_wait.tv_nsec = (long) (1000 * tv_wait.tv_usec);
 
 		while ((loop == 0) && (nanosleep (&ts_wait, &ts_wait) == -1))
 		{
@@ -398,19 +403,21 @@ int main (int argc, char **argv)
 	struct sigaction sig_pipe_action;
 	char *configfile = CONFIGFILE;
 	int test_config  = 0;
+	int test_readall = 0;
 	const char *basedir;
 #if COLLECT_DAEMON
 	struct sigaction sig_chld_action;
 	pid_t pid;
 	int daemonize    = 1;
 #endif
+	int exit_status = 0;
 
 	/* read options */
 	while (1)
 	{
 		int c;
 
-		c = getopt (argc, argv, "htC:"
+		c = getopt (argc, argv, "htTC:"
 #if COLLECT_DAEMON
 				"fP:"
 #endif
@@ -427,6 +434,13 @@ int main (int argc, char **argv)
 			case 't':
 				test_config = 1;
 				break;
+			case 'T':
+				test_readall = 1;
+				global_option_set ("ReadThreads", "-1");
+#if COLLECT_DAEMON
+				daemonize = 0;
+#endif /* COLLECT_DAEMON */
+				break;
 #if COLLECT_DAEMON
 			case 'P':
 				global_option_set ("PIDFile", optarg);
@@ -436,10 +450,15 @@ int main (int argc, char **argv)
 				break;
 #endif /* COLLECT_DAEMON */
 			case 'h':
+				exit_usage (0);
+				break;
 			default:
-				exit_usage ();
+				exit_usage (1);
 		} /* switch (c) */
 	} /* while (1) */
+
+	if (optind < argc)
+		exit_usage (1);
 
 	/*
 	 * Read options from the config file, the environment and the command
@@ -575,10 +594,20 @@ int main (int argc, char **argv)
 	 * run the actual loops
 	 */
 	do_init ();
-	do_loop ();
+
+	if (test_readall)
+	{
+		if (plugin_read_all_once () != 0)
+			exit_status = 1;
+	}
+	else
+	{
+		INFO ("Initialization complete, entering read-loop.");
+		do_loop ();
+	}
 
 	/* close syslog */
-	INFO ("Exiting normally");
+	INFO ("Exiting normally.");
 
 	do_shutdown ();
 
@@ -587,5 +616,5 @@ int main (int argc, char **argv)
 		pidfile_remove ();
 #endif /* COLLECT_DAEMON */
 
-	return (0);
+	return (exit_status);
 } /* int main */

@@ -195,7 +195,7 @@ static void dns_child_callback (const rfc1035_header_t *dns)
 	pthread_mutex_unlock (&opcode_mutex);
 }
 
-static void *dns_child_loop (void *dummy)
+static void *dns_child_loop (void __attribute__((unused)) *dummy)
 {
 	pcap_t *pcap_obj;
 	char    pcap_error[PCAP_ERRBUF_SIZE];
@@ -212,7 +212,7 @@ static void *dns_child_loop (void *dummy)
 
 	/* Passing `pcap_device == NULL' is okay and the same as passign "any" */
 	DEBUG ("Creating PCAP object..");
-	pcap_obj = pcap_open_live (pcap_device,
+	pcap_obj = pcap_open_live ((pcap_device != NULL) ? pcap_device : "any",
 			PCAP_SNAPLEN,
 			0 /* Not promiscuous */,
 			interval_g,
@@ -298,7 +298,6 @@ static void submit_counter (const char *type, const char *type_instance,
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "dns", sizeof (vl.plugin));
 	sstrncpy (vl.type, type, sizeof (vl.type));
@@ -317,7 +316,6 @@ static void submit_octets (counter_t queries, counter_t responses)
 
 	vl.values = values;
 	vl.values_len = 2;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "dns", sizeof (vl.plugin));
 	sstrncpy (vl.type, "dns_octets", sizeof (vl.type));

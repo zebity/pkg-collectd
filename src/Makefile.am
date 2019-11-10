@@ -1,4 +1,4 @@
-SUBDIRS =
+SUBDIRS = libcollectdclient
 if BUILD_WITH_OWN_LIBIPTC
 SUBDIRS += libiptc
 endif
@@ -29,15 +29,19 @@ bin_PROGRAMS = collectd-nagios
 collectd_SOURCES = collectd.c collectd.h \
 		   common.c common.h \
 		   configfile.c configfile.h \
+		   filter_chain.c filter_chain.h \
+		   meta_data.c meta_data.h \
 		   plugin.c plugin.h \
 		   utils_avltree.c utils_avltree.h \
 		   utils_cache.c utils_cache.h \
 		   utils_complain.c utils_complain.h \
 		   utils_ignorelist.c utils_ignorelist.h \
 		   utils_llist.c utils_llist.h \
+		   utils_parse_option.c utils_parse_option.h \
 		   utils_tail_match.c utils_tail_match.h \
 		   utils_match.c utils_match.h \
 		   utils_mount.c utils_mount.h \
+		   utils_subst.c utils_subst.h \
 		   utils_tail.c utils_tail.h \
 		   utils_threshold.c utils_threshold.h \
 		   types_list.c types_list.h
@@ -90,6 +94,8 @@ collectd_nagios_LDFLAGS =
 if BUILD_WITH_LIBSOCKET
 collectd_nagios_LDFLAGS += -lsocket
 endif
+collectd_nagios_LDADD = libcollectdclient/libcollectdclient.la
+collectd_nagios_DEPENDENCIES = libcollectdclient/libcollectdclient.la
 
 pkglib_LTLIBRARIES = 
 
@@ -148,6 +154,17 @@ collectd_LDADD += "-dlopen" battery.la
 collectd_DEPENDENCIES += battery.la
 endif
 
+if BUILD_PLUGIN_BIND
+pkglib_LTLIBRARIES += bind.la
+bind_la_SOURCES = bind.c
+bind_la_LDFLAGS = -module -avoid-version
+bind_la_CFLAGS = $(AM_CFLAGS) \
+		$(BUILD_WITH_LIBCURL_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
+bind_la_LIBADD = $(BUILD_WITH_LIBCURL_LIBS) $(BUILD_WITH_LIBXML2_LIBS)
+collectd_LDADD += "-dlopen" bind.la
+collectd_DEPENDENCIES += bind.la
+endif
+
 if BUILD_PLUGIN_CPU
 pkglib_LTLIBRARIES += cpu.la
 cpu_la_SOURCES = cpu.c
@@ -182,6 +199,31 @@ csv_la_SOURCES = csv.c
 csv_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" csv.la
 collectd_DEPENDENCIES += csv.la
+endif
+
+if BUILD_PLUGIN_CURL
+pkglib_LTLIBRARIES += curl.la
+curl_la_SOURCES = curl.c
+curl_la_LDFLAGS = -module -avoid-version
+curl_la_CFLAGS = $(AM_CFLAGS)
+curl_la_LIBADD =
+collectd_LDADD += "-dlopen" curl.la
+if BUILD_WITH_LIBCURL
+curl_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
+curl_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
+endif
+collectd_DEPENDENCIES += curl.la
+endif
+
+if BUILD_PLUGIN_DBI
+pkglib_LTLIBRARIES += dbi.la
+dbi_la_SOURCES = dbi.c \
+		 utils_db_query.c utils_db_query.h
+dbi_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBDBI_CPPFLAGS)
+dbi_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBDBI_LDFLAGS)
+dbi_la_LIBADD = $(BUILD_WITH_LIBDBI_LIBS)
+collectd_LDADD += "-dlopen" dbi.la
+collectd_DEPENDENCIES += dbi.la
 endif
 
 if BUILD_PLUGIN_DF
@@ -245,7 +287,6 @@ endif
 if BUILD_PLUGIN_EXEC
 pkglib_LTLIBRARIES += exec.la
 exec_la_SOURCES = exec.c \
-		  utils_parse_option.h utils_parse_option.c \
 		  utils_cmd_putnotif.c utils_cmd_putnotif.h \
 		  utils_cmd_putval.c utils_cmd_putval.h
 exec_la_LDFLAGS = -module -avoid-version
@@ -323,7 +364,7 @@ endif
 if BUILD_PLUGIN_IPVS
 pkglib_LTLIBRARIES += ipvs.la
 ipvs_la_SOURCES = ipvs.c
-ipvs_la_CFLAGS = $(KERNEL_CFLAGS)
+ipvs_la_CFLAGS = $(AM_CFLAGS) $(KERNEL_CFLAGS)
 ipvs_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" ipvs.la
 collectd_DEPENDENCIES += ipvs.la
@@ -368,6 +409,30 @@ logfile_la_SOURCES = logfile.c
 logfile_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" logfile.la
 collectd_DEPENDENCIES += logfile.la
+endif
+
+if BUILD_PLUGIN_MATCH_REGEX
+pkglib_LTLIBRARIES += match_regex.la
+match_regex_la_SOURCES = match_regex.c
+match_regex_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" match_regex.la
+collectd_DEPENDENCIES += match_regex.la
+endif
+
+if BUILD_PLUGIN_MATCH_TIMEDIFF
+pkglib_LTLIBRARIES += match_timediff.la
+match_timediff_la_SOURCES = match_timediff.c
+match_timediff_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" match_timediff.la
+collectd_DEPENDENCIES += match_timediff.la
+endif
+
+if BUILD_PLUGIN_MATCH_VALUE
+pkglib_LTLIBRARIES += match_value.la
+match_value_la_SOURCES = match_value.c
+match_value_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" match_value.la
+collectd_DEPENDENCIES += match_value.la
 endif
 
 if BUILD_PLUGIN_MBMON
@@ -529,6 +594,27 @@ collectd_LDADD += "-dlopen" onewire.la
 collectd_DEPENDENCIES += onewire.la
 endif
 
+if BUILD_PLUGIN_OPENVPN
+pkglib_LTLIBRARIES += openvpn.la
+openvpn_la_SOURCES = openvpn.c
+openvpn_la_CFLAGS = $(AM_CFLAGS)
+openvpn_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" openvpn.la
+collectd_DEPENDENCIES += openvpn.la
+endif
+
+if BUILD_PLUGIN_ORACLE
+pkglib_LTLIBRARIES += oracle.la
+oracle_la_SOURCES = oracle.c \
+	utils_db_query.c utils_db_query.h
+oracle_la_CFLAGS = $(AM_CFLAGS)
+oracle_la_CPPFLAGS = $(BUILD_WITH_ORACLE_CFLAGS)
+oracle_la_LIBADD = $(BUILD_WITH_ORACLE_LIBS)
+oracle_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" oracle.la
+collectd_DEPENDENCIES += oracle.la
+endif
+
 if BUILD_PLUGIN_PERL
 pkglib_LTLIBRARIES += perl.la
 perl_la_SOURCES = perl.c
@@ -538,6 +624,11 @@ perl_la_CPPFLAGS = $(AM_CPPFLAGS) -DHAS_BOOL=1
 perl_la_CFLAGS  = $(AM_CFLAGS) \
 		$(PERL_CFLAGS) \
 		-DXS_VERSION=\"$(VERSION)\" -DVERSION=\"$(VERSION)\"
+# Work-around for issues #41 and #42 - Perl 5.10 incorrectly introduced
+# __attribute__nonnull__(3) for Perl_load_module().
+if HAVE_BROKEN_PERL_LOAD_MODULE
+perl_la_CFLAGS += -Wno-nonnull
+endif
 perl_la_LDFLAGS = -module -avoid-version \
 		$(PERL_LDFLAGS)
 collectd_LDADD += "-dlopen" perl.la
@@ -560,7 +651,8 @@ endif
 
 if BUILD_PLUGIN_POSTGRESQL
 pkglib_LTLIBRARIES += postgresql.la
-postgresql_la_SOURCES = postgresql.c
+postgresql_la_SOURCES = postgresql.c \
+		 utils_db_query.c utils_db_query.h
 postgresql_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBPQ_CPPFLAGS)
 postgresql_la_LDFLAGS = -module -avoid-version \
 		$(BUILD_WITH_LIBPQ_LDFLAGS) -lpq
@@ -588,9 +680,19 @@ processes_la_LIBADD += -lkvm
 endif
 endif
 
+if BUILD_PLUGIN_RRDCACHED
+pkglib_LTLIBRARIES += rrdcached.la
+rrdcached_la_SOURCES = rrdcached.c utils_rrdcreate.c utils_rrdcreate.h
+rrdcached_la_LDFLAGS = -module -avoid-version
+rrdcached_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBRRD_CFLAGS)
+rrdcached_la_LIBADD = $(BUILD_WITH_LIBRRD_LDFLAGS)
+collectd_LDADD += "-dlopen" rrdcached.la
+collectd_DEPENDENCIES += rrdcached.la
+endif
+
 if BUILD_PLUGIN_RRDTOOL
 pkglib_LTLIBRARIES += rrdtool.la
-rrdtool_la_SOURCES = rrdtool.c
+rrdtool_la_SOURCES = rrdtool.c utils_rrdcreate.c utils_rrdcreate.h
 rrdtool_la_LDFLAGS = -module -avoid-version
 rrdtool_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBRRD_CFLAGS)
 rrdtool_la_LIBADD = $(BUILD_WITH_LIBRRD_LDFLAGS)
@@ -680,6 +782,30 @@ collectd_LDADD += "-dlopen" tape.la
 collectd_DEPENDENCIES += tape.la
 endif
 
+if BUILD_PLUGIN_TARGET_NOTIFICATION
+pkglib_LTLIBRARIES += target_notification.la
+target_notification_la_SOURCES = target_notification.c
+target_notification_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" target_notification.la
+collectd_DEPENDENCIES += target_notification.la
+endif
+
+if BUILD_PLUGIN_TARGET_REPLACE
+pkglib_LTLIBRARIES += target_replace.la
+target_replace_la_SOURCES = target_replace.c
+target_replace_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" target_replace.la
+collectd_DEPENDENCIES += target_replace.la
+endif
+
+if BUILD_PLUGIN_TARGET_SET
+pkglib_LTLIBRARIES += target_set.la
+target_set_la_SOURCES = target_set.c
+target_set_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" target_set.la
+collectd_DEPENDENCIES += target_set.la
+endif
+
 if BUILD_PLUGIN_TCPCONNS
 pkglib_LTLIBRARIES += tcpconns.la
 tcpconns_la_SOURCES = tcpconns.c
@@ -711,7 +837,6 @@ endif
 if BUILD_PLUGIN_UNIXSOCK
 pkglib_LTLIBRARIES += unixsock.la
 unixsock_la_SOURCES = unixsock.c \
-		      utils_parse_option.h utils_parse_option.c \
 		      utils_cmd_flush.h utils_cmd_flush.c \
 		      utils_cmd_getval.h utils_cmd_getval.c \
 		      utils_cmd_listval.h utils_cmd_listval.c \
@@ -739,7 +864,7 @@ endif
 if BUILD_PLUGIN_UUID
 pkglib_LTLIBRARIES += uuid.la
 uuid_la_SOURCES = uuid.c
-uuid_la_CFLAGS  = $(BUILD_WITH_LIBHAL_CFLAGS)
+uuid_la_CFLAGS  = $(AM_CFLAGS) $(BUILD_WITH_LIBHAL_CFLAGS)
 uuid_la_LIBADD  = $(BUILD_WITH_LIBHAL_LIBS)
 uuid_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" uuid.la
@@ -797,7 +922,7 @@ EXTRA_DIST += collectd-email.pod collectd-exec.pod collectd-nagios.pod \
 .pod.1:
 	pod2man --release=$(VERSION) --center=$(PACKAGE) $< \
 		>.pod2man.tmp 2>/dev/null && mv -f .pod2man.tmp $@ || true
-	if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
+	@if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
 	then \
 		echo "$@ has some POD errors!"; false; \
 	fi
@@ -805,7 +930,7 @@ EXTRA_DIST += collectd-email.pod collectd-exec.pod collectd-nagios.pod \
 .pod.5:
 	pod2man --section=5 --release=$(VERSION) --center=$(PACKAGE) $< \
 		>.pod2man.tmp 2>/dev/null && mv -f .pod2man.tmp $@ || true
-	if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
+	@if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
 	then \
 		echo "$@ has some POD errors!"; false; \
 	fi
@@ -818,7 +943,7 @@ install-exec-hook:
 	else \
 		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
 	fi; \
-	cp -f $(srcdir)/types.db $(DESTDIR)$(pkglibdir)/;
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
+	$(INSTALL) -m 0644 $(srcdir)/types.db $(DESTDIR)$(pkgdatadir)/types.db;
 	$(INSTALL) -m 0644 $(srcdir)/postgresql_default.conf \
 		$(DESTDIR)$(pkgdatadir)/postgresql_default.conf;

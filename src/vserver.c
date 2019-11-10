@@ -56,7 +56,6 @@ static void traffic_submit (const char *plugin_instance,
 
 	vl.values = values;
 	vl.values_len = STATIC_ARRAY_SIZE (values);
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
@@ -78,7 +77,6 @@ static void load_submit (const char *plugin_instance,
 
 	vl.values = values;
 	vl.values_len = STATIC_ARRAY_SIZE (values);
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
@@ -98,7 +96,6 @@ static void submit_gauge (const char *plugin_instance, const char *type,
 
 	vl.values = values;
 	vl.values_len = STATIC_ARRAY_SIZE (values);
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
@@ -142,7 +139,7 @@ static int vserver_read (void)
 
 	while (42)
 	{
-		size_t len;
+		int len;
 		char file[BUFSIZE];
 
 		FILE *fh;
@@ -171,7 +168,7 @@ static int vserver_read (void)
 		if (dent->d_name[0] == '.')
 			continue;
 
-		len = snprintf (file, sizeof (file), PROCDIR "/%s", dent->d_name);
+		len = ssnprintf (file, sizeof (file), PROCDIR "/%s", dent->d_name);
 		if ((len < 0) || (len >= BUFSIZE))
 			continue;
 		
@@ -190,7 +187,7 @@ static int vserver_read (void)
 		/* socket message accounting */
 		len = ssnprintf (file, sizeof (file),
 				PROCDIR "/%s/cacct", dent->d_name);
-		if ((len < 0) || (len >= sizeof (file)))
+		if ((len < 0) || ((size_t) len >= sizeof (file)))
 			continue;
 
 		if (NULL == (fh = fopen (file, "r")))
@@ -238,7 +235,7 @@ static int vserver_read (void)
 		/* thread information and load */
 		len = ssnprintf (file, sizeof (file),
 				PROCDIR "/%s/cvirt", dent->d_name);
-		if ((len < 0) || (len >= sizeof (file)))
+		if ((len < 0) || ((size_t) len >= sizeof (file)))
 			continue;
 
 		if (NULL == (fh = fopen (file, "r")))
@@ -291,7 +288,7 @@ static int vserver_read (void)
 		/* processes and memory usage */
 		len = ssnprintf (file, sizeof (file),
 				PROCDIR "/%s/limit", dent->d_name);
-		if ((len < 0) || (len >= sizeof (file)))
+		if ((len < 0) || ((size_t) len >= sizeof (file)))
 			continue;
 
 		if (NULL == (fh = fopen (file, "r")))

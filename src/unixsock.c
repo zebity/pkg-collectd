@@ -278,7 +278,7 @@ static void *us_handle_client (void *arg)
 	return ((void *) 0);
 } /* void *us_handle_client */
 
-static void *us_server_thread (void *arg)
+static void *us_server_thread (void __attribute__((unused)) *arg)
 {
 	int  status;
 	int *remote_fd;
@@ -383,7 +383,14 @@ static int us_config (const char *key, const char *val)
 
 static int us_init (void)
 {
+	static int have_init = 0;
+
 	int status;
+
+	/* Initialize only once. */
+	if (have_init != 0)
+		return (0);
+	have_init = 1;
 
 	loop = 1;
 

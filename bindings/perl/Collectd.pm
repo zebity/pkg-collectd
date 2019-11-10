@@ -1,5 +1,5 @@
 # collectd - Collectd.pm
-# Copyright (C) 2007, 2008  Sebastian Harl
+# Copyright (C) 2007-2009  Sebastian Harl
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -42,6 +42,7 @@ our %EXPORT_TAGS = (
 			plugin_register
 			plugin_unregister
 			plugin_dispatch_values
+			plugin_write
 			plugin_flush
 			plugin_flush_one
 			plugin_flush_all
@@ -75,6 +76,18 @@ our %EXPORT_TAGS = (
 			LOG_INFO
 			LOG_DEBUG
 	) ],
+	'filter_chain' => [ qw(
+			fc_register
+			FC_MATCH_NO_MATCH
+			FC_MATCH_MATCHES
+			FC_TARGET_CONTINUE
+			FC_TARGET_STOP
+			FC_TARGET_RETURN
+	) ],
+	'fc_types' => [ qw(
+			FC_MATCH
+			FC_TARGET
+	) ],
 	'notif' => [ qw(
 			NOTIF_FAILURE
 			NOTIF_WARNING
@@ -99,6 +112,7 @@ our $interval_g;
 Exporter::export_ok_tags ('all');
 
 my @plugins : shared = ();
+my @fc_plugins : shared = ();
 my %cf_callbacks : shared = ();
 
 my %types = (
@@ -111,8 +125,22 @@ my %types = (
 	TYPE_FLUSH,    "flush"
 );
 
+my %fc_types = (
+	FC_MATCH,  "match",
+	FC_TARGET, "target"
+);
+
+my %fc_exec_names = (
+	FC_MATCH,  "match",
+	FC_TARGET, "invoke"
+);
+
 foreach my $type (keys %types) {
 	$plugins[$type] = &share ({});
+}
+
+foreach my $type (keys %fc_types) {
+	$fc_plugins[$type] = &share ({});
 }
 
 sub _log {
@@ -318,6 +346,66 @@ sub plugin_unregister {
 	}
 }
 
+sub plugin_write {
+	my %args = @_;
+
+	my @plugins    = ();
+	my @datasets   = ();
+	my @valuelists = ();
+
+	if (! defined $args{'valuelists'}) {
+		ERROR ("Collectd::plugin_write: Missing 'valuelists' argument.");
+		return;
+	}
+
+	DEBUG ("Collectd::plugin_write:"
+		. (defined ($args{'plugins'}) ? " plugins = $args{'plugins'}" : "")
+		. (defined ($args{'datasets'}) ? " datasets = $args{'datasets'}" : "")
+		. " valueslists = $args{'valuelists'}");
+
+	if (defined ($args{'plugins'})) {
+		if ("ARRAY" eq ref ($args{'plugins'})) {
+			@plugins = @{$args{'plugins'}};
+		}
+		else {
+			@plugins = ($args{'plugins'});
+		}
+	}
+	else {
+		@plugins = (undef);
+	}
+
+	if ("ARRAY" eq ref ($args{'valuelists'})) {
+		@valuelists = @{$args{'valuelists'}};
+	}
+	else {
+		@valuelists = ($args{'valuelists'});
+	}
+
+	if (defined ($args{'datasets'})) {
+		if ("ARRAY" eq ref ($args{'datasets'})) {
+			@datasets = @{$args{'datasets'}};
+		}
+		else {
+			@datasets = ($args{'datasets'});
+		}
+	}
+	else {
+		@datasets = (undef) x scalar (@valuelists);
+	}
+
+	if ($#datasets != $#valuelists) {
+		ERROR ("Collectd::plugin_write: Invalid number of datasets.");
+		return;
+	}
+
+	foreach my $plugin (@plugins) {
+		for (my $i = 0; $i < scalar (@valuelists); ++$i) {
+			_plugin_write ($plugin, $datasets[$i], $valuelists[$i]);
+		}
+	}
+}
+
 sub plugin_flush {
 	my %args = @_;
 
@@ -393,6 +481,141 @@ sub plugin_flush_all {
 	}
 
 	plugin_flush (timeout => $timeout);
+}
+
+sub fc_call {
+	my $type    = shift;
+	my $name    = shift;
+	my $cb_type = shift;
+
+	my %proc;
+
+	our $cb_name = undef;
+	my  $status;
+
+	if (! ((defined $type) && (defined $name) && (defined $cb_type))) {
+		ERROR ("Usage: Collectd::fc_call(type, name, cb_type, ...)");
+		return;
+	}
+
+	if (! defined $fc_plugins[$type]) {
+		ERROR ("Collectd::fc_call: Invalid type \"$type\"");
+		return;
+	}
+
+	if (! defined $fc_plugins[$type]->{$name}) {
+		ERROR ("Collectd::fc_call: Unknown "
+			. ($type == FC_MATCH ? "match" : "target")
+			. " \"$name\"");
+		return;
+	}
+
+	DEBUG ("Collectd::fc_call: "
+		. "type = \"$type\", name = \"$name\", cb_type = \"$cb_type\"");
+
+	{
+		lock %{$fc_plugins[$type]};
+		%proc = %{$fc_plugins[$type]->{$name}};
+	}
+
+	if (FC_CB_EXEC == $cb_type) {
+		$cb_name = $proc{$fc_exec_names{$type}};
+	}
+	elsif (FC_CB_CREATE == $cb_type) {
+		if (defined $proc{'create'}) {
+			$cb_name = $proc{'create'};
+		}
+		else {
+			return 1;
+		}
+	}
+	elsif (FC_CB_DESTROY == $cb_type) {
+		if (defined $proc{'destroy'}) {
+			$cb_name = $proc{'destroy'};
+		}
+		else {
+			return 1;
+		}
+	}
+
+	$status = call_by_name (@_);
+
+	if ($status < 0) {
+		my $err = undef;
+
+		if ($@) {
+			$err = $@;
+		}
+		else {
+			$err = "callback returned false";
+		}
+
+		ERROR ("Execution of fc callback \"$cb_name\" failed: $err");
+		return;
+	}
+	return $status;
+}
+
+sub fc_register {
+	my $type = shift;
+	my $name = shift;
+	my $proc = shift;
+
+	my %fc : shared;
+
+	DEBUG ("Collectd::fc_register: "
+		. "type = \"$type\", name = \"$name\", proc = \"$proc\"");
+
+	if (! ((defined $type) && (defined $name) && (defined $proc))) {
+		ERROR ("Usage: Collectd::fc_register(type, name, proc)");
+		return;
+	}
+
+	if (! defined $fc_plugins[$type]) {
+		ERROR ("Collectd::fc_register: Invalid type \"$type\"");
+		return;
+	}
+
+	if (("HASH" ne ref ($proc)) || (! defined $proc->{$fc_exec_names{$type}})
+			|| ("" ne ref ($proc->{$fc_exec_names{$type}}))) {
+		ERROR ("Collectd::fc_register: Invalid proc.");
+		return;
+	}
+
+	for my $p (qw( create destroy )) {
+		if ((defined $proc->{$p}) && ("" ne ref ($proc->{$p}))) {
+			ERROR ("Collectd::fc_register: Invalid proc.");
+			return;
+		}
+	}
+
+	%fc = %$proc;
+
+	foreach my $p (keys %fc) {
+		my $pkg = scalar caller;
+
+		if ($p !~ m/^(create|destroy|$fc_exec_names{$type})$/) {
+			next;
+		}
+
+		if ($fc{$p} !~ m/^$pkg\:\:/) {
+			$fc{$p} = $pkg . "::" . $fc{$p};
+		}
+	}
+
+	lock %{$fc_plugins[$type]};
+	if (defined $fc_plugins[$type]->{$name}) {
+		WARNING ("Collectd::fc_register: Overwriting previous "
+			. "definition of match \"$name\".");
+	}
+
+	if (! _fc_register ($type, $name)) {
+		ERROR ("Collectd::fc_register: Failed to register \"$name\".");
+		return;
+	}
+
+	$fc_plugins[$type]->{$name} = \%fc;
+	return 1;
 }
 
 sub _plugin_dispatch_config {

@@ -213,7 +213,6 @@ static void conn_submit_port_entry (port_entry_t *pe)
 
   vl.values = values;
   vl.values_len = 1;
-  vl.time = time (NULL);
   sstrncpy (vl.host, hostname_g, sizeof (vl.host));
   sstrncpy (vl.plugin, "tcpconns", sizeof (vl.plugin));
   sstrncpy (vl.type, "tcp_connections", sizeof (vl.type));
@@ -585,7 +584,8 @@ static int conn_read (void)
 	&& ((inp->inp_vflag & INP_IPV6) == 0))
       continue;
 
-    conn_handle_ports (inp->inp_lport, inp->inp_fport, tp->t_state);
+    conn_handle_ports (ntohs (inp->inp_lport), ntohs (inp->inp_fport),
+	tp->t_state);
   } /* for (in_ptr) */
 
   in_orig = NULL;

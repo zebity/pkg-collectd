@@ -1,6 +1,7 @@
 /**
  * collectd - src/cpu.c
- * Copyright (C) 2005-2007  Florian octo Forster
+ * Copyright (C) 2005-2009  Florian octo Forster
+ * Copyright (C) 2009 Simon Kuhnle
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +18,7 @@
  *
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
+ *   Simon Kuhnle <simon at blarzwurst.de>
  **/
 
 #include "collectd.h"
@@ -49,7 +51,8 @@
 # include <sys/sysinfo.h>
 #endif /* HAVE_LIBKSTAT */
 
-#ifdef HAVE_SYSCTLBYNAME
+#if (defined(HAVE_SYSCTL) && HAVE_SYSCTL) \
+	|| (defined(HAVE_SYSCTLBYNAME) && HAVE_SYSCTLBYNAME)
 # ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
 # endif
@@ -66,14 +69,25 @@
 #  define CP_IDLE   4
 #  define CPUSTATES 5
 # endif
-#endif /* HAVE_SYSCTLBYNAME */
+#endif /* HAVE_SYSCTL || HAVE_SYSCTLBYNAME */
+
+#if HAVE_SYSCTL
+# if defined(CTL_HW) && defined(HW_NCPU) \
+	&& defined(CTL_KERN) && defined(KERN_CPTIME) && defined(CPUSTATES)
+#  define CAN_USE_SYSCTL 1
+# else
+#  define CAN_USE_SYSCTL 0
+# endif
+#else
+# define CAN_USE_SYSCTL 0
+#endif
 
 #if HAVE_STATGRAB_H
 # include <statgrab.h>
 #endif
 
 #if !PROCESSOR_CPU_LOAD_INFO && !KERNEL_LINUX && !HAVE_LIBKSTAT \
-	&& !HAVE_SYSCTLBYNAME && !HAVE_LIBSTATGRAB
+	&& !CAN_USE_SYSCTL && !HAVE_SYSCTLBYNAME && !HAVE_LIBSTATGRAB
 # error "No applicable input method."
 #endif
 
@@ -100,6 +114,10 @@ extern kstat_ctl_t *kc;
 static kstat_t *ksp[MAX_NUMCPU];
 static int numcpu;
 /* #endif HAVE_LIBKSTAT */
+
+#elif CAN_USE_SYSCTL
+static int numcpu;
+/* #endif CAN_USE_SYSCTL */
 
 #elif defined(HAVE_SYSCTLBYNAME)
 static int numcpu;
@@ -146,6 +164,25 @@ static int init (void)
 			ksp[numcpu++] = ksp_chain;
 /* #endif HAVE_LIBKSTAT */
 
+#elif CAN_USE_SYSCTL
+	size_t numcpu_size;
+	int mib[2] = {CTL_HW, HW_NCPU};
+	int status;
+
+	numcpu = 0;
+	numcpu_size = sizeof (numcpu);
+
+	status = sysctl (mib, STATIC_ARRAY_SIZE (mib),
+			&numcpu, &numcpu_size, NULL, 0);
+	if (status == -1)
+	{
+		char errbuf[1024];
+		WARNING ("cpu plugin: sysctl: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
+	}
+/* #endif CAN_USE_SYSCTL */
+
 #elif defined (HAVE_SYSCTLBYNAME)
 	size_t numcpu_size;
 
@@ -179,7 +216,6 @@ static void submit (int cpu_num, const char *type_instance, counter_t value)
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "cpu", sizeof (vl.plugin));
 	ssnprintf (vl.plugin_instance, sizeof (vl.type_instance),
@@ -363,6 +399,70 @@ static int cpu_read (void)
 	}
 /* #endif defined(HAVE_LIBKSTAT) */
 
+#elif CAN_USE_SYSCTL
+	uint64_t cpuinfo[numcpu][CPUSTATES];
+	size_t cpuinfo_size;
+	int status;
+	int i;
+
+	if (numcpu < 1)
+	{
+		ERROR ("cpu plugin: Could not determine number of "
+				"installed CPUs using sysctl(3).");
+		return (-1);
+	}
+
+	memset (cpuinfo, 0, sizeof (cpuinfo));
+
+#if defined(KERN_CPTIME2)
+	if (numcpu > 1) {
+		for (i = 0; i < numcpu; i++) {
+			int mib[] = {CTL_KERN, KERN_CPTIME2, i};
+
+			cpuinfo_size = sizeof (cpuinfo[0]);
+
+			status = sysctl (mib, STATIC_ARRAY_SIZE (mib),
+					cpuinfo[i], &cpuinfo_size, NULL, 0);
+			if (status == -1) {
+				char errbuf[1024];
+				ERROR ("cpu plugin: sysctl failed: %s.",
+						sstrerror (errno, errbuf, sizeof (errbuf)));
+				return (-1);
+			}
+		}
+	}
+	else
+#endif /* defined(KERN_CPTIME2) */
+	{
+		int mib[] = {CTL_KERN, KERN_CPTIME};
+		long cpuinfo_tmp[CPUSTATES];
+
+		cpuinfo_size = sizeof(cpuinfo_tmp);
+
+		status = sysctl (mib, STATIC_ARRAY_SIZE (mib),
+					&cpuinfo_tmp, &cpuinfo_size, NULL, 0);
+		if (status == -1)
+		{
+			char errbuf[1024];
+			ERROR ("cpu plugin: sysctl failed: %s.",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+			return (-1);
+		}
+
+		for(i = 0; i < CPUSTATES; i++) {
+			cpuinfo[0][i] = cpuinfo_tmp[i];
+		}
+	}
+
+	for (i = 0; i < numcpu; i++) {
+		submit (i, "user",      cpuinfo[i][CP_USER]);
+		submit (i, "nice",      cpuinfo[i][CP_NICE]);
+		submit (i, "system",    cpuinfo[i][CP_SYS]);
+		submit (i, "idle",      cpuinfo[i][CP_IDLE]);
+		submit (i, "interrupt", cpuinfo[i][CP_INTR]);
+	}
+/* #endif CAN_USE_SYSCTL */
+
 #elif defined(HAVE_SYSCTLBYNAME)
 	long cpuinfo[CPUSTATES];
 	size_t cpuinfo_size;
@@ -377,30 +477,29 @@ static int cpu_read (void)
 		return (-1);
 	}
 
-	cpuinfo[CP_SYS] += cpuinfo[CP_INTR];
-
 	submit (0, "user", cpuinfo[CP_USER]);
 	submit (0, "nice", cpuinfo[CP_NICE]);
 	submit (0, "system", cpuinfo[CP_SYS]);
 	submit (0, "idle", cpuinfo[CP_IDLE]);
+	submit (0, "interrupt", cpuinfo[CP_INTR]);
 /* #endif HAVE_SYSCTLBYNAME */
 
 #elif defined(HAVE_LIBSTATGRAB)
-       sg_cpu_stats *cs;
-       cs = sg_get_cpu_stats ();
+	sg_cpu_stats *cs;
+	cs = sg_get_cpu_stats ();
 
-       if (cs == NULL)
-       {
-	       ERROR ("cpu plugin: sg_get_cpu_stats failed.");
-               return (-1);
-       }
+	if (cs == NULL)
+	{
+		ERROR ("cpu plugin: sg_get_cpu_stats failed.");
+		return (-1);
+	}
 
-       submit (0, "idle",   (counter_t) cs->idle);
-       submit (0, "nice",   (counter_t) cs->nice);
-       submit (0, "swap",   (counter_t) cs->swap);
-       submit (0, "system", (counter_t) cs->kernel);
-       submit (0, "user",   (counter_t) cs->user);
-       submit (0, "wait",   (counter_t) cs->iowait);
+	submit (0, "idle",   (counter_t) cs->idle);
+	submit (0, "nice",   (counter_t) cs->nice);
+	submit (0, "swap",   (counter_t) cs->swap);
+	submit (0, "system", (counter_t) cs->kernel);
+	submit (0, "user",   (counter_t) cs->user);
+	submit (0, "wait",   (counter_t) cs->iowait);
 #endif /* HAVE_LIBSTATGRAB */
 
 	return (0);

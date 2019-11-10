@@ -111,9 +111,9 @@ static int sensor_list_remove (ipmi_sensor_t *sensor);
 static void sensor_read_handler (ipmi_sensor_t *sensor,
     int err,
     enum ipmi_value_present_e value_present,
-    unsigned int raw_value,
+    unsigned int __attribute__((unused)) raw_value,
     double value,
-    ipmi_states_t *states,
+    ipmi_states_t __attribute__((unused)) *states,
     void *user_data)
 {
   value_t values[1];
@@ -148,11 +148,33 @@ static void sensor_read_handler (ipmi_sensor_t *sensor,
         }
       }
     }
+    else if (IPMI_IS_IPMI_ERR(err) && IPMI_GET_IPMI_ERR(err) == IPMI_NOT_SUPPORTED_IN_PRESENT_STATE_CC)
+    {
+      INFO ("ipmi plugin: sensor_read_handler: Sensor %s not ready",
+          list_item->sensor_name);
+    }
     else
     {
-      INFO ("ipmi plugin: sensor_read_handler: Removing sensor %s, "
-          "because it failed with status %#x.",
-          list_item->sensor_name, err);
+      if (IPMI_IS_IPMI_ERR(err))
+        INFO ("ipmi plugin: sensor_read_handler: Removing sensor %s, "
+            "because it failed with IPMI error %#x.",
+            list_item->sensor_name, IPMI_GET_IPMI_ERR(err));
+      else if (IPMI_IS_OS_ERR(err))
+        INFO ("ipmi plugin: sensor_read_handler: Removing sensor %s, "
+            "because it failed with OS error %#x.",
+            list_item->sensor_name, IPMI_GET_OS_ERR(err));
+      else if (IPMI_IS_RMCPP_ERR(err))
+        INFO ("ipmi plugin: sensor_read_handler: Removing sensor %s, "
+            "because it failed with RMCPP error %#x.",
+            list_item->sensor_name, IPMI_GET_RMCPP_ERR(err));
+      else if (IPMI_IS_SOL_ERR(err))
+        INFO ("ipmi plugin: sensor_read_handler: Removing sensor %s, "
+            "because it failed with RMCPP error %#x.",
+            list_item->sensor_name, IPMI_GET_SOL_ERR(err));
+      else
+        INFO ("ipmi plugin: sensor_read_handler: Removing sensor %s, "
+            "because it failed with error %#x. of class %#x",
+            list_item->sensor_name, err & 0xff, err & 0xffffff00);
       sensor_list_remove (sensor);
     }
     return;
@@ -197,7 +219,6 @@ static void sensor_read_handler (ipmi_sensor_t *sensor,
 
   vl.values = values;
   vl.values_len = 1;
-  vl.time = time (NULL);
 
   sstrncpy (vl.host, hostname_g, sizeof (vl.host));
   sstrncpy (vl.plugin, "ipmi", sizeof (vl.plugin));
@@ -213,35 +234,54 @@ static int sensor_list_add (ipmi_sensor_t *sensor)
   c_ipmi_sensor_list_t *list_item;
   c_ipmi_sensor_list_t *list_prev;
 
+  char buffer[DATA_MAX_NAME_LEN];
+  const char *entity_id_string;
   char sensor_name[DATA_MAX_NAME_LEN];
   char *sensor_name_ptr;
-  int sensor_type, len;
+  int sensor_type;
   const char *type;
   ipmi_entity_t *ent = ipmi_sensor_get_entity(sensor);
 
   sensor_id = ipmi_sensor_convert_to_id (sensor);
 
-  memset (sensor_name, 0, sizeof (sensor_name));
-  ipmi_sensor_get_name (sensor, sensor_name, sizeof (sensor_name));
-  sensor_name[sizeof (sensor_name) - 1] = 0;
+  memset (buffer, 0, sizeof (buffer));
+  ipmi_sensor_get_name (sensor, buffer, sizeof (buffer));
+  buffer[sizeof (buffer) - 1] = 0;
 
-  len = DATA_MAX_NAME_LEN - strlen(sensor_name);
-  strncat(sensor_name, " ", len--);
-  strncat(sensor_name, ipmi_entity_get_entity_id_string(ent), len);
+  entity_id_string = ipmi_entity_get_entity_id_string (ent);
 
-  sensor_name_ptr = strstr (sensor_name, ").");
-  if (sensor_name_ptr == NULL)
-    sensor_name_ptr = sensor_name;
+  if (entity_id_string == NULL)
+    sstrncpy (sensor_name, buffer, sizeof (sensor_name));
   else
-  {
-    char *sensor_name_ptr_id = strstr (sensor_name, "(");
+    ssnprintf (sensor_name, sizeof (sensor_name),
+        "%s %s", buffer, entity_id_string);
 
+  sstrncpy (buffer, sensor_name, sizeof (buffer));
+  sensor_name_ptr = strstr (buffer, ").");
+  if (sensor_name_ptr != NULL)
+  {
+    /* If name is something like "foo (123).bar",
+     * change that to "bar (123)".
+     * Both, sensor_name_ptr and sensor_id_ptr point to memory within the
+     * `buffer' array, which holds a copy of the current `sensor_name'. */
+    char *sensor_id_ptr;
+
+    /* `sensor_name_ptr' points to ").bar". */
+    sensor_name_ptr[1] = 0;
+    /* `buffer' holds "foo (123)\0bar\0". */
     sensor_name_ptr += 2;
-    len = DATA_MAX_NAME_LEN - strlen(sensor_name);
-    strncat(sensor_name, " ", len--);
-    strncat(sensor_name, sensor_name_ptr_id, 
-      MIN(sensor_name_ptr - sensor_name_ptr_id - 1, len));
+    /* `sensor_name_ptr' now points to "bar". */
+
+    sensor_id_ptr = strstr (buffer, "(");
+    if (sensor_id_ptr != NULL)
+    {
+      /* `sensor_id_ptr' now points to "(123)". */
+      ssnprintf (sensor_name, sizeof (sensor_name),
+          "%s %s", sensor_name_ptr, sensor_id_ptr); 
+    }
+    /* else: don't touch sensor_name. */
   }
+  sensor_name_ptr = sensor_name;
 
   /* Both `ignorelist' and `plugin_instance' may be NULL. */
   if (ignorelist_match (ignorelist, sensor_name_ptr) != 0)
@@ -438,9 +478,9 @@ static int sensor_list_remove_all (void)
  * Entity handlers
  */
 static void entity_sensor_update_handler (enum ipmi_update_e op,
-    ipmi_entity_t *entity,
+    ipmi_entity_t __attribute__((unused)) *entity,
     ipmi_sensor_t *sensor,
-    void *user_data)
+    void __attribute__((unused)) *user_data)
 {
   /* TODO: Ignore sensors we cannot read */
 
@@ -459,9 +499,9 @@ static void entity_sensor_update_handler (enum ipmi_update_e op,
  * Domain handlers
  */
 static void domain_entity_update_handler (enum ipmi_update_e op,
-    ipmi_domain_t *domain,
+    ipmi_domain_t __attribute__((unused)) *domain,
     ipmi_entity_t *entity,
-    void *user_data)
+    void __attribute__((unused)) *user_data)
 {
   int status;
 
@@ -494,7 +534,7 @@ static void domain_connection_change_handler (ipmi_domain_t *domain,
 {
   int status;
 
-  printf ("domain_connection_change_handler (domain = %p, err = %i, "
+  DEBUG ("domain_connection_change_handler (domain = %p, err = %i, "
       "conn_num = %u, port_num = %u, still_connected = %i, "
       "user_data = %p);\n",
       (void *) domain, err, conn_num, port_num, still_connected, user_data);
@@ -553,7 +593,7 @@ static int thread_init (os_handler_t **ret_os_handler)
   return (0);
 } /* int thread_init */
 
-static void *thread_main (void *user_data)
+static void *thread_main (void __attribute__((unused)) *user_data)
 {
   int status;
   os_handler_t *os_handler = NULL;
@@ -561,7 +601,7 @@ static void *thread_main (void *user_data)
   status = thread_init (&os_handler);
   if (status != 0)
   {
-    fprintf (stderr, "ipmi plugin: thread_init failed.\n");
+    ERROR ("ipmi plugin: thread_init failed.\n");
     return ((void *) -1);
   }
 

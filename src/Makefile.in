@@ -75,219 +75,260 @@ bin_PROGRAMS = collectd-nagios$(EXEEXT)
 @BUILD_PLUGIN_BATTERY_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_33 = -lIOKit
 @BUILD_PLUGIN_BATTERY_TRUE@am__append_34 = "-dlopen" battery.la
 @BUILD_PLUGIN_BATTERY_TRUE@am__append_35 = battery.la
-@BUILD_PLUGIN_CPU_TRUE@am__append_36 = cpu.la
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_37 = -lkstat
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_38 = -ldevinfo
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_39 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_40 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_CPU_TRUE@am__append_41 = "-dlopen" cpu.la
-@BUILD_PLUGIN_CPU_TRUE@am__append_42 = cpu.la
-@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_43 = cpufreq.la
-@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_44 = "-dlopen" cpufreq.la
-@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_45 = cpufreq.la
-@BUILD_PLUGIN_CSV_TRUE@am__append_46 = csv.la
-@BUILD_PLUGIN_CSV_TRUE@am__append_47 = "-dlopen" csv.la
-@BUILD_PLUGIN_CSV_TRUE@am__append_48 = csv.la
-@BUILD_PLUGIN_DF_TRUE@am__append_49 = df.la
-@BUILD_PLUGIN_DF_TRUE@am__append_50 = "-dlopen" df.la
-@BUILD_PLUGIN_DF_TRUE@am__append_51 = df.la
-@BUILD_PLUGIN_DISK_TRUE@am__append_52 = disk.la
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_53 = -lkstat
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_54 = -ldevinfo
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_55 = -lIOKit
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_56 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)  
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_57 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_DISK_TRUE@am__append_58 = "-dlopen" disk.la
-@BUILD_PLUGIN_DISK_TRUE@am__append_59 = disk.la
-@BUILD_PLUGIN_DNS_TRUE@am__append_60 = dns.la
-@BUILD_PLUGIN_DNS_TRUE@am__append_61 = "-dlopen" dns.la
-@BUILD_PLUGIN_DNS_TRUE@am__append_62 = dns.la
-@BUILD_PLUGIN_EMAIL_TRUE@am__append_63 = email.la
-@BUILD_PLUGIN_EMAIL_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_64 = -lpthread
-@BUILD_PLUGIN_EMAIL_TRUE@am__append_65 = "-dlopen" email.la
-@BUILD_PLUGIN_EMAIL_TRUE@am__append_66 = email.la
-@BUILD_PLUGIN_ENTROPY_TRUE@am__append_67 = entropy.la
-@BUILD_PLUGIN_ENTROPY_TRUE@am__append_68 = "-dlopen" entropy.la
-@BUILD_PLUGIN_ENTROPY_TRUE@am__append_69 = entropy.la
-@BUILD_PLUGIN_EXEC_TRUE@am__append_70 = exec.la
-@BUILD_PLUGIN_EXEC_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_71 = -lpthread
-@BUILD_PLUGIN_EXEC_TRUE@am__append_72 = "-dlopen" exec.la
-@BUILD_PLUGIN_EXEC_TRUE@am__append_73 = exec.la
-@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_74 = filecount.la
-@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_75 = "-dlopen" filecount.la
-@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_76 = filecount.la
-@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_77 = hddtemp.la
-@BUILD_PLUGIN_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_78 = -lsocket
-@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_79 = "-dlopen" hddtemp.la
-@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_80 = hddtemp.la
-@BUILD_PLUGIN_INTERFACE_TRUE@am__append_81 = interface.la
-@BUILD_PLUGIN_INTERFACE_TRUE@am__append_82 = "-dlopen" interface.la
-@BUILD_PLUGIN_INTERFACE_TRUE@am__append_83 = interface.la
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_84 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_85 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_86 = -lkstat
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_87 = -ldevinfo
-@BUILD_PLUGIN_IPTABLES_TRUE@am__append_88 = iptables.la
-@BUILD_PLUGIN_IPTABLES_TRUE@@BUILD_WITH_OWN_LIBIPTC_FALSE@am__append_89 = -liptc
-@BUILD_PLUGIN_IPTABLES_TRUE@am__append_90 = "-dlopen" iptables.la
-@BUILD_PLUGIN_IPTABLES_TRUE@am__append_91 = iptables.la
-@BUILD_PLUGIN_IPMI_TRUE@am__append_92 = ipmi.la
-@BUILD_PLUGIN_IPMI_TRUE@am__append_93 = "-dlopen" ipmi.la
-@BUILD_PLUGIN_IPMI_TRUE@am__append_94 = ipmi.la
-@BUILD_PLUGIN_IPVS_TRUE@am__append_95 = ipvs.la
-@BUILD_PLUGIN_IPVS_TRUE@am__append_96 = "-dlopen" ipvs.la
-@BUILD_PLUGIN_IPVS_TRUE@am__append_97 = ipvs.la
-@BUILD_PLUGIN_IRQ_TRUE@am__append_98 = irq.la
-@BUILD_PLUGIN_IRQ_TRUE@am__append_99 = "-dlopen" irq.la
-@BUILD_PLUGIN_IRQ_TRUE@am__append_100 = irq.la
-@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_101 = libvirt.la
-@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_102 = "-dlopen" libvirt.la
-@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_103 = libvirt.la
-@BUILD_PLUGIN_LOAD_TRUE@am__append_104 = load.la
-@BUILD_PLUGIN_LOAD_TRUE@am__append_105 = "-dlopen" load.la
-@BUILD_PLUGIN_LOAD_TRUE@am__append_106 = load.la
-@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_107 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_108 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_LOGFILE_TRUE@am__append_109 = logfile.la
-@BUILD_PLUGIN_LOGFILE_TRUE@am__append_110 = "-dlopen" logfile.la
-@BUILD_PLUGIN_LOGFILE_TRUE@am__append_111 = logfile.la
-@BUILD_PLUGIN_MBMON_TRUE@am__append_112 = mbmon.la
-@BUILD_PLUGIN_MBMON_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_113 = -lsocket
-@BUILD_PLUGIN_MBMON_TRUE@am__append_114 = "-dlopen" mbmon.la
-@BUILD_PLUGIN_MBMON_TRUE@am__append_115 = mbmon.la
-@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_116 = memcached.la
-@BUILD_PLUGIN_MEMCACHED_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_117 = -lsocket
-@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_118 = "-dlopen" memcached.la
-@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_119 = memcached.la
-@BUILD_PLUGIN_MEMORY_TRUE@am__append_120 = memory.la
-@BUILD_PLUGIN_MEMORY_TRUE@am__append_121 = "-dlopen" memory.la
-@BUILD_PLUGIN_MEMORY_TRUE@am__append_122 = memory.la
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_123 = -lkstat
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_124 = -ldevinfo
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_125 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_126 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_127 = multimeter.la
-@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_128 = "-dlopen" multimeter.la
-@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_129 = multimeter.la
-@BUILD_PLUGIN_MYSQL_TRUE@am__append_130 = mysql.la
-@BUILD_PLUGIN_MYSQL_TRUE@am__append_131 = "-dlopen" mysql.la
-@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_132 = $(BUILD_WITH_LIBMYSQL_CFLAGS)
-@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_133 = $(BUILD_WITH_LIBMYSQL_LIBS)
-@BUILD_PLUGIN_MYSQL_TRUE@am__append_134 = mysql.la
-@BUILD_PLUGIN_NETLINK_TRUE@am__append_135 = netlink.la
-@BUILD_PLUGIN_NETLINK_TRUE@am__append_136 = "-dlopen" netlink.la
-@BUILD_PLUGIN_NETLINK_TRUE@am__append_137 = netlink.la
-@BUILD_PLUGIN_NETWORK_TRUE@am__append_138 = network.la
-@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_139 = -lsocket
-@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_140 = -lpthread
-@BUILD_PLUGIN_NETWORK_TRUE@am__append_141 = "-dlopen" network.la
-@BUILD_PLUGIN_NETWORK_TRUE@am__append_142 = network.la
-@BUILD_PLUGIN_NFS_TRUE@am__append_143 = nfs.la
-@BUILD_PLUGIN_NFS_TRUE@am__append_144 = "-dlopen" nfs.la
-@BUILD_PLUGIN_NFS_TRUE@am__append_145 = nfs.la
-@BUILD_PLUGIN_NGINX_TRUE@am__append_146 = nginx.la
-@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_147 = $(BUILD_WITH_LIBCURL_CFLAGS)
-@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_148 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_PLUGIN_NGINX_TRUE@am__append_149 = "-dlopen" nginx.la
-@BUILD_PLUGIN_NGINX_TRUE@am__append_150 = nginx.la
-@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_151 = notify_desktop.la
-@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_152 = "-dlopen" notify_desktop.la
-@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_153 = notify_desktop.la
-@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_154 = notify_email.la
-@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_155 = "-dlopen" notify_email.la
-@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_156 = notify_email.la
-@BUILD_PLUGIN_NTPD_TRUE@am__append_157 = ntpd.la
-@BUILD_PLUGIN_NTPD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_158 = -lsocket
-@BUILD_PLUGIN_NTPD_TRUE@am__append_159 = "-dlopen" ntpd.la
-@BUILD_PLUGIN_NTPD_TRUE@am__append_160 = ntpd.la
-@BUILD_PLUGIN_NUT_TRUE@am__append_161 = nut.la
-@BUILD_PLUGIN_NUT_TRUE@am__append_162 = "-dlopen" nut.la
-@BUILD_PLUGIN_NUT_TRUE@am__append_163 = nut.la
-@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_164 = onewire.la
-@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_165 = "-dlopen" onewire.la
-@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_166 = onewire.la
-@BUILD_PLUGIN_PERL_TRUE@am__append_167 = perl.la
-@BUILD_PLUGIN_PERL_TRUE@am__append_168 = "-dlopen" perl.la
-@BUILD_PLUGIN_PERL_TRUE@am__append_169 = perl.la
-@BUILD_PLUGIN_PING_TRUE@am__append_170 = ping.la
-@BUILD_PLUGIN_PING_TRUE@@BUILD_WITH_OWN_LIBOPING_FALSE@am__append_171 = -loping
-@BUILD_PLUGIN_PING_TRUE@am__append_172 = "-dlopen" ping.la
-@BUILD_PLUGIN_PING_TRUE@am__append_173 = ping.la
-@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_174 = postgresql.la
-@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_175 = "-dlopen" postgresql.la
-@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_176 = postgresql.la
-@BUILD_PLUGIN_POWERDNS_TRUE@am__append_177 = powerdns.la
-@BUILD_PLUGIN_POWERDNS_TRUE@am__append_178 = "-dlopen" powerdns.la
-@BUILD_PLUGIN_POWERDNS_TRUE@am__append_179 = powerdns.la
-@BUILD_PLUGIN_PROCESSES_TRUE@am__append_180 = processes.la
-@BUILD_PLUGIN_PROCESSES_TRUE@am__append_181 = "-dlopen" processes.la
-@BUILD_PLUGIN_PROCESSES_TRUE@am__append_182 = processes.la
-@BUILD_PLUGIN_PROCESSES_TRUE@@BUILD_WITH_LIBKVM_GETPROCS_TRUE@am__append_183 = -lkvm
-@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_184 = rrdtool.la
-@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_185 = "-dlopen" rrdtool.la
-@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_186 = rrdtool.la
-@BUILD_PLUGIN_SENSORS_TRUE@am__append_187 = sensors.la
-@BUILD_PLUGIN_SENSORS_TRUE@am__append_188 = "-dlopen" sensors.la
-@BUILD_PLUGIN_SENSORS_TRUE@am__append_189 = sensors.la
-@BUILD_PLUGIN_SERIAL_TRUE@am__append_190 = serial.la
-@BUILD_PLUGIN_SERIAL_TRUE@am__append_191 = "-dlopen" serial.la
-@BUILD_PLUGIN_SERIAL_TRUE@am__append_192 = serial.la
-@BUILD_PLUGIN_SNMP_TRUE@am__append_193 = snmp.la
-@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_194 = $(BUILD_WITH_LIBSNMP_CFLAGS)
-@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_195 = $(BUILD_WITH_LIBSNMP_LIBS)
-@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_196 = -lpthread
-@BUILD_PLUGIN_SNMP_TRUE@am__append_197 = "-dlopen" snmp.la
-@BUILD_PLUGIN_SNMP_TRUE@am__append_198 = snmp.la
-@BUILD_PLUGIN_SWAP_TRUE@am__append_199 = swap.la
-@BUILD_PLUGIN_SWAP_TRUE@am__append_200 = "-dlopen" swap.la
-@BUILD_PLUGIN_SWAP_TRUE@am__append_201 = swap.la
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_202 = -lkstat
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_203 = -ldevinfo
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKVM_GETSWAPINFO_TRUE@am__append_204 = -lkvm
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_205 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_206 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_SYSLOG_TRUE@am__append_207 = syslog.la
-@BUILD_PLUGIN_SYSLOG_TRUE@am__append_208 = "-dlopen" syslog.la
-@BUILD_PLUGIN_SYSLOG_TRUE@am__append_209 = syslog.la
-@BUILD_PLUGIN_TAIL_TRUE@am__append_210 = tail.la
-@BUILD_PLUGIN_TAIL_TRUE@am__append_211 = "-dlopen" tail.la
-@BUILD_PLUGIN_TAIL_TRUE@am__append_212 = tail.la
-@BUILD_PLUGIN_TAPE_TRUE@am__append_213 = tape.la
-@BUILD_PLUGIN_TAPE_TRUE@am__append_214 = "-dlopen" tape.la
-@BUILD_PLUGIN_TAPE_TRUE@am__append_215 = tape.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_216 = tcpconns.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_217 = "-dlopen" tcpconns.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_218 = tcpconns.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@@BUILD_WITH_LIBKVM_NLIST_TRUE@am__append_219 = -lkvm
-@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_220 = teamspeak2.la
-@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_221 = "-dlopen" teamspeak2.la
-@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_222 = teamspeak2.la
-@BUILD_PLUGIN_THERMAL_TRUE@am__append_223 = thermal.la
-@BUILD_PLUGIN_THERMAL_TRUE@am__append_224 = "-dlopen" thermal.la
-@BUILD_PLUGIN_THERMAL_TRUE@am__append_225 = thermal.la
-@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_226 = unixsock.la
-@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_227 = "-dlopen" unixsock.la
-@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_228 = unixsock.la
-@BUILD_PLUGIN_USERS_TRUE@am__append_229 = users.la
-@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_230 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_231 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_USERS_TRUE@am__append_232 = "-dlopen" users.la
-@BUILD_PLUGIN_USERS_TRUE@am__append_233 = users.la
-@BUILD_PLUGIN_UUID_TRUE@am__append_234 = uuid.la
-@BUILD_PLUGIN_UUID_TRUE@am__append_235 = "-dlopen" uuid.la
-@BUILD_PLUGIN_UUID_TRUE@am__append_236 = uuid.la
-@BUILD_PLUGIN_VMEM_TRUE@am__append_237 = vmem.la
-@BUILD_PLUGIN_VMEM_TRUE@am__append_238 = "-dlopen" vmem.la
-@BUILD_PLUGIN_VMEM_TRUE@am__append_239 = vmem.la
-@BUILD_PLUGIN_VSERVER_TRUE@am__append_240 = vserver.la
-@BUILD_PLUGIN_VSERVER_TRUE@am__append_241 = "-dlopen" vserver.la
-@BUILD_PLUGIN_VSERVER_TRUE@am__append_242 = vserver.la
-@BUILD_PLUGIN_WIRELESS_TRUE@am__append_243 = wireless.la
-@BUILD_PLUGIN_WIRELESS_TRUE@am__append_244 = "-dlopen" wireless.la
-@BUILD_PLUGIN_WIRELESS_TRUE@am__append_245 = wireless.la
-@BUILD_PLUGIN_XMMS_TRUE@am__append_246 = xmms.la
-@BUILD_PLUGIN_XMMS_TRUE@am__append_247 = "-dlopen" xmms.la
-@BUILD_PLUGIN_XMMS_TRUE@am__append_248 = xmms.la
+@BUILD_PLUGIN_BIND_TRUE@am__append_36 = bind.la
+@BUILD_PLUGIN_BIND_TRUE@am__append_37 = "-dlopen" bind.la
+@BUILD_PLUGIN_BIND_TRUE@am__append_38 = bind.la
+@BUILD_PLUGIN_CPU_TRUE@am__append_39 = cpu.la
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_40 = -lkstat
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_41 = -ldevinfo
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_42 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_43 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_CPU_TRUE@am__append_44 = "-dlopen" cpu.la
+@BUILD_PLUGIN_CPU_TRUE@am__append_45 = cpu.la
+@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_46 = cpufreq.la
+@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_47 = "-dlopen" cpufreq.la
+@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_48 = cpufreq.la
+@BUILD_PLUGIN_CSV_TRUE@am__append_49 = csv.la
+@BUILD_PLUGIN_CSV_TRUE@am__append_50 = "-dlopen" csv.la
+@BUILD_PLUGIN_CSV_TRUE@am__append_51 = csv.la
+@BUILD_PLUGIN_CURL_TRUE@am__append_52 = curl.la
+@BUILD_PLUGIN_CURL_TRUE@am__append_53 = "-dlopen" curl.la
+@BUILD_PLUGIN_CURL_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_54 = $(BUILD_WITH_LIBCURL_CFLAGS)
+@BUILD_PLUGIN_CURL_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_55 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_PLUGIN_CURL_TRUE@am__append_56 = curl.la
+@BUILD_PLUGIN_DBI_TRUE@am__append_57 = dbi.la
+@BUILD_PLUGIN_DBI_TRUE@am__append_58 = "-dlopen" dbi.la
+@BUILD_PLUGIN_DBI_TRUE@am__append_59 = dbi.la
+@BUILD_PLUGIN_DF_TRUE@am__append_60 = df.la
+@BUILD_PLUGIN_DF_TRUE@am__append_61 = "-dlopen" df.la
+@BUILD_PLUGIN_DF_TRUE@am__append_62 = df.la
+@BUILD_PLUGIN_DISK_TRUE@am__append_63 = disk.la
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_64 = -lkstat
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_65 = -ldevinfo
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_66 = -lIOKit
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_67 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)  
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_68 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_DISK_TRUE@am__append_69 = "-dlopen" disk.la
+@BUILD_PLUGIN_DISK_TRUE@am__append_70 = disk.la
+@BUILD_PLUGIN_DNS_TRUE@am__append_71 = dns.la
+@BUILD_PLUGIN_DNS_TRUE@am__append_72 = "-dlopen" dns.la
+@BUILD_PLUGIN_DNS_TRUE@am__append_73 = dns.la
+@BUILD_PLUGIN_EMAIL_TRUE@am__append_74 = email.la
+@BUILD_PLUGIN_EMAIL_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_75 = -lpthread
+@BUILD_PLUGIN_EMAIL_TRUE@am__append_76 = "-dlopen" email.la
+@BUILD_PLUGIN_EMAIL_TRUE@am__append_77 = email.la
+@BUILD_PLUGIN_ENTROPY_TRUE@am__append_78 = entropy.la
+@BUILD_PLUGIN_ENTROPY_TRUE@am__append_79 = "-dlopen" entropy.la
+@BUILD_PLUGIN_ENTROPY_TRUE@am__append_80 = entropy.la
+@BUILD_PLUGIN_EXEC_TRUE@am__append_81 = exec.la
+@BUILD_PLUGIN_EXEC_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_82 = -lpthread
+@BUILD_PLUGIN_EXEC_TRUE@am__append_83 = "-dlopen" exec.la
+@BUILD_PLUGIN_EXEC_TRUE@am__append_84 = exec.la
+@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_85 = filecount.la
+@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_86 = "-dlopen" filecount.la
+@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_87 = filecount.la
+@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_88 = hddtemp.la
+@BUILD_PLUGIN_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_89 = -lsocket
+@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_90 = "-dlopen" hddtemp.la
+@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_91 = hddtemp.la
+@BUILD_PLUGIN_INTERFACE_TRUE@am__append_92 = interface.la
+@BUILD_PLUGIN_INTERFACE_TRUE@am__append_93 = "-dlopen" interface.la
+@BUILD_PLUGIN_INTERFACE_TRUE@am__append_94 = interface.la
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_95 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_96 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_97 = -lkstat
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_98 = -ldevinfo
+@BUILD_PLUGIN_IPTABLES_TRUE@am__append_99 = iptables.la
+@BUILD_PLUGIN_IPTABLES_TRUE@@BUILD_WITH_OWN_LIBIPTC_FALSE@am__append_100 = -liptc
+@BUILD_PLUGIN_IPTABLES_TRUE@am__append_101 = "-dlopen" iptables.la
+@BUILD_PLUGIN_IPTABLES_TRUE@am__append_102 = iptables.la
+@BUILD_PLUGIN_IPMI_TRUE@am__append_103 = ipmi.la
+@BUILD_PLUGIN_IPMI_TRUE@am__append_104 = "-dlopen" ipmi.la
+@BUILD_PLUGIN_IPMI_TRUE@am__append_105 = ipmi.la
+@BUILD_PLUGIN_IPVS_TRUE@am__append_106 = ipvs.la
+@BUILD_PLUGIN_IPVS_TRUE@am__append_107 = "-dlopen" ipvs.la
+@BUILD_PLUGIN_IPVS_TRUE@am__append_108 = ipvs.la
+@BUILD_PLUGIN_IRQ_TRUE@am__append_109 = irq.la
+@BUILD_PLUGIN_IRQ_TRUE@am__append_110 = "-dlopen" irq.la
+@BUILD_PLUGIN_IRQ_TRUE@am__append_111 = irq.la
+@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_112 = libvirt.la
+@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_113 = "-dlopen" libvirt.la
+@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_114 = libvirt.la
+@BUILD_PLUGIN_LOAD_TRUE@am__append_115 = load.la
+@BUILD_PLUGIN_LOAD_TRUE@am__append_116 = "-dlopen" load.la
+@BUILD_PLUGIN_LOAD_TRUE@am__append_117 = load.la
+@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_118 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_119 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_LOGFILE_TRUE@am__append_120 = logfile.la
+@BUILD_PLUGIN_LOGFILE_TRUE@am__append_121 = "-dlopen" logfile.la
+@BUILD_PLUGIN_LOGFILE_TRUE@am__append_122 = logfile.la
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_123 = match_regex.la
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_124 = "-dlopen" match_regex.la
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_125 = match_regex.la
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_126 = match_timediff.la
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_127 = "-dlopen" match_timediff.la
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_128 = match_timediff.la
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_129 = match_value.la
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_130 = "-dlopen" match_value.la
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_131 = match_value.la
+@BUILD_PLUGIN_MBMON_TRUE@am__append_132 = mbmon.la
+@BUILD_PLUGIN_MBMON_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_133 = -lsocket
+@BUILD_PLUGIN_MBMON_TRUE@am__append_134 = "-dlopen" mbmon.la
+@BUILD_PLUGIN_MBMON_TRUE@am__append_135 = mbmon.la
+@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_136 = memcached.la
+@BUILD_PLUGIN_MEMCACHED_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_137 = -lsocket
+@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_138 = "-dlopen" memcached.la
+@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_139 = memcached.la
+@BUILD_PLUGIN_MEMORY_TRUE@am__append_140 = memory.la
+@BUILD_PLUGIN_MEMORY_TRUE@am__append_141 = "-dlopen" memory.la
+@BUILD_PLUGIN_MEMORY_TRUE@am__append_142 = memory.la
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_143 = -lkstat
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_144 = -ldevinfo
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_145 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_146 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_147 = multimeter.la
+@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_148 = "-dlopen" multimeter.la
+@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_149 = multimeter.la
+@BUILD_PLUGIN_MYSQL_TRUE@am__append_150 = mysql.la
+@BUILD_PLUGIN_MYSQL_TRUE@am__append_151 = "-dlopen" mysql.la
+@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_152 = $(BUILD_WITH_LIBMYSQL_CFLAGS)
+@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_153 = $(BUILD_WITH_LIBMYSQL_LIBS)
+@BUILD_PLUGIN_MYSQL_TRUE@am__append_154 = mysql.la
+@BUILD_PLUGIN_NETLINK_TRUE@am__append_155 = netlink.la
+@BUILD_PLUGIN_NETLINK_TRUE@am__append_156 = "-dlopen" netlink.la
+@BUILD_PLUGIN_NETLINK_TRUE@am__append_157 = netlink.la
+@BUILD_PLUGIN_NETWORK_TRUE@am__append_158 = network.la
+@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_159 = -lsocket
+@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_160 = -lpthread
+@BUILD_PLUGIN_NETWORK_TRUE@am__append_161 = "-dlopen" network.la
+@BUILD_PLUGIN_NETWORK_TRUE@am__append_162 = network.la
+@BUILD_PLUGIN_NFS_TRUE@am__append_163 = nfs.la
+@BUILD_PLUGIN_NFS_TRUE@am__append_164 = "-dlopen" nfs.la
+@BUILD_PLUGIN_NFS_TRUE@am__append_165 = nfs.la
+@BUILD_PLUGIN_NGINX_TRUE@am__append_166 = nginx.la
+@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_167 = $(BUILD_WITH_LIBCURL_CFLAGS)
+@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_168 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_PLUGIN_NGINX_TRUE@am__append_169 = "-dlopen" nginx.la
+@BUILD_PLUGIN_NGINX_TRUE@am__append_170 = nginx.la
+@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_171 = notify_desktop.la
+@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_172 = "-dlopen" notify_desktop.la
+@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_173 = notify_desktop.la
+@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_174 = notify_email.la
+@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_175 = "-dlopen" notify_email.la
+@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_176 = notify_email.la
+@BUILD_PLUGIN_NTPD_TRUE@am__append_177 = ntpd.la
+@BUILD_PLUGIN_NTPD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_178 = -lsocket
+@BUILD_PLUGIN_NTPD_TRUE@am__append_179 = "-dlopen" ntpd.la
+@BUILD_PLUGIN_NTPD_TRUE@am__append_180 = ntpd.la
+@BUILD_PLUGIN_NUT_TRUE@am__append_181 = nut.la
+@BUILD_PLUGIN_NUT_TRUE@am__append_182 = "-dlopen" nut.la
+@BUILD_PLUGIN_NUT_TRUE@am__append_183 = nut.la
+@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_184 = onewire.la
+@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_185 = "-dlopen" onewire.la
+@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_186 = onewire.la
+@BUILD_PLUGIN_OPENVPN_TRUE@am__append_187 = openvpn.la
+@BUILD_PLUGIN_OPENVPN_TRUE@am__append_188 = "-dlopen" openvpn.la
+@BUILD_PLUGIN_OPENVPN_TRUE@am__append_189 = openvpn.la
+@BUILD_PLUGIN_ORACLE_TRUE@am__append_190 = oracle.la
+@BUILD_PLUGIN_ORACLE_TRUE@am__append_191 = "-dlopen" oracle.la
+@BUILD_PLUGIN_ORACLE_TRUE@am__append_192 = oracle.la
+@BUILD_PLUGIN_PERL_TRUE@am__append_193 = perl.la
+# Work-around for issues #41 and #42 - Perl 5.10 incorrectly introduced
+# __attribute__nonnull__(3) for Perl_load_module().
+@BUILD_PLUGIN_PERL_TRUE@@HAVE_BROKEN_PERL_LOAD_MODULE_TRUE@am__append_194 = -Wno-nonnull
+@BUILD_PLUGIN_PERL_TRUE@am__append_195 = "-dlopen" perl.la
+@BUILD_PLUGIN_PERL_TRUE@am__append_196 = perl.la
+@BUILD_PLUGIN_PING_TRUE@am__append_197 = ping.la
+@BUILD_PLUGIN_PING_TRUE@@BUILD_WITH_OWN_LIBOPING_FALSE@am__append_198 = -loping
+@BUILD_PLUGIN_PING_TRUE@am__append_199 = "-dlopen" ping.la
+@BUILD_PLUGIN_PING_TRUE@am__append_200 = ping.la
+@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_201 = postgresql.la
+@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_202 = "-dlopen" postgresql.la
+@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_203 = postgresql.la
+@BUILD_PLUGIN_POWERDNS_TRUE@am__append_204 = powerdns.la
+@BUILD_PLUGIN_POWERDNS_TRUE@am__append_205 = "-dlopen" powerdns.la
+@BUILD_PLUGIN_POWERDNS_TRUE@am__append_206 = powerdns.la
+@BUILD_PLUGIN_PROCESSES_TRUE@am__append_207 = processes.la
+@BUILD_PLUGIN_PROCESSES_TRUE@am__append_208 = "-dlopen" processes.la
+@BUILD_PLUGIN_PROCESSES_TRUE@am__append_209 = processes.la
+@BUILD_PLUGIN_PROCESSES_TRUE@@BUILD_WITH_LIBKVM_GETPROCS_TRUE@am__append_210 = -lkvm
+@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_211 = rrdcached.la
+@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_212 = "-dlopen" rrdcached.la
+@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_213 = rrdcached.la
+@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_214 = rrdtool.la
+@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_215 = "-dlopen" rrdtool.la
+@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_216 = rrdtool.la
+@BUILD_PLUGIN_SENSORS_TRUE@am__append_217 = sensors.la
+@BUILD_PLUGIN_SENSORS_TRUE@am__append_218 = "-dlopen" sensors.la
+@BUILD_PLUGIN_SENSORS_TRUE@am__append_219 = sensors.la
+@BUILD_PLUGIN_SERIAL_TRUE@am__append_220 = serial.la
+@BUILD_PLUGIN_SERIAL_TRUE@am__append_221 = "-dlopen" serial.la
+@BUILD_PLUGIN_SERIAL_TRUE@am__append_222 = serial.la
+@BUILD_PLUGIN_SNMP_TRUE@am__append_223 = snmp.la
+@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_224 = $(BUILD_WITH_LIBSNMP_CFLAGS)
+@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_225 = $(BUILD_WITH_LIBSNMP_LIBS)
+@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_226 = -lpthread
+@BUILD_PLUGIN_SNMP_TRUE@am__append_227 = "-dlopen" snmp.la
+@BUILD_PLUGIN_SNMP_TRUE@am__append_228 = snmp.la
+@BUILD_PLUGIN_SWAP_TRUE@am__append_229 = swap.la
+@BUILD_PLUGIN_SWAP_TRUE@am__append_230 = "-dlopen" swap.la
+@BUILD_PLUGIN_SWAP_TRUE@am__append_231 = swap.la
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_232 = -lkstat
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_233 = -ldevinfo
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKVM_GETSWAPINFO_TRUE@am__append_234 = -lkvm
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_235 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_236 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_SYSLOG_TRUE@am__append_237 = syslog.la
+@BUILD_PLUGIN_SYSLOG_TRUE@am__append_238 = "-dlopen" syslog.la
+@BUILD_PLUGIN_SYSLOG_TRUE@am__append_239 = syslog.la
+@BUILD_PLUGIN_TAIL_TRUE@am__append_240 = tail.la
+@BUILD_PLUGIN_TAIL_TRUE@am__append_241 = "-dlopen" tail.la
+@BUILD_PLUGIN_TAIL_TRUE@am__append_242 = tail.la
+@BUILD_PLUGIN_TAPE_TRUE@am__append_243 = tape.la
+@BUILD_PLUGIN_TAPE_TRUE@am__append_244 = "-dlopen" tape.la
+@BUILD_PLUGIN_TAPE_TRUE@am__append_245 = tape.la
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_246 = target_notification.la
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_247 = "-dlopen" target_notification.la
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_248 = target_notification.la
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_249 = target_replace.la
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_250 = "-dlopen" target_replace.la
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_251 = target_replace.la
+@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_252 = target_set.la
+@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_253 = "-dlopen" target_set.la
+@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_254 = target_set.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_255 = tcpconns.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_256 = "-dlopen" tcpconns.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_257 = tcpconns.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@@BUILD_WITH_LIBKVM_NLIST_TRUE@am__append_258 = -lkvm
+@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_259 = teamspeak2.la
+@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_260 = "-dlopen" teamspeak2.la
+@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_261 = teamspeak2.la
+@BUILD_PLUGIN_THERMAL_TRUE@am__append_262 = thermal.la
+@BUILD_PLUGIN_THERMAL_TRUE@am__append_263 = "-dlopen" thermal.la
+@BUILD_PLUGIN_THERMAL_TRUE@am__append_264 = thermal.la
+@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_265 = unixsock.la
+@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_266 = "-dlopen" unixsock.la
+@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_267 = unixsock.la
+@BUILD_PLUGIN_USERS_TRUE@am__append_268 = users.la
+@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_269 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_270 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_USERS_TRUE@am__append_271 = "-dlopen" users.la
+@BUILD_PLUGIN_USERS_TRUE@am__append_272 = users.la
+@BUILD_PLUGIN_UUID_TRUE@am__append_273 = uuid.la
+@BUILD_PLUGIN_UUID_TRUE@am__append_274 = "-dlopen" uuid.la
+@BUILD_PLUGIN_UUID_TRUE@am__append_275 = uuid.la
+@BUILD_PLUGIN_VMEM_TRUE@am__append_276 = vmem.la
+@BUILD_PLUGIN_VMEM_TRUE@am__append_277 = "-dlopen" vmem.la
+@BUILD_PLUGIN_VMEM_TRUE@am__append_278 = vmem.la
+@BUILD_PLUGIN_VSERVER_TRUE@am__append_279 = vserver.la
+@BUILD_PLUGIN_VSERVER_TRUE@am__append_280 = "-dlopen" vserver.la
+@BUILD_PLUGIN_VSERVER_TRUE@am__append_281 = vserver.la
+@BUILD_PLUGIN_WIRELESS_TRUE@am__append_282 = wireless.la
+@BUILD_PLUGIN_WIRELESS_TRUE@am__append_283 = "-dlopen" wireless.la
+@BUILD_PLUGIN_WIRELESS_TRUE@am__append_284 = wireless.la
+@BUILD_PLUGIN_XMMS_TRUE@am__append_285 = xmms.la
+@BUILD_PLUGIN_XMMS_TRUE@am__append_286 = "-dlopen" xmms.la
+@BUILD_PLUGIN_XMMS_TRUE@am__append_287 = xmms.la
 subdir = src
 DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/collectd.conf.in \
@@ -357,6 +398,15 @@ battery_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(battery_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_BATTERY_TRUE@am_battery_la_rpath = -rpath $(pkglibdir)
+@BUILD_PLUGIN_BIND_TRUE@bind_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@BUILD_PLUGIN_BIND_TRUE@	$(am__DEPENDENCIES_1)
+am__bind_la_SOURCES_DIST = bind.c
+@BUILD_PLUGIN_BIND_TRUE@am_bind_la_OBJECTS = bind_la-bind.lo
+bind_la_OBJECTS = $(am_bind_la_OBJECTS)
+bind_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(bind_la_CFLAGS) $(CFLAGS) \
+	$(bind_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_BIND_TRUE@am_bind_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 @BUILD_PLUGIN_CPU_TRUE@cpu_la_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am__cpu_la_SOURCES_DIST = cpu.c
@@ -382,6 +432,24 @@ csv_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(csv_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @BUILD_PLUGIN_CSV_TRUE@am_csv_la_rpath = -rpath $(pkglibdir)
+@BUILD_PLUGIN_CURL_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_CURL_TRUE@curl_la_DEPENDENCIES = $(am__DEPENDENCIES_4)
+am__curl_la_SOURCES_DIST = curl.c
+@BUILD_PLUGIN_CURL_TRUE@am_curl_la_OBJECTS = curl_la-curl.lo
+curl_la_OBJECTS = $(am_curl_la_OBJECTS)
+curl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(curl_la_CFLAGS) $(CFLAGS) \
+	$(curl_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_CURL_TRUE@am_curl_la_rpath = -rpath $(pkglibdir)
+@BUILD_PLUGIN_DBI_TRUE@dbi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am__dbi_la_SOURCES_DIST = dbi.c utils_db_query.c utils_db_query.h
+@BUILD_PLUGIN_DBI_TRUE@am_dbi_la_OBJECTS = dbi_la-dbi.lo \
+@BUILD_PLUGIN_DBI_TRUE@	dbi_la-utils_db_query.lo
+dbi_la_OBJECTS = $(am_dbi_la_OBJECTS)
+dbi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(dbi_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@BUILD_PLUGIN_DBI_TRUE@am_dbi_la_rpath = -rpath $(pkglibdir)
 df_la_LIBADD =
 am__df_la_SOURCES_DIST = df.c
 @BUILD_PLUGIN_DF_TRUE@am_df_la_OBJECTS = df.lo
@@ -390,8 +458,8 @@ df_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(df_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @BUILD_PLUGIN_DF_TRUE@am_df_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
-@BUILD_PLUGIN_DISK_TRUE@disk_la_DEPENDENCIES = $(am__DEPENDENCIES_4)
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_DISK_TRUE@disk_la_DEPENDENCIES = $(am__DEPENDENCIES_5)
 am__disk_la_SOURCES_DIST = disk.c
 @BUILD_PLUGIN_DISK_TRUE@am_disk_la_OBJECTS = disk_la-disk.lo
 disk_la_OBJECTS = $(am_disk_la_OBJECTS)
@@ -424,11 +492,9 @@ entropy_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(entropy_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_ENTROPY_TRUE@am_entropy_la_rpath = -rpath $(pkglibdir)
 exec_la_LIBADD =
-am__exec_la_SOURCES_DIST = exec.c utils_parse_option.h \
-	utils_parse_option.c utils_cmd_putnotif.c utils_cmd_putnotif.h \
-	utils_cmd_putval.c utils_cmd_putval.h
+am__exec_la_SOURCES_DIST = exec.c utils_cmd_putnotif.c \
+	utils_cmd_putnotif.h utils_cmd_putval.c utils_cmd_putval.h
 @BUILD_PLUGIN_EXEC_TRUE@am_exec_la_OBJECTS = exec.lo \
-@BUILD_PLUGIN_EXEC_TRUE@	utils_parse_option.lo \
 @BUILD_PLUGIN_EXEC_TRUE@	utils_cmd_putnotif.lo \
 @BUILD_PLUGIN_EXEC_TRUE@	utils_cmd_putval.lo
 exec_la_OBJECTS = $(am_exec_la_OBJECTS)
@@ -453,9 +519,9 @@ hddtemp_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(hddtemp_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_HDDTEMP_TRUE@am_hddtemp_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_5 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_6 = $(am__DEPENDENCIES_1)
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_DEPENDENCIES =  \
-@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__DEPENDENCIES_5)
+@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__DEPENDENCIES_6)
 am__interface_la_SOURCES_DIST = interface.c
 @BUILD_PLUGIN_INTERFACE_TRUE@am_interface_la_OBJECTS =  \
 @BUILD_PLUGIN_INTERFACE_TRUE@	interface_la-interface.lo
@@ -507,8 +573,8 @@ libvirt_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libvirt_la_CFLAGS) \
 	$(CFLAGS) $(libvirt_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_LIBVIRT_TRUE@am_libvirt_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_6 = $(am__DEPENDENCIES_1)
-@BUILD_PLUGIN_LOAD_TRUE@load_la_DEPENDENCIES = $(am__DEPENDENCIES_6)
+@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_7 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_LOAD_TRUE@load_la_DEPENDENCIES = $(am__DEPENDENCIES_7)
 am__load_la_SOURCES_DIST = load.c
 @BUILD_PLUGIN_LOAD_TRUE@am_load_la_OBJECTS = load_la-load.lo
 load_la_OBJECTS = $(am_load_la_OBJECTS)
@@ -524,6 +590,36 @@ logfile_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(logfile_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_LOGFILE_TRUE@am_logfile_la_rpath = -rpath $(pkglibdir)
+match_regex_la_LIBADD =
+am__match_regex_la_SOURCES_DIST = match_regex.c
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am_match_regex_la_OBJECTS =  \
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@	match_regex.lo
+match_regex_la_OBJECTS = $(am_match_regex_la_OBJECTS)
+match_regex_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(match_regex_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am_match_regex_la_rpath = -rpath \
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@	$(pkglibdir)
+match_timediff_la_LIBADD =
+am__match_timediff_la_SOURCES_DIST = match_timediff.c
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am_match_timediff_la_OBJECTS =  \
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@	match_timediff.lo
+match_timediff_la_OBJECTS = $(am_match_timediff_la_OBJECTS)
+match_timediff_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(match_timediff_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am_match_timediff_la_rpath = -rpath \
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@	$(pkglibdir)
+match_value_la_LIBADD =
+am__match_value_la_SOURCES_DIST = match_value.c
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am_match_value_la_OBJECTS =  \
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@	match_value.lo
+match_value_la_OBJECTS = $(am_match_value_la_OBJECTS)
+match_value_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(match_value_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am_match_value_la_rpath = -rpath \
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@	$(pkglibdir)
 mbmon_la_LIBADD =
 am__mbmon_la_SOURCES_DIST = mbmon.c
 @BUILD_PLUGIN_MBMON_TRUE@am_mbmon_la_OBJECTS = mbmon.lo
@@ -541,11 +637,11 @@ memcached_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(memcached_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_MEMCACHED_TRUE@am_memcached_la_rpath = -rpath \
 @BUILD_PLUGIN_MEMCACHED_TRUE@	$(pkglibdir)
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_7 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_8 = $(am__DEPENDENCIES_1)
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_DEPENDENCIES =  \
 @BUILD_PLUGIN_MEMORY_TRUE@	$(am__DEPENDENCIES_1) \
 @BUILD_PLUGIN_MEMORY_TRUE@	$(am__DEPENDENCIES_1) \
-@BUILD_PLUGIN_MEMORY_TRUE@	$(am__DEPENDENCIES_7)
+@BUILD_PLUGIN_MEMORY_TRUE@	$(am__DEPENDENCIES_8)
 am__memory_la_SOURCES_DIST = memory.c
 @BUILD_PLUGIN_MEMORY_TRUE@am_memory_la_OBJECTS = memory_la-memory.lo
 memory_la_OBJECTS = $(am_memory_la_OBJECTS)
@@ -563,9 +659,9 @@ multimeter_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(multimeter_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_MULTIMETER_TRUE@am_multimeter_la_rpath = -rpath \
 @BUILD_PLUGIN_MULTIMETER_TRUE@	$(pkglibdir)
-@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__DEPENDENCIES_8 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__DEPENDENCIES_9 = $(am__DEPENDENCIES_1)
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_DEPENDENCIES =  \
-@BUILD_PLUGIN_MYSQL_TRUE@	$(am__DEPENDENCIES_8)
+@BUILD_PLUGIN_MYSQL_TRUE@	$(am__DEPENDENCIES_9)
 am__mysql_la_SOURCES_DIST = mysql.c
 @BUILD_PLUGIN_MYSQL_TRUE@am_mysql_la_OBJECTS = mysql_la-mysql.lo
 mysql_la_OBJECTS = $(am_mysql_la_OBJECTS)
@@ -599,9 +695,9 @@ nfs_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(nfs_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @BUILD_PLUGIN_NFS_TRUE@am_nfs_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__DEPENDENCIES_9 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__DEPENDENCIES_10 = $(am__DEPENDENCIES_1)
 @BUILD_PLUGIN_NGINX_TRUE@nginx_la_DEPENDENCIES =  \
-@BUILD_PLUGIN_NGINX_TRUE@	$(am__DEPENDENCIES_9)
+@BUILD_PLUGIN_NGINX_TRUE@	$(am__DEPENDENCIES_10)
 am__nginx_la_SOURCES_DIST = nginx.c
 @BUILD_PLUGIN_NGINX_TRUE@am_nginx_la_OBJECTS = nginx_la-nginx.lo
 nginx_la_OBJECTS = $(am_nginx_la_OBJECTS)
@@ -655,6 +751,26 @@ onewire_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(onewire_la_CFLAGS) \
 	$(CFLAGS) $(onewire_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_ONEWIRE_TRUE@am_onewire_la_rpath = -rpath $(pkglibdir)
+openvpn_la_LIBADD =
+am__openvpn_la_SOURCES_DIST = openvpn.c
+@BUILD_PLUGIN_OPENVPN_TRUE@am_openvpn_la_OBJECTS =  \
+@BUILD_PLUGIN_OPENVPN_TRUE@	openvpn_la-openvpn.lo
+openvpn_la_OBJECTS = $(am_openvpn_la_OBJECTS)
+openvpn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(openvpn_la_CFLAGS) \
+	$(CFLAGS) $(openvpn_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_OPENVPN_TRUE@am_openvpn_la_rpath = -rpath $(pkglibdir)
+@BUILD_PLUGIN_ORACLE_TRUE@oracle_la_DEPENDENCIES =  \
+@BUILD_PLUGIN_ORACLE_TRUE@	$(am__DEPENDENCIES_1)
+am__oracle_la_SOURCES_DIST = oracle.c utils_db_query.c \
+	utils_db_query.h
+@BUILD_PLUGIN_ORACLE_TRUE@am_oracle_la_OBJECTS = oracle_la-oracle.lo \
+@BUILD_PLUGIN_ORACLE_TRUE@	oracle_la-utils_db_query.lo
+oracle_la_OBJECTS = $(am_oracle_la_OBJECTS)
+oracle_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(oracle_la_CFLAGS) \
+	$(CFLAGS) $(oracle_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_ORACLE_TRUE@am_oracle_la_rpath = -rpath $(pkglibdir)
 perl_la_LIBADD =
 am__perl_la_SOURCES_DIST = perl.c
 @BUILD_PLUGIN_PERL_TRUE@am_perl_la_OBJECTS = perl_la-perl.lo
@@ -671,9 +787,11 @@ ping_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 @BUILD_PLUGIN_PING_TRUE@am_ping_la_rpath = -rpath $(pkglibdir)
 postgresql_la_LIBADD =
-am__postgresql_la_SOURCES_DIST = postgresql.c
+am__postgresql_la_SOURCES_DIST = postgresql.c utils_db_query.c \
+	utils_db_query.h
 @BUILD_PLUGIN_POSTGRESQL_TRUE@am_postgresql_la_OBJECTS =  \
-@BUILD_PLUGIN_POSTGRESQL_TRUE@	postgresql_la-postgresql.lo
+@BUILD_PLUGIN_POSTGRESQL_TRUE@	postgresql_la-postgresql.lo \
+@BUILD_PLUGIN_POSTGRESQL_TRUE@	postgresql_la-utils_db_query.lo
 postgresql_la_OBJECTS = $(am_postgresql_la_OBJECTS)
 postgresql_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -698,11 +816,26 @@ processes_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(processes_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_PROCESSES_TRUE@am_processes_la_rpath = -rpath \
 @BUILD_PLUGIN_PROCESSES_TRUE@	$(pkglibdir)
+@BUILD_PLUGIN_RRDCACHED_TRUE@rrdcached_la_DEPENDENCIES =  \
+@BUILD_PLUGIN_RRDCACHED_TRUE@	$(am__DEPENDENCIES_1)
+am__rrdcached_la_SOURCES_DIST = rrdcached.c utils_rrdcreate.c \
+	utils_rrdcreate.h
+@BUILD_PLUGIN_RRDCACHED_TRUE@am_rrdcached_la_OBJECTS =  \
+@BUILD_PLUGIN_RRDCACHED_TRUE@	rrdcached_la-rrdcached.lo \
+@BUILD_PLUGIN_RRDCACHED_TRUE@	rrdcached_la-utils_rrdcreate.lo
+rrdcached_la_OBJECTS = $(am_rrdcached_la_OBJECTS)
+rrdcached_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(rrdcached_la_CFLAGS) \
+	$(CFLAGS) $(rrdcached_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_RRDCACHED_TRUE@am_rrdcached_la_rpath = -rpath \
+@BUILD_PLUGIN_RRDCACHED_TRUE@	$(pkglibdir)
 @BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_DEPENDENCIES =  \
 @BUILD_PLUGIN_RRDTOOL_TRUE@	$(am__DEPENDENCIES_1)
-am__rrdtool_la_SOURCES_DIST = rrdtool.c
+am__rrdtool_la_SOURCES_DIST = rrdtool.c utils_rrdcreate.c \
+	utils_rrdcreate.h
 @BUILD_PLUGIN_RRDTOOL_TRUE@am_rrdtool_la_OBJECTS =  \
-@BUILD_PLUGIN_RRDTOOL_TRUE@	rrdtool_la-rrdtool.lo
+@BUILD_PLUGIN_RRDTOOL_TRUE@	rrdtool_la-rrdtool.lo \
+@BUILD_PLUGIN_RRDTOOL_TRUE@	rrdtool_la-utils_rrdcreate.lo
 rrdtool_la_OBJECTS = $(am_rrdtool_la_OBJECTS)
 rrdtool_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(rrdtool_la_CFLAGS) \
@@ -725,8 +858,8 @@ serial_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(serial_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_SERIAL_TRUE@am_serial_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__DEPENDENCIES_10 = $(am__DEPENDENCIES_1)
-@BUILD_PLUGIN_SNMP_TRUE@snmp_la_DEPENDENCIES = $(am__DEPENDENCIES_10) \
+@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__DEPENDENCIES_11 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_SNMP_TRUE@snmp_la_DEPENDENCIES = $(am__DEPENDENCIES_11) \
 @BUILD_PLUGIN_SNMP_TRUE@	$(am__DEPENDENCIES_1)
 am__snmp_la_SOURCES_DIST = snmp.c
 @BUILD_PLUGIN_SNMP_TRUE@am_snmp_la_OBJECTS = snmp_la-snmp.lo
@@ -735,11 +868,11 @@ snmp_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(snmp_la_CFLAGS) $(CFLAGS) \
 	$(snmp_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_SNMP_TRUE@am_snmp_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_11 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_12 = $(am__DEPENDENCIES_1)
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @BUILD_PLUGIN_SWAP_TRUE@	$(am__DEPENDENCIES_1) \
 @BUILD_PLUGIN_SWAP_TRUE@	$(am__DEPENDENCIES_1) \
-@BUILD_PLUGIN_SWAP_TRUE@	$(am__DEPENDENCIES_11)
+@BUILD_PLUGIN_SWAP_TRUE@	$(am__DEPENDENCIES_12)
 am__swap_la_SOURCES_DIST = swap.c
 @BUILD_PLUGIN_SWAP_TRUE@am_swap_la_OBJECTS = swap_la-swap.lo
 swap_la_OBJECTS = $(am_swap_la_OBJECTS)
@@ -771,6 +904,36 @@ tape_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(tape_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @BUILD_PLUGIN_TAPE_TRUE@am_tape_la_rpath = -rpath $(pkglibdir)
+target_notification_la_LIBADD =
+am__target_notification_la_SOURCES_DIST = target_notification.c
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am_target_notification_la_OBJECTS =  \
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@	target_notification.lo
+target_notification_la_OBJECTS = $(am_target_notification_la_OBJECTS)
+target_notification_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(target_notification_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am_target_notification_la_rpath =  \
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@	-rpath $(pkglibdir)
+target_replace_la_LIBADD =
+am__target_replace_la_SOURCES_DIST = target_replace.c
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am_target_replace_la_OBJECTS =  \
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@	target_replace.lo
+target_replace_la_OBJECTS = $(am_target_replace_la_OBJECTS)
+target_replace_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(target_replace_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am_target_replace_la_rpath = -rpath \
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@	$(pkglibdir)
+target_set_la_LIBADD =
+am__target_set_la_SOURCES_DIST = target_set.c
+@BUILD_PLUGIN_TARGET_SET_TRUE@am_target_set_la_OBJECTS =  \
+@BUILD_PLUGIN_TARGET_SET_TRUE@	target_set.lo
+target_set_la_OBJECTS = $(am_target_set_la_OBJECTS)
+target_set_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(target_set_la_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_PLUGIN_TARGET_SET_TRUE@am_target_set_la_rpath = -rpath \
+@BUILD_PLUGIN_TARGET_SET_TRUE@	$(pkglibdir)
 @BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_DEPENDENCIES =  \
 @BUILD_PLUGIN_TCPCONNS_TRUE@	$(am__DEPENDENCIES_1)
 am__tcpconns_la_SOURCES_DIST = tcpconns.c
@@ -799,13 +962,11 @@ thermal_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(thermal_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_THERMAL_TRUE@am_thermal_la_rpath = -rpath $(pkglibdir)
 unixsock_la_LIBADD =
-am__unixsock_la_SOURCES_DIST = unixsock.c utils_parse_option.h \
-	utils_parse_option.c utils_cmd_flush.h utils_cmd_flush.c \
-	utils_cmd_getval.h utils_cmd_getval.c utils_cmd_listval.h \
-	utils_cmd_listval.c utils_cmd_putval.h utils_cmd_putval.c \
-	utils_cmd_putnotif.h utils_cmd_putnotif.c
+am__unixsock_la_SOURCES_DIST = unixsock.c utils_cmd_flush.h \
+	utils_cmd_flush.c utils_cmd_getval.h utils_cmd_getval.c \
+	utils_cmd_listval.h utils_cmd_listval.c utils_cmd_putval.h \
+	utils_cmd_putval.c utils_cmd_putnotif.h utils_cmd_putnotif.c
 @BUILD_PLUGIN_UNIXSOCK_TRUE@am_unixsock_la_OBJECTS = unixsock.lo \
-@BUILD_PLUGIN_UNIXSOCK_TRUE@	utils_parse_option.lo \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@	utils_cmd_flush.lo \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@	utils_cmd_getval.lo \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@	utils_cmd_listval.lo \
@@ -816,9 +977,9 @@ unixsock_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(unixsock_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_UNIXSOCK_TRUE@am_unixsock_la_rpath = -rpath $(pkglibdir)
-@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_12 = $(am__DEPENDENCIES_1)
+@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_13 = $(am__DEPENDENCIES_1)
 @BUILD_PLUGIN_USERS_TRUE@users_la_DEPENDENCIES =  \
-@BUILD_PLUGIN_USERS_TRUE@	$(am__DEPENDENCIES_12)
+@BUILD_PLUGIN_USERS_TRUE@	$(am__DEPENDENCIES_13)
 am__users_la_SOURCES_DIST = users.c
 @BUILD_PLUGIN_USERS_TRUE@am_users_la_OBJECTS = users_la-users.lo
 users_la_OBJECTS = $(am_users_la_OBJECTS)
@@ -871,20 +1032,22 @@ sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS) $(sbin_PROGRAMS)
 am_collectd_OBJECTS = collectd-collectd.$(OBJEXT) \
 	collectd-common.$(OBJEXT) collectd-configfile.$(OBJEXT) \
+	collectd-filter_chain.$(OBJEXT) collectd-meta_data.$(OBJEXT) \
 	collectd-plugin.$(OBJEXT) collectd-utils_avltree.$(OBJEXT) \
 	collectd-utils_cache.$(OBJEXT) \
 	collectd-utils_complain.$(OBJEXT) \
 	collectd-utils_ignorelist.$(OBJEXT) \
 	collectd-utils_llist.$(OBJEXT) \
+	collectd-utils_parse_option.$(OBJEXT) \
 	collectd-utils_tail_match.$(OBJEXT) \
 	collectd-utils_match.$(OBJEXT) collectd-utils_mount.$(OBJEXT) \
-	collectd-utils_tail.$(OBJEXT) \
+	collectd-utils_subst.$(OBJEXT) collectd-utils_tail.$(OBJEXT) \
 	collectd-utils_threshold.$(OBJEXT) \
 	collectd-types_list.$(OBJEXT)
 collectd_OBJECTS = $(am_collectd_OBJECTS)
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_13 =  \
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_14 =  \
 @BUILD_WITH_LIBSTATGRAB_TRUE@	$(am__DEPENDENCIES_1)
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__DEPENDENCIES_14 =  \
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__DEPENDENCIES_15 =  \
 @BUILD_WITH_OWN_LIBOCONFIG_TRUE@	$(am__DEPENDENCIES_1) \
 @BUILD_WITH_OWN_LIBOCONFIG_TRUE@	liboconfig/liboconfig.la
 collectd_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -892,7 +1055,6 @@ collectd_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(collectd_LDFLAGS) $(LDFLAGS) -o $@
 am_collectd_nagios_OBJECTS = collectd-nagios.$(OBJEXT)
 collectd_nagios_OBJECTS = $(am_collectd_nagios_OBJECTS)
-collectd_nagios_LDADD = $(LDADD)
 collectd_nagios_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(collectd_nagios_LDFLAGS) $(LDFLAGS) -o $@
@@ -913,25 +1075,30 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(apache_la_SOURCES) $(apcups_la_SOURCES) \
 	$(apple_sensors_la_SOURCES) $(ascent_la_SOURCES) \
-	$(battery_la_SOURCES) $(cpu_la_SOURCES) $(cpufreq_la_SOURCES) \
-	$(csv_la_SOURCES) $(df_la_SOURCES) $(disk_la_SOURCES) \
+	$(battery_la_SOURCES) $(bind_la_SOURCES) $(cpu_la_SOURCES) \
+	$(cpufreq_la_SOURCES) $(csv_la_SOURCES) $(curl_la_SOURCES) \
+	$(dbi_la_SOURCES) $(df_la_SOURCES) $(disk_la_SOURCES) \
 	$(dns_la_SOURCES) $(email_la_SOURCES) $(entropy_la_SOURCES) \
 	$(exec_la_SOURCES) $(filecount_la_SOURCES) \
 	$(hddtemp_la_SOURCES) $(interface_la_SOURCES) \
 	$(ipmi_la_SOURCES) $(iptables_la_SOURCES) $(ipvs_la_SOURCES) \
 	$(irq_la_SOURCES) $(libvirt_la_SOURCES) $(load_la_SOURCES) \
-	$(logfile_la_SOURCES) $(mbmon_la_SOURCES) \
-	$(memcached_la_SOURCES) $(memory_la_SOURCES) \
-	$(multimeter_la_SOURCES) $(mysql_la_SOURCES) \
-	$(netlink_la_SOURCES) $(network_la_SOURCES) $(nfs_la_SOURCES) \
-	$(nginx_la_SOURCES) $(notify_desktop_la_SOURCES) \
-	$(notify_email_la_SOURCES) $(ntpd_la_SOURCES) \
-	$(nut_la_SOURCES) $(onewire_la_SOURCES) $(perl_la_SOURCES) \
+	$(logfile_la_SOURCES) $(match_regex_la_SOURCES) \
+	$(match_timediff_la_SOURCES) $(match_value_la_SOURCES) \
+	$(mbmon_la_SOURCES) $(memcached_la_SOURCES) \
+	$(memory_la_SOURCES) $(multimeter_la_SOURCES) \
+	$(mysql_la_SOURCES) $(netlink_la_SOURCES) \
+	$(network_la_SOURCES) $(nfs_la_SOURCES) $(nginx_la_SOURCES) \
+	$(notify_desktop_la_SOURCES) $(notify_email_la_SOURCES) \
+	$(ntpd_la_SOURCES) $(nut_la_SOURCES) $(onewire_la_SOURCES) \
+	$(openvpn_la_SOURCES) $(oracle_la_SOURCES) $(perl_la_SOURCES) \
 	$(ping_la_SOURCES) $(postgresql_la_SOURCES) \
 	$(powerdns_la_SOURCES) $(processes_la_SOURCES) \
-	$(rrdtool_la_SOURCES) $(sensors_la_SOURCES) \
-	$(serial_la_SOURCES) $(snmp_la_SOURCES) $(swap_la_SOURCES) \
-	$(syslog_la_SOURCES) $(tail_la_SOURCES) $(tape_la_SOURCES) \
+	$(rrdcached_la_SOURCES) $(rrdtool_la_SOURCES) \
+	$(sensors_la_SOURCES) $(serial_la_SOURCES) $(snmp_la_SOURCES) \
+	$(swap_la_SOURCES) $(syslog_la_SOURCES) $(tail_la_SOURCES) \
+	$(tape_la_SOURCES) $(target_notification_la_SOURCES) \
+	$(target_replace_la_SOURCES) $(target_set_la_SOURCES) \
 	$(tcpconns_la_SOURCES) $(teamspeak2_la_SOURCES) \
 	$(thermal_la_SOURCES) $(unixsock_la_SOURCES) \
 	$(users_la_SOURCES) $(uuid_la_SOURCES) $(vmem_la_SOURCES) \
@@ -942,16 +1109,21 @@ DIST_SOURCES = $(am__apache_la_SOURCES_DIST) \
 	$(am__apcups_la_SOURCES_DIST) \
 	$(am__apple_sensors_la_SOURCES_DIST) \
 	$(am__ascent_la_SOURCES_DIST) $(am__battery_la_SOURCES_DIST) \
-	$(am__cpu_la_SOURCES_DIST) $(am__cpufreq_la_SOURCES_DIST) \
-	$(am__csv_la_SOURCES_DIST) $(am__df_la_SOURCES_DIST) \
-	$(am__disk_la_SOURCES_DIST) $(am__dns_la_SOURCES_DIST) \
-	$(am__email_la_SOURCES_DIST) $(am__entropy_la_SOURCES_DIST) \
-	$(am__exec_la_SOURCES_DIST) $(am__filecount_la_SOURCES_DIST) \
+	$(am__bind_la_SOURCES_DIST) $(am__cpu_la_SOURCES_DIST) \
+	$(am__cpufreq_la_SOURCES_DIST) $(am__csv_la_SOURCES_DIST) \
+	$(am__curl_la_SOURCES_DIST) $(am__dbi_la_SOURCES_DIST) \
+	$(am__df_la_SOURCES_DIST) $(am__disk_la_SOURCES_DIST) \
+	$(am__dns_la_SOURCES_DIST) $(am__email_la_SOURCES_DIST) \
+	$(am__entropy_la_SOURCES_DIST) $(am__exec_la_SOURCES_DIST) \
+	$(am__filecount_la_SOURCES_DIST) \
 	$(am__hddtemp_la_SOURCES_DIST) \
 	$(am__interface_la_SOURCES_DIST) $(am__ipmi_la_SOURCES_DIST) \
 	$(am__iptables_la_SOURCES_DIST) $(am__ipvs_la_SOURCES_DIST) \
 	$(am__irq_la_SOURCES_DIST) $(am__libvirt_la_SOURCES_DIST) \
 	$(am__load_la_SOURCES_DIST) $(am__logfile_la_SOURCES_DIST) \
+	$(am__match_regex_la_SOURCES_DIST) \
+	$(am__match_timediff_la_SOURCES_DIST) \
+	$(am__match_value_la_SOURCES_DIST) \
 	$(am__mbmon_la_SOURCES_DIST) $(am__memcached_la_SOURCES_DIST) \
 	$(am__memory_la_SOURCES_DIST) \
 	$(am__multimeter_la_SOURCES_DIST) $(am__mysql_la_SOURCES_DIST) \
@@ -960,14 +1132,19 @@ DIST_SOURCES = $(am__apache_la_SOURCES_DIST) \
 	$(am__notify_desktop_la_SOURCES_DIST) \
 	$(am__notify_email_la_SOURCES_DIST) \
 	$(am__ntpd_la_SOURCES_DIST) $(am__nut_la_SOURCES_DIST) \
-	$(am__onewire_la_SOURCES_DIST) $(am__perl_la_SOURCES_DIST) \
+	$(am__onewire_la_SOURCES_DIST) $(am__openvpn_la_SOURCES_DIST) \
+	$(am__oracle_la_SOURCES_DIST) $(am__perl_la_SOURCES_DIST) \
 	$(am__ping_la_SOURCES_DIST) $(am__postgresql_la_SOURCES_DIST) \
 	$(am__powerdns_la_SOURCES_DIST) \
 	$(am__processes_la_SOURCES_DIST) \
+	$(am__rrdcached_la_SOURCES_DIST) \
 	$(am__rrdtool_la_SOURCES_DIST) $(am__sensors_la_SOURCES_DIST) \
 	$(am__serial_la_SOURCES_DIST) $(am__snmp_la_SOURCES_DIST) \
 	$(am__swap_la_SOURCES_DIST) $(am__syslog_la_SOURCES_DIST) \
 	$(am__tail_la_SOURCES_DIST) $(am__tape_la_SOURCES_DIST) \
+	$(am__target_notification_la_SOURCES_DIST) \
+	$(am__target_replace_la_SOURCES_DIST) \
+	$(am__target_set_la_SOURCES_DIST) \
 	$(am__tcpconns_la_SOURCES_DIST) \
 	$(am__teamspeak2_la_SOURCES_DIST) \
 	$(am__thermal_la_SOURCES_DIST) $(am__unixsock_la_SOURCES_DIST) \
@@ -991,7 +1168,7 @@ RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = libiptc liboconfig liboping
+DIST_SUBDIRS = libcollectdclient libiptc liboconfig liboping
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -1002,6 +1179,9 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BUILD_WITH_LIBCURL_CFLAGS = @BUILD_WITH_LIBCURL_CFLAGS@
 BUILD_WITH_LIBCURL_LIBS = @BUILD_WITH_LIBCURL_LIBS@
+BUILD_WITH_LIBDBI_CPPFLAGS = @BUILD_WITH_LIBDBI_CPPFLAGS@
+BUILD_WITH_LIBDBI_LDFLAGS = @BUILD_WITH_LIBDBI_LDFLAGS@
+BUILD_WITH_LIBDBI_LIBS = @BUILD_WITH_LIBDBI_LIBS@
 BUILD_WITH_LIBHAL_CFLAGS = @BUILD_WITH_LIBHAL_CFLAGS@
 BUILD_WITH_LIBHAL_LIBS = @BUILD_WITH_LIBHAL_LIBS@
 BUILD_WITH_LIBMYSQL_CFLAGS = @BUILD_WITH_LIBMYSQL_CFLAGS@
@@ -1030,6 +1210,8 @@ BUILD_WITH_LIBXMMS_CFLAGS = @BUILD_WITH_LIBXMMS_CFLAGS@
 BUILD_WITH_LIBXMMS_LIBS = @BUILD_WITH_LIBXMMS_LIBS@
 BUILD_WITH_OPENIPMI_CFLAGS = @BUILD_WITH_OPENIPMI_CFLAGS@
 BUILD_WITH_OPENIPMI_LIBS = @BUILD_WITH_OPENIPMI_LIBS@
+BUILD_WITH_ORACLE_CFLAGS = @BUILD_WITH_ORACLE_CFLAGS@
+BUILD_WITH_ORACLE_LIBS = @BUILD_WITH_ORACLE_LIBS@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -1059,6 +1241,11 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 KERNEL_CFLAGS = @KERNEL_CFLAGS@
 KERNEL_DIR = @KERNEL_DIR@
+LCC_VERSION_EXTRA = @LCC_VERSION_EXTRA@
+LCC_VERSION_MAJOR = @LCC_VERSION_MAJOR@
+LCC_VERSION_MINOR = @LCC_VERSION_MINOR@
+LCC_VERSION_PATCH = @LCC_VERSION_PATCH@
+LCC_VERSION_STRING = @LCC_VERSION_STRING@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
@@ -1138,6 +1325,7 @@ mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
+pkgconfigdir = @pkgconfigdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
@@ -1147,9 +1335,11 @@ srcdir = @srcdir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = $(am__append_1) $(am__append_2) $(am__append_3)
+SUBDIRS = libcollectdclient $(am__append_1) $(am__append_2) \
+	$(am__append_3)
 @COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
 AM_CPPFLAGS = -DPREFIX='"${prefix}"' \
 	-DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"' \
@@ -1160,15 +1350,19 @@ AM_CPPFLAGS = -DPREFIX='"${prefix}"' \
 collectd_SOURCES = collectd.c collectd.h \
 		   common.c common.h \
 		   configfile.c configfile.h \
+		   filter_chain.c filter_chain.h \
+		   meta_data.c meta_data.h \
 		   plugin.c plugin.h \
 		   utils_avltree.c utils_avltree.h \
 		   utils_cache.c utils_cache.h \
 		   utils_complain.c utils_complain.h \
 		   utils_ignorelist.c utils_ignorelist.h \
 		   utils_llist.c utils_llist.h \
+		   utils_parse_option.c utils_parse_option.h \
 		   utils_tail_match.c utils_tail_match.h \
 		   utils_match.c utils_match.h \
 		   utils_mount.c utils_mount.h \
+		   utils_subst.c utils_subst.h \
 		   utils_tail.c utils_tail.h \
 		   utils_threshold.c utils_threshold.h \
 		   types_list.c types_list.h
@@ -1180,72 +1374,86 @@ collectd_LDADD = $(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_8) $(am__append_9) $(am__append_10) \
 	$(am__append_12) $(am__append_13) $(am__append_15) \
 	$(am__append_18) $(am__append_24) $(am__append_27) \
-	$(am__append_30) $(am__append_34) $(am__append_41) \
+	$(am__append_30) $(am__append_34) $(am__append_37) \
 	$(am__append_44) $(am__append_47) $(am__append_50) \
-	$(am__append_58) $(am__append_61) $(am__append_65) \
-	$(am__append_68) $(am__append_72) $(am__append_75) \
-	$(am__append_79) $(am__append_82) $(am__append_90) \
-	$(am__append_93) $(am__append_96) $(am__append_99) \
-	$(am__append_102) $(am__append_105) $(am__append_110) \
-	$(am__append_114) $(am__append_118) $(am__append_121) \
-	$(am__append_128) $(am__append_131) $(am__append_136) \
-	$(am__append_141) $(am__append_144) $(am__append_149) \
-	$(am__append_152) $(am__append_155) $(am__append_159) \
-	$(am__append_162) $(am__append_165) $(am__append_168) \
-	$(am__append_172) $(am__append_175) $(am__append_178) \
-	$(am__append_181) $(am__append_185) $(am__append_188) \
-	$(am__append_191) $(am__append_197) $(am__append_200) \
-	$(am__append_208) $(am__append_211) $(am__append_214) \
-	$(am__append_217) $(am__append_221) $(am__append_224) \
-	$(am__append_227) $(am__append_232) $(am__append_235) \
+	$(am__append_53) $(am__append_58) $(am__append_61) \
+	$(am__append_69) $(am__append_72) $(am__append_76) \
+	$(am__append_79) $(am__append_83) $(am__append_86) \
+	$(am__append_90) $(am__append_93) $(am__append_101) \
+	$(am__append_104) $(am__append_107) $(am__append_110) \
+	$(am__append_113) $(am__append_116) $(am__append_121) \
+	$(am__append_124) $(am__append_127) $(am__append_130) \
+	$(am__append_134) $(am__append_138) $(am__append_141) \
+	$(am__append_148) $(am__append_151) $(am__append_156) \
+	$(am__append_161) $(am__append_164) $(am__append_169) \
+	$(am__append_172) $(am__append_175) $(am__append_179) \
+	$(am__append_182) $(am__append_185) $(am__append_188) \
+	$(am__append_191) $(am__append_195) $(am__append_199) \
+	$(am__append_202) $(am__append_205) $(am__append_208) \
+	$(am__append_212) $(am__append_215) $(am__append_218) \
+	$(am__append_221) $(am__append_227) $(am__append_230) \
 	$(am__append_238) $(am__append_241) $(am__append_244) \
-	$(am__append_247)
+	$(am__append_247) $(am__append_250) $(am__append_253) \
+	$(am__append_256) $(am__append_260) $(am__append_263) \
+	$(am__append_266) $(am__append_271) $(am__append_274) \
+	$(am__append_277) $(am__append_280) $(am__append_283) \
+	$(am__append_286)
 collectd_DEPENDENCIES = $(am__append_14) $(am__append_21) \
 	$(am__append_25) $(am__append_28) $(am__append_31) \
-	$(am__append_35) $(am__append_42) $(am__append_45) \
-	$(am__append_48) $(am__append_51) $(am__append_59) \
-	$(am__append_62) $(am__append_66) $(am__append_69) \
-	$(am__append_73) $(am__append_76) $(am__append_80) \
-	$(am__append_83) $(am__append_91) $(am__append_94) \
-	$(am__append_97) $(am__append_100) $(am__append_103) \
-	$(am__append_106) $(am__append_111) $(am__append_115) \
-	$(am__append_119) $(am__append_122) $(am__append_129) \
-	$(am__append_134) $(am__append_137) $(am__append_142) \
-	$(am__append_145) $(am__append_150) $(am__append_153) \
-	$(am__append_156) $(am__append_160) $(am__append_163) \
-	$(am__append_166) $(am__append_169) $(am__append_173) \
-	$(am__append_176) $(am__append_179) $(am__append_182) \
+	$(am__append_35) $(am__append_38) $(am__append_45) \
+	$(am__append_48) $(am__append_51) $(am__append_56) \
+	$(am__append_59) $(am__append_62) $(am__append_70) \
+	$(am__append_73) $(am__append_77) $(am__append_80) \
+	$(am__append_84) $(am__append_87) $(am__append_91) \
+	$(am__append_94) $(am__append_102) $(am__append_105) \
+	$(am__append_108) $(am__append_111) $(am__append_114) \
+	$(am__append_117) $(am__append_122) $(am__append_125) \
+	$(am__append_128) $(am__append_131) $(am__append_135) \
+	$(am__append_139) $(am__append_142) $(am__append_149) \
+	$(am__append_154) $(am__append_157) $(am__append_162) \
+	$(am__append_165) $(am__append_170) $(am__append_173) \
+	$(am__append_176) $(am__append_180) $(am__append_183) \
 	$(am__append_186) $(am__append_189) $(am__append_192) \
-	$(am__append_198) $(am__append_201) $(am__append_209) \
-	$(am__append_212) $(am__append_215) $(am__append_218) \
-	$(am__append_222) $(am__append_225) $(am__append_228) \
-	$(am__append_233) $(am__append_236) $(am__append_239) \
-	$(am__append_242) $(am__append_245) $(am__append_248)
+	$(am__append_196) $(am__append_200) $(am__append_203) \
+	$(am__append_206) $(am__append_209) $(am__append_213) \
+	$(am__append_216) $(am__append_219) $(am__append_222) \
+	$(am__append_228) $(am__append_231) $(am__append_239) \
+	$(am__append_242) $(am__append_245) $(am__append_248) \
+	$(am__append_251) $(am__append_254) $(am__append_257) \
+	$(am__append_261) $(am__append_264) $(am__append_267) \
+	$(am__append_272) $(am__append_275) $(am__append_278) \
+	$(am__append_281) $(am__append_284) $(am__append_287)
 collectdmon_SOURCES = collectdmon.c
 collectdmon_CPPFLAGS = $(AM_CPPFLAGS)
 collectd_nagios_SOURCES = collectd-nagios.c
 collectd_nagios_LDFLAGS = $(am__append_16)
+collectd_nagios_LDADD = libcollectdclient/libcollectdclient.la
+collectd_nagios_DEPENDENCIES = libcollectdclient/libcollectdclient.la
 pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 	$(am__append_26) $(am__append_29) $(am__append_32) \
-	$(am__append_36) $(am__append_43) $(am__append_46) \
-	$(am__append_49) $(am__append_52) $(am__append_60) \
-	$(am__append_63) $(am__append_67) $(am__append_70) \
-	$(am__append_74) $(am__append_77) $(am__append_81) \
-	$(am__append_88) $(am__append_92) $(am__append_95) \
-	$(am__append_98) $(am__append_101) $(am__append_104) \
-	$(am__append_109) $(am__append_112) $(am__append_116) \
-	$(am__append_120) $(am__append_127) $(am__append_130) \
-	$(am__append_135) $(am__append_138) $(am__append_143) \
-	$(am__append_146) $(am__append_151) $(am__append_154) \
-	$(am__append_157) $(am__append_161) $(am__append_164) \
-	$(am__append_167) $(am__append_170) $(am__append_174) \
-	$(am__append_177) $(am__append_180) $(am__append_184) \
+	$(am__append_36) $(am__append_39) $(am__append_46) \
+	$(am__append_49) $(am__append_52) $(am__append_57) \
+	$(am__append_60) $(am__append_63) $(am__append_71) \
+	$(am__append_74) $(am__append_78) $(am__append_81) \
+	$(am__append_85) $(am__append_88) $(am__append_92) \
+	$(am__append_99) $(am__append_103) $(am__append_106) \
+	$(am__append_109) $(am__append_112) $(am__append_115) \
+	$(am__append_120) $(am__append_123) $(am__append_126) \
+	$(am__append_129) $(am__append_132) $(am__append_136) \
+	$(am__append_140) $(am__append_147) $(am__append_150) \
+	$(am__append_155) $(am__append_158) $(am__append_163) \
+	$(am__append_166) $(am__append_171) $(am__append_174) \
+	$(am__append_177) $(am__append_181) $(am__append_184) \
 	$(am__append_187) $(am__append_190) $(am__append_193) \
-	$(am__append_199) $(am__append_207) $(am__append_210) \
-	$(am__append_213) $(am__append_216) $(am__append_220) \
-	$(am__append_223) $(am__append_226) $(am__append_229) \
-	$(am__append_234) $(am__append_237) $(am__append_240) \
-	$(am__append_243) $(am__append_246)
+	$(am__append_197) $(am__append_201) $(am__append_204) \
+	$(am__append_207) $(am__append_211) $(am__append_214) \
+	$(am__append_217) $(am__append_220) $(am__append_223) \
+	$(am__append_229) $(am__append_237) $(am__append_240) \
+	$(am__append_243) $(am__append_246) $(am__append_249) \
+	$(am__append_252) $(am__append_255) $(am__append_259) \
+	$(am__append_262) $(am__append_265) $(am__append_268) \
+	$(am__append_273) $(am__append_276) $(am__append_279) \
+	$(am__append_282) $(am__append_285)
 @BUILD_PLUGIN_APACHE_TRUE@apache_la_SOURCES = apache.c
 @BUILD_PLUGIN_APACHE_TRUE@apache_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_APACHE_TRUE@apache_la_CFLAGS = $(AM_CFLAGS) \
@@ -1265,52 +1473,67 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_BATTERY_TRUE@battery_la_SOURCES = battery.c
 @BUILD_PLUGIN_BATTERY_TRUE@battery_la_LDFLAGS = -module -avoid-version \
 @BUILD_PLUGIN_BATTERY_TRUE@	$(am__append_33)
+@BUILD_PLUGIN_BIND_TRUE@bind_la_SOURCES = bind.c
+@BUILD_PLUGIN_BIND_TRUE@bind_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_BIND_TRUE@bind_la_CFLAGS = $(AM_CFLAGS) \
+@BUILD_PLUGIN_BIND_TRUE@		$(BUILD_WITH_LIBCURL_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
+
+@BUILD_PLUGIN_BIND_TRUE@bind_la_LIBADD = $(BUILD_WITH_LIBCURL_LIBS) $(BUILD_WITH_LIBXML2_LIBS)
 @BUILD_PLUGIN_CPU_TRUE@cpu_la_SOURCES = cpu.c
-@BUILD_PLUGIN_CPU_TRUE@cpu_la_CFLAGS = $(AM_CFLAGS) $(am__append_39)
+@BUILD_PLUGIN_CPU_TRUE@cpu_la_CFLAGS = $(AM_CFLAGS) $(am__append_42)
 @BUILD_PLUGIN_CPU_TRUE@cpu_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_CPU_TRUE@	$(am__append_37) $(am__append_38)
-@BUILD_PLUGIN_CPU_TRUE@cpu_la_LIBADD = $(am__append_40)
+@BUILD_PLUGIN_CPU_TRUE@	$(am__append_40) $(am__append_41)
+@BUILD_PLUGIN_CPU_TRUE@cpu_la_LIBADD = $(am__append_43)
 @BUILD_PLUGIN_CPUFREQ_TRUE@cpufreq_la_SOURCES = cpufreq.c
 @BUILD_PLUGIN_CPUFREQ_TRUE@cpufreq_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_CSV_TRUE@csv_la_SOURCES = csv.c
 @BUILD_PLUGIN_CSV_TRUE@csv_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_CURL_TRUE@curl_la_SOURCES = curl.c
+@BUILD_PLUGIN_CURL_TRUE@curl_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_CURL_TRUE@curl_la_CFLAGS = $(AM_CFLAGS) $(am__append_54)
+@BUILD_PLUGIN_CURL_TRUE@curl_la_LIBADD = $(am__append_55)
+@BUILD_PLUGIN_DBI_TRUE@dbi_la_SOURCES = dbi.c \
+@BUILD_PLUGIN_DBI_TRUE@		 utils_db_query.c utils_db_query.h
+
+@BUILD_PLUGIN_DBI_TRUE@dbi_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBDBI_CPPFLAGS)
+@BUILD_PLUGIN_DBI_TRUE@dbi_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBDBI_LDFLAGS)
+@BUILD_PLUGIN_DBI_TRUE@dbi_la_LIBADD = $(BUILD_WITH_LIBDBI_LIBS)
 @BUILD_PLUGIN_DF_TRUE@df_la_SOURCES = df.c
 @BUILD_PLUGIN_DF_TRUE@df_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_DISK_TRUE@disk_la_SOURCES = disk.c
-@BUILD_PLUGIN_DISK_TRUE@disk_la_CFLAGS = $(AM_CFLAGS) $(am__append_56)
+@BUILD_PLUGIN_DISK_TRUE@disk_la_CFLAGS = $(AM_CFLAGS) $(am__append_67)
 @BUILD_PLUGIN_DISK_TRUE@disk_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_DISK_TRUE@	$(am__append_53) $(am__append_54) \
-@BUILD_PLUGIN_DISK_TRUE@	$(am__append_55)
-@BUILD_PLUGIN_DISK_TRUE@disk_la_LIBADD = $(am__append_57)
+@BUILD_PLUGIN_DISK_TRUE@	$(am__append_64) $(am__append_65) \
+@BUILD_PLUGIN_DISK_TRUE@	$(am__append_66)
+@BUILD_PLUGIN_DISK_TRUE@disk_la_LIBADD = $(am__append_68)
 @BUILD_PLUGIN_DNS_TRUE@dns_la_SOURCES = dns.c utils_dns.c utils_dns.h
 @BUILD_PLUGIN_DNS_TRUE@dns_la_LDFLAGS = -module -avoid-version -lpcap -lpthread
 @BUILD_PLUGIN_EMAIL_TRUE@email_la_SOURCES = email.c
 @BUILD_PLUGIN_EMAIL_TRUE@email_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_EMAIL_TRUE@	$(am__append_64)
+@BUILD_PLUGIN_EMAIL_TRUE@	$(am__append_75)
 @BUILD_PLUGIN_ENTROPY_TRUE@entropy_la_SOURCES = entropy.c
 @BUILD_PLUGIN_ENTROPY_TRUE@entropy_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_EXEC_TRUE@exec_la_SOURCES = exec.c \
-@BUILD_PLUGIN_EXEC_TRUE@		  utils_parse_option.h utils_parse_option.c \
 @BUILD_PLUGIN_EXEC_TRUE@		  utils_cmd_putnotif.c utils_cmd_putnotif.h \
 @BUILD_PLUGIN_EXEC_TRUE@		  utils_cmd_putval.c utils_cmd_putval.h
 
 @BUILD_PLUGIN_EXEC_TRUE@exec_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_EXEC_TRUE@	$(am__append_71)
+@BUILD_PLUGIN_EXEC_TRUE@	$(am__append_82)
 @BUILD_PLUGIN_FILECOUNT_TRUE@filecount_la_SOURCES = filecount.c
 @BUILD_PLUGIN_FILECOUNT_TRUE@filecount_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_SOURCES = hddtemp.c
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_HDDTEMP_TRUE@	$(am__append_78)
+@BUILD_PLUGIN_HDDTEMP_TRUE@	$(am__append_89)
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_SOURCES = interface.c
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_84)
+@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_95)
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_LDFLAGS = -module \
-@BUILD_PLUGIN_INTERFACE_TRUE@	-avoid-version $(am__append_86) \
-@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_87)
-@BUILD_PLUGIN_INTERFACE_TRUE@interface_la_LIBADD = $(am__append_85)
+@BUILD_PLUGIN_INTERFACE_TRUE@	-avoid-version $(am__append_97) \
+@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_98)
+@BUILD_PLUGIN_INTERFACE_TRUE@interface_la_LIBADD = $(am__append_96)
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_SOURCES = iptables.c
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_LDFLAGS = -module \
-@BUILD_PLUGIN_IPTABLES_TRUE@	-avoid-version $(am__append_89)
+@BUILD_PLUGIN_IPTABLES_TRUE@	-avoid-version $(am__append_100)
 @BUILD_PLUGIN_IPTABLES_TRUE@@BUILD_WITH_OWN_LIBIPTC_TRUE@iptables_la_LIBADD = libiptc/libiptc.la
 @BUILD_PLUGIN_IPTABLES_TRUE@@BUILD_WITH_OWN_LIBIPTC_TRUE@iptables_la_DEPENDENCIES = libiptc/libiptc.la
 @BUILD_PLUGIN_IPMI_TRUE@ipmi_la_SOURCES = ipmi.c
@@ -1318,7 +1541,7 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_IPMI_TRUE@ipmi_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_IPMI_TRUE@ipmi_la_LIBADD = $(BUILD_WITH_OPENIPMI_LIBS)
 @BUILD_PLUGIN_IPVS_TRUE@ipvs_la_SOURCES = ipvs.c
-@BUILD_PLUGIN_IPVS_TRUE@ipvs_la_CFLAGS = $(KERNEL_CFLAGS)
+@BUILD_PLUGIN_IPVS_TRUE@ipvs_la_CFLAGS = $(AM_CFLAGS) $(KERNEL_CFLAGS)
 @BUILD_PLUGIN_IPVS_TRUE@ipvs_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_IRQ_TRUE@irq_la_SOURCES = irq.c
 @BUILD_PLUGIN_IRQ_TRUE@irq_la_LDFLAGS = -module -avoid-version
@@ -1330,44 +1553,50 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_LIBVIRT_TRUE@libvirt_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_LOAD_TRUE@load_la_SOURCES = load.c
 @BUILD_PLUGIN_LOAD_TRUE@load_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_LOAD_TRUE@	$(am__append_107)
+@BUILD_PLUGIN_LOAD_TRUE@	$(am__append_118)
 @BUILD_PLUGIN_LOAD_TRUE@load_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_LOAD_TRUE@load_la_LIBADD = $(am__append_108)
+@BUILD_PLUGIN_LOAD_TRUE@load_la_LIBADD = $(am__append_119)
 @BUILD_PLUGIN_LOGFILE_TRUE@logfile_la_SOURCES = logfile.c
 @BUILD_PLUGIN_LOGFILE_TRUE@logfile_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@match_regex_la_SOURCES = match_regex.c
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@match_regex_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@match_timediff_la_SOURCES = match_timediff.c
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@match_timediff_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@match_value_la_SOURCES = match_value.c
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@match_value_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_MBMON_TRUE@mbmon_la_SOURCES = mbmon.c
 @BUILD_PLUGIN_MBMON_TRUE@mbmon_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_MBMON_TRUE@	$(am__append_113)
+@BUILD_PLUGIN_MBMON_TRUE@	$(am__append_133)
 @BUILD_PLUGIN_MEMCACHED_TRUE@memcached_la_SOURCES = memcached.c
 @BUILD_PLUGIN_MEMCACHED_TRUE@memcached_la_LDFLAGS = -module \
-@BUILD_PLUGIN_MEMCACHED_TRUE@	-avoid-version $(am__append_117)
+@BUILD_PLUGIN_MEMCACHED_TRUE@	-avoid-version $(am__append_137)
 @BUILD_PLUGIN_MEMCACHED_TRUE@memcached_la_LIBADD = 
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_SOURCES = memory.c
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_125)
+@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_145)
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_MEMORY_TRUE@memory_la_LIBADD = $(am__append_123) \
-@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_124) $(am__append_126)
+@BUILD_PLUGIN_MEMORY_TRUE@memory_la_LIBADD = $(am__append_143) \
+@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_144) $(am__append_146)
 @BUILD_PLUGIN_MULTIMETER_TRUE@multimeter_la_SOURCES = multimeter.c
 @BUILD_PLUGIN_MULTIMETER_TRUE@multimeter_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_SOURCES = mysql.c
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_MYSQL_TRUE@	$(am__append_132)
-@BUILD_PLUGIN_MYSQL_TRUE@mysql_la_LIBADD = $(am__append_133)
+@BUILD_PLUGIN_MYSQL_TRUE@	$(am__append_152)
+@BUILD_PLUGIN_MYSQL_TRUE@mysql_la_LIBADD = $(am__append_153)
 @BUILD_PLUGIN_NETLINK_TRUE@netlink_la_SOURCES = netlink.c
 @BUILD_PLUGIN_NETLINK_TRUE@netlink_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_NETLINK_TRUE@netlink_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBNETLINK_CFLAGS)
 @BUILD_PLUGIN_NETLINK_TRUE@netlink_la_LIBADD = $(BUILD_WITH_LIBNETLINK_LIBS)
 @BUILD_PLUGIN_NETWORK_TRUE@network_la_SOURCES = network.c network.h
 @BUILD_PLUGIN_NETWORK_TRUE@network_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_NETWORK_TRUE@	$(am__append_139) $(am__append_140)
+@BUILD_PLUGIN_NETWORK_TRUE@	$(am__append_159) $(am__append_160)
 @BUILD_PLUGIN_NFS_TRUE@nfs_la_SOURCES = nfs.c
 @BUILD_PLUGIN_NFS_TRUE@nfs_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_NGINX_TRUE@nginx_la_SOURCES = nginx.c
 @BUILD_PLUGIN_NGINX_TRUE@nginx_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_NGINX_TRUE@	$(am__append_147)
-@BUILD_PLUGIN_NGINX_TRUE@nginx_la_LIBADD = $(am__append_148)
+@BUILD_PLUGIN_NGINX_TRUE@	$(am__append_167)
+@BUILD_PLUGIN_NGINX_TRUE@nginx_la_LIBADD = $(am__append_168)
 @BUILD_PLUGIN_NGINX_TRUE@nginx_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@notify_desktop_la_SOURCES = notify_desktop.c
 @BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@notify_desktop_la_CFLAGS = $(AM_CFLAGS) $(LIBNOTIFY_CFLAGS)
@@ -1376,7 +1605,7 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@notify_email_la_LDFLAGS = -L/usr/local/lib -lesmtp -lssl -lcrypto -pthread -module -avoid-version
 @BUILD_PLUGIN_NTPD_TRUE@ntpd_la_SOURCES = ntpd.c
 @BUILD_PLUGIN_NTPD_TRUE@ntpd_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_NTPD_TRUE@	$(am__append_158)
+@BUILD_PLUGIN_NTPD_TRUE@	$(am__append_178)
 @BUILD_PLUGIN_NUT_TRUE@nut_la_SOURCES = nut.c
 @BUILD_PLUGIN_NUT_TRUE@nut_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBUPSCLIENT_CFLAGS)
 @BUILD_PLUGIN_NUT_TRUE@nut_la_LDFLAGS = -module -avoid-version -lpthread $(BUILD_WITH_LIBUPSCLIENT_LIBS)
@@ -1385,23 +1614,35 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_CPPFLAGS = $(BUILD_WITH_LIBOWCAPI_CPPFLAGS)
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_LIBADD = $(BUILD_WITH_LIBOWCAPI_LIBS)
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_OPENVPN_TRUE@openvpn_la_SOURCES = openvpn.c
+@BUILD_PLUGIN_OPENVPN_TRUE@openvpn_la_CFLAGS = $(AM_CFLAGS)
+@BUILD_PLUGIN_OPENVPN_TRUE@openvpn_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_ORACLE_TRUE@oracle_la_SOURCES = oracle.c \
+@BUILD_PLUGIN_ORACLE_TRUE@	utils_db_query.c utils_db_query.h
+
+@BUILD_PLUGIN_ORACLE_TRUE@oracle_la_CFLAGS = $(AM_CFLAGS)
+@BUILD_PLUGIN_ORACLE_TRUE@oracle_la_CPPFLAGS = $(BUILD_WITH_ORACLE_CFLAGS)
+@BUILD_PLUGIN_ORACLE_TRUE@oracle_la_LIBADD = $(BUILD_WITH_ORACLE_LIBS)
+@BUILD_PLUGIN_ORACLE_TRUE@oracle_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_PERL_TRUE@perl_la_SOURCES = perl.c
 # Despite C99 providing the "bool" type thru stdbool.h, Perl defines its own
 # version of that type if HAS_BOOL is not defined... *sigh*
 @BUILD_PLUGIN_PERL_TRUE@perl_la_CPPFLAGS = $(AM_CPPFLAGS) -DHAS_BOOL=1
-@BUILD_PLUGIN_PERL_TRUE@perl_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_PERL_TRUE@		$(PERL_CFLAGS) \
-@BUILD_PLUGIN_PERL_TRUE@		-DXS_VERSION=\"$(VERSION)\" -DVERSION=\"$(VERSION)\"
-
+@BUILD_PLUGIN_PERL_TRUE@perl_la_CFLAGS = $(AM_CFLAGS) $(PERL_CFLAGS) \
+@BUILD_PLUGIN_PERL_TRUE@	-DXS_VERSION=\"$(VERSION)\" \
+@BUILD_PLUGIN_PERL_TRUE@	-DVERSION=\"$(VERSION)\" \
+@BUILD_PLUGIN_PERL_TRUE@	$(am__append_194)
 @BUILD_PLUGIN_PERL_TRUE@perl_la_LDFLAGS = -module -avoid-version \
 @BUILD_PLUGIN_PERL_TRUE@		$(PERL_LDFLAGS)
 
 @BUILD_PLUGIN_PING_TRUE@ping_la_SOURCES = ping.c
 @BUILD_PLUGIN_PING_TRUE@ping_la_LDFLAGS = -module -avoid-version \
-@BUILD_PLUGIN_PING_TRUE@	$(am__append_171)
+@BUILD_PLUGIN_PING_TRUE@	$(am__append_198)
 @BUILD_PLUGIN_PING_TRUE@@BUILD_WITH_OWN_LIBOPING_TRUE@ping_la_LIBADD = liboping/liboping.la
 @BUILD_PLUGIN_PING_TRUE@@BUILD_WITH_OWN_LIBOPING_TRUE@ping_la_DEPENDENCIES = liboping/liboping.la
-@BUILD_PLUGIN_POSTGRESQL_TRUE@postgresql_la_SOURCES = postgresql.c
+@BUILD_PLUGIN_POSTGRESQL_TRUE@postgresql_la_SOURCES = postgresql.c \
+@BUILD_PLUGIN_POSTGRESQL_TRUE@		 utils_db_query.c utils_db_query.h
+
 @BUILD_PLUGIN_POSTGRESQL_TRUE@postgresql_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBPQ_CPPFLAGS)
 @BUILD_PLUGIN_POSTGRESQL_TRUE@postgresql_la_LDFLAGS = -module -avoid-version \
 @BUILD_PLUGIN_POSTGRESQL_TRUE@		$(BUILD_WITH_LIBPQ_LDFLAGS) -lpq
@@ -1410,8 +1651,12 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_POWERDNS_TRUE@powerdns_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_PROCESSES_TRUE@processes_la_SOURCES = processes.c
 @BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LIBADD = $(am__append_183)
-@BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_SOURCES = rrdtool.c
+@BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LIBADD = $(am__append_210)
+@BUILD_PLUGIN_RRDCACHED_TRUE@rrdcached_la_SOURCES = rrdcached.c utils_rrdcreate.c utils_rrdcreate.h
+@BUILD_PLUGIN_RRDCACHED_TRUE@rrdcached_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_RRDCACHED_TRUE@rrdcached_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBRRD_CFLAGS)
+@BUILD_PLUGIN_RRDCACHED_TRUE@rrdcached_la_LIBADD = $(BUILD_WITH_LIBRRD_LDFLAGS)
+@BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_SOURCES = rrdtool.c utils_rrdcreate.c utils_rrdcreate.h
 @BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBRRD_CFLAGS)
 @BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_LIBADD = $(BUILD_WITH_LIBRRD_LDFLAGS)
@@ -1424,31 +1669,36 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_SNMP_TRUE@snmp_la_SOURCES = snmp.c
 @BUILD_PLUGIN_SNMP_TRUE@snmp_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_SNMP_TRUE@snmp_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_194)
-@BUILD_PLUGIN_SNMP_TRUE@snmp_la_LIBADD = $(am__append_195) \
-@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_196)
+@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_224)
+@BUILD_PLUGIN_SNMP_TRUE@snmp_la_LIBADD = $(am__append_225) \
+@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_226)
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_SOURCES = swap.c
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_205)
+@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_235)
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_SWAP_TRUE@swap_la_LIBADD = $(am__append_202) \
-@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_203) $(am__append_204) \
-@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_206)
+@BUILD_PLUGIN_SWAP_TRUE@swap_la_LIBADD = $(am__append_232) \
+@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_233) $(am__append_234) \
+@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_236)
 @BUILD_PLUGIN_SYSLOG_TRUE@syslog_la_SOURCES = syslog.c
 @BUILD_PLUGIN_SYSLOG_TRUE@syslog_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_TAIL_TRUE@tail_la_SOURCES = tail.c
 @BUILD_PLUGIN_TAIL_TRUE@tail_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_TAPE_TRUE@tape_la_SOURCES = tape.c
 @BUILD_PLUGIN_TAPE_TRUE@tape_la_LDFLAGS = -module -avoid-version -lkstat -ldevinfo
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@target_notification_la_SOURCES = target_notification.c
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@target_notification_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@target_replace_la_SOURCES = target_replace.c
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@target_replace_la_LDFLAGS = -module -avoid-version
+@BUILD_PLUGIN_TARGET_SET_TRUE@target_set_la_SOURCES = target_set.c
+@BUILD_PLUGIN_TARGET_SET_TRUE@target_set_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_SOURCES = tcpconns.c
 @BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_LIBADD = $(am__append_219)
+@BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_LIBADD = $(am__append_258)
 @BUILD_PLUGIN_TEAMSPEAK2_TRUE@teamspeak2_la_SOURCES = teamspeak2.c
 @BUILD_PLUGIN_TEAMSPEAK2_TRUE@teamspeak2_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_THERMAL_TRUE@thermal_la_SOURCES = thermal.c
 @BUILD_PLUGIN_THERMAL_TRUE@thermal_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_SOURCES = unixsock.c \
-@BUILD_PLUGIN_UNIXSOCK_TRUE@		      utils_parse_option.h utils_parse_option.c \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@		      utils_cmd_flush.h utils_cmd_flush.c \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@		      utils_cmd_getval.h utils_cmd_getval.c \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@		      utils_cmd_listval.h utils_cmd_listval.c \
@@ -1458,11 +1708,11 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_LDFLAGS = -module -avoid-version -lpthread
 @BUILD_PLUGIN_USERS_TRUE@users_la_SOURCES = users.c
 @BUILD_PLUGIN_USERS_TRUE@users_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_USERS_TRUE@	$(am__append_230)
+@BUILD_PLUGIN_USERS_TRUE@	$(am__append_269)
 @BUILD_PLUGIN_USERS_TRUE@users_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_USERS_TRUE@users_la_LIBADD = $(am__append_231)
+@BUILD_PLUGIN_USERS_TRUE@users_la_LIBADD = $(am__append_270)
 @BUILD_PLUGIN_UUID_TRUE@uuid_la_SOURCES = uuid.c
-@BUILD_PLUGIN_UUID_TRUE@uuid_la_CFLAGS = $(BUILD_WITH_LIBHAL_CFLAGS)
+@BUILD_PLUGIN_UUID_TRUE@uuid_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBHAL_CFLAGS)
 @BUILD_PLUGIN_UUID_TRUE@uuid_la_LIBADD = $(BUILD_WITH_LIBHAL_LIBS)
 @BUILD_PLUGIN_UUID_TRUE@uuid_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_VMEM_TRUE@vmem_la_SOURCES = vmem.c
@@ -1575,12 +1825,18 @@ ascent.la: $(ascent_la_OBJECTS) $(ascent_la_DEPENDENCIES)
 	$(ascent_la_LINK) $(am_ascent_la_rpath) $(ascent_la_OBJECTS) $(ascent_la_LIBADD) $(LIBS)
 battery.la: $(battery_la_OBJECTS) $(battery_la_DEPENDENCIES) 
 	$(battery_la_LINK) $(am_battery_la_rpath) $(battery_la_OBJECTS) $(battery_la_LIBADD) $(LIBS)
+bind.la: $(bind_la_OBJECTS) $(bind_la_DEPENDENCIES) 
+	$(bind_la_LINK) $(am_bind_la_rpath) $(bind_la_OBJECTS) $(bind_la_LIBADD) $(LIBS)
 cpu.la: $(cpu_la_OBJECTS) $(cpu_la_DEPENDENCIES) 
 	$(cpu_la_LINK) $(am_cpu_la_rpath) $(cpu_la_OBJECTS) $(cpu_la_LIBADD) $(LIBS)
 cpufreq.la: $(cpufreq_la_OBJECTS) $(cpufreq_la_DEPENDENCIES) 
 	$(cpufreq_la_LINK) $(am_cpufreq_la_rpath) $(cpufreq_la_OBJECTS) $(cpufreq_la_LIBADD) $(LIBS)
 csv.la: $(csv_la_OBJECTS) $(csv_la_DEPENDENCIES) 
 	$(csv_la_LINK) $(am_csv_la_rpath) $(csv_la_OBJECTS) $(csv_la_LIBADD) $(LIBS)
+curl.la: $(curl_la_OBJECTS) $(curl_la_DEPENDENCIES) 
+	$(curl_la_LINK) $(am_curl_la_rpath) $(curl_la_OBJECTS) $(curl_la_LIBADD) $(LIBS)
+dbi.la: $(dbi_la_OBJECTS) $(dbi_la_DEPENDENCIES) 
+	$(dbi_la_LINK) $(am_dbi_la_rpath) $(dbi_la_OBJECTS) $(dbi_la_LIBADD) $(LIBS)
 df.la: $(df_la_OBJECTS) $(df_la_DEPENDENCIES) 
 	$(df_la_LINK) $(am_df_la_rpath) $(df_la_OBJECTS) $(df_la_LIBADD) $(LIBS)
 disk.la: $(disk_la_OBJECTS) $(disk_la_DEPENDENCIES) 
@@ -1613,6 +1869,12 @@ load.la: $(load_la_OBJECTS) $(load_la_DEPENDENCIES)
 	$(load_la_LINK) $(am_load_la_rpath) $(load_la_OBJECTS) $(load_la_LIBADD) $(LIBS)
 logfile.la: $(logfile_la_OBJECTS) $(logfile_la_DEPENDENCIES) 
 	$(logfile_la_LINK) $(am_logfile_la_rpath) $(logfile_la_OBJECTS) $(logfile_la_LIBADD) $(LIBS)
+match_regex.la: $(match_regex_la_OBJECTS) $(match_regex_la_DEPENDENCIES) 
+	$(match_regex_la_LINK) $(am_match_regex_la_rpath) $(match_regex_la_OBJECTS) $(match_regex_la_LIBADD) $(LIBS)
+match_timediff.la: $(match_timediff_la_OBJECTS) $(match_timediff_la_DEPENDENCIES) 
+	$(match_timediff_la_LINK) $(am_match_timediff_la_rpath) $(match_timediff_la_OBJECTS) $(match_timediff_la_LIBADD) $(LIBS)
+match_value.la: $(match_value_la_OBJECTS) $(match_value_la_DEPENDENCIES) 
+	$(match_value_la_LINK) $(am_match_value_la_rpath) $(match_value_la_OBJECTS) $(match_value_la_LIBADD) $(LIBS)
 mbmon.la: $(mbmon_la_OBJECTS) $(mbmon_la_DEPENDENCIES) 
 	$(mbmon_la_LINK) $(am_mbmon_la_rpath) $(mbmon_la_OBJECTS) $(mbmon_la_LIBADD) $(LIBS)
 memcached.la: $(memcached_la_OBJECTS) $(memcached_la_DEPENDENCIES) 
@@ -1641,6 +1903,10 @@ nut.la: $(nut_la_OBJECTS) $(nut_la_DEPENDENCIES)
 	$(nut_la_LINK) $(am_nut_la_rpath) $(nut_la_OBJECTS) $(nut_la_LIBADD) $(LIBS)
 onewire.la: $(onewire_la_OBJECTS) $(onewire_la_DEPENDENCIES) 
 	$(onewire_la_LINK) $(am_onewire_la_rpath) $(onewire_la_OBJECTS) $(onewire_la_LIBADD) $(LIBS)
+openvpn.la: $(openvpn_la_OBJECTS) $(openvpn_la_DEPENDENCIES) 
+	$(openvpn_la_LINK) $(am_openvpn_la_rpath) $(openvpn_la_OBJECTS) $(openvpn_la_LIBADD) $(LIBS)
+oracle.la: $(oracle_la_OBJECTS) $(oracle_la_DEPENDENCIES) 
+	$(oracle_la_LINK) $(am_oracle_la_rpath) $(oracle_la_OBJECTS) $(oracle_la_LIBADD) $(LIBS)
 perl.la: $(perl_la_OBJECTS) $(perl_la_DEPENDENCIES) 
 	$(perl_la_LINK) $(am_perl_la_rpath) $(perl_la_OBJECTS) $(perl_la_LIBADD) $(LIBS)
 ping.la: $(ping_la_OBJECTS) $(ping_la_DEPENDENCIES) 
@@ -1651,6 +1917,8 @@ powerdns.la: $(powerdns_la_OBJECTS) $(powerdns_la_DEPENDENCIES)
 	$(powerdns_la_LINK) $(am_powerdns_la_rpath) $(powerdns_la_OBJECTS) $(powerdns_la_LIBADD) $(LIBS)
 processes.la: $(processes_la_OBJECTS) $(processes_la_DEPENDENCIES) 
 	$(processes_la_LINK) $(am_processes_la_rpath) $(processes_la_OBJECTS) $(processes_la_LIBADD) $(LIBS)
+rrdcached.la: $(rrdcached_la_OBJECTS) $(rrdcached_la_DEPENDENCIES) 
+	$(rrdcached_la_LINK) $(am_rrdcached_la_rpath) $(rrdcached_la_OBJECTS) $(rrdcached_la_LIBADD) $(LIBS)
 rrdtool.la: $(rrdtool_la_OBJECTS) $(rrdtool_la_DEPENDENCIES) 
 	$(rrdtool_la_LINK) $(am_rrdtool_la_rpath) $(rrdtool_la_OBJECTS) $(rrdtool_la_LIBADD) $(LIBS)
 sensors.la: $(sensors_la_OBJECTS) $(sensors_la_DEPENDENCIES) 
@@ -1667,6 +1935,12 @@ tail.la: $(tail_la_OBJECTS) $(tail_la_DEPENDENCIES)
 	$(tail_la_LINK) $(am_tail_la_rpath) $(tail_la_OBJECTS) $(tail_la_LIBADD) $(LIBS)
 tape.la: $(tape_la_OBJECTS) $(tape_la_DEPENDENCIES) 
 	$(tape_la_LINK) $(am_tape_la_rpath) $(tape_la_OBJECTS) $(tape_la_LIBADD) $(LIBS)
+target_notification.la: $(target_notification_la_OBJECTS) $(target_notification_la_DEPENDENCIES) 
+	$(target_notification_la_LINK) $(am_target_notification_la_rpath) $(target_notification_la_OBJECTS) $(target_notification_la_LIBADD) $(LIBS)
+target_replace.la: $(target_replace_la_OBJECTS) $(target_replace_la_DEPENDENCIES) 
+	$(target_replace_la_LINK) $(am_target_replace_la_rpath) $(target_replace_la_OBJECTS) $(target_replace_la_LIBADD) $(LIBS)
+target_set.la: $(target_set_la_OBJECTS) $(target_set_la_DEPENDENCIES) 
+	$(target_set_la_LINK) $(am_target_set_la_rpath) $(target_set_la_OBJECTS) $(target_set_la_LIBADD) $(LIBS)
 tcpconns.la: $(tcpconns_la_OBJECTS) $(tcpconns_la_DEPENDENCIES) 
 	$(tcpconns_la_LINK) $(am_tcpconns_la_rpath) $(tcpconns_la_OBJECTS) $(tcpconns_la_LIBADD) $(LIBS)
 teamspeak2.la: $(teamspeak2_la_OBJECTS) $(teamspeak2_la_DEPENDENCIES) 
@@ -1764,9 +2038,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apple_sensors.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ascent_la-ascent.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/battery.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bind_la-bind.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-collectd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-configfile.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-filter_chain.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-meta_data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-nagios.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-plugin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-types_list.Po@am__quote@
@@ -1777,6 +2054,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_llist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_mount.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_parse_option.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_subst.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_tail.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_tail_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_threshold.Po@am__quote@
@@ -1784,6 +2063,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu_la-cpu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpufreq.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/csv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/curl_la-curl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbi_la-dbi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbi_la-utils_db_query.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/disk_la-disk.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns.Plo@am__quote@
@@ -1800,6 +2082,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libvirt_la-libvirt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/load_la-load.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logfile.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match_regex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match_timediff.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match_value.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbmon.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memcached.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory_la-memory.Plo@am__quote@
@@ -1814,12 +2099,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nut_la-nut.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/onewire_la-onewire.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openvpn_la-openvpn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oracle_la-oracle.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oracle_la-utils_db_query.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/perl_la-perl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ping.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/postgresql_la-postgresql.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/postgresql_la-utils_db_query.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/powerdns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/processes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rrdcached_la-rrdcached.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rrdcached_la-utils_rrdcreate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rrdtool_la-rrdtool.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rrdtool_la-utils_rrdcreate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sensors_la-sensors.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/serial.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snmp_la-snmp.Plo@am__quote@
@@ -1827,6 +2119,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/syslog.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tape.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/target_notification.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/target_replace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/target_set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpconns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/teamspeak2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thermal.Plo@am__quote@
@@ -1838,7 +2133,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_cmd_putnotif.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_cmd_putval.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_dns.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_parse_option.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uuid_la-uuid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vmem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vserver.Plo@am__quote@
@@ -1880,12 +2174,40 @@ ascent_la-ascent.lo: ascent.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ascent_la_CFLAGS) $(CFLAGS) -c -o ascent_la-ascent.lo `test -f 'ascent.c' || echo '$(srcdir)/'`ascent.c
 
+bind_la-bind.lo: bind.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bind_la_CFLAGS) $(CFLAGS) -MT bind_la-bind.lo -MD -MP -MF $(DEPDIR)/bind_la-bind.Tpo -c -o bind_la-bind.lo `test -f 'bind.c' || echo '$(srcdir)/'`bind.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/bind_la-bind.Tpo $(DEPDIR)/bind_la-bind.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bind.c' object='bind_la-bind.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bind_la_CFLAGS) $(CFLAGS) -c -o bind_la-bind.lo `test -f 'bind.c' || echo '$(srcdir)/'`bind.c
+
 cpu_la-cpu.lo: cpu.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(cpu_la_CFLAGS) $(CFLAGS) -MT cpu_la-cpu.lo -MD -MP -MF $(DEPDIR)/cpu_la-cpu.Tpo -c -o cpu_la-cpu.lo `test -f 'cpu.c' || echo '$(srcdir)/'`cpu.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/cpu_la-cpu.Tpo $(DEPDIR)/cpu_la-cpu.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cpu.c' object='cpu_la-cpu.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(cpu_la_CFLAGS) $(CFLAGS) -c -o cpu_la-cpu.lo `test -f 'cpu.c' || echo '$(srcdir)/'`cpu.c
+
+curl_la-curl.lo: curl.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(curl_la_CFLAGS) $(CFLAGS) -MT curl_la-curl.lo -MD -MP -MF $(DEPDIR)/curl_la-curl.Tpo -c -o curl_la-curl.lo `test -f 'curl.c' || echo '$(srcdir)/'`curl.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/curl_la-curl.Tpo $(DEPDIR)/curl_la-curl.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='curl.c' object='curl_la-curl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(curl_la_CFLAGS) $(CFLAGS) -c -o curl_la-curl.lo `test -f 'curl.c' || echo '$(srcdir)/'`curl.c
+
+dbi_la-dbi.lo: dbi.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dbi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dbi_la-dbi.lo -MD -MP -MF $(DEPDIR)/dbi_la-dbi.Tpo -c -o dbi_la-dbi.lo `test -f 'dbi.c' || echo '$(srcdir)/'`dbi.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/dbi_la-dbi.Tpo $(DEPDIR)/dbi_la-dbi.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dbi.c' object='dbi_la-dbi.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dbi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dbi_la-dbi.lo `test -f 'dbi.c' || echo '$(srcdir)/'`dbi.c
+
+dbi_la-utils_db_query.lo: utils_db_query.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dbi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dbi_la-utils_db_query.lo -MD -MP -MF $(DEPDIR)/dbi_la-utils_db_query.Tpo -c -o dbi_la-utils_db_query.lo `test -f 'utils_db_query.c' || echo '$(srcdir)/'`utils_db_query.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/dbi_la-utils_db_query.Tpo $(DEPDIR)/dbi_la-utils_db_query.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_db_query.c' object='dbi_la-utils_db_query.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dbi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dbi_la-utils_db_query.lo `test -f 'utils_db_query.c' || echo '$(srcdir)/'`utils_db_query.c
 
 disk_la-disk.lo: disk.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(disk_la_CFLAGS) $(CFLAGS) -MT disk_la-disk.lo -MD -MP -MF $(DEPDIR)/disk_la-disk.Tpo -c -o disk_la-disk.lo `test -f 'disk.c' || echo '$(srcdir)/'`disk.c
@@ -1978,6 +2300,27 @@ onewire_la-onewire.lo: onewire.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(onewire_la_CPPFLAGS) $(CPPFLAGS) $(onewire_la_CFLAGS) $(CFLAGS) -c -o onewire_la-onewire.lo `test -f 'onewire.c' || echo '$(srcdir)/'`onewire.c
 
+openvpn_la-openvpn.lo: openvpn.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(openvpn_la_CFLAGS) $(CFLAGS) -MT openvpn_la-openvpn.lo -MD -MP -MF $(DEPDIR)/openvpn_la-openvpn.Tpo -c -o openvpn_la-openvpn.lo `test -f 'openvpn.c' || echo '$(srcdir)/'`openvpn.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/openvpn_la-openvpn.Tpo $(DEPDIR)/openvpn_la-openvpn.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='openvpn.c' object='openvpn_la-openvpn.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(openvpn_la_CFLAGS) $(CFLAGS) -c -o openvpn_la-openvpn.lo `test -f 'openvpn.c' || echo '$(srcdir)/'`openvpn.c
+
+oracle_la-oracle.lo: oracle.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(oracle_la_CPPFLAGS) $(CPPFLAGS) $(oracle_la_CFLAGS) $(CFLAGS) -MT oracle_la-oracle.lo -MD -MP -MF $(DEPDIR)/oracle_la-oracle.Tpo -c -o oracle_la-oracle.lo `test -f 'oracle.c' || echo '$(srcdir)/'`oracle.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oracle_la-oracle.Tpo $(DEPDIR)/oracle_la-oracle.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='oracle.c' object='oracle_la-oracle.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(oracle_la_CPPFLAGS) $(CPPFLAGS) $(oracle_la_CFLAGS) $(CFLAGS) -c -o oracle_la-oracle.lo `test -f 'oracle.c' || echo '$(srcdir)/'`oracle.c
+
+oracle_la-utils_db_query.lo: utils_db_query.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(oracle_la_CPPFLAGS) $(CPPFLAGS) $(oracle_la_CFLAGS) $(CFLAGS) -MT oracle_la-utils_db_query.lo -MD -MP -MF $(DEPDIR)/oracle_la-utils_db_query.Tpo -c -o oracle_la-utils_db_query.lo `test -f 'utils_db_query.c' || echo '$(srcdir)/'`utils_db_query.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oracle_la-utils_db_query.Tpo $(DEPDIR)/oracle_la-utils_db_query.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_db_query.c' object='oracle_la-utils_db_query.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(oracle_la_CPPFLAGS) $(CPPFLAGS) $(oracle_la_CFLAGS) $(CFLAGS) -c -o oracle_la-utils_db_query.lo `test -f 'utils_db_query.c' || echo '$(srcdir)/'`utils_db_query.c
+
 perl_la-perl.lo: perl.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(perl_la_CPPFLAGS) $(CPPFLAGS) $(perl_la_CFLAGS) $(CFLAGS) -MT perl_la-perl.lo -MD -MP -MF $(DEPDIR)/perl_la-perl.Tpo -c -o perl_la-perl.lo `test -f 'perl.c' || echo '$(srcdir)/'`perl.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/perl_la-perl.Tpo $(DEPDIR)/perl_la-perl.Plo
@@ -1992,12 +2335,40 @@ postgresql_la-postgresql.lo: postgresql.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(postgresql_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o postgresql_la-postgresql.lo `test -f 'postgresql.c' || echo '$(srcdir)/'`postgresql.c
 
+postgresql_la-utils_db_query.lo: utils_db_query.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(postgresql_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT postgresql_la-utils_db_query.lo -MD -MP -MF $(DEPDIR)/postgresql_la-utils_db_query.Tpo -c -o postgresql_la-utils_db_query.lo `test -f 'utils_db_query.c' || echo '$(srcdir)/'`utils_db_query.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/postgresql_la-utils_db_query.Tpo $(DEPDIR)/postgresql_la-utils_db_query.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_db_query.c' object='postgresql_la-utils_db_query.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(postgresql_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o postgresql_la-utils_db_query.lo `test -f 'utils_db_query.c' || echo '$(srcdir)/'`utils_db_query.c
+
+rrdcached_la-rrdcached.lo: rrdcached.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdcached_la_CFLAGS) $(CFLAGS) -MT rrdcached_la-rrdcached.lo -MD -MP -MF $(DEPDIR)/rrdcached_la-rrdcached.Tpo -c -o rrdcached_la-rrdcached.lo `test -f 'rrdcached.c' || echo '$(srcdir)/'`rrdcached.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/rrdcached_la-rrdcached.Tpo $(DEPDIR)/rrdcached_la-rrdcached.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rrdcached.c' object='rrdcached_la-rrdcached.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdcached_la_CFLAGS) $(CFLAGS) -c -o rrdcached_la-rrdcached.lo `test -f 'rrdcached.c' || echo '$(srcdir)/'`rrdcached.c
+
+rrdcached_la-utils_rrdcreate.lo: utils_rrdcreate.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdcached_la_CFLAGS) $(CFLAGS) -MT rrdcached_la-utils_rrdcreate.lo -MD -MP -MF $(DEPDIR)/rrdcached_la-utils_rrdcreate.Tpo -c -o rrdcached_la-utils_rrdcreate.lo `test -f 'utils_rrdcreate.c' || echo '$(srcdir)/'`utils_rrdcreate.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/rrdcached_la-utils_rrdcreate.Tpo $(DEPDIR)/rrdcached_la-utils_rrdcreate.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_rrdcreate.c' object='rrdcached_la-utils_rrdcreate.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdcached_la_CFLAGS) $(CFLAGS) -c -o rrdcached_la-utils_rrdcreate.lo `test -f 'utils_rrdcreate.c' || echo '$(srcdir)/'`utils_rrdcreate.c
+
 rrdtool_la-rrdtool.lo: rrdtool.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdtool_la_CFLAGS) $(CFLAGS) -MT rrdtool_la-rrdtool.lo -MD -MP -MF $(DEPDIR)/rrdtool_la-rrdtool.Tpo -c -o rrdtool_la-rrdtool.lo `test -f 'rrdtool.c' || echo '$(srcdir)/'`rrdtool.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/rrdtool_la-rrdtool.Tpo $(DEPDIR)/rrdtool_la-rrdtool.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rrdtool.c' object='rrdtool_la-rrdtool.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdtool_la_CFLAGS) $(CFLAGS) -c -o rrdtool_la-rrdtool.lo `test -f 'rrdtool.c' || echo '$(srcdir)/'`rrdtool.c
+
+rrdtool_la-utils_rrdcreate.lo: utils_rrdcreate.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdtool_la_CFLAGS) $(CFLAGS) -MT rrdtool_la-utils_rrdcreate.lo -MD -MP -MF $(DEPDIR)/rrdtool_la-utils_rrdcreate.Tpo -c -o rrdtool_la-utils_rrdcreate.lo `test -f 'utils_rrdcreate.c' || echo '$(srcdir)/'`utils_rrdcreate.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/rrdtool_la-utils_rrdcreate.Tpo $(DEPDIR)/rrdtool_la-utils_rrdcreate.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_rrdcreate.c' object='rrdtool_la-utils_rrdcreate.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rrdtool_la_CFLAGS) $(CFLAGS) -c -o rrdtool_la-utils_rrdcreate.lo `test -f 'utils_rrdcreate.c' || echo '$(srcdir)/'`utils_rrdcreate.c
 
 sensors_la-sensors.lo: sensors.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(sensors_la_CFLAGS) $(CFLAGS) -MT sensors_la-sensors.lo -MD -MP -MF $(DEPDIR)/sensors_la-sensors.Tpo -c -o sensors_la-sensors.lo `test -f 'sensors.c' || echo '$(srcdir)/'`sensors.c
@@ -2083,6 +2454,34 @@ collectd-configfile.obj: configfile.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-configfile.obj `if test -f 'configfile.c'; then $(CYGPATH_W) 'configfile.c'; else $(CYGPATH_W) '$(srcdir)/configfile.c'; fi`
 
+collectd-filter_chain.o: filter_chain.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-filter_chain.o -MD -MP -MF $(DEPDIR)/collectd-filter_chain.Tpo -c -o collectd-filter_chain.o `test -f 'filter_chain.c' || echo '$(srcdir)/'`filter_chain.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-filter_chain.Tpo $(DEPDIR)/collectd-filter_chain.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='filter_chain.c' object='collectd-filter_chain.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-filter_chain.o `test -f 'filter_chain.c' || echo '$(srcdir)/'`filter_chain.c
+
+collectd-filter_chain.obj: filter_chain.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-filter_chain.obj -MD -MP -MF $(DEPDIR)/collectd-filter_chain.Tpo -c -o collectd-filter_chain.obj `if test -f 'filter_chain.c'; then $(CYGPATH_W) 'filter_chain.c'; else $(CYGPATH_W) '$(srcdir)/filter_chain.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-filter_chain.Tpo $(DEPDIR)/collectd-filter_chain.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='filter_chain.c' object='collectd-filter_chain.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-filter_chain.obj `if test -f 'filter_chain.c'; then $(CYGPATH_W) 'filter_chain.c'; else $(CYGPATH_W) '$(srcdir)/filter_chain.c'; fi`
+
+collectd-meta_data.o: meta_data.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-meta_data.o -MD -MP -MF $(DEPDIR)/collectd-meta_data.Tpo -c -o collectd-meta_data.o `test -f 'meta_data.c' || echo '$(srcdir)/'`meta_data.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-meta_data.Tpo $(DEPDIR)/collectd-meta_data.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='meta_data.c' object='collectd-meta_data.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-meta_data.o `test -f 'meta_data.c' || echo '$(srcdir)/'`meta_data.c
+
+collectd-meta_data.obj: meta_data.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-meta_data.obj -MD -MP -MF $(DEPDIR)/collectd-meta_data.Tpo -c -o collectd-meta_data.obj `if test -f 'meta_data.c'; then $(CYGPATH_W) 'meta_data.c'; else $(CYGPATH_W) '$(srcdir)/meta_data.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-meta_data.Tpo $(DEPDIR)/collectd-meta_data.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='meta_data.c' object='collectd-meta_data.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-meta_data.obj `if test -f 'meta_data.c'; then $(CYGPATH_W) 'meta_data.c'; else $(CYGPATH_W) '$(srcdir)/meta_data.c'; fi`
+
 collectd-plugin.o: plugin.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-plugin.o -MD -MP -MF $(DEPDIR)/collectd-plugin.Tpo -c -o collectd-plugin.o `test -f 'plugin.c' || echo '$(srcdir)/'`plugin.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-plugin.Tpo $(DEPDIR)/collectd-plugin.Po
@@ -2167,6 +2566,20 @@ collectd-utils_llist.obj: utils_llist.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_llist.obj `if test -f 'utils_llist.c'; then $(CYGPATH_W) 'utils_llist.c'; else $(CYGPATH_W) '$(srcdir)/utils_llist.c'; fi`
 
+collectd-utils_parse_option.o: utils_parse_option.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_parse_option.o -MD -MP -MF $(DEPDIR)/collectd-utils_parse_option.Tpo -c -o collectd-utils_parse_option.o `test -f 'utils_parse_option.c' || echo '$(srcdir)/'`utils_parse_option.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-utils_parse_option.Tpo $(DEPDIR)/collectd-utils_parse_option.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_parse_option.c' object='collectd-utils_parse_option.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_parse_option.o `test -f 'utils_parse_option.c' || echo '$(srcdir)/'`utils_parse_option.c
+
+collectd-utils_parse_option.obj: utils_parse_option.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_parse_option.obj -MD -MP -MF $(DEPDIR)/collectd-utils_parse_option.Tpo -c -o collectd-utils_parse_option.obj `if test -f 'utils_parse_option.c'; then $(CYGPATH_W) 'utils_parse_option.c'; else $(CYGPATH_W) '$(srcdir)/utils_parse_option.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-utils_parse_option.Tpo $(DEPDIR)/collectd-utils_parse_option.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_parse_option.c' object='collectd-utils_parse_option.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_parse_option.obj `if test -f 'utils_parse_option.c'; then $(CYGPATH_W) 'utils_parse_option.c'; else $(CYGPATH_W) '$(srcdir)/utils_parse_option.c'; fi`
+
 collectd-utils_tail_match.o: utils_tail_match.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_tail_match.o -MD -MP -MF $(DEPDIR)/collectd-utils_tail_match.Tpo -c -o collectd-utils_tail_match.o `test -f 'utils_tail_match.c' || echo '$(srcdir)/'`utils_tail_match.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-utils_tail_match.Tpo $(DEPDIR)/collectd-utils_tail_match.Po
@@ -2208,6 +2621,20 @@ collectd-utils_mount.obj: utils_mount.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_mount.c' object='collectd-utils_mount.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_mount.obj `if test -f 'utils_mount.c'; then $(CYGPATH_W) 'utils_mount.c'; else $(CYGPATH_W) '$(srcdir)/utils_mount.c'; fi`
+
+collectd-utils_subst.o: utils_subst.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_subst.o -MD -MP -MF $(DEPDIR)/collectd-utils_subst.Tpo -c -o collectd-utils_subst.o `test -f 'utils_subst.c' || echo '$(srcdir)/'`utils_subst.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-utils_subst.Tpo $(DEPDIR)/collectd-utils_subst.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_subst.c' object='collectd-utils_subst.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_subst.o `test -f 'utils_subst.c' || echo '$(srcdir)/'`utils_subst.c
+
+collectd-utils_subst.obj: utils_subst.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_subst.obj -MD -MP -MF $(DEPDIR)/collectd-utils_subst.Tpo -c -o collectd-utils_subst.obj `if test -f 'utils_subst.c'; then $(CYGPATH_W) 'utils_subst.c'; else $(CYGPATH_W) '$(srcdir)/utils_subst.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/collectd-utils_subst.Tpo $(DEPDIR)/collectd-utils_subst.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_subst.c' object='collectd-utils_subst.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_subst.obj `if test -f 'utils_subst.c'; then $(CYGPATH_W) 'utils_subst.c'; else $(CYGPATH_W) '$(srcdir)/utils_subst.c'; fi`
 
 collectd-utils_tail.o: utils_tail.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_tail.o -MD -MP -MF $(DEPDIR)/collectd-utils_tail.Tpo -c -o collectd-utils_tail.o `test -f 'utils_tail.c' || echo '$(srcdir)/'`utils_tail.c
@@ -2659,7 +3086,7 @@ uninstall-man: uninstall-man1 uninstall-man5
 .pod.1:
 	pod2man --release=$(VERSION) --center=$(PACKAGE) $< \
 		>.pod2man.tmp 2>/dev/null && mv -f .pod2man.tmp $@ || true
-	if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
+	@if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
 	then \
 		echo "$@ has some POD errors!"; false; \
 	fi
@@ -2667,7 +3094,7 @@ uninstall-man: uninstall-man1 uninstall-man5
 .pod.5:
 	pod2man --section=5 --release=$(VERSION) --center=$(PACKAGE) $< \
 		>.pod2man.tmp 2>/dev/null && mv -f .pod2man.tmp $@ || true
-	if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
+	@if grep '\<POD ERRORS\>' $@ >/dev/null 2>&1; \
 	then \
 		echo "$@ has some POD errors!"; false; \
 	fi
@@ -2680,8 +3107,8 @@ install-exec-hook:
 	else \
 		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
 	fi; \
-	cp -f $(srcdir)/types.db $(DESTDIR)$(pkglibdir)/;
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
+	$(INSTALL) -m 0644 $(srcdir)/types.db $(DESTDIR)$(pkgdatadir)/types.db;
 	$(INSTALL) -m 0644 $(srcdir)/postgresql_default.conf \
 		$(DESTDIR)$(pkgdatadir)/postgresql_default.conf;
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

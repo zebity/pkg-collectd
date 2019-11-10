@@ -126,7 +126,6 @@ static int ascent_submit_gauge (const char *plugin_instance, /* {{{ */
 
   vl.values = values;
   vl.values_len = 1;
-  vl.time = time (NULL);
   sstrncpy (vl.host, hostname_g, sizeof (vl.host));
   sstrncpy (vl.plugin, "ascent", sizeof (vl.plugin));
 
@@ -144,7 +143,7 @@ static int ascent_submit_gauge (const char *plugin_instance, /* {{{ */
 } /* }}} int ascent_submit_gauge */
 
 static size_t ascent_curl_callback (void *buf, size_t size, size_t nmemb, /* {{{ */
-    void *stream)
+    void __attribute__((unused)) *stream)
 {
   size_t len = size * nmemb;
 
@@ -175,7 +174,7 @@ static size_t ascent_curl_callback (void *buf, size_t size, size_t nmemb, /* {{{
 
 static int ascent_submit_players (player_stats_t *ps) /* {{{ */
 {
-  int i;
+  size_t i;
   gauge_t value;
 
   for (i = 0; i < RACES_LIST_LENGTH; i++)
@@ -214,7 +213,7 @@ static int ascent_account_player (player_stats_t *ps, /* {{{ */
 {
   if (pi->race >= 0)
   {
-    if ((pi->race >= RACES_LIST_LENGTH)
+    if (((size_t) pi->race >= RACES_LIST_LENGTH)
         || (races_list[pi->race] == NULL))
       ERROR ("ascent plugin: Ignoring invalid numeric race %i.", pi->race);
     else
@@ -223,7 +222,7 @@ static int ascent_account_player (player_stats_t *ps, /* {{{ */
 
   if (pi->class >= 0)
   {
-    if ((pi->class >= CLASSES_LIST_LENGTH)
+    if (((size_t) pi->class >= CLASSES_LIST_LENGTH)
         || (classes_list[pi->class] == NULL))
       ERROR ("ascent plugin: Ignoring invalid numeric class %i.", pi->class);
     else
@@ -232,7 +231,7 @@ static int ascent_account_player (player_stats_t *ps, /* {{{ */
 
   if (pi->gender >= 0)
   {
-    if ((pi->gender >= GENDERS_LIST_LENGTH)
+    if (((size_t) pi->gender >= GENDERS_LIST_LENGTH)
         || (genders_list[pi->gender] == NULL))
       ERROR ("ascent plugin: Ignoring invalid numeric gender %i.",
           pi->gender);
@@ -277,10 +276,12 @@ static int ascent_xml_submit_gauge (xmlDoc *doc, xmlNode *node, /* {{{ */
     value = strtod (str_ptr, &end_ptr);
     if (str_ptr == end_ptr)
     {
+      xmlFree(str_ptr);
       ERROR ("ascent plugin: ascent_xml_submit_gauge: strtod failed.");
       return (-1);
     }
   }
+  xmlFree(str_ptr);
 
   return (ascent_submit_gauge (plugin_instance, type, type_instance, value));
 } /* }}} int ascent_xml_submit_gauge */
@@ -306,10 +307,12 @@ static int ascent_xml_read_int (xmlDoc *doc, xmlNode *node, /* {{{ */
     value = strtol (str_ptr, &end_ptr, 0);
     if (str_ptr == end_ptr)
     {
+      xmlFree(str_ptr);
       ERROR ("ascent plugin: ascent_xml_read_int: strtol failed.");
       return (-1);
     }
   }
+  xmlFree(str_ptr);
 
   *ret_value = value;
   return (0);
@@ -546,7 +549,7 @@ static int ascent_init (void) /* {{{ */
 
     status = ssnprintf (credentials, sizeof (credentials), "%s:%s",
         user, (pass == NULL) ? "" : pass);
-    if (status >= sizeof (credentials))
+    if ((status < 0) || ((size_t) status >= sizeof (credentials)))
     {
       ERROR ("ascent plugin: ascent_init: Returning an error because the "
           "credentials have been truncated.");

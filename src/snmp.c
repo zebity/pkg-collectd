@@ -22,6 +22,7 @@
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
+#include "utils_complain.h"
 
 #include <pthread.h>
 
@@ -67,6 +68,7 @@ struct host_definition_s
   char *community;
   int version;
   void *sess_handle;
+  c_complain_t complaint;
   uint32_t interval;
   time_t next_update;
   data_definition_t **data_list;
@@ -116,6 +118,7 @@ static pthread_cond_t  host_cond = PTHREAD_COND_INITIALIZER;
 /*
  * Private functions
  */
+/* Many functions to handle the configuration. {{{ */
 /* First there are many functions which do configuration stuff. It's a big
  * bloated and messy, I'm afraid. */
 
@@ -527,9 +530,9 @@ static int csnmp_config_add_host_interval (host_definition_t *hd, oconfig_item_t
     return (-1);
   }
 
-  hd->interval = (int) ci->values[0].value.number;
-  if (hd->interval < 0)
-    hd->interval = 0;
+  hd->interval = ci->values[0].value.number >= 0
+    ? (uint32_t) ci->values[0].value.number
+    : 0;
 
   return (0);
 } /* int csnmp_config_add_host_interval */
@@ -551,6 +554,7 @@ static int csnmp_config_add_host (oconfig_item_t *ci)
     return (-1);
   memset (hd, '\0', sizeof (host_definition_t));
   hd->version = 2;
+  C_COMPLAIN_INIT (&hd->complaint);
 
   hd->name = strdup (ci->values[0].value.string);
   if (hd->name == NULL)
@@ -653,7 +657,7 @@ static int csnmp_config (oconfig_item_t *ci)
   return (0);
 } /* int csnmp_config */
 
-/* End of the config stuff. Now the interesting part begins */
+/* }}} End of the config stuff. Now the interesting part begins */
 
 static void csnmp_host_close_session (host_definition_t *host)
 {
@@ -692,6 +696,7 @@ static void csnmp_host_open_session (host_definition_t *host)
   }
 } /* void csnmp_host_open_session */
 
+/* TODO: Check if negative values wrap around. Problem: negative temperatures. */
 static value_t csnmp_value_list_to_value (struct variable_list *vl, int type,
     double scale, double shift)
 {
@@ -959,7 +964,6 @@ static int csnmp_dispatch_table (host_definition_t *host, data_definition_t *dat
   sstrncpy (vl.plugin, "snmp", sizeof (vl.plugin));
 
   vl.interval = host->interval;
-  vl.time = time (NULL);
 
   subid = 0;
   have_more = 1;
@@ -1135,7 +1139,7 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
       break;
     }
 
-    for (i = 0; i < oid_list_len; i++)
+    for (i = 0; (uint32_t) i < oid_list_len; i++)
       snmp_add_null_var (req, oid_list[i].oid, oid_list[i].oid_len);
 
     res = NULL;
@@ -1146,7 +1150,9 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
       char *errstr = NULL;
 
       snmp_sess_error (host->sess_handle, NULL, NULL, &errstr);
-      ERROR ("snmp plugin: host %s: snmp_sess_synch_response failed: %s",
+
+      c_complain (LOG_ERR, &host->complaint,
+	  "snmp plugin: host %s: snmp_sess_synch_response failed: %s",
 	  host->name, (errstr == NULL) ? "Unknown problem" : errstr);
 
       if (res != NULL)
@@ -1161,6 +1167,9 @@ static int csnmp_read_table (host_definition_t *host, data_definition_t *data)
     }
     status = 0;
     assert (res != NULL);
+    c_release (LOG_INFO, &host->complaint,
+	"snmp plugin: host %s: snmp_sess_synch_response successful.",
+	host->name);
 
     vb = res->variables;
     if (vb == NULL)
@@ -1376,7 +1385,6 @@ static int csnmp_read_value (host_definition_t *host, data_definition_t *data)
     return (-1);
   }
 
-  vl.time = time (NULL);
 
   for (vb = res->variables; vb != NULL; vb = vb->next_variable)
   {
@@ -1434,7 +1442,7 @@ static int csnmp_read_host (host_definition_t *host)
   time_end = time (NULL);
   DEBUG ("snmp plugin: csnmp_read_host (%s) finished at %u;", host->name,
       (unsigned int) time_end);
-  if ((time_end - time_start) > host->interval)
+  if ((uint32_t) (time_end - time_start) > host->interval)
   {
     WARNING ("snmp plugin: Host `%s' should be queried every %i seconds, "
 	"but reading all values takes %u seconds.",
@@ -1444,7 +1452,7 @@ static int csnmp_read_host (host_definition_t *host)
   return (0);
 } /* int csnmp_read_host */
 
-static void *csnmp_read_thread (void *data)
+static void *csnmp_read_thread (void __attribute__((unused)) *data)
 {
   host_definition_t *host;
 
@@ -1497,7 +1505,7 @@ static int csnmp_init (void)
     {
       host->interval = interval_g;
     }
-    else if (host->interval < interval_g)
+    else if (host->interval < (uint32_t) interval_g)
     {
       host->interval = interval_g;
       WARNING ("snmp plugin: Data for host `%s' will be collected every %i seconds.",
@@ -1626,5 +1634,5 @@ void module_register (void)
 } /* void module_register */
 
 /*
- * vim: shiftwidth=2 softtabstop=2 tabstop=8
+ * vim: shiftwidth=2 softtabstop=2 tabstop=8 fdm=marker
  */

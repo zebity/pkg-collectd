@@ -9,7 +9,7 @@ FQDNLookup   true
 #BaseDir     "@prefix@/var/lib/@PACKAGE_NAME@"
 #PIDFile     "@prefix@/var/run/@PACKAGE_NAME@.pid"
 #PluginDir   "@prefix@/lib/@PACKAGE_NAME@"
-#TypesDB     "@prefix@/lib/@PACKAGE_NAME@/types.db"
+#TypesDB     "@prefix@/share/@PACKAGE_NAME@/types.db"
 #Interval     10
 #ReadThreads  5
 
@@ -31,9 +31,12 @@ FQDNLookup   true
 @BUILD_PLUGIN_APPLE_SENSORS_TRUE@LoadPlugin apple_sensors
 @BUILD_PLUGIN_ASCENT_TRUE@LoadPlugin ascent
 @BUILD_PLUGIN_BATTERY_TRUE@LoadPlugin battery
+@BUILD_PLUGIN_BIND_TRUE@LoadPlugin bind
 @BUILD_PLUGIN_CPU_TRUE@LoadPlugin cpu
 @BUILD_PLUGIN_CPUFREQ_TRUE@LoadPlugin cpufreq
 @BUILD_PLUGIN_CSV_TRUE@LoadPlugin csv
+@BUILD_PLUGIN_CURL_TRUE@LoadPlugin curl
+@BUILD_PLUGIN_DBI_TRUE@LoadPlugin dbi
 @BUILD_PLUGIN_DF_TRUE@LoadPlugin df
 @BUILD_PLUGIN_DISK_TRUE@LoadPlugin disk
 @BUILD_PLUGIN_DNS_TRUE@LoadPlugin dns
@@ -63,11 +66,14 @@ FQDNLookup   true
 @BUILD_PLUGIN_NTPD_TRUE@LoadPlugin ntpd
 @BUILD_PLUGIN_NUT_TRUE@LoadPlugin nut
 @BUILD_PLUGIN_ONEWIRE_TRUE@LoadPlugin onewire
+@BUILD_PLUGIN_OPENVPN_TRUE@LoadPlugin openvpn
+@BUILD_PLUGIN_ORACLE_TRUE@LoadPlugin oracle
 @BUILD_PLUGIN_PERL_TRUE@LoadPlugin perl
 @BUILD_PLUGIN_PING_TRUE@LoadPlugin ping
 @BUILD_PLUGIN_POSTGRESQL_TRUE@LoadPlugin postgresql
 @BUILD_PLUGIN_POWERDNS_TRUE@LoadPlugin powerdns
 @BUILD_PLUGIN_PROCESSES_TRUE@LoadPlugin processes
+@BUILD_PLUGIN_RRDCACHED_TRUE@LoadPlugin rrdcached
 @BUILD_PLUGIN_RRDTOOL_TRUE@LoadPlugin rrdtool
 @BUILD_PLUGIN_SENSORS_TRUE@LoadPlugin sensors
 @BUILD_PLUGIN_SERIAL_TRUE@LoadPlugin serial
@@ -80,7 +86,7 @@ FQDNLookup   true
 @BUILD_PLUGIN_THERMAL_TRUE@LoadPlugin thermal
 @BUILD_PLUGIN_UNIXSOCK_TRUE@LoadPlugin unixsock
 @BUILD_PLUGIN_USERS_TRUE@LoadPlugin users
-@BUILD_PLUGIN_UUID_TRUE@LoadPlugin uuid
+#LoadPlugin uuid
 @BUILD_PLUGIN_VMEM_TRUE@LoadPlugin vmem
 @BUILD_PLUGIN_VSERVER_TRUE@LoadPlugin vserver
 @BUILD_PLUGIN_WIRELESS_TRUE@LoadPlugin wireless
@@ -105,9 +111,63 @@ FQDNLookup   true
 #	CACert "/etc/ssl/ca.crt"
 #</Plugin>
 
+#<Plugin "bind">
+#  URL "http://localhost:8053/"
+#  OpCodes         true
+#  QTypes          true
+#
+#  ServerStats     true
+#  ZoneMaintStats  true
+#  ResolverStats   false
+#  MemoryStats     true
+#
+#  <View "_default">
+#    QTypes        true
+#    ResolverStats true
+#    CacheRRSets   true
+#
+#    Zone "127.in-addr.arpa/IN"
+#  </View>
+#</Plugin>
+
 #<Plugin csv>
 #	DataDir "@prefix@/var/lib/@PACKAGE_NAME@/csv"
 #	StoreRates false
+#</Plugin>
+
+#<Plugin curl>
+#  <Page "stock_quotes">
+#    URL "http://finance.google.com/finance?q=NYSE%3AAMD"
+#    User "foo"
+#    Password "bar"
+#    <Match>
+#      Regex "<span +class=\"pr\"[^>]*> *([0-9]*\\.[0-9]+) *</span>"
+#      DSType "GaugeAverage"
+#      Type "stock_value"
+#      Instance "AMD"
+#    </Match>
+#  </Page>
+#</Plugin>
+
+#<Plugin dbi>
+#	<Query "num_of_customers">
+#		Statement "SELECT 'customers' AS c_key, COUNT(*) AS c_value FROM customers_tbl"
+#		<Result>
+#			Type "gauge"
+#			InstancesFrom "c_key"
+#			ValuesFrom "c_value"
+#		</Result>
+#	</Query>
+#	<Database "customers_db">
+#		Driver "mysql"
+#		DriverOption "host" "localhost"
+#		DriverOption "username" "collectd"
+#		DriverOption "password" "AeXohy0O"
+#		DriverOption "dbname" "custdb0"
+#		#SelectDB "custdb0"
+#		Query "num_of_customers"
+#		#Query "..."
+#	</Database>
 #</Plugin>
 
 #<Plugin df>
@@ -146,6 +206,7 @@ FQDNLookup   true
 #		Name "*.conf"
 #		MTime "-5m"
 #		Size "+10k"
+#		Recursive true
 #	</Directory>
 #</Plugin>
 
@@ -258,6 +319,27 @@ FQDNLookup   true
 #	IgnoreSelected false
 #</Plugin>
 
+#<Plugin openvpn>
+#	StatusFile "/etc/openvpn/openvpn-status.log"
+#</Plugin>
+
+#<Plugin oracle>
+#  <Query "out_of_stock">
+#    Statement "SELECT category, COUNT(*) AS value FROM products WHERE in_stock = 0 GROUP BY category"
+#    <Result>
+#      Type "gauge"
+#      InstancesFrom "category"
+#      ValuesFrom "value"
+#    </Result>
+#  </Query>
+#  <Database "product_information">
+#    ConnectID "db01"
+#    Username "oracle"
+#    Password "secret"
+#    Query "out_of_stock"
+#  </Database>
+#</Plugin>
+
 #<Plugin perl>
 #	IncludeDir "/my/include/path"
 #	BaseName "Collectd::Plugin"
@@ -277,26 +359,41 @@ FQDNLookup   true
 
 #<Plugin postgresql>
 #	<Query magic>
-#		Query "SELECT magic, spells FROM wizard WHERE host = $1;"
+#		Statement "SELECT magic FROM wizard WHERE host = $1;"
 #		Param hostname
-#		Column gauge magic
-#		Column counter spells
+#		<Result>
+#			Type gauge
+#			InstancePrefix "magic"
+#			ValuesFrom magic
+#		</Result>
 #	</Query>
-#
+#	<Query rt36_tickets>
+#		Statement "SELECT COUNT(type) AS count, type \
+#		                  FROM (SELECT CASE \
+#		                               WHEN resolved = 'epoch' THEN 'open' \
+#		                               ELSE 'resolved' END AS type \
+#		                               FROM tickets) type \
+#		                  GROUP BY type;"
+#		<Result>
+#			Type counter
+#			InstancePrefix "rt36_tickets"
+#			InstancesFrom "type"
+#			ValuesFrom "count"
+#		</Result>
+#	</Query>
 #	<Database foo>
 #		Host "hostname"
-#		Port 5432
+#		Port "5432"
 #		User "username"
 #		Password "secret"
-#
 #		SSLMode "prefer"
 #		KRBSrvName "kerberos_service_name"
-#
 #		Query magic
 #	</Database>
-#
 #	<Database bar>
 #		Service "service_name"
+#		Query backend # predefined
+#		Query rt36_tickets
 #	</Database>
 #</Plugin>
 
@@ -316,6 +413,13 @@ FQDNLookup   true
 
 #<Plugin processes>
 #	Process "name"
+#</Plugin>
+
+#<Plugin rrdcached>
+#	DaemonAddress "unix:/tmp/rrdcached.sock"
+#	DataDir "@prefix@/var/lib/@PACKAGE_NAME@/rrd"
+#	CreateFiles true
+#	CollectStatistics true
 #</Plugin>
 
 #<Plugin rrdtool>
@@ -385,7 +489,7 @@ FQDNLookup   true
 #    <Match>
 #      Regex "\\<R=local_user\\>"
 #      DSType "CounterInc"
-#      Type "email_count"
+#      Type "counter"
 #      Instance "local_user"
 #    </Match>
 #  </File>
@@ -423,3 +527,27 @@ FQDNLookup   true
 #	Verbose false
 #</Plugin>
 
+# * * * * * * * * * * * * *
+# * FILTER CONFIGURATION  *
+# * * * * * * * * * * * * *
+
+# The following configures collectd's filtering mechanism. Before changing
+# anything in this section, please read the `FILTER CONFIGURATION' section in
+# the collectd.conf(5) manual page.
+
+# Load required matches:
+#@BUILD_PLUGIN_MATCH_REGEX_TRUE@LoadPlugin match_regex
+#@BUILD_PLUGIN_MATCH_VALUE_TRUE@LoadPlugin match_value
+#@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@LoadPlugin match_timediff
+
+# Load required targets:
+#@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@LoadPlugin target_notification
+#@BUILD_PLUGIN_TARGET_REPLACE_TRUE@LoadPlugin target_replace
+#@BUILD_PLUGIN_TARGET_SET_TRUE@LoadPlugin target_set
+ 
+# The following block demonstrates the default behavior if no filtering is
+# configured at all: All values will be sent to all available write plugins.
+
+#<Chain "Main">
+#  Target "write"
+#</Chain>

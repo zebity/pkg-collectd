@@ -126,6 +126,14 @@ The sample config file that is installed with C<makeE<nbsp>install> includes a
 line which sets this option, though, so that default installations will have
 this setting enabled.
 
+=item B<PreCacheChain> I<ChainName>
+
+=item B<PostCacheChain> I<ChainName>
+
+Configure the name of the "pre-cache chain" and the "post-cache chain". Please
+see L<FILTER CONFIGURATION> below on information on chains and how these
+setting change the daemon's behavior.
+
 =back
 
 =head1 PLUGIN OPTIONS
@@ -257,6 +265,150 @@ and are checked by default depends on the distribution you use.
 
 =back
 
+=head2 Plugin C<bind>
+
+Starting with BIND 9.5.0, the most widely used DNS server software provides
+extensive statistics about queries, responses and lots of other information.
+The bind plugin retrieves this information that's encoded in XML and provided
+via HTTP and submits the values to collectd.
+
+To use this plugin, you first need to tell BIND to make this information
+available. This is done with the C<statistics-channels> configuration option:
+
+ statistics-channels {
+   inet localhost port 8053;
+ };
+
+The configuration follows the grouping that can be seen when looking at the
+data with an XSLT compatible viewer, such as a modern web browser. It's
+probably a good idea to make yourself familiar with the provided values, so you
+can understand what the collected statistics actually mean.
+
+Synopsis:
+
+ <Plugin "bind">
+   URL "http://localhost:8053/"
+   OpCodes         true
+   QTypes          true
+ 
+   ServerStats     true
+   ZoneMaintStats  true
+   ResolverStats   false
+   MemoryStats     true
+ 
+   <View "_default">
+     QTypes        true
+     ResolverStats true
+     CacheRRSets   true
+ 
+     Zone "127.in-addr.arpa/IN"
+   </View>
+ </Plugin>
+
+The bind plugin accepts the following configuration options:
+
+=over 4
+
+=item B<URL> I<URL>
+
+URL from which to retrieve the XML data. If not specified,
+C<http://localhost:8053/> will be used.
+
+=item B<OpCodes> I<true>|I<false>
+
+When enabled, statistics about the I<"OpCodes">, for example the number of
+C<QUERY> packets, are collected.
+
+Default: Enabled.
+
+=item B<QTypes> I<true>|I<false>
+
+When enabled, the number of I<incoming> queries by query types (for example
+C<A>, C<MX>, C<AAAA>) is collected.
+
+Default: Enabled.
+
+=item B<ServerStats> I<true>|I<false>
+
+Collect global server statistics, such as requests received over IPv4 and IPv6,
+successful queries, and failed updates.
+
+Default: Enabled.
+
+=item B<ZoneMaintStats> I<true>|I<false>
+
+Collect zone maintenance statistics, mostly information about notifications
+(zone updates) and zone transfers.
+
+Default: Enabled.
+
+=item B<ResolverStats> I<true>|I<false>
+
+Collect resolver statistics, i.E<nbsp>e. statistics about outgoing requests
+(e.E<nbsp>g. queries over IPv4, lame servers). Since the global resolver
+counters apparently were removed in BIND 9.5.1 and 9.6.0, this is disabled by
+default. Use the B<ResolverStats> option within a B<View "_default"> block
+instead for the same functionality.
+
+Default: Disabled.
+
+=item B<MemoryStats>
+
+Collect global memory statistics.
+
+Default: Enabled.
+
+=item B<View> I<Name>
+
+Collect statistics about a specific I<"view">. BIND can behave different,
+mostly depending on the source IP-address of the request. These different
+configurations are called "views". If you don't use this feature, you most
+likely are only interested in the C<_default> view.
+
+Within a E<lt>B<View>E<nbsp>I<name>E<gt> block, you can specify which
+information you want to collect about a view. If no B<View> block is
+configured, no detailed view statistics will be collected.
+
+=over 4
+
+=item B<QTypes> I<true>|I<false>
+
+If enabled, the number of I<outgoing> queries by query type (e.E<nbsp>g. C<A>,
+C<MX>) is collected.
+
+Default: Enabled.
+
+=item B<ResolverStats> I<true>|I<false>
+
+Collect resolver statistics, i.E<nbsp>e. statistics about outgoing requests
+(e.E<nbsp>g. queries over IPv4, lame servers).
+
+Default: Enabled.
+
+=item B<CacheRRSets> I<true>|I<false>
+
+If enabled, the number of entries (I<"RR sets">) in the view's cache by query
+type is collected. Negative entries (queries which resulted in an error, for
+example names that do not exist) are reported with a leading exclamation mark,
+e.E<nbsp>g. "!A".
+
+Default: Enabled.
+
+=item B<Zone> I<Name>
+
+When given, collect detailed information about the given zone in the view. The
+information collected if very similar to the global B<ServerStats> information
+(see above).
+
+You can repeat this option to collect detailed information about multiple
+zones.
+
+By default no detailed zone information is collected.
+
+=back
+
+=back
+
 =head2 Plugin C<cpufreq>
 
 This plugin doesn't have any options. It reads
@@ -273,12 +425,325 @@ installed and an "cpu governor" (that's a kernel module) is loaded.
 
 Set the directory to store CSV-files under. Per default CSV-files are generated
 beneath the daemon's working directory, i.E<nbsp>e. the B<BaseDir>.
+The special strings B<stdout> and B<stderr> can be used to write to the standard
+output and standard error channels, respectively. This, of course, only makes
+much sense when collectd is running in foreground- or non-daemon-mode.
 
 =item B<StoreRates> B<true|false>
 
 If set to B<true>, convert counter values to rates. If set to B<false> (the
 default) counter values are stored as is, i.E<nbsp>e. as an increasing integer
 number.
+
+=back
+
+=head2 Plugin C<curl>
+
+The curl plugin uses the B<libcurl> (L<http://curl.haxx.se/>) to read web pages
+and the match infrastructure (the same code used by the tail plugin) to use
+regular expressions with the received data.
+
+The following example will read the current value of AMD stock from google's
+finance page and dispatch the value to collectd.
+
+  <Plugin curl>
+    <Page "stock_quotes">
+      URL "http://finance.google.com/finance?q=NYSE%3AAMD"
+      User "foo"
+      Password "bar"
+      <Match>
+        Regex "<span +class=\"pr\"[^>]*> *([0-9]*\\.[0-9]+) *</span>"
+        DSType "GaugeAverage"
+        # Note: `stock_value' is not a standard type.
+        Type "stock_value"
+        Instance "AMD"
+      </Match>
+    </Page>
+  </Plugin>
+
+In the B<Plugin> block, there may be one or more B<Page> blocks, each defining
+a web page and one or more "matches" to be performed on the returned data. The
+string argument to the B<Page> block is used as plugin instance.
+
+The following options are valid within B<Page> blocks:
+
+=over 4
+
+=item B<URL> I<URL>
+
+URL of the web site to retrieve. Since a regular expression will be used to
+extract information from this data, non-binary data is a big plus here ;)
+
+=item B<User> I<Name>
+
+Username to use if authorization is required to read the page.
+
+=item B<Password> I<Password>
+
+Password to use if authorization is required to read the page.
+
+=item B<VerifyPeer> B<true>|B<false>
+
+Enable or disable peer SSL certificate verification. See
+L<http://curl.haxx.se/docs/sslcerts.html> for details. Enabled by default.
+
+=item B<VerifyHost> B<true>|B<false>
+
+Enable or disable peer host name verification. If enabled, the plugin checks if
+the C<Common Name> or a C<Subject Alternate Name> field of the SSL certificate
+matches the host name provided by the B<URL> option. If this identity check
+fails, the connection is aborted. Obviously, only works when connecting to a
+SSL enabled server. Enabled by default.
+
+=item B<CACert> I<file>
+
+File that holds one or more SSL certificates. If you want to use HTTPS you will
+possibly need this option. What CA certificates come bundled with C<libcurl>
+and are checked by default depends on the distribution you use.
+
+=item B<E<lt>MatchE<gt>>
+
+One or more B<Match> blocks that define how to match information in the data
+returned by C<libcurl>. The C<curl> plugin uses the same infrastructure that's
+used by the C<tail> plugin, so please see the documentation of the C<tail>
+plugin below on how matches are defined.
+
+=back
+
+=head2 Plugin C<dbi>
+
+This plugin uses the B<dbi> library (L<http://libdbi.sourceforge.net/>) to
+connect to various databases, execute I<SQL> statements and read back the
+results. I<dbi> is an acronym for "database interface" in case you were
+wondering about the name. You can configure how each column is to be
+interpreted and the plugin will generate one or more data sets from each row
+returned according to these rules.
+
+Because the plugin is very generic, the configuration is a little more complex
+than those of other plugins. It usually looks something like this:
+
+  <Plugin dbi>
+    <Query "out_of_stock">
+      Statement "SELECT category, COUNT(*) AS value FROM products WHERE in_stock = 0 GROUP BY category"
+      # Use with MySQL 5.0.0 or later
+      MinVersion 50000
+      <Result>
+        Type "gauge"
+        InstancePrefix "out_of_stock"
+        InstancesFrom "category"
+        ValuesFrom "value"
+      </Result>
+    </Query>
+    <Database "product_information">
+      Driver "mysql"
+      DriverOption "host" "localhost"
+      DriverOption "username" "collectd"
+      DriverOption "password" "aZo6daiw"
+      DriverOption "dbname" "prod_info"
+      SelectDB "prod_info"
+      Query "out_of_stock"
+    </Database>
+  </Plugin>
+
+The configuration above defines one query with one result and one database. The
+query is then linked to the database with the B<Query> option I<within> the
+B<E<lt>DatabaseE<gt>> block. You can have any number of queries and databases
+and you can also use the B<Include> statement to split up the configuration
+file in multiple, smaller files. However, the B<E<lt>QueryE<gt>> block I<must>
+precede the B<E<lt>DatabaseE<gt>> blocks, because the file is interpreted from
+top to bottom!
+
+The following is a complete list of options:
+
+=head3 B<Query> blocks
+
+Query blocks define I<SQL> statements and how the returned data should be
+interpreted. They are identified by the name that is given in the opening line
+of the block. Thus the name needs to be unique. Other than that, the name is
+not used in collectd. 
+
+In each B<Query> block, there is one or more B<Result> blocks. B<Result> blocks
+define which column holds which value or instance information. You can use
+multiple B<Result> blocks to create multiple values from one returned row. This
+is especially useful, when queries take a long time and sending almost the same
+query again and again is not desirable.
+
+Example:
+
+  <Query "environment">
+    Statement "select station, temperature, humidity from environment"
+    <Result>
+      Type "temperature"
+      # InstancePrefix "foo"
+      InstancesFrom "station"
+      ValuesFrom "temperature"
+    </Result>
+    <Result>
+      Type "humidity"
+      InstancesFrom "station"
+      ValuesFrom "humidity"
+    </Result>
+  </Query>
+
+The following options are accepted:
+
+=over 4
+
+=item B<Statement> I<SQL>
+
+Sets the statement that should be executed on the server. This is B<not>
+interpreted by collectd, but simply passed to the database server. Therefore,
+the SQL dialect that's used depends on the server collectd is connected to.
+
+The query has to return at least two columns, one for the instance and one
+value. You cannot omit the instance, even if the statement is guaranteed to
+always return exactly one line. In that case, you can usually specify something
+like this:
+
+  Statement "SELECT \"instance\", COUNT(*) AS value FROM table"
+
+(That works with MySQL but may not be valid SQL according to the spec. If you
+use a more strict database server, you may have to select from a dummy table or
+something.)
+
+Please note that some databases, for example B<Oracle>, will fail if you
+include a semicolon at the end of the statement.
+
+=item B<MinVersion> I<Version>
+
+=item B<MaxVersion> I<Value>
+
+Only use this query for the specified database version. You can use these
+options to provide multiple queries with the same name but with a slightly
+different syntax. The plugin will use only those queries, where the specified
+minimum and maximum versions fit the version of the database in use.
+
+The database version is determined by C<dbi_conn_get_engine_version>, see the 
+L<libdbi documentation|http://libdbi.sourceforge.net/docs/programmers-guide/reference-conn.html#DBI-CONN-GET-ENGINE-VERSION>
+for details. Basically, each part of the version is assumed to be in the range
+from B<00> to B<99> and all dots are removed. So version "4.1.2" becomes
+"40102", version "5.0.42" becomes "50042".
+
+B<Warning:> The plugin will use B<all> matching queries, so if you specify
+multiple queries with the same name and B<overlapping> ranges, weird stuff will
+happen. Don't to it! A valid example would be something along these lines:
+
+  MinVersion 40000
+  MaxVersion 49999
+  ...
+  MinVersion 50000
+  MaxVersion 50099
+  ...
+  MinVersion 50100
+  # No maximum
+
+In the above example, there are three ranges that don't overlap. The last one
+goes from version "5.1.0" to infinity, meaning "all later versions". Versions
+before "4.0.0" are not specified.
+
+=item B<Type> I<Type>
+
+The B<type> that's used for each line returned. See L<types.db(5)> for more
+details on how types are defined. In short: A type is a predefined layout of
+data and the number of values and type of values has to match the type
+definition.
+
+If you specify "temperature" here, you need exactly one gauge column. If you
+specify "if_octets", you will need two counter columns. See the B<ValuesFrom>
+setting below.
+
+There must be exactly one B<Type> option inside each B<Result> block.
+
+=item B<InstancePrefix> I<prefix>
+
+Prepends I<prefix> to the type instance. If B<InstancesFrom> (see below) is not
+given, the string is simply copied. If B<InstancesFrom> is given, I<prefix> and
+all strings returned in the appropriate columns are concatenated together,
+separated by dashes I<("-")>.
+
+=item B<InstancesFrom> I<column0> [I<column1> ...]
+
+Specifies the columns whose values will be used to create the "type-instance"
+for each row. If you specify more than one column, the value of all columns
+will be join together with the dashes I<("-")> as separation character.
+
+The plugin itself does not check whether or not all built instances are
+different. It's your responsibility to assure that each is unique. This is
+especially true, if you do not specify B<InstancesFrom>: B<You> have to make
+sure that only one row is returned in this case.
+
+If neither B<InstancePrefix> nor B<InstancesFrom> is given, the type-instance
+will be empty.
+
+=item B<ValuesFrom> I<column0> [I<column1> ...]
+
+Names the columns whose content is used as the actual data for the data sets
+that are dispatched to the daemon. How many such columns you need is determined
+by the B<Type> setting above. If you specify too many or not enough columns,
+the plugin will complain about that and no data will be submitted to the
+daemon.
+
+The actual data type in the columns is not that important. The plugin will
+automatically cast the values to the right type if it know how to do that. So
+it should be able to handle integer an floating point types, as well as strings
+(if they include a number at the beginning).
+
+There must be at least one B<ValuesFrom> option inside each B<Result> block.
+
+=back
+
+=head3 B<Database> blocks
+
+Database blocks define a connection to a database and which queries should be
+sent to that database. Since the used "dbi" library can handle a wide variety
+of databases, the configuration is very generic. If in doubt, refer to libdbi's
+documentationE<nbsp>- we stick as close to the terminology used there.
+
+Each database needs a "name" as string argument in the starting tag of the
+block. This name will be used as "PluginInstance" in the values submitted to
+the daemon. Other than that, that name is not used.
+
+=over 4
+
+=item B<Driver> I<Driver>
+
+Specifies the driver to use to connect to the database. In many cases those
+drivers are named after the database they can connect to, but this is not a
+technical necessity. These drivers are sometimes referred to as "DBD",
+B<D>ataB<B>ase B<D>river, and some distributions ship them in separate
+packages. Drivers for the "dbi" library are developed by the B<libdbi-drivers>
+project at L<http://libdbi-drivers.sourceforge.net/>.
+
+You need to give the driver name as expected by the "dbi" library here. You
+should be able to find that in the documentation for each driver. If you
+mistype the driver name, the plugin will dump a list of all known driver names
+to the log.
+
+=item B<DriverOption> I<Key> I<Value>
+
+Sets driver-specific options. What option a driver supports can be found in the
+documentation for each driver, somewhere at
+L<http://libdbi-drivers.sourceforge.net/>. However, the options "host",
+"username", "password", and "dbname" seem to be deE<nbsp>facto standards.
+
+Unfortunately, drivers are not too keen to report errors when an unknown option
+is passed to them, so invalid settings here may go unnoticed. This is not the
+plugin's fault, it will report errors if it gets them from the libraryE<nbsp>/
+the driver. If a driver complains about an option, the plugin will dump a
+complete list of all options understood by that driver to the log.
+
+=item B<SelectDB> I<Database>
+
+In some cases, the database name you connect with is not the database name you
+want to use for querying data. If this option is set, the plugin will "select"
+(switch to) that database after the connection is established.
+
+=item B<Query> I<QueryName>
+
+Associates the query named I<QueryName> with this database connection. The
+query needs to be defined I<before> this statement, i.E<nbsp>e. all query
+blocks you want to refer to must be placed above the database block you want to
+refer to them from.
 
 =back
 
@@ -490,6 +955,10 @@ As with the B<MTime> option, a "multiplier" may be added. For a detailed
 description see above. Valid multipliers here are C<b> (byte), C<k> (kilobyte),
 C<m> (megabyte), C<g> (gigabyte), C<t> (terabyte), and C<p> (petabyte). Please
 note that there are 1000 bytes in a kilobyte, not 1024.
+
+=item B<Recursive> I<true>|I<false>
+
+Controls whether or not to recurse into subdirectories. Enabled by default.
 
 =back
 
@@ -719,6 +1188,10 @@ Prefix all lines printed by the current time. Defaults to B<true>.
 
 =back
 
+B<Note>: There is no need to notify the daemon after moving or removing the
+log file (e.E<nbsp>g. when rotating the logs). The plugin reopens the file
+for each line it writes.
+
 =head2 Plugin C<mbmon>
 
 The C<mbmon plugin> uses mbmon to retrieve temperature, voltage, etc.
@@ -769,12 +1242,12 @@ database when started and keeps the connection up as long as possible. When the
 connection is interrupted for whatever reason it will try to re-connect. The
 plugin will complaint loudly in case anything goes wrong.
 
-This plugin issues C<SHOW STATUS> and evaluates C<Bytes_{received,sent}>,
-C<Com_*> and C<Handler_*> which correspond to F<mysql_octets.rrd>,
-F<mysql_commands-*.rrd> and F<mysql_handler-*.rrd>. Also, the values of
-C<Qcache_*> are put in F<mysql_qcache.rrd> and values of C<Threads_*> are put
-in F<mysql_threads.rrd>. Please refer to the B<MySQL reference manual>,
-I<5.2.4. Server Status Variables> for an explanation of these values.
+This plugin issues the MySQL C<SHOW STATUS> command and collects information
+about MySQL network traffic, executed statements, requests, the query cache
+and threads by evaluating the C<Bytes_{received,sent}>, C<Com_*>,
+C<Handler_*>, C<Qcache_*> and C<Threads_*> return values. Please refer to the
+B<MySQL reference manual>, I<5.1.6. Server Status Variables> for an
+explanation of these values.
 
 Use the following options to configure the plugin:
 
@@ -786,7 +1259,9 @@ Hostname of the database server. Defaults to B<localhost>.
 
 =item B<User> I<Username>
 
-Username to use when connecting to the database.
+Username to use when connecting to the database. The user does not have to be
+granted any privileges (which is synonym to granting the C<USAGE> privilege).
+Any existing MySQL user will do.
 
 =item B<Password> I<Password>
 
@@ -796,6 +1271,23 @@ Password needed to log into the database.
 
 Select this database. Defaults to I<no database> which is a perfectly reasonable
 option for what this plugin does.
+
+=item B<Port> I<Port>
+
+TCP-port to connect to. The port must be specified in its numeric form, but it
+must be passed as a string nonetheless. For example:
+
+  Port "3306"
+
+If B<Host> is set to B<localhost> (the default), this setting has no effect.
+See the documentation for the C<mysql_real_connect> function for details.
+
+=item B<Socket> I<Socket>
+
+Specifies the path to the UNIX domain socket of the MySQL server. This option
+only has any effect, if B<Host> is set to B<localhost> (the default).
+Otherwise, use the B<Port> option above. See the documentation for the
+C<mysql_real_connect> function for details.
 
 =back
 
@@ -1005,6 +1497,61 @@ has been specified, the default is used as well.
 
 =back
 
+=head2 Plugin C<notify_email>
+
+The I<notify_email> plugin uses the I<ESMTP> library to send notifications to a
+configured email address.
+
+I<libESMTP> is available from L<http://www.stafford.uklinux.net/libesmtp/>.
+
+Available configuration options:
+
+=over 4
+
+=item B<From> I<Address>
+
+Email address from which the emails should appear to come from.
+
+Default: C<root@localhost>
+
+=item B<Recipient> I<Address>
+
+Configures the email address(es) to which the notifications should be mailed.
+May be repeated to send notifications to multiple addresses.
+
+At least one B<Recipient> must be present for the plugin to work correctly.
+
+=item B<SMTPServer> I<Hostname>
+
+Hostname of the SMTP server to connect to.
+
+Default: C<localhost>
+
+=item B<SMTPPort> I<Port>
+
+TCP port to connect to.
+
+Default: C<25>
+
+=item B<SMTPUser> I<Username>
+
+Username for ASMTP authentication. Optional.
+
+=item B<SMTPPassword> I<Password>
+
+Password for ASMTP authentication. Optional.
+
+=item B<Subject> I<Subject>
+
+Subject-template to use when sending emails. There must be exactly two
+string-placeholders in the subject, given in the standard I<printf(3)> syntax,
+i.E<nbsp>e. C<%s>. The first will be replaced with the severity, the second
+with the hostname.
+
+Default: C<Collectd notify: %s@%s>
+
+=back
+
 =head2 Plugin C<ntpd>
 
 =over 4
@@ -1094,10 +1641,98 @@ controller, but as soon as you throw in a couple more senors and maybe a hub
 or two, reading all values will take more than ten seconds (the default
 interval). We will probably add some separate thread for reading the sensors
 and some cache or something like that, but it's not done yet. We will try to
-maintain backwards compatibility in the future, but we can't probmise. So in
-short: If it works for you: Great! But kaap in mind that the config I<might>
+maintain backwards compatibility in the future, but we can't promise. So in
+short: If it works for you: Great! But keep in mind that the config I<might>
 change, though this is unlikely. Oh, and if you want to help improving this
 plugin, just send a short notice to the mailing list. ThanksE<nbsp>:)
+
+=head2 Plugin C<openvpn>
+
+The OpenVPN plugin reads a status file maintained by OpenVPN and gathers
+traffic statistics about connected clients.
+
+To set up OpenVPN to write to the status file periodically, use the
+B<--status> option of OpenVPN. Since OpenVPN can write two different formats,
+you need to set the required format, too. This is done by setting
+B<--status-version> to B<2>.
+
+So, in a nutshell you need:
+
+  openvpn $OTHER_OPTIONS \
+    --status "/var/run/openvpn-status" 10 \
+    --status-version 2
+
+Available options:
+
+=over 4
+
+=item B<StatusFile> I<File>
+
+Specifies the location of the status file.
+
+=back
+
+=head2 Plugin C<oracle>
+
+The "oracle" plugin uses the Oracle® Call Interface I<(OCI)> to connect to an
+Oracle® Database and lets you execute SQL statements there. It is very similar
+to the "dbi" plugin, because it was written around the same time. See the "dbi"
+plugin's documentation above for details.
+
+  <Plugin oracle>
+    <Query "out_of_stock">
+      Statement "SELECT category, COUNT(*) AS value FROM products WHERE in_stock = 0 GROUP BY category"
+      <Result>
+        Type "gauge"
+        # InstancePrefix "foo"
+        InstancesFrom "category"
+        ValuesFrom "value"
+      </Result>
+    </Query>
+    <Database "product_information">
+      ConnectID "db01"
+      Username "oracle"
+      Password "secret"
+      Query "out_of_stock"
+    </Database>
+  </Plugin>
+
+=head3 B<Query> blocks
+
+The Query blocks are handled identically to the Query blocks of the "dbi"
+plugin. Please see its documentation above for details on how to specify
+queries.
+
+=head3 B<Database> blocks
+
+Database blocks define a connection to a database and which queries should be
+sent to that database. Each database needs a "name" as string argument in the
+starting tag of the block. This name will be used as "PluginInstance" in the
+values submitted to the daemon. Other than that, that name is not used.
+
+=over 4
+
+=item B<ConnectID> I<ID>
+
+Defines the "database alias" or "service name" to connect to. Usually, these
+names are defined in the file named C<$ORACLE_HOME/network/admin/tnsnames.ora>.
+
+=item B<Username> I<Username>
+
+Username used for authentication.
+
+=item B<Password> I<Password>
+
+Password used for authentication.
+
+=item B<Query> I<QueryName>
+
+Associates the query named I<QueryName> with this database connection. The
+query needs to be defined I<before> this statement, i.E<nbsp>e. all query
+blocks you want to refer to must be placed above the database block you want to
+refer to them from.
+
+=back
 
 =head2 Plugin C<perl>
 
@@ -1142,10 +1777,28 @@ L<http://www.postgresql.org/docs/manuals/>.
 
   <Plugin postgresql>
     <Query magic>
-      Query "SELECT magic, spells FROM wizard WHERE host = $1;"
+      Statement "SELECT magic FROM wizard WHERE host = $1;"
       Param hostname
-      Column gauge magic
-      Column counter spells
+      <Result>
+        Type gauge
+        InstancePrefix "magic"
+        ValuesFrom magic
+      </Result>
+    </Query>
+
+    <Query rt36_tickets>
+      Statement "SELECT COUNT(type) AS count, type \
+                        FROM (SELECT CASE \
+                                     WHEN resolved = 'epoch' THEN 'open' \
+                                     ELSE 'resolved' END AS type \
+                                     FROM tickets) type \
+                        GROUP BY type;"
+      <Result>
+        Type counter
+        InstancePrefix "rt36_tickets"
+        InstancesFrom "type"
+        ValuesFrom "count"
+      </Result>
     </Query>
 
     <Database foo>
@@ -1157,23 +1810,33 @@ L<http://www.postgresql.org/docs/manuals/>.
       KRBSrvName "kerberos_service_name"
       Query magic
     </Database>
+
     <Database bar>
       Service "service_name"
+      Query backend # predefined
+      Query rt36_tickets
     </Database>
   </Plugin>
 
 The B<Query> block defines one database query which may later be used by a
 database definition. It accepts a single mandatory argument which specifies
-the name of the query. The names of all queries have to be unique. The
-following configuration options are available to define the query:
+the name of the query. The names of all queries have to be unique (see the
+B<MinPGVersion> and B<MaxPGVersion> options below for an exception to this
+rule). The following configuration options are available to define the query:
+
+In each B<Query> block, there is one or more B<Result> blocks. B<Result>
+blocks define how to handle the values returned from the query. They define
+which column holds which value and how to dispatch that value to the daemon.
+Multiple B<Result> blocks may be used to extract multiple values from a single
+query.
 
 =over 4
 
-=item B<Query> I<sql query>
+=item B<Statement> I<sql query statement>
 
-Specify the I<sql query> which the plugin should execute. The string may
-contain the tokens B<$1>, B<$2>, etc. which are used to reference the first,
-second, etc. parameter. The value of the parameters is specified by the
+Specify the I<sql query statement> which the plugin should execute. The string
+may contain the tokens B<$1>, B<$2>, etc. which are used to reference the
+first, second, etc. parameter. The value of the parameters is specified by the
 B<Param> configuration option - see below for details. To include a literal
 B<$> character followed by a number, surround it with single quotes (B<'>).
 
@@ -1181,7 +1844,14 @@ Any SQL command which may return data (such as C<SELECT> or C<SHOW>) is
 allowed. Note, however, that only a single command may be used. Semicolons are
 allowed as long as a single non-empty command has been specified only.
 
-=item B<Param> I<hostname>|I<database>|I<username>
+The returned lines will be handled separately one after another.
+
+=item B<Query> I<sql query statement>
+
+This is a deprecated synonym for B<Statement>. It will be removed in version 5
+of collectd.
+
+=item B<Param> I<hostname>|I<database>|I<username>|I<interval>
 
 Specify the parameters which should be passed to the SQL query. The parameters
 are referred to in the SQL query as B<$1>, B<$2>, etc. in the same order as
@@ -1203,17 +1873,72 @@ The name of the database of the current connection.
 
 The username used to connect to the database.
 
+=item I<interval>
+
+The interval collectd is using (as specified by the B<Interval> option).
+
 =back
 
 Please note that parameters are only supported by PostgreSQL's protocol
 version 3 and above which was introduced in version 7.4 of PostgreSQL.
 
+=item B<Type> I<type>
+
+The I<type> name to be used when dispatching the values. The type describes
+how to handle the data and where to store it. See L<types.db(5)> for more
+details on types and their configuration. The number and type of values (as
+selected by the B<ValuesFrom> option) has to match the type of the given name.
+
+This option is required inside a B<Result> block.
+
+=item B<InstancePrefix> I<prefix>
+
+=item B<InstancesFrom> I<column0> [I<column1> ...]
+
+Specify how to create the "TypeInstance" for each data set (i.E<nbsp>e. line).
+B<InstancePrefix> defines a static prefix that will be prepended to all type
+instances. B<InstancesFrom> defines the column names whose values will be used
+to create the type instance. Multiple values will be joined together using the
+hyphen (C<->) as separation character.
+
+The plugin itself does not check whether or not all built instances are
+different. It is your responsibility to assure that each is unique.
+
+Both options are optional. If none is specified, the type instance will be
+empty.
+
+=item B<ValuesFrom> I<column0> [I<column1> ...]
+
+Names the columns whose content is used as the actual data for the data sets
+that are dispatched to the daemon. How many such columns you need is
+determined by the B<Type> setting as explained above. If you specify too many
+or not enough columns, the plugin will complain about that and no data will be
+submitted to the daemon.
+
+The actual data type, as seen by PostgreSQL, is not that important as long as
+it represents numbers. The plugin will automatically cast the values to the
+right type if it know how to do that. For that, it uses the L<strtoll(3)> and
+L<strtod(3)> functions, so anything supported by those functions is supported
+by the plugin as well.
+
+This option is required inside a B<Result> block and may be specified multiple
+times. If multiple B<ValuesFrom> options are specified, the columns are read
+in the given order.
+
 =item B<Column> I<type> [I<type instance>]
 
-Specify the I<type> and optional I<type instance> used to dispatch the value
-of each result column. Detailed information about types and their
-configuration can be found in L<types.db(5)>. The number and order of the
-B<Column> options has to match the columns of the query result.
+This is a deprecated alternative to a B<Result> block. It will be removed in
+version 5 of collectd. It is equivalent to the following B<Result> block:
+
+  <Result>
+    Type I<type>
+    InstancePrefix I<type instance>
+    ValuesFrom I<name of the x. column>
+  </Result>
+
+The order of the B<Column> options defines which columns of the query result
+should be used. The first option specifies the data found in the first column,
+the second option that of the second column, and so on.
 
 =item B<MinPGVersion> I<version>
 
@@ -1498,6 +2223,65 @@ collected for these selected processes are size of the resident segment size
 (RSS), user- and system-time used, number of processes and number of threads,
 and minor and major pagefaults.
 
+=item B<ProcessMatch> I<name> I<regex>
+
+Similar to the B<Process> option this allows to select more detailed
+statistics of processes matching the specified I<regex> (see L<regex(7)> for
+details). The statistics of all matching processes are summed up and
+dispatched to the daemon using the specified I<name> as an identifier. This
+allows to "group" several processes together. I<name> must not contain
+slashes.
+
+=back
+
+=head2 Plugin C<rrdcached>
+
+The C<rrdcached> plugin uses the RRDTool accelerator daemon, L<rrdcached(1)>,
+to store values to RRD files in an efficient manner. The combination of the
+C<rrdcached> B<plugin> and the C<rrdcached> B<daemon> is very similar to the
+way the C<rrdtool> plugin works (see below). The added abstraction layer
+provides a number of benefits, though: Because the cache is not within
+C<collectd> anymore, it does not need to be flushed when C<collectd> is to be
+restarted. This results in much shorter (if any) gaps in graphs, especially
+under heavy load. Also, the C<rrdtool> command line utility is aware of the
+daemon so that it can flush values to disk automatically when needed. This
+allows to integrate automated flushing of values into graphing solutions much
+more easily.
+
+There are disadvantages, though: The daemon may reside on a different host, so
+it may not be possible for C<collectd> to create the appropriate RRD files
+anymore. And even if C<rrdcached> runs on the same host, it may run in a
+different base directory, so relative paths may do weird stuff if you're not
+careful.
+
+So the B<recommended configuration> is to let C<collectd> and C<rrdcached> run
+on the same host, communicating via a UNIX domain socket. The B<DataDir>
+setting should be set to an absolute path, so that a changed base directory
+does not result in RRD files being createdE<nbsp>/ expected in the wrong place.
+
+=over 4
+
+=item B<DaemonAddress> I<Address>
+
+Address of the daemon as understood by the C<rrdc_connect> function of the RRD
+library. See L<rrdcached(1)> for details. Example:
+
+  <Plugin "rrdcached">
+    DaemonAddress "unix:/var/run/rrdcached.sock"
+  </Plugin>
+
+=item B<DataDir> I<Directory>
+
+Set the base directory in which the RRD files reside. If this is a relative
+path, it is relative to the working base directory of the C<rrdcached> daemon!
+Use of an absolute path is recommended.
+
+=item B<CreateFiles> B<true>|B<false>
+
+Enables or disables the creation of RRD files. If the daemon is not running
+locally, or B<DataDir> is set to a relative path, this will not work as
+expected. Default is B<true>.
+
 =back
 
 =head2 Plugin C<rrdtool>
@@ -1577,7 +2361,7 @@ reduces IO-operations and thus lessens the load produced by updating the files.
 The trade off is that the graphs kind of "drag behind" and that more memory is
 used.
 
-=item B<WritesPerSecond> B<Updates>
+=item B<WritesPerSecond> I<Updates>
 
 When collecting many statistics with collectd and the C<rrdtool> plugin, you
 will run serious performance problems. The B<CacheFlush> setting and the
@@ -1665,16 +2449,16 @@ user using (extended) regular expressions, as described in L<regex(7)>.
     <File "/var/log/exim4/mainlog">
       Instance "exim"
       <Match>
-      	Regex "S=([1-9][0-9]*)"
-	DSType "CounterAdd"
-	Type "ipt_bytes"
-	Instance "total"
+        Regex "S=([1-9][0-9]*)"
+        DSType "CounterAdd"
+        Type "ipt_bytes"
+        Instance "total"
       </Match>
       <Match>
-      	Regex "\\<R=local_user\\>"
-	DSType "CounterInc"
-	Type "counter"
-	Instance "local_user"
+        Regex "\\<R=local_user\\>"
+        DSType "CounterInc"
+        Type "counter"
+        Instance "local_user"
       </Match>
     </File>
   </Plugin>
@@ -1948,6 +2732,12 @@ the F</proc/virtual> filesystem that is required by this plugin.
 
 The B<VServer> homepage can be found at L<http://linux-vserver.org/>.
 
+B<Note>: The traffic collected by this plugin accounts for the amount of
+traffic passing a socket which might be a lot less than the actual on-wire
+traffic (e.E<nbsp>g. due to headers and retransmission). If you want to
+collect on-wire traffic you could, for example, use the logging facilities of
+iptables to feed data for the guest IPs into the iptables plugin.
+
 =head1 THRESHOLD CONFIGURATION
 
 Starting with version C<4.3.0> collectd has support for B<monitoring>. By that
@@ -2005,7 +2795,7 @@ information.
      <Plugin "memory">
        <Type "memory">
          Instance "cached"
-	 WarningMin 100000000
+         WarningMin 100000000
        </Type>
      </Plugin>
    </Host>
@@ -2075,6 +2865,651 @@ only one such notification is generated until the value appears again.
 
 =back
 
+=head1 FILTER CONFIGURATION
+
+Starting with collectd 4.6 there is a powerful filtering infrastructure
+implemented in the daemon. The concept has mostly been copied from
+I<ip_tables>, the packet filter infrastructure for Linux. We'll use a similar
+terminology, so that users that are familiar with iptables feel right at home.
+
+=head2 Terminology
+
+The following are the terms used in the remainder of the filter configuration
+documentation. For an ASCII-art schema of the mechanism, see
+L<"General structure"> below.
+
+=over 4
+
+=item B<Match>
+
+A I<match> is a criteria to select specific values. Examples are, of course, the
+name of the value or it's current value.
+
+Matches are implemented in plugins which you have to load prior to using the
+match. The name of such plugins starts with the "match_" prefix.
+
+=item B<Target>
+
+A I<target> is some action that is to be performed with data. Such actions
+could, for example, be to change part of the value's identifier or to ignore
+the value completely.
+
+Some of these targets are built into the daemon, see L<"Built-in targets">
+below. Other targets are implemented in plugins which you have to load prior to
+using the target. The name of such plugins starts with the "target_" prefix.
+
+=item B<Rule>
+
+The combination of any number of matches and at least one target is called a
+I<rule>. The target actions will be performed for all values for which B<all>
+matches apply. If the rule does not have any matches associated with it, the
+target action will be performed for all values.
+
+=item B<Chain>
+
+A I<chain> is a list of rules and possibly default targets. The rules are tried
+in order and if one matches, the associated target will be called. If a value
+is handled by a rule, it depends on the target whether or not any subsequent
+rules are considered or if traversal of the chain is aborted, see
+L<"Flow control"> below. After all rules have been checked, the default targets
+will be executed.
+
+=back
+
+=head2 General structure
+
+The following shows the resulting structure:
+
+ +---------+
+ ! Chain   !
+ +---------+
+      !
+      V
+ +---------+  +---------+  +---------+  +---------+
+ ! Rule    !->! Match   !->! Match   !->! Target  !
+ +---------+  +---------+  +---------+  +---------+
+      !
+      V
+ +---------+  +---------+  +---------+
+ ! Rule    !->! Target  !->! Target  !
+ +---------+  +---------+  +---------+
+      !
+      V
+      :
+      :
+      !
+      V
+ +---------+  +---------+  +---------+
+ ! Rule    !->! Match   !->! Target  !
+ +---------+  +---------+  +---------+
+      !
+      V
+ +---------+
+ ! Default !
+ ! Target  !
+ +---------+
+
+=head2 Flow control
+
+There are four ways to control which way a value takes through the filter
+mechanism:
+
+=over 4
+
+=item B<jump>
+
+The built-in B<jump> target can be used to "call" another chain, i.E<nbsp>e.
+process the value with another chain. When the called chain finishes, usually
+the next target or rule after the jump is executed.
+
+=item B<stop>
+
+The stop condition, signaled for example by the built-in target B<stop>, causes
+all processing of the value to be stopped immediately.
+
+=item B<return>
+
+Causes processing in the current chain to be aborted, but processing of the
+value generally will continue. This means that if the chain was called via
+B<Jump>, the next target or rule after the jump will be executed. If the chain
+was not called by another chain, control will be returned to the daemon and it
+may pass the value to another chain.
+
+=item B<continue>
+
+Most targets will signal the B<continue> condition, meaning that processing
+should continue normally. There is no special built-in target for this
+condition.
+
+=back
+
+=head2 Synopsis
+
+The configuration reflects this structure directly:
+
+ PostCacheChain "PostCache"
+ <Chain "PostCache">
+   <Rule "ignore_mysql_show">
+     <Match "regex">
+       Plugin "^mysql$"
+       Type "^mysql_command$"
+       TypeInstance "^show_"
+     </Match>
+     <Target "stop">
+     </Target>
+   </Rule>
+   <Target "write">
+     Plugin "rrdtool"
+   </Target>
+ </Chain>
+
+The above configuration example will ignore all values where the plugin field
+is "mysql", the type is "mysql_command" and the type instance begins with
+"show_". All other values will be sent to the C<rrdtool> write plugin via the
+default target of the chain. Since this chain is run after the value has been
+added to the cache, the MySQL C<show_*> command statistics will be available
+via the C<unixsock> plugin.
+
+=head2 List of configuration options
+
+=over 4
+
+=item B<PreCacheChain> I<ChainName>
+
+=item B<PostCacheChain> I<ChainName>
+
+Configure the name of the "pre-cache chain" and the "post-cache chain". The
+argument is the name of a I<chain> that should be executed before and/or after
+the values have been added to the cache.
+
+To understand the implications, it's important you know what is going on inside
+I<collectd>. The following diagram shows how values are passed from the
+read-plugins to the write-plugins:
+
+   +---------------+
+   !  Read-Plugin  !
+   +-------+-------+
+           !
+ + - - - - V - - - - +
+ : +---------------+ :
+ : !   Pre-Cache   ! :
+ : !     Chain     ! :
+ : +-------+-------+ :
+ :         !         :
+ :         V         :
+ : +-------+-------+ :  +---------------+
+ : !     Cache     !--->!  Value Cache  !
+ : !     insert    ! :  +---+---+-------+
+ : +-------+-------+ :      !   !
+ :         !   ,------------'   !
+ :         V   V     :          V
+ : +-------+---+---+ :  +-------+-------+
+ : !  Post-Cache   +--->! Write-Plugins !
+ : !     Chain     ! :  +---------------+
+ : +---------------+ :
+ :                   :
+ :  dispatch values  :
+ + - - - - - - - - - +
+
+After the values are passed from the "read" plugins to the dispatch functions,
+the pre-cache chain is run first. The values are added to the internal cache
+afterwards. The post-cache chain is run after the values have been added to the
+cache. So why is it such a huge deal if chains are run before or after the
+values have been added to this cache?
+
+Targets that change the identifier of a value list should be executed before
+the values are added to the cache, so that the name in the cache matches the
+name that is used in the "write" plugins. The C<unixsock> plugin, too, uses
+this cache to receive a list of all available values. If you change the
+identifier after the value list has been added to the cache, this may easily
+lead to confusion, but it's not forbidden of course.
+
+The cache is also used to convert counter values to rates. These rates are, for
+example, used by the C<value> match (see below). If you use the rate stored in
+the cache B<before> the new value is added, you will use the old, B<previous>
+rate. Write plugins may use this rate, too, see the C<csv> plugin, for example.
+The C<unixsock> plugin uses these rates too, to implement the C<GETVAL>
+command.
+
+Last but not last, the B<stop> target makes a difference: If the pre-cache
+chain returns the stop condition, the value will not be added to the cache and
+the post-cache chain will not be run.
+
+=item B<Chain> I<Name>
+
+Adds a new chain with a certain name. This name can be used to refer to a
+specific chain, for example to jump to it.
+
+Within the B<Chain> block, there can be B<Rule> blocks and B<Target> blocks.
+
+=item B<Rule> [I<Name>]
+
+Adds a new rule to the current chain. The name of the rule is optional and
+currently has no meaning for the daemon.
+
+Within the B<Rule> block, there may be any number of B<Match> blocks and there
+must be at least one B<Target> block.
+
+=item B<Match> I<Name>
+
+Adds a match to a B<Rule> block. The name specifies what kind of match should
+be performed. Available matches depend on the plugins that have been loaded.
+
+The arguments inside the B<Match> block are passed to the plugin implementing
+the match, so which arguments are valid here depends on the plugin being used.
+If you do not need any to pass any arguments to a match, you can use the
+shorter syntax:
+
+ Match "foobar"
+
+Which is equivalent to:
+
+ <Match "foobar">
+ </Match>
+
+=item B<Target> I<Name>
+
+Add a target to a rule or a default target to a chain. The name specifies what
+kind of target is to be added. Which targets are available depends on the
+plugins being loaded.
+
+The arguments inside the B<Target> block are passed to the plugin implementing
+the target, so which arguments are valid here depends on the plugin being used.
+If you do not need any to pass any arguments to a target, you can use the
+shorter syntax:
+
+ Target "stop"
+
+This is the same as writing:
+
+ <Target "stop">
+ </Target>
+
+=back
+
+=head2 Built-in targets 
+
+The following targets are built into the core daemon and therefore need no
+plugins to be loaded:
+
+=over 4
+
+=item B<return>
+
+Signals the "return" condition, see the L<"Flow control"> section above. This
+causes the current chain to stop processing the value and returns control to
+the calling chain. The calling chain will continue processing targets and rules
+just after the B<jump> target (see below). This is very similar to the
+B<RETURN> target of iptables, see L<iptables(8)>.
+
+This target does not have any options.
+
+Example:
+
+ Target "return"
+
+=item B<stop>
+
+Signals the "stop" condition, see the L<"Flow control"> section above. This
+causes processing of the value to be aborted immediately. This is similar to
+the B<DROP> target of iptables, see L<iptables(8)>.
+
+This target does not have any options.
+
+Example:
+
+ Target "stop"
+
+=item B<write>
+
+Sends the value to "write" plugins.
+
+Available options:
+
+=over 4
+
+=item B<Plugin> I<Name>
+
+Name of the write plugin to which the data should be sent. This option may be
+given multiple times to send the data to more than one write plugin.
+
+=back
+
+If no plugin is explicitly specified, the values will be sent to all available
+write plugins.
+
+Example:
+
+ <Target "write">
+   Plugin "rrdtool"
+ </Target>
+
+=item B<jump>
+
+Starts processing the rules of another chain, see L<"Flow control"> above. If
+the end of that chain is reached, or a stop condition is encountered,
+processing will continue right after the B<jump> target, i.E<nbsp>e. with the
+next target or the next rule. This is similar to the B<-j> command line option
+of iptables, see L<iptables(8)>.
+
+Available options:
+
+=over 4
+
+=item B<Chain> I<Name>
+
+Jumps to the chain I<Name>. This argument is required and may appear only once.
+
+=back
+
+Example:
+
+ <Target "jump">
+   Chain "foobar"
+ </Target>
+
+=back
+
+=head2 Available matches
+
+=over 4
+
+=item B<regex>
+
+Matches a value using regular expressions.
+
+Available options:
+
+=over 4
+
+=item B<Host> I<Regex>
+
+=item B<Plugin> I<Regex>
+
+=item B<PluginInstance> I<Regex>
+
+=item B<Type> I<Regex>
+
+=item B<TypeInstance> I<Regex>
+
+Match values where the given regular expressions match the various fields of
+the identifier of a value. If multiple regular expressions are given, B<all>
+regexen must match for a value to match.
+
+=back
+
+Example:
+
+ <Match "regex">
+   Host "customer[0-9]+"
+   Plugin "^foobar$"
+ </Match>
+
+=item B<timediff>
+
+Matches values that have a time which differs from the time on the server.
+
+This match is mainly intended for servers that receive values over the
+C<network> plugin and write them to disk using the C<rrdtool> plugin. RRDtool
+is very sensitive to the timestamp used when updating the RRD files. In
+particular, the time must be ever increasing. If a misbehaving client sends one
+packet with a timestamp far in the future, all further packets with a correct
+time will be ignored because of that one packet. What's worse, such corrupted
+RRD files are hard to fix.
+
+This match lets one match all values B<outside> a specified time range
+(relative to the server's time), so you can use the B<stop> target (see below)
+to ignore the value, for example.
+
+Available options:
+
+=over 4
+
+=item B<Future> I<Seconds>
+
+Matches all values that are I<ahead> of the server's time by I<Seconds> or more
+seconds. Set to zero for no limit. Either B<Future> or B<Past> must be
+non-zero.
+
+=item B<Past> I<Seconds>
+
+Matches all values that are I<behind> of the server's time by I<Seconds> or
+more seconds. Set to zero for no limit. Either B<Future> or B<Past> must be
+non-zero.
+
+=back
+
+Example:
+
+ <Match "timediff">
+   Future  300
+   Past   3600
+ </Match>
+
+This example matches all values that are five minutes or more ahead of the
+server or one hour (or more) lagging behind.
+
+=item B<value>
+
+Matches the actual value of data sources against given minimumE<nbsp>/ maximum
+values. If a data-set consists of more than one data-source, all data-sources
+must match the specified ranges for a positive match.
+
+Available options:
+
+=over 4
+
+=item B<Min> I<Value>
+
+Sets the smallest value which still results in a match. If unset, behaves like
+negative infinity.
+
+=item B<Max> I<Value>
+
+Sets the largest value which still results in a match. If unset, behaves like
+positive infinity.
+
+=item B<Invert> B<true>|B<false>
+
+Inverts the selection. If the B<Min> and B<Max> settings result in a match,
+no-match is returned and vice versa. Please note that the B<Invert> setting
+only effects how B<Min> and B<Max> are applied to a specific value. Especially
+the B<DataSource> and B<Satisfy> settings (see below) are not inverted.
+
+=item B<DataSource> I<DSName> [I<DSName> ...]
+
+Select one or more of the data sources. If no data source is configured, all
+data sources will be checked. If the type handled by the match does not have a
+data source of the specified name(s), this will always result in no match
+(independent of the B<Invert> setting).
+
+=item B<Satisfy> B<Any>|B<All>
+
+Specifies how checking with several data sources is performed. If set to
+B<Any>, the match succeeds if one of the data sources is in the configured
+range. If set to B<All> the match only succeeds if all data sources are within
+the configured range. Default is B<All>.
+
+Usually B<All> is used for positive matches, B<Any> is used for negative
+matches. This means that with B<All> you usually check that all values are in a
+"good" range, while with B<Any> you check if any value is within a "bad" range
+(or outside the "good" range).
+
+=back
+
+Either B<Min> or B<Max>, but not both, may be unset.
+
+Example:
+
+ # Match all values smaller than or equal to 100. Matches only if all data
+ # sources are below 100.
+ <Match "value">
+   Max 100
+   Satisfy "All"
+ </Match>
+ 
+ # Match if the value of any data source is outside the range of 0 - 100.
+ <Match "value">
+   Min   0
+   Max 100
+   Invert true
+   Satisfy "Any"
+ </Match>
+
+=back
+
+=head2 Available targets
+
+=over 4
+
+=item B<notification>
+
+Creates and dispatches a notification.
+
+Available options:
+
+=over 4
+
+=item B<Message> I<String>
+
+This required option sets the message of the notification. The following
+placeholders will be replaced by an appropriate value:
+
+=over 4
+
+=item B<%{host}>
+
+=item B<%{plugin}>
+
+=item B<%{plugin_instance}>
+
+=item B<%{type}>
+
+=item B<%{type_instance}>
+
+These placeholders are replaced by the identifier field of the same name.
+
+=item B<%{ds:>I<name>B<}>
+
+These placeholders are replaced by a (hopefully) human readable representation
+of the current rate of this data source. If you changed the instance name
+(using the B<set> or B<replace> targets, see below), it may not be possible to
+convert counter values to rates.
+
+=back
+
+Please note that these placeholders are B<case sensitive>!
+
+=item B<Severity> B<"FATAL">|B<"WARNING">|B<"OKAY">
+
+Sets the severity of the message. If omitted, the severity B<"WARNING"> is
+used.
+
+=back
+
+Example:
+
+  <Target "notification">
+    Message "Oops, the %{type_instance} temperature is currently %{ds:value}!"
+    Severity "WARNING"
+  </Target>
+
+=item B<replace>
+
+Replaces parts of the identifier using regular expressions.
+
+Available options:
+
+=over 4
+
+=item B<Host> I<Regex> I<Replacement>
+
+=item B<Plugin> I<Regex> I<Replacement>
+
+=item B<PluginInstance> I<Regex> I<Replacement>
+
+=item B<TypeInstance> I<Regex> I<Replacement>
+
+Match the appropriate field with the given regular expression I<Regex>. If the
+regular expression matches, that part that matches is replaced with
+I<Replacement>. If multiple places of the input buffer match a given regular
+expression, only the first occurrence will be replaced.
+
+You can specify each option multiple times to use multiple regular expressions
+one after another.
+
+=back
+
+Example:
+
+ <Target "replace">
+   # Replace "example.net" with "example.com"
+   Host "\\<example.net\\>" "example.com"
+ 
+   # Strip "www." from hostnames
+   Host "\\<www\\." ""
+ </Target>
+
+=item B<set>
+
+Sets part of the identifier of a value to a given string.
+
+Available options:
+
+=over 4
+
+=item B<Host> I<String>
+
+=item B<Plugin> I<String>
+
+=item B<PluginInstance> I<String>
+
+=item B<TypeInstance> I<String>
+
+Set the appropriate field to the given string. The strings for plugin instance
+and type instance may be empty, the strings for host and plugin may not be
+empty. It's currently not possible to set the type of a value this way.
+
+=back
+
+Example:
+
+ <Target "set">
+   PluginInstance "coretemp"
+   TypeInstance "core3"
+ </Target>
+
+=back
+
+=head2 Backwards compatibility
+
+If you use collectd with an old configuration, i.E<nbsp>e. one without a
+B<Chain> block, it will behave as it used to. This is equivalent to the
+following configuration:
+
+ <Chain "PostCache">
+   Target "write"
+ </Chain>
+
+If you specify a B<PostCacheChain>, the B<write> target will not be added
+anywhere and you will have to make sure that it is called where appropriate. We
+suggest to add the above snippet as default target to your "PostCache" chain.
+
+=head2 Examples
+
+Ignore all values, where the hostname does not contain a dot, i.E<nbsp>e. can't
+be an FQDN.
+
+ <Chain "PreCache">
+   <Rule "no_fqdn">
+     <Match "regex">
+       Host "^[^\.]*$"
+     </Match>
+     Target "stop"
+   </Rule>
+   Target "write"
+ </Chain>
+
 =head1 SEE ALSO
 
 L<collectd(1)>,
@@ -2083,9 +3518,11 @@ L<collectd-perl(5)>,
 L<collectd-unixsock(5)>,
 L<types.db(5)>,
 L<hddtemp(8)>,
+L<iptables(8)>,
 L<kstat(3KSTAT)>,
 L<mbmon(1)>,
 L<psql(1)>,
+L<regex(7)>,
 L<rrdtool(1)>,
 L<sensors(1)>
 

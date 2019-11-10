@@ -22,6 +22,7 @@
  *   Lyonel Vincent <lyonel at ezix.org>
  *   Florian octo Forster <octo at verplant.org>
  *   Oleg King <king2 at kaluga.ru>
+ *   Sebastian Harl <sh at tokkee.org>
  **/
 
 #include "collectd.h"
@@ -101,13 +102,16 @@
 # include <regex.h>
 #endif
 
+#ifndef ARG_MAX
+#  define ARG_MAX 4096
+#endif
+
 #define BUFSIZE 256
 
 static const char *config_keys[] =
 {
 	"Process",
-	"ProcessMatch",
-	NULL
+	"ProcessMatch"
 };
 static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 
@@ -118,7 +122,9 @@ typedef struct procstat_entry_s
 
 	unsigned long num_proc;
 	unsigned long num_lwp;
+	unsigned long vmem_size;
 	unsigned long vmem_rss;
+	unsigned long stack_size;
 
 	unsigned long vmem_minflt;
 	unsigned long vmem_majflt;
@@ -143,7 +149,9 @@ typedef struct procstat
 
 	unsigned long num_proc;
 	unsigned long num_lwp;
+	unsigned long vmem_size;
 	unsigned long vmem_rss;
+	unsigned long stack_size;
 
 	unsigned long vmem_minflt_counter;
 	unsigned long vmem_majflt_counter;
@@ -315,13 +323,17 @@ static void ps_list_add (const char *name, const char *cmdline, procstat_entry_t
 		}
 
 		pse->age = 0;
-		pse->num_proc = entry->num_proc;
-		pse->num_lwp  = entry->num_lwp;
-		pse->vmem_rss = entry->vmem_rss;
+		pse->num_proc   = entry->num_proc;
+		pse->num_lwp    = entry->num_lwp;
+		pse->vmem_size  = entry->vmem_size;
+		pse->vmem_rss   = entry->vmem_rss;
+		pse->stack_size = entry->stack_size;
 
-		ps->num_proc += pse->num_proc;
-		ps->num_lwp  += pse->num_lwp;
-		ps->vmem_rss += pse->vmem_rss;
+		ps->num_proc   += pse->num_proc;
+		ps->num_lwp    += pse->num_lwp;
+		ps->vmem_size  += pse->vmem_size;
+		ps->vmem_rss   += pse->vmem_rss;
+		ps->stack_size += pse->stack_size;
 
 		if ((entry->vmem_minflt_counter == 0)
 				&& (entry->vmem_majflt_counter == 0))
@@ -410,7 +422,9 @@ static void ps_list_reset (void)
 	{
 		ps->num_proc    = 0;
 		ps->num_lwp     = 0;
+		ps->vmem_size   = 0;
 		ps->vmem_rss    = 0;
+		ps->stack_size  = 0;
 
 		pse_prev = NULL;
 		pse = ps->instances;
@@ -459,12 +473,18 @@ static int ps_config (const char *key, const char *value)
 		int fields_num;
 
 		new_val = strdup (value);
-		if (new_val == NULL)
+		if (new_val == NULL) {
+			ERROR ("processes plugin: strdup failed when processing "
+					"`ProcessMatch %s'.", value);
 			return (1);
+		}
+
 		fields_num = strsplit (new_val, fields,
 				STATIC_ARRAY_SIZE (fields));
 		if (fields_num != 2)
 		{
+			ERROR ("processes plugin: `ProcessMatch' needs exactly "
+					"two string arguments.");
 			sfree (new_val);
 			return (1);
 		}
@@ -473,6 +493,8 @@ static int ps_config (const char *key, const char *value)
 	}
 	else
 	{
+		ERROR ("processes plugin: The `%s' configuration option is not "
+				"understood and will be ignored.", key);
 		return (-1);
 	}
 
@@ -531,7 +553,6 @@ static void ps_submit_state (const char *state, double value)
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "processes", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));
@@ -549,13 +570,22 @@ static void ps_submit_proc_list (procstat_t *ps)
 
 	vl.values = values;
 	vl.values_len = 2;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "processes", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, ps->name, sizeof (vl.plugin_instance));
 
+	sstrncpy (vl.type, "ps_vm", sizeof (vl.type));
+	vl.values[0].gauge = ps->vmem_size;
+	vl.values_len = 1;
+	plugin_dispatch_values (&vl);
+
 	sstrncpy (vl.type, "ps_rss", sizeof (vl.type));
 	vl.values[0].gauge = ps->vmem_rss;
+	vl.values_len = 1;
+	plugin_dispatch_values (&vl);
+
+	sstrncpy (vl.type, "ps_stacksize", sizeof (vl.type));
+	vl.values[0].gauge = ps->stack_size;
 	vl.values_len = 1;
 	plugin_dispatch_values (&vl);
 
@@ -664,7 +694,9 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 
 	long long unsigned cpu_user_counter;
 	long long unsigned cpu_system_counter;
+	long long unsigned vmem_size;
 	long long unsigned vmem_rss;
+	long long unsigned stack_size;
 
 	memset (ps, 0, sizeof (procstat_t));
 
@@ -731,10 +763,20 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 
 	cpu_user_counter   = atoll (fields[13]);
 	cpu_system_counter = atoll (fields[14]);
-	vmem_rss = atoll (fields[23]);
+	vmem_size          = atoll (fields[22]);
+	vmem_rss           = atoll (fields[23]);
 	ps->vmem_minflt_counter = atol (fields[9]);
 	ps->vmem_majflt_counter = atol (fields[11]);
-	
+
+	{
+		unsigned long long stack_start = atoll (fields[27]);
+		unsigned long long stack_ptr   = atoll (fields[28]);
+
+		stack_size = (stack_start > stack_ptr)
+			? stack_start - stack_ptr
+			: stack_ptr - stack_start;
+	}
+
 	/* Convert jiffies to useconds */
 	cpu_user_counter   = cpu_user_counter   * 1000000 / CONFIG_HZ;
 	cpu_system_counter = cpu_system_counter * 1000000 / CONFIG_HZ;
@@ -742,11 +784,103 @@ int ps_read_process (int pid, procstat_t *ps, char *state)
 
 	ps->cpu_user_counter = (unsigned long) cpu_user_counter;
 	ps->cpu_system_counter = (unsigned long) cpu_system_counter;
+	ps->vmem_size = (unsigned long) vmem_size;
 	ps->vmem_rss = (unsigned long) vmem_rss;
+	ps->stack_size = (unsigned long) stack_size;
 
 	/* success */
 	return (0);
 } /* int ps_read_process (...) */
+
+static char *ps_get_cmdline (pid_t pid, char *name, char *buf, size_t buf_len)
+{
+	char  *buf_ptr;
+	size_t len;
+
+	char file[PATH_MAX];
+	int  fd;
+
+	size_t n;
+
+	if ((pid < 1) || (NULL == buf) || (buf_len < 2))
+		return NULL;
+
+	ssnprintf (file, sizeof (file), "/proc/%u/cmdline", pid);
+
+	fd = open (file, O_RDONLY);
+	if (fd < 0) {
+		char errbuf[4096];
+		WARNING ("processes plugin: Failed to open `%s': %s.", file,
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return NULL;
+	}
+
+	buf_ptr = buf;
+	len     = buf_len;
+
+	n = 0;
+
+	while (42) {
+		ssize_t status;
+
+		status = read (fd, (void *)buf_ptr, len);
+
+		if (status < 0) {
+			char errbuf[4096];
+
+			if ((EAGAIN == errno) || (EINTR == errno))
+				continue;
+
+			WARNING ("processes plugin: Failed to read from `%s': %s.", file,
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+			close (fd);
+			return NULL;
+		}
+
+		n += status;
+
+		if (status == 0)
+			break;
+
+		buf_ptr += status;
+		len     -= status;
+
+		if (len <= 0)
+			break;
+	}
+
+	close (fd);
+
+	if (0 == n) {
+		/* cmdline not available; e.g. kernel thread, zombie */
+		if (NULL == name)
+			return NULL;
+
+		ssnprintf (buf, buf_len, "[%s]", name);
+		return buf;
+	}
+
+	assert (n <= buf_len);
+
+	if (n == buf_len)
+		--n;
+	buf[n] = '\0';
+
+	--n;
+	/* remove trailing whitespace */
+	while ((n > 0) && (isspace (buf[n]) || ('\0' == buf[n]))) {
+		buf[n] = '\0';
+		--n;
+	}
+
+	/* arguments are separated by '\0' in /proc/<pid>/cmdline */
+	while (n > 0) {
+		if ('\0' == buf[n])
+			buf[n] = ' ';
+		--n;
+	}
+	return buf;
+} /* char *ps_get_cmdline (...) */
 #endif /* KERNEL_LINUX */
 
 #if HAVE_THREAD_INFO
@@ -1062,6 +1196,8 @@ static int ps_read (void)
 	DIR           *proc;
 	int            pid;
 
+	char cmdline[ARG_MAX];
+
 	int        status;
 	procstat_t ps;
 	procstat_entry_t pse;
@@ -1098,9 +1234,11 @@ static int ps_read (void)
 		pse.id       = pid;
 		pse.age      = 0;
 
-		pse.num_proc = ps.num_proc;
-		pse.num_lwp  = ps.num_lwp;
-		pse.vmem_rss = ps.vmem_rss;
+		pse.num_proc   = ps.num_proc;
+		pse.num_lwp    = ps.num_lwp;
+		pse.vmem_size  = ps.vmem_size;
+		pse.vmem_rss   = ps.vmem_rss;
+		pse.stack_size = ps.stack_size;
 
 		pse.vmem_minflt = 0;
 		pse.vmem_minflt_counter = ps.vmem_minflt_counter;
@@ -1122,8 +1260,9 @@ static int ps_read (void)
 			case 'W': paging++;   break;
 		}
 
-		/* FIXME: cmdline should be here instead of NULL */
-		ps_list_add (ps.name, NULL, &pse);
+		ps_list_add (ps.name,
+				ps_get_cmdline (pid, ps.name, cmdline, sizeof (cmdline)),
+				&pse);
 	}
 
 	closedir (proc);

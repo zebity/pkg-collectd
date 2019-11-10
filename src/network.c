@@ -178,7 +178,6 @@ static char         send_buffer[BUFF_SIZE];
 static char        *send_buffer_ptr;
 static int          send_buffer_fill;
 static value_list_t send_buffer_vl = VALUE_LIST_STATIC;
-static char         send_buffer_type[DATA_MAX_NAME_LEN];
 static pthread_mutex_t send_buffer_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static c_avl_tree_t      *cache_tree = NULL;
@@ -499,7 +498,7 @@ static int parse_part_values (void **ret_buffer, int *ret_buffer_len,
 
 	exp_size = 3 * sizeof (uint16_t)
 		+ pkg_numval * (sizeof (uint8_t) + sizeof (value_t));
-	if (buffer_len < exp_size)
+	if ((buffer_len < 0) || ((size_t) buffer_len < exp_size))
 	{
 		WARNING ("network plugin: parse_part_values: "
 				"Packet too short: "
@@ -563,7 +562,7 @@ static int parse_part_number (void **ret_buffer, int *ret_buffer_len,
 	uint16_t pkg_length;
 	uint16_t pkg_type;
 
-	if (buffer_len < exp_size)
+	if ((buffer_len < 0) || ((size_t) buffer_len < exp_size))
 	{
 		WARNING ("network plugin: parse_part_number: "
 				"Packet too short: "
@@ -603,7 +602,7 @@ static int parse_part_string (void **ret_buffer, int *ret_buffer_len,
 	uint16_t pkg_length;
 	uint16_t pkg_type;
 
-	if (buffer_len < header_size)
+	if ((buffer_len < 0) || ((size_t) buffer_len < header_size))
 	{
 		WARNING ("network plugin: parse_part_string: "
 				"Packet too short: "
@@ -645,7 +644,8 @@ static int parse_part_string (void **ret_buffer, int *ret_buffer_len,
 	/* Check that the package data fits into the output buffer.
 	 * The previous if-statement ensures that:
 	 * `pkg_length > header_size' */
-	if ((pkg_length - header_size) > output_len)
+	if ((output_len < 0)
+			|| ((size_t) output_len < ((size_t) pkg_length - header_size)))
 	{
 		WARNING ("network plugin: parse_part_string: "
 				"Output buffer too small.");
@@ -1241,7 +1241,7 @@ static int network_add_sending_socket (const char *node, const char *service)
 	return (0);
 } /* int network_get_listen_socket */
 
-static void *dispatch_thread (void *arg)
+static void *dispatch_thread (void __attribute__((unused)) *arg)
 {
   while (42)
   {
@@ -1280,6 +1280,9 @@ static int network_receive (void)
 	int i;
 	int status;
 
+	receive_list_entry_t *private_list_head;
+	receive_list_entry_t *private_list_tail;
+
 	if (listen_sockets_num == 0)
 		network_add_listen_socket (NULL, NULL);
 
@@ -1288,6 +1291,9 @@ static int network_receive (void)
 		ERROR ("network: Failed to open a listening socket.");
 		return (-1);
 	}
+
+	private_list_head = NULL;
+	private_list_tail = NULL;
 
 	while (listen_loop == 0)
 	{
@@ -1329,7 +1335,8 @@ static int network_receive (void)
 				ERROR ("network plugin: malloc failed.");
 				return (-1);
 			}
-			memset (ent, '\0', sizeof (receive_list_entry_t));
+			memset (ent, 0, sizeof (receive_list_entry_t));
+			ent->next = NULL;
 
 			/* Hopefully this be optimized out by the compiler. It
 			 * might help prevent stupid bugs in the future though.
@@ -1339,26 +1346,53 @@ static int network_receive (void)
 			memcpy (ent->data, buffer, buffer_len);
 			ent->data_len = buffer_len;
 
-			pthread_mutex_lock (&receive_list_lock);
-			if (receive_list_head == NULL)
-			{
-				receive_list_head = ent;
-				receive_list_tail = ent;
-			}
+			if (private_list_head == NULL)
+				private_list_head = ent;
 			else
+				private_list_tail->next = ent;
+			private_list_tail = ent;
+
+			/* Do not block here. Blocking here has led to
+			 * insufficient performance in the past. */
+			if (pthread_mutex_trylock (&receive_list_lock) == 0)
 			{
-				receive_list_tail->next = ent;
-				receive_list_tail = ent;
+				if (receive_list_head == NULL)
+					receive_list_head = private_list_head;
+				else
+					receive_list_tail->next = private_list_head;
+				receive_list_tail = private_list_tail;
+
+				private_list_head = NULL;
+				private_list_tail = NULL;
+
+				pthread_cond_signal (&receive_list_cond);
+				pthread_mutex_unlock (&receive_list_lock);
 			}
-			pthread_cond_signal (&receive_list_cond);
-			pthread_mutex_unlock (&receive_list_lock);
 		} /* for (listen_sockets) */
 	} /* while (listen_loop == 0) */
+
+	/* Make sure everything is dispatched before exiting. */
+	if (private_list_head != NULL)
+	{
+		pthread_mutex_lock (&receive_list_lock);
+
+		if (receive_list_head == NULL)
+			receive_list_head = private_list_head;
+		else
+			receive_list_tail->next = private_list_head;
+		receive_list_tail = private_list_tail;
+
+		private_list_head = NULL;
+		private_list_tail = NULL;
+
+		pthread_cond_signal (&receive_list_cond);
+		pthread_mutex_unlock (&receive_list_lock);
+	}
 
 	return (0);
 }
 
-static void *receive_thread (void *arg)
+static void *receive_thread (void __attribute__((unused)) *arg)
 {
 	return (network_receive () ? (void *) 1 : (void *) 0);
 } /* void *receive_thread */
@@ -1393,7 +1427,7 @@ static void network_send_buffer (const char *buffer, int buffer_len)
 } /* void network_send_buffer */
 
 static int add_to_buffer (char *buffer, int buffer_size,
-		value_list_t *vl_def, char *type_def,
+		value_list_t *vl_def,
 		const data_set_t *ds, const value_list_t *vl)
 {
 	char *buffer_orig = buffer;
@@ -1439,12 +1473,12 @@ static int add_to_buffer (char *buffer, int buffer_size,
 		sstrncpy (vl_def->plugin_instance, vl->plugin_instance, sizeof (vl_def->plugin_instance));
 	}
 
-	if (strcmp (type_def, vl->type) != 0)
+	if (strcmp (vl_def->type, vl->type) != 0)
 	{
 		if (write_part_string (&buffer, &buffer_size, TYPE_TYPE,
 					vl->type, strlen (vl->type)) != 0)
 			return (-1);
-		sstrncpy (type_def, vl->type, sizeof (type_def));
+		sstrncpy (vl_def->type, ds->type, sizeof (vl_def->type));
 	}
 
 	if (strcmp (vl_def->type_instance, vl->type_instance) != 0)
@@ -1470,8 +1504,7 @@ static void flush_buffer (void)
 	network_send_buffer (send_buffer, send_buffer_fill);
 	send_buffer_ptr  = send_buffer;
 	send_buffer_fill = 0;
-	memset (&send_buffer_vl, '\0', sizeof (send_buffer_vl));
-	memset (send_buffer_type, '\0', sizeof (send_buffer_type));
+	memset (&send_buffer_vl, 0, sizeof (send_buffer_vl));
 }
 
 static int network_write (const data_set_t *ds, const value_list_t *vl)
@@ -1490,7 +1523,7 @@ static int network_write (const data_set_t *ds, const value_list_t *vl)
 
 	status = add_to_buffer (send_buffer_ptr,
 			sizeof (send_buffer) - send_buffer_fill,
-			&send_buffer_vl, send_buffer_type,
+			&send_buffer_vl,
 			ds, vl);
 	if (status >= 0)
 	{
@@ -1504,7 +1537,7 @@ static int network_write (const data_set_t *ds, const value_list_t *vl)
 
 		status = add_to_buffer (send_buffer_ptr,
 				sizeof (send_buffer) - send_buffer_fill,
-				&send_buffer_vl, send_buffer_type,
+				&send_buffer_vl,
 				ds, vl);
 
 		if (status >= 0)
@@ -1726,8 +1759,7 @@ static int network_init (void)
 
 	send_buffer_ptr  = send_buffer;
 	send_buffer_fill = 0;
-	memset (&send_buffer_vl, '\0', sizeof (send_buffer_vl));
-	memset (send_buffer_type, '\0', sizeof (send_buffer_type));
+	memset (&send_buffer_vl, 0, sizeof (send_buffer_vl));
 
 	cache_tree = c_avl_create ((int (*) (const void *, const void *)) strcmp);
 	cache_flush_last = time (NULL);
@@ -1777,7 +1809,8 @@ static int network_init (void)
  * just send the buffer if `flush'  is called - if the requested value was in
  * there, good. If not, well, then there is nothing to flush.. -octo
  */
-static int network_flush (int timeout, const char *identifier)
+static int network_flush (int timeout,
+		const char __attribute__((unused)) *identifier)
 {
 	pthread_mutex_lock (&send_buffer_lock);
 

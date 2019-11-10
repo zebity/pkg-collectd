@@ -186,6 +186,7 @@ static int uc_insert (const data_set_t *ds, const value_list_t *vl,
   ce = cache_alloc (ds->ds_num);
   if (ce == NULL)
   {
+    sfree (key_copy);
     ERROR ("uc_insert: cache_alloc (%i) failed.", ds->ds_num);
     return (-1);
   }
@@ -261,6 +262,7 @@ int uc_check_timeout (void)
       {
 	ERROR ("uc_purge: realloc failed.");
 	c_avl_iterator_destroy (iter);
+	pthread_mutex_unlock (&cache_lock);
 	return (-1);
       }
 
@@ -510,7 +512,7 @@ gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
 
   if (FORMAT_VL (name, sizeof (name), vl, ds) != 0)
   {
-    ERROR ("uc_insert: FORMAT_VL failed.");
+    ERROR ("utils_cache: uc_get_rate: FORMAT_VL failed.");
     return (NULL);
   }
 
@@ -520,7 +522,7 @@ gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
 
   /* This is important - the caller has no other way of knowing how many
    * values are returned. */
-  if (ret_num != ds->ds_num)
+  if (ret_num != (size_t) ds->ds_num)
   {
     ERROR ("utils_cache: uc_get_rate: ds[%s] has %i values, "
 	"but uc_get_rate_by_name returned %zu.",

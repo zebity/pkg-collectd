@@ -39,7 +39,8 @@ typedef struct
 	int interval;
 } c_complain_t;
 
-#define C_COMPLAIN_INIT { 0, 0 }
+#define C_COMPLAIN_INIT_STATIC { 0, 0 }
+#define C_COMPLAIN_INIT(c) do { (c)->last = 0; (c)->interval = 0; } while (0)
 
 /*
  * NAME
@@ -75,6 +76,15 @@ void c_complain_once (int level, c_complain_t *c, const char *format, ...);
 
 /*
  * NAME
+ *   c_would_release
+ *
+ * DESCRIPTION
+ *   Returns true if the specified complaint would be released, false else.
+ */
+#define c_would_release(c) ((c)->interval != 0)
+
+/*
+ * NAME
  *   c_release
  *
  * DESCRIPTION
@@ -86,7 +96,7 @@ void c_complain_once (int level, c_complain_t *c, const char *format, ...);
 void c_do_release (int level, c_complain_t *c, const char *format, ...);
 #define c_release(level, c, ...) \
 	do { \
-		if ((c)->interval != 0) \
+		if (c_would_release (c)) \
 			c_do_release(level, c, __VA_ARGS__); \
 	} while (0)
 

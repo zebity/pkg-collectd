@@ -170,7 +170,6 @@ static void submit_one (const char *dev, const char *type,
 
   vl.values = values;
   vl.values_len = 1;
-  vl.time = time (NULL);
   sstrncpy (vl.host, hostname_g, sizeof (vl.host));
   sstrncpy (vl.plugin, "netlink", sizeof (vl.plugin));
   sstrncpy (vl.plugin_instance, dev, sizeof (vl.plugin_instance));
@@ -194,7 +193,6 @@ static void submit_two (const char *dev, const char *type,
 
   vl.values = values;
   vl.values_len = 2;
-  vl.time = time (NULL);
   sstrncpy (vl.host, hostname_g, sizeof (vl.host));
   sstrncpy (vl.plugin, "netlink", sizeof (vl.plugin));
   sstrncpy (vl.plugin_instance, dev, sizeof (vl.plugin_instance));
@@ -206,8 +204,8 @@ static void submit_two (const char *dev, const char *type,
   plugin_dispatch_values (&vl);
 } /* void submit_two */
 
-static int link_filter (const struct sockaddr_nl *sa,
-    struct nlmsghdr *nmh, void *args)
+static int link_filter (const struct sockaddr_nl __attribute__((unused)) *sa,
+    struct nlmsghdr *nmh, void __attribute__((unused)) *args)
 {
   struct ifinfomsg *msg;
   int msg_len;
@@ -248,7 +246,7 @@ static int link_filter (const struct sockaddr_nl *sa,
 
   /* Update the `iflist'. It's used to know which interfaces exist and query
    * them later for qdiscs and classes. */
-  if (msg->ifi_index >= iflist_len)
+  if ((msg->ifi_index >= 0) && ((size_t) msg->ifi_index >= iflist_len))
   {
     char **temp;
 
@@ -316,7 +314,7 @@ static int link_filter (const struct sockaddr_nl *sa,
   return (0);
 } /* int link_filter */
 
-static int qos_filter (const struct sockaddr_nl *sa,
+static int qos_filter (const struct sockaddr_nl __attribute__((unused)) *sa,
     struct nlmsghdr *nmh, void *args)
 {
   struct tcmsg *msg;
@@ -361,7 +359,8 @@ static int qos_filter (const struct sockaddr_nl *sa,
     return (0);
   }
 
-  if (msg->tcm_ifindex >= iflist_len)
+  if ((msg->tcm_ifindex >= 0)
+      && ((size_t) msg->tcm_ifindex >= iflist_len))
   {
     ERROR ("netlink plugin: qos_filter: msg->tcm_ifindex = %i "
 	">= iflist_len = %zu",
@@ -582,9 +581,9 @@ static int ir_read (void)
 
   /* `link_filter' will update `iflist' which is used here to iterate over all
    * interfaces. */
-  for (ifindex = 0; ifindex < iflist_len; ifindex++)
+  for (ifindex = 0; (size_t) ifindex < iflist_len; ifindex++)
   {
-    int type_index;
+    size_t type_index;
 
     if (iflist[ifindex] == NULL)
       continue;

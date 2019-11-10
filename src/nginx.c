@@ -52,7 +52,8 @@ static const char *config_keys[] =
 };
 static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 
-static size_t nginx_curl_callback (void *buf, size_t size, size_t nmemb, void *stream)
+static size_t nginx_curl_callback (void *buf, size_t size, size_t nmemb,
+    void __attribute__((unused)) *stream)
 {
   size_t len = size * nmemb;
 
@@ -122,8 +123,9 @@ static int init (void)
 
   if (user != NULL)
   {
-    if (ssnprintf (credentials, sizeof (credentials),
-	  "%s:%s", user, pass == NULL ? "" : pass) >= sizeof (credentials))
+    int status = ssnprintf (credentials, sizeof (credentials),
+	"%s:%s", user, pass == NULL ? "" : pass);
+    if ((status < 0) || ((size_t) status >= sizeof (credentials)))
     {
       ERROR ("nginx plugin: Credentials would have been truncated.");
       return (-1);
@@ -177,7 +179,6 @@ static void submit (char *type, char *inst, long long value)
 
   vl.values = values;
   vl.values_len = 1;
-  vl.time = time (NULL);
   sstrncpy (vl.host, hostname_g, sizeof (vl.host));
   sstrncpy (vl.plugin, "nginx", sizeof (vl.plugin));
   sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));

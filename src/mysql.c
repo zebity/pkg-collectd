@@ -24,7 +24,9 @@
 #include "plugin.h"
 #include "configfile.h"
 
-#ifdef HAVE_MYSQL_MYSQL_H
+#ifdef HAVE_MYSQL_H
+#include <mysql.h>
+#elif defined(HAVE_MYSQL_MYSQL_H)
 #include <mysql/mysql.h>
 #endif
 
@@ -36,14 +38,18 @@ static const char *config_keys[] =
 	"User",
 	"Password",
 	"Database",
+	"Port",
+	"Socket",
 	NULL
 };
-static int config_keys_num = 4;
+static int config_keys_num = 6;
 
 static char *host = "localhost";
 static char *user;
 static char *pass;
 static char *db = NULL;
+static char *socket = NULL;
+static int   port = 0;
 
 static MYSQL *getconnection (void)
 {
@@ -86,7 +92,7 @@ static MYSQL *getconnection (void)
 		return (NULL);
 	}
 
-	if (mysql_real_connect (con, host, user, pass, db, 0, NULL, 0) == NULL)
+	if (mysql_real_connect (con, host, user, pass, db, port, socket, 0) == NULL)
 	{
 		ERROR ("mysql_real_connect failed: %s", mysql_error (con));
 		state = 0;
@@ -111,9 +117,36 @@ static int config (const char *key, const char *value)
 		return ((pass = strdup (value)) == NULL ? 1 : 0);
 	else if (strcasecmp (key, "database") == 0)
 		return ((db = strdup (value)) == NULL ? 1 : 0);
+	else if (strcasecmp (key, "socket") == 0)
+		return ((socket = strdup (value)) == NULL ? 1 : 0);
+	else if (strcasecmp (key, "port") == 0)
+	{
+	    char *endptr = NULL;
+	    int temp;
+
+	    errno = 0;
+	    temp = strtol (value, &endptr, 0);
+	    if ((errno != 0) || (value == endptr))
+	    {
+		ERROR ("mysql plugin: Invalid \"Port\" argument: %s",
+			value);
+		port = 0;
+		return (1);
+	    }
+	    else if ((temp < 0) || (temp >= 65535))
+	    {
+		ERROR ("mysql plugin: Port number out of range: %i",
+			temp);
+		port = 0;
+		return (1);
+	    }
+
+	    port = temp;
+	    return (0);
+	}
 	else
 		return (-1);
-}
+} /* int config */
 
 static void counter_submit (const char *type, const char *type_instance,
 		counter_t value)
@@ -125,7 +158,6 @@ static void counter_submit (const char *type, const char *type_instance,
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "mysql", sizeof (vl.plugin));
 	sstrncpy (vl.type, type, sizeof (vl.type));
@@ -149,7 +181,6 @@ static void qcache_submit (counter_t hits, counter_t inserts,
 
 	vl.values = values;
 	vl.values_len = 5;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "mysql", sizeof (vl.plugin));
 	sstrncpy (vl.type, "mysql_qcache", sizeof (vl.type));
@@ -170,7 +201,6 @@ static void threads_submit (gauge_t running, gauge_t connected, gauge_t cached,
 
 	vl.values = values;
 	vl.values_len = 4;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "mysql", sizeof (vl.plugin));
 	sstrncpy (vl.type, "mysql_threads", sizeof (vl.type));
@@ -188,7 +218,6 @@ static void traffic_submit (counter_t rx, counter_t tx)
 
 	vl.values = values;
 	vl.values_len = 2;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "mysql", sizeof (vl.plugin));
 	sstrncpy (vl.type, "mysql_octets", sizeof (vl.type));

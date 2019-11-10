@@ -1,0 +1,90 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+sub _get_n_colors
+{
+	my $instances = shift;
+	my $num = scalar @$instances;
+	my $ret = {};
+
+	for (my $i = 0; $i < $num; $i++)
+	{
+		my $pos = 6 * $i / $num;
+		my $n = int ($pos);
+		my $p = $pos - $n;
+		my $q = 1 - $p;
+
+		my $red   = 0;
+		my $green = 0;
+		my $blue  = 0;
+
+		my $color;
+
+		if ($n == 0)
+		{
+			$red  = 255;
+			$blue = 255 * $p;
+		}
+		elsif ($n == 1)
+		{
+			$red  = 255 * $q;
+			$blue = 255;
+		}
+		elsif ($n == 2)
+		{
+			$green = 255 * $p;
+			$blue  = 255;
+		}
+		elsif ($n == 3)
+		{
+			$green = 255;
+			$blue  = 255 * $q;
+		}
+		elsif ($n == 4)
+		{
+			$red   = 255 * $p;
+			$green = 255;
+		}
+		elsif ($n == 5)
+		{
+			$red   = 255;
+			$green = 255 * $q;
+		}
+		else { die; }
+
+		$color = sprintf ("%02x%02x%02x", $red, $green, $blue);
+		$ret->{$instances->[$i]} = $color;
+	}
+
+	return ($ret);
+} # _get_n_colors
+
+our @dses = ();
+our $colors;
+
+while (<>)
+{
+	my $line = $_;
+
+	chomp ($line);
+
+	if ($line =~ m/^\s*#/)
+	{
+		next;
+	}
+
+	for (split (' ', $line))
+	{
+		my $ds = $_;
+		push (@dses, $ds);
+	}
+}
+
+$colors = _get_n_colors (\@dses);
+
+for (sort (@dses))
+{
+
+}

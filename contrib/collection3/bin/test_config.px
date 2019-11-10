@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use lib (qw(../lib/));
+
+use Collectd::Graph::Config (qw(gc_read_config gc_get_config));
+use Collectd::Graph ();
+use Collectd::Graph::File ();
+use Data::Dumper ();
+
+gc_read_config ('../etc/collection4.conf') or die;
+my $conf = gc_get_config ();
+print Data::Dumper->Dump ([$conf], ['conf']);
+
+my $graph_config = $conf->{'graph'};
+if (!$graph_config)
+{
+	die ("Don't have graph definitions");
+}
+
+my @graphs = ();
+
+if (ref ($graph_config) ne 'ARRAY')
+{
+  $graph_config = [ $graph_config ];
+}
+
+for (@$graph_config)
+{
+  my $graph = Collectd::Graph->parseConfig ($_);
+  if ($graph)
+  {
+    push (@graphs, $graph);
+  }
+}
+
+print Data::Dumper->Dump ([\@graphs], ['graphs']);
+
+my $files = Collectd::Graph::File->scanDirectory ('/tmp/collectd/var/lib/collectd');
+#print Data::Dumper->Dump ([$files], ['files']);
+
+for (@graphs)
+{
+  my $graph = $_;
+
+  if (!$graph->checkAvailable ($files))
+  {
+    print "Graph " . $graph->get ('name') . " not available.\n";
+    next;
+  }
+
+  my @tmp = $graph->getRRDArgs ($files);
+  print "===\n";
+  print "RRD arguments: rrdtool graph /tmp/foo.png "
+  . join (' ', map { shellescape ($_) } @tmp) . "\n";
+  print "===\n\n";
+}
+
+exit (0);
+
+sub shellescape
+{
+  my $str = shift;
+
+  $str =~ s/'/'\\''/g;
+  return ("'$str'");
+}
+
+# vim: set sw=2 sts=2 et fdm=marker :

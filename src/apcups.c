@@ -24,13 +24,6 @@
  *   Anthony Gialluca <tonyabg at charter.net>
  **/
 
-/*
- * FIXME: Don't know why but without this here atof() was not returning
- * correct values for me. This is behavior that I don't understand and
- * should be examined in closer detail.
- */
-#include <stdlib.h>
-
 #include "collectd.h"
 #include "common.h"      /* rrd_update_file */
 #include "plugin.h"      /* plugin_register, plugin_submit */
@@ -371,7 +364,6 @@ static void apc_submit_generic (char *type, char *type_inst, double value)
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "apcups", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));

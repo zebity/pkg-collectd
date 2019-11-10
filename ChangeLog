@@ -1,3 +1,146 @@
+2009-03-18, Version 4.6.2
+	* collectd: Some Solaris utility code has been improved.
+	* filter subsystem: Allow `Chains' without default targets.
+	* liboping: A patch to comply with strict aliasing rules has been
+	  added.
+	* timediff match: Fix a typo: The match was registered with a wrong
+	  name which prevented this match to be used as documented. Thanks to
+	  Bruno Prémont for finding this problem.
+	* bind plugin: Fix collection of the cached RR sets. The number of RR
+	  sets currently in the cache was collected as a counter value, which
+	  is nonsense. Thanks to Bruno Prémont for implementing this.
+	* dns plugin: Don't pass NULL to `pcap_open_live': Some systems,
+	  primarily BSDs, don't take it well and crash.
+	* oracle plugin: Portability to 64 bit systems has been improved.
+	* postgresql plugin: The default configuration has been improved.
+	* rrdtool plugin: Fix a possible race condition: If the network plugin
+	  is brought and dispatches a value before the rrdtool plugin is
+	  initialized, the daemon may crash.
+
+2009-02-22, Version 4.6.1
+	* collectd: Many documentation fixes.
+	* Collectd::Unixsock: Error handling has been improved.
+	* regex match: Don't link with the PCRE library.
+	* bind plugin: Various bugs have been fixed. Thanks to Bruno Prémont
+	  for finding and fixing most of them.
+	* ipmi plugin: Fix an off-by-one error which could cause segmentation
+	  faults. Thanks to Peter Holik for his patch.
+
+2009-02-16, Version 4.6.0
+	* collectd: Added the `filter chain' infrastructure, which allows the
+	  user to use `matches' and `targets' to control value processing.
+	* collectd: The new `-T' command line argument allows more in-depth
+	  testing of a configuration. Thanks to Doug MacEachern for the patch.
+	* collectd-nagios: The Nagios integration command has been updated to
+	  use libcollectdclient. The `percentage' aggregation function has
+	  been added. Thanks to Fabian Linzberger for the patch.
+	* libcollectdclient: A library which abstracts communication with the
+	  unixsock plugin for clients has been added.
+	* regex match: Match values by their identifies using regular
+	  expressions.
+	* timediff match: Match for values with an invalid timestamp.
+	* value match: Select values by their data sources' values.
+	* notification target: Create and dispatch a notification.
+	* replace target: Replace parts of an identifier using regular
+	  expressions.
+	* set target: Set (overwrite) entire parts of an identifier.
+	* bind plugin: This new plugin uses the new HTTP/XML interface to BIND
+	  statistics, allowing very detailed name server statistics. Thanks to
+	  Bruno Prémont for this plugin.
+	* cpu plugin: Report `interrupt' separately when using
+	  sysctlbyname(3) (used under *BSD). Support for sysctl(3), for
+	  example for native OpenBSD support, has been added. Thanks to Simon
+	  Kuhnle for the patch.
+	* csv plugin: Make it possible to write values to STDOUT instead of
+	  files. This is meant for testing purposes mostly. The output written
+	  to STDOUT is compatible with the exec plugin. Thanks to Doug
+	  MacEachern for the patch.
+	* curl plugin: This new plugin can be used to read web pages and parse
+	  them using the same mechanism that's used in the tail plugin.
+	* dbi plugin: This new plugin allows you to connect to a variety of
+	  relational databases and use SQL to gather custom statistics from
+	  it. It is similar to the already existing PostgreSQL plugin but uses
+	  libdbi to communicate with the database(s).
+	* interface plugin: Use the ignorelist framework when selecting /
+	  ignoring interfaces. This allows one to use regular expressions to
+	  select interfaces, too.
+	* ipmi plugin: Handle temporary IPMI error conditions more gracefully.
+	  Thanks to Bruno Prémont for this patch.
+	* memcached plugin: Add hit-ratio metric. Thanks to Doug MacEachern
+	  for the patch.
+	* mysql plugin: Allow connecting to a database via the UNIX domain
+	  socket, too. Thanks to Mirko Buffoni for the patch.
+	* network plugin: Further performance improvements for the receive
+	  code. This hopefully will help very large setups.
+	* openvpn plugin: This new plugin collects statistics provided by the
+	  OpenVPN daemon. Thanks to Doug MacEachern for the patch.
+	* oracle plugin: This new plugin allows you to connect to an Oracle
+	  database and use SQL to gather custom statistics from it. It is
+	  similar to the already existing PostgreSQL plugin.
+	* perl plugin: Compatibility fixes for broken versions of Perl 5.10
+	  have been added.
+	* perl plugin: Export the newly added plugin_write() to Perl plugins.
+	* perl plugin: Added support for `notification meta data'.
+	* perl plugin: Added support for the `filter chain' infrastructure by
+	  allowing plugins to register `matches' and `targets'.
+	* postgresql plugin: The preferred configuration syntax has been
+	  updated to be in line with the syntax used by the new dbi and oracle
+	  plugins. The compatibility code for the old syntax is present.
+	  Support for the new `Result' blocks and the interval parameter has
+	  been added.
+	* processes plugin: Stacksize and virtual memory usage statistics have
+	  been added. Portability fixes.
+	* rrdcached plugin: This new plugin uses the (still in development)
+	  RRD accelerator daemon, rrdcached. This daemon works very similar to
+	  the original rrdtool plugin of collectd, but adds some more nice
+	  features.
+	* swap plugin: Code for OpenBSD (and possibly other *BSDs) has been
+	  added.
+
+2009-02-22, Version 4.5.3
+	* build system: The check for libupsclient even when `pkg-config' is
+	  not available.
+	* collectd: Fix error handling in the global cache.
+	* Collectd::Unixsock: Error handling has been improved.
+	* ascent plugin: Fix a memory leak. Thanks to Bruno Prémont for his
+	  patch.
+	* ipmi plugin: Fix an off-by-one error which could cause segmentation
+	  faults. Thanks to Peter Holik for his patch.
+	* tcpconns plugin: An endianness problem has been fixed in the *BSD
+	  code. Thanks to "thated" for reporting this.
+
+2009-01-02, Version 4.5.2
+	* build system: Check for `mysql.h' and `mysql/mysql.h', since the
+	  file may be in both locations, especially when the database was
+	  installed in a non-standard path. Thanks to Dusty Doris for
+	  reporting this.
+	* build system: Handle the _POSIX_PTHREAD_SEMANTICS defined, needed by
+	  Solaris, in the configure script automatically.
+	* build system, tcpconns plugin: Check for `kvm_nlist' and
+	  `kvm_openfiles' before enabling the plugin: Solaris provides a KVM
+	  library with similar functions to the BSD variant, but doesn't
+	  provide these necessary functions.
+	* collectd.conf(5): Various fixes and clarifications.
+	* collectd: Remove a GNUism (unnamed unions), thus improving
+	  portability.
+	* collectd, apcups plugin: Include "collectd.h" before <stdlib.h>.
+	  This solves portability problems, especially for Solaris.
+	* dns plugin: Fix a portability problem with NetBSD.
+	* filecount plugin: Fix an off-by-one error. This error may cause a
+	  segmentation fault.
+	* network plugin: Fix the handling of `type' in the network protocol.
+	  Due to a programming mistake, only 4 or 8 bytes would be copied to a
+	  much larger buffer. This caused the `type' to be transferred much
+	  more often than necessary. In some cases, e. g. the `cpu' and
+	  `cpufreq' plugins being used at the same time, data may be corrupted
+	  in those files. Thanks to Bruno Prémont for debugging and reporting
+	  this issue.
+	* processes plugin: Fix a possible segmentation fault when specifying
+	  invalid configuration options.
+	* unixsock plugin: Make sure the initialization function is run only
+	  once. This resolves a file descriptor leak under systems which run
+	  the initialization more than once, such as Solaris.
+
 2008-10-16, Version 4.5.1
 	* build system: Change `--enable-<plugin>' to abort with an error if
 	  dependencies are not met. Thanks to Bruno Prémont for the patch.
@@ -13,7 +156,7 @@
 	* collectdmon: Don't block SIGCHLD. This fixes a potential portability
 	  problem.
 	* collectd-nagios: Fix handling of the `-d' option. Thanks to Fabian
-	  Linzberger for reporting the but.
+	  Linzberger for reporting the bug.
 	* iptables plugin: Fix an off-by-one error. If a string was just one
 	  character too long, it was truncated instead of reporting an error.
 	* network plugin: Fix a memory leak in the configuration handling
@@ -25,7 +168,7 @@
 	  leaks. Thanks to ``Admin'' for reporting these bugs.
 	* snmp plugin: Don't expect null-terminated strings from the Net-SNMP
 	  library.
-	* tail plugin: Call `clearerr' after reading an EOF. This fixes
+	* tail plugin: Call `clearerr(3)' after reading an EOF. This fixes
 	  problems with some `libc's. Thanks to Matthias Lay for reporting the
 	  bug.
 
@@ -60,6 +203,28 @@
 	* thermal plugin: The new thermal plugin collects system temperatures
 	  using Linux ACPI thermal zone data.
 
+2009-01-02, Version 4.4.5
+	* build system: Check for `mysql.h' and `mysql/mysql.h', since the
+	  file may be in both locations, especially when the database was
+	  installed in a non-standard path. Thanks to Dusty Doris for
+	  reporting this.
+	* build system: Handle the _POSIX_PTHREAD_SEMANTICS defined, needed by
+	  Solaris, in the configure script automatically.
+	* collectd.conf(5): Various fixes and clarifications.
+	* apcups plugin: Include "collectd.h" before <stdlib.h>. This solves
+	  portability problems, especially for Solaris.
+	* dns plugin: Fix a portability problem with NetBSD.
+	* network plugin: Fix the handling of `type' in the network protocol.
+	  Due to a programming mistake, only 4 or 8 bytes would be copied to a
+	  much larger buffer. This caused the `type' to be transferred much
+	  more often than necessary. In some cases, e. g. the `cpu' and
+	  `cpufreq' plugins being used at the same time, data may be corrupted
+	  in those files. Thanks to Bruno Prémont for debugging and reporting
+	  this issue.
+	* unixsock plugin: Make sure the initialization function is run only
+	  once. This resolves a file descriptor leak under systems which run
+	  the initialization more than once, such as Solaris.
+
 2008-10-16, Version 4.4.4
 	* build system: Change `--enable-<plugin>' to abort with an error if
 	  dependencies are not met. Thanks to Bruno Prémont for the patch.
@@ -75,11 +240,11 @@
 	* collectdmon: Don't block SIGCHLD. This fixes a potential portability
 	  problem.
 	* collectd-nagios: Fix handling of the `-d' option. Thanks to Fabian
-	  Linzberger for reporting the but.
+	  Linzberger for reporting the bug.
 	* network plugin: Fix a memory leak in the configuration handling
 	  code. Thanks to Niraj Tolia for reporting this issue.
 	* perl plugin: Log an error message if bootstrapping `Collectd' fails.
-	* tail plugin: Call `clearerr' after reading an EOF. This fixes
+	* tail plugin: Call `clearerr(3)' after reading an EOF. This fixes
 	  problems with some `libc's. Thanks to Matthias Lay for reporting the
 	  bug.
 
@@ -116,7 +281,7 @@
 	  daemon.
 	* perl plugin: Fail noisily, but don't shutdown the daemon, if
 	  initialization has errors. An issue with Perl 5.10 has been fixed.
-	* teamspeak2 plugin: Fixed an out of bounce array access. Thanks to
+	* teamspeak2 plugin: Fixed an out of bound array access. Thanks to
 	  René Rebe and Siegmund Gorr for reporting this.
 
 2008-05-06, Version 4.4.0

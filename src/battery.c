@@ -98,7 +98,6 @@ static void battery_submit (const char *plugin_instance, const char *type, doubl
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "battery", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
@@ -315,8 +314,8 @@ static void get_via_generic_iokit (double *ret_charge,
 #endif /* HAVE_IOKIT_IOKITLIB_H */
 
 #if KERNEL_LINUX
-static int battery_read_acpi (const char *dir, const char *name,
-		void *user_data)
+static int battery_read_acpi (const char __attribute__((unused)) *dir,
+		const char *name, void __attribute__((unused)) *user_data)
 {
 	double  current = INVALID_VALUE;
 	double  voltage = INVALID_VALUE;

@@ -1,6 +1,6 @@
 /**
  * collectd - src/plugin.c
- * Copyright (C) 2005-2008  Florian octo Forster
+ * Copyright (C) 2005-2009  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +36,7 @@
 #include "utils_llist.h"
 #include "utils_cache.h"
 #include "utils_threshold.h"
+#include "filter_chain.h"
 
 /*
  * Private structures
@@ -59,6 +60,9 @@ static llist_t *list_flush;
 static llist_t *list_shutdown;
 static llist_t *list_log;
 static llist_t *list_notification;
+
+static fc_chain_t *pre_cache_chain = NULL;
+static fc_chain_t *post_cache_chain = NULL;
 
 static c_avl_tree_t *data_sets;
 
@@ -167,7 +171,7 @@ static int plugin_load_file (char *file)
 	return (0);
 }
 
-static void *plugin_read_thread (void *args)
+static void *plugin_read_thread (void __attribute__((unused)) *args)
 {
 	llentry_t   *le;
 	read_func_t *rf;
@@ -274,6 +278,9 @@ static void stop_threads (void)
 {
 	int i;
 
+	if (read_threads == NULL)
+		return;
+
 	pthread_mutex_lock (&read_lock);
 	read_loop = 0;
 	DEBUG ("plugin: stop_threads: Signalling `read_cond'");
@@ -321,6 +328,7 @@ int plugin_load (const char *type)
 	int   ret;
 	struct stat    statbuf;
 	struct dirent *de;
+	int status;
 
 	DEBUG ("type = %s", type);
 
@@ -329,8 +337,8 @@ int plugin_load (const char *type)
 
 	/* `cpu' should not match `cpufreq'. To solve this we add `.so' to the
 	 * type when matching the filename */
-	if (ssnprintf (typename, sizeof (typename),
-			"%s.so", type) >= sizeof (typename))
+	status = ssnprintf (typename, sizeof (typename), "%s.so", type);
+	if ((status < 0) || ((size_t) status >= sizeof (typename)))
 	{
 		WARNING ("snprintf: truncated: `%s.so'", type);
 		return (-1);
@@ -350,8 +358,9 @@ int plugin_load (const char *type)
 		if (strncasecmp (de->d_name, typename, typename_len))
 			continue;
 
-		if (ssnprintf (filename, sizeof (filename),
-				"%s/%s", dir, de->d_name) >= sizeof (filename))
+		status = ssnprintf (filename, sizeof (filename),
+				"%s/%s", dir, de->d_name);
+		if ((status < 0) || ((size_t) status >= sizeof (filename)))
 		{
 			WARNING ("snprintf: truncated: `%s/%s'", dir, de->d_name);
 			continue;
@@ -580,12 +589,20 @@ int plugin_unregister_notification (const char *name)
 
 void plugin_init_all (void)
 {
+	const char *chain_name;
 	int (*callback) (void);
 	llentry_t *le;
 	int status;
 
 	/* Init the value cache */
 	uc_init ();
+
+	chain_name = global_option_get ("PreCacheChain");
+	pre_cache_chain = fc_chain_get_by_name (chain_name);
+
+	chain_name = global_option_get ("PostCacheChain");
+	post_cache_chain = fc_chain_get_by_name (chain_name);
+
 
 	if ((list_init == NULL) && (list_read == NULL))
 		return;
@@ -622,7 +639,8 @@ void plugin_init_all (void)
 		int num;
 		rt = global_option_get ("ReadThreads");
 		num = atoi (rt);
-		start_threads ((num > 0) ? num : 5);
+		if (num != -1)
+			start_threads ((num > 0) ? num : 5);
 	}
 } /* void plugin_init_all */
 
@@ -664,6 +682,104 @@ void plugin_read_all (void)
 	pthread_cond_broadcast (&read_cond);
 	pthread_mutex_unlock (&read_lock);
 } /* void plugin_read_all */
+
+/* Read function called when the `-T' command line argument is given. */
+int plugin_read_all_once (void)
+{
+	llentry_t   *le;
+	read_func_t *rf;
+	int status;
+	int return_status = 0;
+
+	if (list_read == NULL)
+	{
+		NOTICE ("No read-functions are registered.");
+		return (0);
+	}
+
+	for (le = llist_head (list_read);
+	     le != NULL;
+	     le = le->next)
+	{
+		rf = (read_func_t *) le->value;
+		status = rf->callback ();
+		if (status != 0)
+		{
+			NOTICE ("read-function of plugin `%s' failed.",
+				le->key);
+			return_status = -1;
+		}
+	}
+
+	return (return_status);
+} /* int plugin_read_all_once */
+
+int plugin_write (const char *plugin, /* {{{ */
+		const data_set_t *ds, const value_list_t *vl)
+{
+  int (*callback) (const data_set_t *ds, const value_list_t *vl);
+  llentry_t *le;
+  int status;
+
+  if (vl == NULL)
+    return (EINVAL);
+
+  if (list_write == NULL)
+    return (ENOENT);
+
+  if (ds == NULL)
+  {
+    ds = plugin_get_ds (vl->type);
+    if (ds == NULL)
+    {
+      ERROR ("plugin_write: Unable to lookup type `%s'.", vl->type);
+      return (ENOENT);
+    }
+  }
+
+  if (plugin == NULL)
+  {
+    int success = 0;
+    int failure = 0;
+
+    le = llist_head (list_write);
+    while (le != NULL)
+    {
+      callback = le->value;
+      status = (*callback) (ds, vl);
+      if (status != 0)
+        failure++;
+      else
+        success++;
+
+      le = le->next;
+    }
+
+    if ((success == 0) && (failure != 0))
+      status = -1;
+    else
+      status = 0;
+  }
+  else /* plugin != NULL */
+  {
+    le = llist_head (list_write);
+    while (le != NULL)
+    {
+      if (strcasecmp (plugin, le->key) == 0)
+        break;
+
+      le = le->next;
+    }
+
+    if (le == NULL)
+      return (ENOENT);
+
+    callback = le->value;
+    status = (*callback) (ds, vl);
+  }
+
+  return (status);
+} /* }}} int plugin_write */
 
 int plugin_flush (const char *plugin, int timeout, const char *identifier)
 {
@@ -718,13 +834,17 @@ void plugin_shutdown_all (void)
 
 int plugin_dispatch_values (value_list_t *vl)
 {
-	static c_complain_t no_write_complaint = C_COMPLAIN_INIT;
+	int status;
+	static c_complain_t no_write_complaint = C_COMPLAIN_INIT_STATIC;
 
-	int (*callback) (const data_set_t *, const value_list_t *);
+	value_t *saved_values;
+	int      saved_values_len;
+
 	data_set_t *ds;
-	llentry_t *le;
 
-	if ((vl == NULL) || (*vl->type == '\0')) {
+	if ((vl == NULL) || (vl->type[0] == 0)
+			|| (vl->values == NULL) || (vl->values_len < 1))
+	{
 		ERROR ("plugin_dispatch_values: Invalid value list.");
 		return (-1);
 	}
@@ -748,6 +868,9 @@ int plugin_dispatch_values (value_list_t *vl)
 		INFO ("plugin_dispatch_values: Dataset not found: %s", vl->type);
 		return (-1);
 	}
+
+	if (vl->time == 0)
+		vl->time = time (NULL);
 
 	DEBUG ("plugin_dispatch_values: time = %u; interval = %i; "
 			"host = %s; "
@@ -785,17 +908,79 @@ int plugin_dispatch_values (value_list_t *vl)
 	escape_slashes (vl->type, sizeof (vl->type));
 	escape_slashes (vl->type_instance, sizeof (vl->type_instance));
 
+	/* Copy the values. This way, we can assure `targets' that they get
+	 * dynamically allocated values, which they can free and replace if
+	 * they like. */
+	if ((pre_cache_chain != NULL) || (post_cache_chain != NULL))
+	{
+		saved_values     = vl->values;
+		saved_values_len = vl->values_len;
+
+		vl->values = (value_t *) calloc (vl->values_len,
+				sizeof (*vl->values));
+		if (vl->values == NULL)
+		{
+			ERROR ("plugin_dispatch_values: calloc failed.");
+			vl->values = saved_values;
+			return (-1);
+		}
+		memcpy (vl->values, saved_values,
+				vl->values_len * sizeof (*vl->values));
+	}
+	else /* if ((pre == NULL) && (post == NULL)) */
+	{
+		saved_values     = NULL;
+		saved_values_len = 0;
+	}
+
+	if (pre_cache_chain != NULL)
+	{
+		status = fc_process_chain (ds, vl, pre_cache_chain);
+		if (status < 0)
+		{
+			WARNING ("plugin_dispatch_values: Running the "
+					"pre-cache chain failed with "
+					"status %i (%#x).",
+					status, status);
+		}
+		else if (status == FC_TARGET_STOP)
+		{
+			/* Restore the state of the value_list so that plugins
+			 * don't get confused.. */
+			if (saved_values != NULL)
+			{
+				free (vl->values);
+				vl->values     = saved_values;
+				vl->values_len = saved_values_len;
+			}
+			return (0);
+		}
+	}
+
 	/* Update the value cache */
 	uc_update (ds, vl);
-	ut_check_threshold (ds, vl);
 
-	le = llist_head (list_write);
-	while (le != NULL)
+	if (post_cache_chain != NULL)
 	{
-		callback = (int (*) (const data_set_t *, const value_list_t *)) le->value;
-		(*callback) (ds, vl);
+		status = fc_process_chain (ds, vl, post_cache_chain);
+		if (status < 0)
+		{
+			WARNING ("plugin_dispatch_values: Running the "
+					"post-cache chain failed with "
+					"status %i (%#x).",
+					status, status);
+		}
+	}
+	else
+		fc_default_action (ds, vl);
 
-		le = le->next;
+	/* Restore the state of the value_list so that plugins don't get
+	 * confused.. */
+	if (saved_values != NULL)
+	{
+		free (vl->values);
+		vl->values     = saved_values;
+		vl->values_len = saved_values_len;
 	}
 
 	return (0);
@@ -901,8 +1086,8 @@ static int plugin_notification_meta_add (notification_t *n,
   {
     case NM_TYPE_STRING:
     {
-      meta->value_string = strdup ((const char *) value);
-      if (meta->value_string == NULL)
+      meta->nm_value.nm_string = strdup ((const char *) value);
+      if (meta->nm_value.nm_string == NULL)
       {
         ERROR ("plugin_notification_meta_add: strdup failed.");
         sfree (meta);
@@ -912,22 +1097,22 @@ static int plugin_notification_meta_add (notification_t *n,
     }
     case NM_TYPE_SIGNED_INT:
     {
-      meta->value_signed_int = *((int64_t *) value);
+      meta->nm_value.nm_signed_int = *((int64_t *) value);
       break;
     }
     case NM_TYPE_UNSIGNED_INT:
     {
-      meta->value_unsigned_int = *((uint64_t *) value);
+      meta->nm_value.nm_unsigned_int = *((uint64_t *) value);
       break;
     }
     case NM_TYPE_DOUBLE:
     {
-      meta->value_double = *((double *) value);
+      meta->nm_value.nm_double = *((double *) value);
       break;
     }
     case NM_TYPE_BOOLEAN:
     {
-      meta->value_boolean = *((bool *) value);
+      meta->nm_value.nm_boolean = *((bool *) value);
       break;
     }
     default:
@@ -1000,25 +1185,25 @@ int plugin_notification_meta_copy (notification_t *dst,
   {
     if (meta->type == NM_TYPE_STRING)
       plugin_notification_meta_add_string (dst, meta->name,
-          meta->value_string);
+          meta->nm_value.nm_string);
     else if (meta->type == NM_TYPE_SIGNED_INT)
       plugin_notification_meta_add_signed_int (dst, meta->name,
-          meta->value_signed_int);
+          meta->nm_value.nm_signed_int);
     else if (meta->type == NM_TYPE_UNSIGNED_INT)
       plugin_notification_meta_add_unsigned_int (dst, meta->name,
-          meta->value_unsigned_int);
+          meta->nm_value.nm_unsigned_int);
     else if (meta->type == NM_TYPE_DOUBLE)
       plugin_notification_meta_add_double (dst, meta->name,
-          meta->value_double);
+          meta->nm_value.nm_double);
     else if (meta->type == NM_TYPE_BOOLEAN)
       plugin_notification_meta_add_boolean (dst, meta->name,
-          meta->value_boolean);
+          meta->nm_value.nm_boolean);
   }
 
   return (0);
 } /* int plugin_notification_meta_copy */
 
-int plugin_notification_meta_free (notification_t *n)
+int plugin_notification_meta_free (notification_meta_t *n)
 {
   notification_meta_t *this;
   notification_meta_t *next;
@@ -1029,16 +1214,15 @@ int plugin_notification_meta_free (notification_t *n)
     return (-1);
   }
 
-  this = n->meta;
-  n->meta = NULL;
+  this = n;
   while (this != NULL)
   {
     next = this->next;
 
     if (this->type == NM_TYPE_STRING)
     {
-      free ((char *)this->value_string);
-      this->value_string = NULL;
+      free ((char *)this->nm_value.nm_string);
+      this->nm_value.nm_string = NULL;
     }
     sfree (this);
 

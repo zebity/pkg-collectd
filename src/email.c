@@ -187,10 +187,16 @@ static int email_config (const char *key, const char *value)
 			fprintf (stderr, "email plugin: `MaxConns' was set to invalid "
 					"value %li, will use default %i.\n",
 					tmp, MAX_CONNS);
+			ERROR ("email plugin: `MaxConns' was set to invalid "
+					"value %li, will use default %i.\n",
+					tmp, MAX_CONNS);
 			max_conns = MAX_CONNS;
 		}
 		else if (tmp > MAX_CONNS_LIMIT) {
 			fprintf (stderr, "email plugin: `MaxConns' was set to invalid "
+					"value %li, will use hardcoded limit %i.\n",
+					tmp, MAX_CONNS_LIMIT);
+			ERROR ("email plugin: `MaxConns' was set to invalid "
 					"value %li, will use hardcoded limit %i.\n",
 					tmp, MAX_CONNS_LIMIT);
 			max_conns = MAX_CONNS_LIMIT;
@@ -372,7 +378,7 @@ static void *collect (void *arg)
 	pthread_exit ((void *)0);
 } /* static void *collect (void *) */
 
-static void *open_connection (void *arg)
+static void *open_connection (void __attribute__((unused)) *arg)
 {
 	struct sockaddr_un addr;
 
@@ -650,7 +656,6 @@ static void email_submit (const char *type, const char *type_instance, gauge_t v
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "email", sizeof (vl.plugin));
 	sstrncpy (vl.type, type, sizeof (vl.type));

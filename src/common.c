@@ -18,6 +18,8 @@
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
  *   Niki W. Waibel <niki.waibel@gmx.net>
+ *   Sebastian Harl <sh at tokkee.org>
+ *   Michał Mirosław <mirq-linux at rere.qmqm.pl>
 **/
 
 #if HAVE_CONFIG_H
@@ -77,15 +79,21 @@ int ssnprintf (char *dest, size_t n, const char *format, ...)
 char *sstrdup (const char *s)
 {
 	char *r;
+	size_t sz;
 
 	if (s == NULL)
 		return (NULL);
 
-	if((r = strdup (s)) == NULL)
+	/* Do not use `strdup' here, because it's not specified in POSIX. It's
+	 * ``only'' an XSI extension. */
+	sz = strlen (s) + 1;
+	r = (char *) malloc (sizeof (char) * sz);
+	if (r == NULL)
 	{
-		ERROR ("Not enough memory.");
+		ERROR ("sstrdup: Out of memory.");
 		exit (3);
 	}
+	memcpy (r, s, sizeof (char) * sz);
 
 	return (r);
 } /* char *sstrdup */
@@ -341,28 +349,56 @@ int escape_slashes (char *buf, int buf_len)
 	return (0);
 } /* int escape_slashes */
 
-int timeval_sub_timespec (struct timeval *tv0, struct timeval *tv1, struct timespec *ret)
+int timeval_cmp (struct timeval tv0, struct timeval tv1, struct timeval *delta)
 {
-	if ((tv0 == NULL) || (tv1 == NULL) || (ret == NULL))
-		return (-2);
+	struct timeval *larger;
+	struct timeval *smaller;
 
-	if ((tv0->tv_sec < tv1->tv_sec)
-			|| ((tv0->tv_sec == tv1->tv_sec) && (tv0->tv_usec < tv1->tv_usec)))
-		return (-1);
+	int status;
 
-	ret->tv_sec  = tv0->tv_sec - tv1->tv_sec;
-	ret->tv_nsec = 1000 * ((long) (tv0->tv_usec - tv1->tv_usec));
+	NORMALIZE_TIMEVAL (tv0);
+	NORMALIZE_TIMEVAL (tv1);
 
-	if (ret->tv_nsec < 0)
+	if ((tv0.tv_sec == tv1.tv_sec) && (tv0.tv_usec == tv1.tv_usec))
 	{
-		assert (ret->tv_sec > 0);
-
-		ret->tv_nsec += 1000000000;
-		ret->tv_sec  -= 1;
+		if (delta != NULL) {
+			delta->tv_sec  = 0;
+			delta->tv_usec = 0;
+		}
+		return (0);
 	}
 
-	return (0);
-}
+	if ((tv0.tv_sec < tv1.tv_sec)
+			|| ((tv0.tv_sec == tv1.tv_sec) && (tv0.tv_usec < tv1.tv_usec)))
+	{
+		larger  = &tv1;
+		smaller = &tv0;
+		status  = -1;
+	}
+	else
+	{
+		larger  = &tv0;
+		smaller = &tv1;
+		status  = 1;
+	}
+
+	if (delta != NULL) {
+		delta->tv_sec = larger->tv_sec - smaller->tv_sec;
+
+		if (smaller->tv_usec <= larger->tv_usec)
+			delta->tv_usec = larger->tv_usec - smaller->tv_usec;
+		else
+		{
+			--delta->tv_sec;
+			delta->tv_usec = 1000000 + larger->tv_usec - smaller->tv_usec;
+		}
+	}
+
+	assert ((delta == NULL)
+			|| ((0 <= delta->tv_usec) && (delta->tv_usec < 1000000)));
+
+	return (status);
+} /* int timeval_cmp */
 
 int check_create_dir (const char *file_orig)
 {
@@ -377,7 +413,7 @@ int check_create_dir (const char *file_orig)
 	char *saveptr;
 	int   last_is_file = 1;
 	int   path_is_absolute = 0;
-	int   len;
+	size_t len;
 	int   i;
 
 	/*
@@ -433,7 +469,8 @@ int check_create_dir (const char *file_orig)
 		 */
 		if (fields[i][0] == '.')
 		{
-			ERROR ("Cowardly refusing to create a directory that begins with a `.' (dot): `%s'", file_orig);
+			ERROR ("Cowardly refusing to create a directory that "
+					"begins with a `.' (dot): `%s'", file_orig);
 			return (-2);
 		}
 
@@ -448,32 +485,42 @@ int check_create_dir (const char *file_orig)
 			return (-1);
 		}
 
-		if (stat (dir, &statbuf) == -1)
-		{
-			if (errno == ENOENT)
+		while (42) {
+			if (stat (dir, &statbuf) == -1)
 			{
-				if (mkdir (dir, 0755) == -1)
+				if (errno == ENOENT)
 				{
+					if (mkdir (dir, 0755) == 0)
+						break;
+
+					/* this might happen, if a different thread created
+					 * the directory in the meantime
+					 * => call stat() again to check for S_ISDIR() */
+					if (EEXIST == errno)
+						continue;
+
 					char errbuf[1024];
 					ERROR ("check_create_dir: mkdir (%s): %s", dir,
 							sstrerror (errno,
 								errbuf, sizeof (errbuf)));
 					return (-1);
 				}
+				else
+				{
+					char errbuf[1024];
+					ERROR ("check_create_dir: stat (%s): %s", dir,
+							sstrerror (errno, errbuf,
+								sizeof (errbuf)));
+					return (-1);
+				}
 			}
-			else
+			else if (!S_ISDIR (statbuf.st_mode))
 			{
-				char errbuf[1024];
-				ERROR ("stat (%s): %s", dir,
-						sstrerror (errno, errbuf,
-							sizeof (errbuf)));
+				ERROR ("check_create_dir: `%s' exists but is not "
+						"a directory!", dir);
 				return (-1);
 			}
-		}
-		else if (!S_ISDIR (statbuf.st_mode))
-		{
-			ERROR ("stat (%s): Not a directory!", dir);
-			return (-1);
+			break;
 		}
 	}
 
@@ -484,26 +531,26 @@ int check_create_dir (const char *file_orig)
 int get_kstat (kstat_t **ksp_ptr, char *module, int instance, char *name)
 {
 	char ident[128];
+
+	*ksp_ptr = NULL;
 	
 	if (kc == NULL)
 		return (-1);
 
 	ssnprintf (ident, sizeof (ident), "%s,%i,%s", module, instance, name);
 
+	*ksp_ptr = kstat_lookup (kc, module, instance, name);
 	if (*ksp_ptr == NULL)
 	{
-		if ((*ksp_ptr = kstat_lookup (kc, module, instance, name)) == NULL)
-		{
-			ERROR ("Cound not find kstat %s", ident);
-			return (-1);
-		}
+		ERROR ("get_kstat: Cound not find kstat %s", ident);
+		return (-1);
+	}
 
-		if ((*ksp_ptr)->ks_type != KSTAT_TYPE_NAMED)
-		{
-			WARNING ("kstat %s has wrong type", ident);
-			*ksp_ptr = NULL;
-			return (-1);
-		}
+	if ((*ksp_ptr)->ks_type != KSTAT_TYPE_NAMED)
+	{
+		ERROR ("get_kstat: kstat %s has wrong type", ident);
+		*ksp_ptr = NULL;
+		return (-1);
 	}
 
 #ifdef assert
@@ -513,13 +560,13 @@ int get_kstat (kstat_t **ksp_ptr, char *module, int instance, char *name)
 
 	if (kstat_read (kc, *ksp_ptr, NULL) == -1)
 	{
-		WARNING ("kstat %s could not be read", ident);
+		ERROR ("get_kstat: kstat %s could not be read", ident);
 		return (-1);
 	}
 
 	if ((*ksp_ptr)->ks_type != KSTAT_TYPE_NAMED)
 	{
-		WARNING ("kstat %s has wrong type", ident);
+		ERROR ("get_kstat: kstat %s has wrong type", ident);
 		return (-1);
 	}
 
@@ -537,12 +584,12 @@ long long get_kstat_value (kstat_t *ksp, char *name)
 #else
 	if (ksp == NULL)
 	{
-		fprintf (stderr, "ERROR: %s:%i: ksp == NULL\n", __FILE__, __LINE__);
+		ERROR ("ERROR: %s:%i: ksp == NULL\n", __FILE__, __LINE__);
 		return (-1LL);
 	}
 	else if (ksp->ks_type != KSTAT_TYPE_NAMED)
 	{
-		fprintf (stderr, "ERROR: %s:%i: ksp->ks_type != KSTAT_TYPE_NAMED\n", __FILE__, __LINE__);
+		ERROR ("ERROR: %s:%i: ksp->ks_type != KSTAT_TYPE_NAMED\n", __FILE__, __LINE__);
 		return (-1LL);
 	}
 #endif
@@ -919,4 +966,22 @@ int read_file_contents (const char *filename, char *buf, int bufsize)
 	return n;
 }
 
+counter_t counter_diff (counter_t old_value, counter_t new_value)
+{
+	counter_t diff;
 
+	if (old_value > new_value)
+	{
+		if (old_value <= 4294967295U)
+			diff = (4294967295U - old_value) + new_value;
+		else
+			diff = (18446744073709551615ULL - old_value)
+				+ new_value;
+	}
+	else
+	{
+		diff = new_value - old_value;
+	}
+
+	return (diff);
+} /* counter_t counter_to_gauge */

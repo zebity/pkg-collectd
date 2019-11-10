@@ -1,6 +1,6 @@
 /**
  * collectd - src/csv.c
- * Copyright (C) 2007  Florian octo Forster
+ * Copyright (C) 2007-2009  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,6 +23,7 @@
 #include "plugin.h"
 #include "common.h"
 #include "utils_cache.h"
+#include "utils_parse_option.h"
 
 /*
  * Private variables
@@ -36,6 +37,7 @@ static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 
 static char *datadir   = NULL;
 static int store_rates = 0;
+static int use_stdio   = 0;
 
 static int value_list_to_string (char *buffer, int buffer_len,
 		const data_set_t *ds, const value_list_t *vl)
@@ -146,6 +148,7 @@ static int value_list_to_filename (char *buffer, int buffer_len,
 		return (-1);
 	offset += status;
 
+	if (!use_stdio)
 	{
 		time_t now;
 		struct tm stm;
@@ -200,6 +203,16 @@ static int csv_config (const char *key, const char *value)
 	{
 		if (datadir != NULL)
 			free (datadir);
+		if (strcasecmp ("stdout", value) == 0)
+		{
+			use_stdio = 1;
+			return (0);
+		}
+		else if (strcasecmp ("stderr", value) == 0)
+		{
+			use_stdio = 2;
+			return (0);
+		}
 		datadir = strdup (value);
 		if (datadir != NULL)
 		{
@@ -258,6 +271,27 @@ static int csv_write (const data_set_t *ds, const value_list_t *vl)
 
 	if (value_list_to_string (values, sizeof (values), ds, vl) != 0)
 		return (-1);
+
+	if (use_stdio)
+	{
+		size_t i;
+
+		escape_string (filename, sizeof (filename));
+
+		/* Replace commas by colons for PUTVAL compatible output. */
+		for (i = 0; i < sizeof (values); i++)
+		{
+			if (values[i] == 0)
+				break;
+			else if (values[i] == ',')
+				values[i] = ':';
+		}
+
+		fprintf (use_stdio == 1 ? stdout : stderr,
+			 "PUTVAL %s interval=%i %s\n",
+			 filename, interval_g, values);
+		return (0);
+	}
 
 	if (stat (filename, &statbuf) == -1)
 	{

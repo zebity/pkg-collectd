@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # collectd - contrib/cussh.pl
-# Copyright (C) 2007-2008  Sebastian Harl
+# Copyright (C) 2007-2009  Sebastian Harl
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -62,6 +62,7 @@ use Collectd::Unixsock();
 		GETVAL  => \&getval,
 		FLUSH   => \&flush,
 		LISTVAL => \&listval,
+		PUTNOTIF => \&putnotif,
 	};
 
 	if (! $sock) {
@@ -109,13 +110,42 @@ use Collectd::Unixsock();
 	exit 0;
 }
 
+sub tokenize {
+	my $line     = shift || return;
+	my $line_ptr = $line;
+	my @line     = ();
+
+	my $token_pattern = qr/[^"\s]+|"[^"]+"/;
+
+	while (my ($token) = $line_ptr =~ m/^($token_pattern)\s+/) {
+		$line_ptr = $';
+		push @line, $token;
+	}
+
+	if ($line_ptr =~ m/^$token_pattern$/) {
+		push @line, $line_ptr;
+	}
+	else {
+		my ($token) = split m/ /, $line_ptr, 1;
+		print STDERR "Failed to parse line: $line\n";
+		print STDERR "Parse error near token \"$token\".\n";
+		return;
+	}
+
+	foreach my $l (@line) {
+		if ($l =~ m/^"(.*)"$/) {
+			$l = $1;
+		}
+	}
+	return @line;
+}
+
 sub getid {
 	my $string = shift || return;
 
-	print $$string . $/;
 	my ($h, $p, $pi, $t, $ti) =
-		$$string =~ m#^([^/]+)/([^/-]+)(?:-([^/]+))?/([^/-]+)(?:-([^/]+))?\s*#;
-	$$string = $';
+		$string =~ m#^([^/]+)/([^/-]+)(?:-([^/]+))?/([^/-]+)(?:-([^/]+))?\s*#;
+	$string = $';
 
 	return if ((! $h) || (! $p) || (! $t));
 
@@ -163,6 +193,7 @@ Available commands:
   GETVAL
   FLUSH
   LISTVAL
+  PUTNOTIF
 
 See the embedded Perldoc documentation for details. To do that, run:
   perldoc $0
@@ -170,7 +201,7 @@ HELP
 	return 1;
 } # cmd_help
 
-=item B<GETVAL> I<Identifier>
+=item B<PUTVAL> I<Identifier> I<Valuelist>
 
 =cut
 
@@ -178,18 +209,37 @@ sub putval {
 	my $sock = shift || return;
 	my $line = shift || return;
 
-	my $id = getid(\$line);
+	my @line = tokenize($line);
+
+	my $id;
+	my $ret;
+
+	if (! @line) {
+		return;
+	}
+
+	if (scalar(@line) < 2) {
+		print STDERR "Synopsis: PUTVAL <id> <value0> [<value1> ...]" . $/;
+		return;
+	}
+
+	$id = getid($line[0]);
 
 	if (! $id) {
-		print STDERR $sock->{'error'} . $/;
+		print STDERR "Invalid id \"$line[0]\"." . $/;
 		return;
 	}
 
 	my ($time, @values) = split m/:/, $line;
-	return $sock->putval(%$id, time => $time, values => \@values);
+	$ret = $sock->putval(%$id, time => $time, values => \@values);
+
+	if (! $ret) {
+		print STDERR "socket error: " . $sock->{'error'} . $/;
+	}
+	return $ret;
 }
 
-=item B<PUTVAL> I<Identifier> I<Valuelist>
+=item B<GETVAL> I<Identifier>
 
 =cut
 
@@ -197,17 +247,31 @@ sub getval {
 	my $sock = shift || return;
 	my $line = shift || return;
 
-	my $id = getid(\$line);
+	my @line = tokenize($line);
 
-	if (! $id) {
-		print STDERR $sock->{'error'} . $/;
+	my $id;
+	my $vals;
+
+	if (! @line) {
 		return;
 	}
 
-	my $vals = $sock->getval(%$id);
+	if (scalar(@line) < 1) {
+		print STDERR "Synopsis: GETVAL <id>" . $/;
+		return;
+	}
+
+	$id = getid($line[0]);
+
+	if (! $id) {
+		print STDERR "Invalid id \"$line[0]\"." . $/;
+		return;
+	}
+
+	$vals = $sock->getval(%$id);
 
 	if (! $vals) {
-		print STDERR $sock->{'error'} . $/;
+		print STDERR "socket error: " . $sock->{'error'} . $/;
 		return;
 	}
 
@@ -225,6 +289,8 @@ sub flush {
 	my $sock = shift || return;
 	my $line = shift;
 
+	my @line = tokenize($line);
+
 	my $res;
 
 	if (! $line) {
@@ -233,7 +299,7 @@ sub flush {
 	else {
 		my %args = ();
 
-		foreach my $i (split m/ /, $line) {
+		foreach my $i (@line) {
 			my ($option, $value) = $i =~ m/^([^=]+)=(.+)$/;
 			next if (! ($option && $value));
 
@@ -262,10 +328,9 @@ sub flush {
 	}
 
 	if (! $res) {
-		print STDERR $sock->{'error'} . $/;
-		return;
+		print STDERR "socket error: " . $sock->{'error'} . $/;
 	}
-	return 1;
+	return $res;
 }
 
 =item B<LISTVAL>
@@ -274,13 +339,19 @@ sub flush {
 
 sub listval {
 	my $sock = shift || return;
+	my $line = shift;
 
 	my @res;
+
+	if ($line ne "") {
+		print STDERR "Synopsis: LISTVAL" . $/;
+		return;
+	}
 
 	@res = $sock->listval();
 
 	if (! @res) {
-		print STDERR $sock->{'error'} . $/;
+		print STDERR "socket error: " . $sock->{'error'} . $/;
 		return;
 	}
 
@@ -288,6 +359,39 @@ sub listval {
 		print $ident->{'time'} . " " . putid($ident) . $/;
 	}
 	return 1;
+}
+
+=item B<PUTNOTIF> [[B<severity>=I<$severity>] [B<message>=I<$message>] [ ...]]
+
+=cut
+
+sub putnotif {
+	my $sock = shift || return;
+	my $line = shift || return;
+
+	my @line = tokenize($line);
+
+	my $ret;
+
+	my (%values) = ();
+	foreach my $i (@line) {
+		my ($key, $val) = split m/=/, $i, 2;
+		if ($key && $val) {
+			$values{$key} = $val;
+		}
+		else {
+			$values{'message'} = defined($values{'message'})
+				? ($values{'message'} . ' ' . $key)
+				: $key;
+		}
+	}
+	$values{'time'} ||= time();
+
+	$ret = $sock->putnotif(%values);
+	if (! $ret) {
+		print STDERR "socket error: " . $sock->{'error'} . $/;
+	}
+	return $ret;
 }
 
 =back

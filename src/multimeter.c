@@ -36,26 +36,6 @@
 
 static int fd = -1;
 
-static int multimeter_timeval_sub (struct timeval *tv1, struct timeval *tv2,
-                struct timeval *res)
-{
-        if ((tv1->tv_sec < tv2->tv_sec) ||
-	    ((tv1->tv_sec == tv2->tv_sec) && (tv1->tv_usec < tv2->tv_usec)))
-    	        return (-1);
-
-        res->tv_sec  = tv1->tv_sec  - tv2->tv_sec;
-        res->tv_usec = tv1->tv_usec - tv2->tv_usec;
-
-        assert ((res->tv_sec > 0) || ((res->tv_sec == 0) && (res->tv_usec > 0)));
-
-        while (res->tv_usec < 0)
-        {
-	        res->tv_usec += 1000000;
-                res->tv_sec--;
-        }
-	return (0);
-}
-
 #define LINE_LENGTH 14
 static int multimeter_read_value(double *value)
 {
@@ -86,7 +66,12 @@ static int multimeter_read_value(double *value)
     			struct timeval timeout;
     			struct timeval time_now;
 
-			write(fd, "D", 1);
+			status = swrite (fd, "D", 1);
+			if (status < 0)
+			{
+				ERROR ("multimeter plugin: swrite failed.");
+				return (-1);
+			}
 
 			FD_ZERO(&rfds);
 			FD_SET(fd, &rfds);
@@ -100,7 +85,7 @@ static int multimeter_read_value(double *value)
 							sizeof (errbuf)));
 	                        return (-1);
 	                }
-			if (multimeter_timeval_sub (&time_end, &time_now, &timeout) == -1)
+			if (timeval_cmp (time_end, time_now, &timeout) < 0)
 	                        break;
 
 			status = select(fd+1, &rfds, NULL, NULL, &timeout);
@@ -215,7 +200,6 @@ static void multimeter_submit (double value)
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "multimeter", sizeof (vl.plugin));
 	sstrncpy (vl.type, "multimeter", sizeof (vl.type));

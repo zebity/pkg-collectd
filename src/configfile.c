@@ -1,6 +1,6 @@
 /**
  * collectd - src/configfile.c
- * Copyright (C) 2005-2008  Florian octo Forster
+ * Copyright (C) 2005-2009  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,6 +30,7 @@
 #include "configfile.h"
 #include "types_list.h"
 #include "utils_threshold.h"
+#include "filter_chain.h"
 
 #if HAVE_WORDEXP_H
 # include <wordexp.h>
@@ -97,7 +98,9 @@ static cf_global_option_t cf_global_options[] =
 	{"Hostname",    NULL, NULL},
 	{"FQDNLookup",  NULL, "false"},
 	{"Interval",    NULL, "10"},
-	{"ReadThreads", NULL, "5"}
+	{"ReadThreads", NULL, "5"},
+	{"PreCacheChain",  NULL, "PreCache"},
+	{"PostCacheChain", NULL, "PostCache"}
 };
 static int cf_global_options_num = STATIC_ARRAY_LEN (cf_global_options);
 
@@ -155,7 +158,8 @@ static int cf_dispatch (const char *type, const char *orig_key,
 
 	for (i = 0; i < cf_cb->keys_num; i++)
 	{
-		if (strcasecmp (cf_cb->keys[i], key) == 0)
+		if ((cf_cb->keys[i] != NULL)
+				&& (strcasecmp (cf_cb->keys[i], key) == 0))
 		{
 			ret = (*cf_cb->callback) (key, value);
 			break;
@@ -204,13 +208,18 @@ static int dispatch_value_typesdb (const oconfig_item_t *ci)
 
 	cf_default_typesdb = 0;
 
-	if (ci->values_num < 1)
+	if (ci->values_num < 1) {
+		ERROR ("configfile: `TypesDB' needs at least one argument.");
 		return (-1);
+	}
 
 	for (i = 0; i < ci->values_num; ++i)
 	{
-		if (OCONFIG_TYPE_STRING != ci->values[i].type)
+		if (OCONFIG_TYPE_STRING != ci->values[i].type) {
+			WARNING ("configfile: TypesDB: Skipping %i. argument which "
+					"is not a string.", i + 1);
 			continue;
+		}
 
 		read_types_list (ci->values[i].value.string);
 	}
@@ -276,7 +285,7 @@ static int dispatch_value_plugin (const char *plugin, oconfig_item_t *ci)
 	buffer_ptr = buffer + 1;
 
 	return (cf_dispatch (plugin, ci->key, buffer_ptr));
-} /* int plugin_conf_dispatch */
+} /* int dispatch_value_plugin */
 
 static int dispatch_value (const oconfig_item_t *ci)
 {
@@ -340,6 +349,8 @@ static int dispatch_block (oconfig_item_t *ci)
 		return (dispatch_block_plugin (ci));
 	else if (strcasecmp (ci->key, "Threshold") == 0)
 		return (ut_config (ci));
+	else if (strcasecmp (ci->key, "Chain") == 0)
+		return (fc_configure (ci));
 
 	return (0);
 }
@@ -549,7 +560,7 @@ static oconfig_item_t *cf_read_dir (const char *dir, int depth)
 
 		status = ssnprintf (name, sizeof (name), "%s/%s",
 				dir, de->d_name);
-		if (status >= sizeof (name))
+		if ((status < 0) || ((size_t) status >= sizeof (name)))
 		{
 			ERROR ("configfile: Not including `%s/%s' because its"
 					" name is too long.",
@@ -624,7 +635,7 @@ static oconfig_item_t *cf_read_generic (const char *path, int depth)
 	int status;
 	const char *path_ptr;
 	wordexp_t we;
-	int i;
+	size_t i;
 
 	if (depth >= CF_MAX_DEPTH)
 	{
@@ -891,7 +902,7 @@ int cf_read (char *filename)
 
 	/* Read the default types.db if no `TypesDB' option was given. */
 	if (cf_default_typesdb)
-		read_types_list (PLUGINDIR"/types.db");
+		read_types_list (PKGDATADIR"/types.db");
 
 	return (0);
 } /* int cf_read */

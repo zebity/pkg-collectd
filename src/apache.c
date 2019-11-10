@@ -55,7 +55,7 @@ static const char *config_keys[] =
 static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 
 static size_t apache_curl_callback (void *buf, size_t size, size_t nmemb,
-		void *stream)
+		void __attribute__((unused)) *stream)
 {
 	size_t len = size * nmemb;
 
@@ -148,7 +148,7 @@ static int init (void)
 
 		status = ssnprintf (credentials, sizeof (credentials), "%s:%s",
 				user, (pass == NULL) ? "" : pass);
-		if (status >= sizeof (credentials))
+		if ((status < 0) || ((size_t) status >= sizeof (credentials)))
 		{
 			ERROR ("apache plugin: init: Returning an error "
 					"because the credentials have been "
@@ -197,7 +197,6 @@ static void submit_counter (const char *type, const char *type_instance,
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "apache", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));
@@ -220,7 +219,6 @@ static void submit_gauge (const char *type, const char *type_instance,
 
 	vl.values = values;
 	vl.values_len = 1;
-	vl.time = time (NULL);
 	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
 	sstrncpy (vl.plugin, "apache", sizeof (vl.plugin));
 	sstrncpy (vl.plugin_instance, "", sizeof (vl.plugin_instance));

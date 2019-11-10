@@ -20,6 +20,25 @@ our $Debug = param ('debug');
 our $Begin = param ('begin');
 our $End = param ('end');
 our $GraphWidth = param ('width');
+our $GraphHeight = param ('height');
+our $Index = param ('index') || 0;
+our $OutputFormat = 'PNG';
+our $ContentType = 'image/png';
+
+if (param ('format'))
+{
+  my $temp = param ('format') || '';
+  $temp = uc ($temp);
+
+  if ($temp =~ m/^(PNG|SVG|EPS|PDF)$/)
+  {
+    $OutputFormat = $temp;
+
+    if ($OutputFormat eq 'SVG') { $ContentType = 'image/svg+xml'; }
+    elsif ($OutputFormat eq 'EPS') { $ContentType = 'image/eps'; }
+    elsif ($OutputFormat eq 'PDF') { $ContentType = 'application/pdf'; }
+  }
+}
 
 if ($Debug)
 {
@@ -39,6 +58,16 @@ if ($GraphWidth)
 if (!$GraphWidth)
 {
   $GraphWidth = gc_get_scalar ('GraphWidth', 400);
+}
+
+if ($GraphHeight)
+{
+  $GraphHeight =~ s/\D//g;
+}
+
+if (!$GraphHeight)
+{
+  $GraphHeight = gc_get_scalar ('GraphHeight', 100);
 }
 
 { # Sanitize begin and end times
@@ -141,7 +170,7 @@ flush_files ($files,
     addr => gc_get_scalar ('UnixSockAddr', undef),
     interval => gc_get_scalar ('Interval', 10));
 
-print STDOUT header (-Content_type => 'image/png',
+print STDOUT header (-Content_type => $ContentType,
   -Last_Modified => epoch_to_rfc1123 ($obj->getLastModified ()),
   -Expires => epoch_to_rfc1123 ($expires));
 
@@ -150,7 +179,7 @@ if ($Debug)
   print "\$expires = $expires;\n";
 }
 
-my $args = $obj->getRRDArgs (0);
+my $args = $obj->getRRDArgs (0 + $Index);
 
 if ($Debug)
 {
@@ -173,7 +202,7 @@ else
   }
 
   $| = 1;
-  RRDs::graph ('-', '-a', 'PNG', '--width', $GraphWidth, @timesel, @$args);
+  RRDs::graph ('-', '-a', $OutputFormat, '--width', $GraphWidth, '--height', $GraphHeight, @timesel, @$args);
   if (my $err = RRDs::error ())
   {
     print STDERR "RRDs::graph failed: $err\n";

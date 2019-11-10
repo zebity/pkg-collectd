@@ -34,6 +34,7 @@
  */
 
 #include "collectd.h"
+#include "plugin.h"
 #include "common.h"
 
 #if HAVE_NETINET_IN_SYSTM_H
@@ -336,9 +337,7 @@ rfc1035NameUnpack(const char *buf, size_t sz, off_t * off, char *name, size_t ns
 }
 
 static int
-handle_dns(const char *buf, int len,
-	const struct in6_addr *s_addr,
-	const struct in6_addr *d_addr)
+handle_dns(const char *buf, int len)
 {
     rfc1035_header_t qh;
     uint16_t us;
@@ -355,7 +354,6 @@ handle_dns(const char *buf, int len,
 
     memcpy(&us, buf + 2, 2);
     us = ntohs(us);
-    fprintf (stderr, "Bytes 0, 1: 0x%04hx\n", us);
     qh.qr = (us >> 15) & 0x01;
     qh.opcode = (us >> 11) & 0x0F;
     qh.aa = (us >> 10) & 0x01;
@@ -391,7 +389,7 @@ handle_dns(const char *buf, int len,
     while ((t = strchr(qh.qname, '\r')))
 	*t = ' ';
     for (t = qh.qname; *t; t++)
-	*t = tolower(*t);
+	*t = tolower((int) *t);
 
     memcpy(&us, buf + offset, 2);
     qh.qtype = ntohs(us);
@@ -412,16 +410,14 @@ handle_dns(const char *buf, int len,
 }
 
 static int
-handle_udp(const struct udphdr *udp, int len,
-	const struct in6_addr *s_addr,
-	const struct in6_addr *d_addr)
+handle_udp(const struct udphdr *udp, int len)
 {
     char buf[PCAP_SNAPLEN];
     if ((ntohs (udp->UDP_DEST) != 53)
 		    && (ntohs (udp->UDP_SRC) != 53))
 	return 0;
     memcpy(buf, udp + 1, len - sizeof(*udp));
-    if (0 == handle_dns(buf, len - sizeof(*udp), s_addr, d_addr))
+    if (0 == handle_dns(buf, len - sizeof(*udp)))
 	return 0;
     return 1;
 }
@@ -492,7 +488,7 @@ handle_ipv6 (struct ip6_hdr *ipv6, int len)
 	return (0);
 
     memcpy (buf, (char *) ipv6 + offset, payload_len);
-    if (handle_udp ((struct udphdr *) buf, payload_len, &s_addr, &d_addr) == 0)
+    if (handle_udp ((struct udphdr *) buf, payload_len) == 0)
 	return (0);
 
     return (1); /* Success */
@@ -516,7 +512,7 @@ handle_ip(const struct ip *ip, int len)
     if (IPPROTO_UDP != ip->ip_p)
 	return 0;
     memcpy(buf, (void *) ip + offset, len - offset);
-    if (0 == handle_udp((struct udphdr *) buf, len - offset, &s_addr, &d_addr))
+    if (0 == handle_udp((struct udphdr *) buf, len - offset))
 	return 0;
     return 1;
 }
@@ -649,7 +645,7 @@ void handle_pcap(u_char *udata, const struct pcap_pkthdr *hdr, const u_char *pkt
 {
     int status;
 
-    fprintf (stderr, "handle_pcap (udata = %p, hdr = %p, pkt = %p): hdr->caplen = %i\n",
+    DEBUG ("handle_pcap (udata = %p, hdr = %p, pkt = %p): hdr->caplen = %i\n",
 		    (void *) udata, (void *) hdr, (void *) pkt,
 		    hdr->caplen);
 
@@ -686,7 +682,7 @@ void handle_pcap(u_char *udata, const struct pcap_pkthdr *hdr, const u_char *pkt
 	    break;
 
 	default:
-	    fprintf (stderr, "unsupported data link type %d\n",
+	    ERROR ("handle_pcap: unsupported data link type %d\n",
 		    pcap_datalink(pcap_obj));
 	    status = 0;
 	    break;

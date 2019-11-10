@@ -49,6 +49,9 @@
 /* Define to 1 if you have the <curl/curl.h> header file. */
 #undef HAVE_CURL_CURL_H
 
+/* Define to 1 if you have the <dbi/dbi.h> header file. */
+#undef HAVE_DBI_DBI_H
+
 /* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRERROR_R
@@ -198,7 +201,7 @@
    (-lkvm) */
 #undef HAVE_LIBKVM_GETSWAPINFO
 
-/* Define to 1 if you have the 'kvm' library with the 'kvm_nlist' symbol
+/* Define to 1 if you have the 'kvm' library with the 'kvm_openfiles' symbol
    (-lkvm) */
 #undef HAVE_LIBKVM_NLIST
 
@@ -339,6 +342,9 @@
 /* Define to 1 if you have the <mnttab.h> header file. */
 #undef HAVE_MNTTAB_H
 
+/* Define to 1 if you have the <mysql.h> header file. */
+#undef HAVE_MYSQL_H
+
 /* Define to 1 if you have the <mysql/mysql.h> header file. */
 #undef HAVE_MYSQL_MYSQL_H
 
@@ -399,6 +405,9 @@
 /* Define to 1 if you have the <net-snmp/net-snmp-config.h> header file. */
 #undef HAVE_NET_SNMP_NET_SNMP_CONFIG_H
 
+/* Define to 1 if you have the <oci.h> header file. */
+#undef HAVE_OCI_H
+
 /* Define if the function getmntent exists and takes one argument. */
 #undef HAVE_ONE_GETMNTENT
 
@@ -420,6 +429,9 @@
 /* Define if Perl supports ithreads. */
 #undef HAVE_PERL_ITHREADS
 
+/* Define if Perl's struct mgvtbl has member svt_local. */
+#undef HAVE_PERL_STRUCT_MGVTBL_SVT_LOCAL
+
 /* Define to 1 if the apache plugin is enabled. */
 #undef HAVE_PLUGIN_APACHE
 
@@ -435,6 +447,9 @@
 /* Define to 1 if the battery plugin is enabled. */
 #undef HAVE_PLUGIN_BATTERY
 
+/* Define to 1 if the bind plugin is enabled. */
+#undef HAVE_PLUGIN_BIND
+
 /* Define to 1 if the cpu plugin is enabled. */
 #undef HAVE_PLUGIN_CPU
 
@@ -443,6 +458,12 @@
 
 /* Define to 1 if the csv plugin is enabled. */
 #undef HAVE_PLUGIN_CSV
+
+/* Define to 1 if the curl plugin is enabled. */
+#undef HAVE_PLUGIN_CURL
+
+/* Define to 1 if the dbi plugin is enabled. */
+#undef HAVE_PLUGIN_DBI
 
 /* Define to 1 if the df plugin is enabled. */
 #undef HAVE_PLUGIN_DF
@@ -492,6 +513,15 @@
 /* Define to 1 if the logfile plugin is enabled. */
 #undef HAVE_PLUGIN_LOGFILE
 
+/* Define to 1 if the match_regex plugin is enabled. */
+#undef HAVE_PLUGIN_MATCH_REGEX
+
+/* Define to 1 if the match_timediff plugin is enabled. */
+#undef HAVE_PLUGIN_MATCH_TIMEDIFF
+
+/* Define to 1 if the match_value plugin is enabled. */
+#undef HAVE_PLUGIN_MATCH_VALUE
+
 /* Define to 1 if the mbmon plugin is enabled. */
 #undef HAVE_PLUGIN_MBMON
 
@@ -534,6 +564,12 @@
 /* Define to 1 if the onewire plugin is enabled. */
 #undef HAVE_PLUGIN_ONEWIRE
 
+/* Define to 1 if the openvpn plugin is enabled. */
+#undef HAVE_PLUGIN_OPENVPN
+
+/* Define to 1 if the oracle plugin is enabled. */
+#undef HAVE_PLUGIN_ORACLE
+
 /* Define to 1 if the perl plugin is enabled. */
 #undef HAVE_PLUGIN_PERL
 
@@ -548,6 +584,9 @@
 
 /* Define to 1 if the processes plugin is enabled. */
 #undef HAVE_PLUGIN_PROCESSES
+
+/* Define to 1 if the rrdcached plugin is enabled. */
+#undef HAVE_PLUGIN_RRDCACHED
 
 /* Define to 1 if the rrdtool plugin is enabled. */
 #undef HAVE_PLUGIN_RRDTOOL
@@ -572,6 +611,15 @@
 
 /* Define to 1 if the tape plugin is enabled. */
 #undef HAVE_PLUGIN_TAPE
+
+/* Define to 1 if the target_notification plugin is enabled. */
+#undef HAVE_PLUGIN_TARGET_NOTIFICATION
+
+/* Define to 1 if the target_replace plugin is enabled. */
+#undef HAVE_PLUGIN_TARGET_REPLACE
+
+/* Define to 1 if the target_set plugin is enabled. */
+#undef HAVE_PLUGIN_TARGET_SET
 
 /* Define to 1 if the tcpconns plugin is enabled. */
 #undef HAVE_PLUGIN_TCPCONNS
@@ -752,6 +800,15 @@
 
 /* Define if the function getmntent exists. It's the version from libsun. */
 #undef HAVE_SUN_GETMNTENT
+
+/* Define to 1 if you have the `swapctl' function. */
+#undef HAVE_SWAPCTL
+
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the `sysctl' function. */
+#undef HAVE_SYSCTL
 
 /* Define to 1 if you have the `sysctlbyname' function. */
 #undef HAVE_SYSCTLBYNAME
