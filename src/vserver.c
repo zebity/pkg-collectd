@@ -57,8 +57,8 @@ static void traffic_submit (const char *plugin_instance,
 	vl.values = values;
 	vl.values_len = STATIC_ARRAY_SIZE (values);
 	vl.time = time (NULL);
-	strcpy (vl.host, hostname_g);
-	strcpy (vl.plugin, "vserver");
+	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
+	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
 	strncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
 	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
@@ -78,8 +78,8 @@ static void load_submit (const char *plugin_instance,
 	vl.values = values;
 	vl.values_len = STATIC_ARRAY_SIZE (values);
 	vl.time = time (NULL);
-	strcpy (vl.host, hostname_g);
-	strcpy (vl.plugin, "vserver");
+	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
+	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
 	strncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
 
 	plugin_dispatch_values ("load", &vl);
@@ -97,8 +97,8 @@ static void submit_gauge (const char *plugin_instance, const char *type,
 	vl.values = values;
 	vl.values_len = STATIC_ARRAY_SIZE (values);
 	vl.time = time (NULL);
-	strcpy (vl.host, hostname_g);
-	strcpy (vl.plugin, "vserver");
+	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
+	sstrncpy (vl.plugin, "vserver", sizeof (vl.plugin));
 	strncpy (vl.plugin_instance, plugin_instance, sizeof (vl.plugin_instance));
 	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
@@ -117,11 +117,19 @@ static inline long long __get_sock_bytes(const char *s)
 
 static int vserver_read (void)
 {
+#if NAME_MAX < 1024
+# define DIRENT_BUFFER_SIZE (sizeof (struct dirent) + 1024 + 1)
+#else
+# define DIRENT_BUFFER_SIZE (sizeof (struct dirent) + NAME_MAX + 1)
+#endif
+
 	DIR 			*proc;
 	struct dirent 	*dent; /* 42 */
+	char dirent_buffer[DIRENT_BUFFER_SIZE];
 
 	errno = 0;
-	if (NULL == (proc = opendir (PROCDIR)))
+	proc = opendir (PROCDIR);
+	if (proc == NULL)
 	{
 		char errbuf[1024];
 		ERROR ("vserver plugin: fopen (%s): %s", PROCDIR, 
@@ -129,21 +137,51 @@ static int vserver_read (void)
 		return (-1);
 	}
 
-	while (NULL != (dent = readdir (proc)))
+	while (42)
 	{
-		int  len;
+		size_t len;
 		char file[BUFSIZE];
 
 		FILE *fh;
 		char buffer[BUFSIZE];
 
+		struct stat statbuf;
 		char *cols[4];
+
+		int status;
+
+		status = readdir_r (proc, (struct dirent *) dirent_buffer, &dent);
+		if (status != 0)
+		{
+			char errbuf[4096];
+			ERROR ("vserver plugin: readdir_r failed: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+			closedir (proc);
+			return (-1);
+		}
+		else if (dent == NULL)
+		{
+			/* end of directory */
+			break;
+		}
 
 		if (dent->d_name[0] == '.')
 			continue;
 
-		/* This is not a directory */
-		if (dent->d_type != DT_DIR)
+		len = snprintf (file, sizeof (file), PROCDIR "/%s", dent->d_name);
+		if ((len < 0) || (len >= BUFSIZE))
+			continue;
+		
+		status = stat (file, &statbuf);
+		if (status != 0)
+		{
+			char errbuf[4096];
+			WARNING ("vserver plugin: stat (%s) failed: %s",
+					file, sstrerror (errno, errbuf, sizeof (errbuf)));
+			continue;
+		}
+		
+		if (!S_ISDIR (statbuf.st_mode))
 			continue;
 
 		/* socket message accounting */

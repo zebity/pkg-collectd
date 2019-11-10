@@ -56,8 +56,8 @@ static void wireless_submit (const char *plugin_instance, const char *type,
 	vl.values = values;
 	vl.values_len = 1;
 	vl.time = time (NULL);
-	strcpy (vl.host, hostname_g);
-	strcpy (vl.plugin, "wireless");
+	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
+	sstrncpy (vl.plugin, "wireless", sizeof (vl.plugin));
 	strncpy (vl.plugin_instance, plugin_instance,
 			sizeof (vl.plugin_instance));
 
@@ -128,7 +128,9 @@ static int wireless_read (void)
 			power = 1.0; /* invalid */
 		else if ((power >= 0.0) && (power <= 100.0))
 			power = wireless_percent_to_power (power);
-		else if (power > 100.0)
+		else if ((power > 100.0) && (power <= 256.0))
+			power = power - 256.0;
+		else if (power > 0.0)
 			power = 1.0; /* invalid */
 
 		/* noise [dBm] < 0.0 */
@@ -137,7 +139,9 @@ static int wireless_read (void)
 			noise = 1.0; /* invalid */
 		else if ((noise >= 0.0) && (noise <= 100.0))
 			noise = wireless_percent_to_power (noise);
-		else if (noise > 100.0)
+		else if ((noise > 100.0) && (noise <= 256.0))
+			noise = noise - 256.0;
+		else if (noise > 0.0)
 			noise = 1.0; /* invalid */
 
 		wireless_submit (device, "signal_quality", quality);

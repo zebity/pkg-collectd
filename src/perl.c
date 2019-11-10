@@ -27,12 +27,18 @@
 /* do not automatically get the thread specific perl interpreter */
 #define PERL_NO_GET_CONTEXT
 
+#define DONT_POISON_SPRINTF_YET 1
 #include "collectd.h"
+#undef DONT_POISON_SPRINTF_YET
 
 #include "configfile.h"
 
 #include <EXTERN.h>
 #include <perl.h>
+
+#if __GNUC__
+# pragma GCC poison sprintf
+#endif
 
 #include <XSUB.h>
 
@@ -559,7 +565,7 @@ static int pplugin_dispatch_values (pTHX_ char *name, HV *values)
 		list.host[DATA_MAX_NAME_LEN - 1] = '\0';
 	}
 	else {
-		strcpy (list.host, hostname_g);
+		sstrncpy (list.host, hostname_g, sizeof (list.host));
 	}
 
 	if (NULL != (tmp = hv_fetch (values, "plugin", 6, 0))) {

@@ -707,14 +707,14 @@ static value_t csnmp_value_list_to_value (struct variable_list *vl, int type,
       || (vl->type == ASN_GAUGE))
   {
     temp = (uint32_t) *vl->val.integer;
-    DEBUG ("snmp plugin: Parsed int32 value is %llu.", temp);
+    DEBUG ("snmp plugin: Parsed int32 value is %"PRIu64".", temp);
   }
   else if (vl->type == ASN_COUNTER64)
   {
     temp = (uint32_t) vl->val.counter64->high;
     temp = temp << 32;
     temp += (uint32_t) vl->val.counter64->low;
-    DEBUG ("snmp plugin: Parsed int64 value is %llu.", temp);
+    DEBUG ("snmp plugin: Parsed int64 value is %"PRIu64".", temp);
   }
   else
   {
@@ -779,7 +779,7 @@ static int csnmp_check_res_left_subtree (const host_definition_t *host,
     if (vb == NULL)
     {
       ERROR ("snmp plugin: host %s: Expected one more variable for "
-	  "the instance..");
+	  "the instance..", host->name);
       return (-1);
     }
 
@@ -909,7 +909,7 @@ static int csnmp_dispatch_table (host_definition_t *host, data_definition_t *dat
 
   strncpy (vl.host, host->name, sizeof (vl.host));
   vl.host[sizeof (vl.host) - 1] = '\0';
-  strcpy (vl.plugin, "snmp");
+  sstrncpy (vl.plugin, "snmp", sizeof (vl.plugin));
 
   vl.interval = host->interval;
   vl.time = time (NULL);
@@ -1301,7 +1301,7 @@ static int csnmp_read_value (host_definition_t *host, data_definition_t *data)
 
   strncpy (vl.host, host->name, sizeof (vl.host));
   vl.host[sizeof (vl.host) - 1] = '\0';
-  strcpy (vl.plugin, "snmp");
+  sstrncpy (vl.plugin, "snmp", sizeof (vl.plugin));
   strncpy (vl.type_instance, data->instance.string, sizeof (vl.type_instance));
   vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
 
@@ -1400,8 +1400,8 @@ static int csnmp_read_host (host_definition_t *host)
   if ((time_end - time_start) > host->interval)
   {
     WARNING ("snmp plugin: Host `%s' should be queried every %i seconds, "
-	"but reading all values takes %i seconds.",
-	host->name, host->interval, time_end - time_start);
+	"but reading all values takes %u seconds.",
+	host->name, host->interval, (unsigned int) (time_end - time_start));
   }
 
   return (0);

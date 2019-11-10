@@ -213,8 +213,8 @@ static void disk_submit (const char *plugin_instance,
 	vl.values = values;
 	vl.values_len = 2;
 	vl.time = time (NULL);
-	strcpy (vl.host, hostname_g);
-	strcpy (vl.plugin, "disk");
+	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
+	sstrncpy (vl.plugin, "disk", sizeof (vl.plugin));
 	strncpy (vl.plugin_instance, plugin_instance,
 			sizeof (vl.plugin_instance));
 
@@ -452,7 +452,7 @@ static int disk_read (void)
 		major = atoll (fields[0]);
 		minor = atoll (fields[1]);
 
-		disk_name = fields[2];
+		disk_name = fields[2 + fieldshift];
 
 		for (ds = disklist, pre_ds = disklist; ds != NULL; pre_ds = ds, ds = ds->next)
 			if (strcmp (disk_name, ds->name) == 0)
