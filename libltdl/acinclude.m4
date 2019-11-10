@@ -7,7 +7,7 @@
 ## unlimited permission to copy and/or distribute it, with or without
 ## modifications, as long as this notice is preserved.
 
-# serial 52 Debian 1.5.26-1 AC_PROG_LIBTOOL
+# serial 52 Debian 1.5.26-4 AC_PROG_LIBTOOL
 
 
 # AC_PROVIDE_IFELSE(MACRO-NAME, IF-PROVIDED, IF-NOT-PROVIDED)

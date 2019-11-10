@@ -1,4 +1,7 @@
 SUBDIRS =
+if BUILD_WITH_OWN_LIBIPTC
+SUBDIRS += libiptc
+endif
 if BUILD_WITH_OWN_LIBOCONFIG
 SUBDIRS += liboconfig
 endif
@@ -30,51 +33,51 @@ collectd_SOURCES = collectd.c collectd.h \
 		   utils_cache.c utils_cache.h \
 		   utils_ignorelist.c utils_ignorelist.h \
 		   utils_llist.c utils_llist.h \
+		   utils_tail_match.c utils_tail_match.h \
+		   utils_match.c utils_match.h \
 		   utils_mount.c utils_mount.h \
+		   utils_tail.c utils_tail.h \
 		   utils_threshold.c utils_threshold.h \
 		   types_list.c types_list.h
-collectd_CPPFLAGS = $(LTDLINCL)
-collectd_CPPFLAGS += $(AM_CPPFLAGS)
 
-# Link to these libraries..
+collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LTDLINCL)
+collectd_CFLAGS =
 collectd_LDFLAGS = -export-dynamic
-if BUILD_WITH_LIBRT
-collectd_LDFLAGS += -lrt
-endif
-if BUILD_WITH_LIBSOCKET
-collectd_LDFLAGS += -lsocket
-endif
-if BUILD_WITH_LIBRESOLV
-collectd_LDFLAGS += -lresolv
-endif
-if BUILD_WITH_LIBPTHREAD
-collectd_LDFLAGS += -lpthread
-endif
-if BUILD_WITH_LIBKSTAT
-collectd_LDFLAGS += -lkstat
-endif
-if BUILD_WITH_LIBDEVINFO
-collectd_LDFLAGS += -ldevinfo
-endif
-
-if BUILD_WITH_LIBSTATGRAB
-if BUILD_WITH_LIBKVM
-collectd_LDFLAGS += -lkvm
-endif
-if BUILD_WITH_LIBDEVSTAT
-collectd_LDFLAGS += -ldevstat
-endif
-collectd_LDFLAGS += -lstatgrab
-endif
-
-
 collectd_LDADD =
 collectd_DEPENDENCIES =
+
+# Link to these libraries..
+if BUILD_WITH_LIBRT
+collectd_LDADD += -lrt
+endif
+if BUILD_WITH_LIBSOCKET
+collectd_LDADD += -lsocket
+endif
+if BUILD_WITH_LIBRESOLV
+collectd_LDADD += -lresolv
+endif
+if BUILD_WITH_LIBPTHREAD
+collectd_LDADD += -lpthread
+endif
+if BUILD_WITH_LIBKSTAT
+collectd_LDADD += -lkstat
+endif
+if BUILD_WITH_LIBDEVINFO
+collectd_LDADD += -ldevinfo
+endif
+
+# The daemon needs to call sg_init, so we need to link it against libstatgrab,
+# too. -octo
+if BUILD_WITH_LIBSTATGRAB
+collectd_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+collectd_LDADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+endif
+
 if BUILD_WITH_OWN_LIBOCONFIG
 collectd_LDADD += $(LIBLTDL) liboconfig/liboconfig.la
 collectd_DEPENDENCIES += $(LIBLTDL) liboconfig/liboconfig.la
 else
-collectd_LDFLAGS += -loconfig
+collectd_LDADD += -loconfig
 endif
 
 collectdmon_SOURCES = collectdmon.c
@@ -121,6 +124,16 @@ collectd_LDADD += "-dlopen" apple_sensors.la
 collectd_DEPENDENCIES += apple_sensors.la
 endif
 
+if BUILD_PLUGIN_ASCENT
+pkglib_LTLIBRARIES += ascent.la
+ascent_la_SOURCES = ascent.c
+ascent_la_LDFLAGS = -module -avoid-version
+ascent_la_CFLAGS = $(BUILD_WITH_LIBCURL_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
+ascent_la_LIBADD = $(BUILD_WITH_LIBCURL_LIBS) $(BUILD_WITH_LIBXML2_LIBS)
+collectd_LDADD += "-dlopen" apache.la
+collectd_DEPENDENCIES += ascent.la
+endif
+
 if BUILD_PLUGIN_BATTERY
 pkglib_LTLIBRARIES += battery.la
 battery_la_SOURCES = battery.c
@@ -135,12 +148,18 @@ endif
 if BUILD_PLUGIN_CPU
 pkglib_LTLIBRARIES += cpu.la
 cpu_la_SOURCES = cpu.c
+cpu_la_CFLAGS =
 cpu_la_LDFLAGS = -module -avoid-version
+cpu_la_LIBADD = 
 if BUILD_WITH_LIBKSTAT
 cpu_la_LDFLAGS += -lkstat
 endif
 if BUILD_WITH_LIBDEVINFO
 cpu_la_LDFLAGS += -ldevinfo
+endif
+if BUILD_WITH_LIBSTATGRAB
+cpu_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+cpu_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 endif
 collectd_LDADD += "-dlopen" cpu.la
 collectd_DEPENDENCIES += cpu.la
@@ -173,7 +192,9 @@ endif
 if BUILD_PLUGIN_DISK
 pkglib_LTLIBRARIES += disk.la
 disk_la_SOURCES = disk.c
+disk_la_CFLAGS =
 disk_la_LDFLAGS = -module -avoid-version
+disk_la_LIBADD = 
 if BUILD_WITH_LIBKSTAT
 disk_la_LDFLAGS += -lkstat
 endif
@@ -182,6 +203,10 @@ disk_la_LDFLAGS += -ldevinfo
 endif
 if BUILD_WITH_LIBIOKIT
 disk_la_LDFLAGS += -lIOKit
+endif
+if BUILD_WITH_LIBSTATGRAB
+disk_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)  
+disk_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 endif
 collectd_LDADD += "-dlopen" disk.la
 collectd_DEPENDENCIES += disk.la
@@ -241,32 +266,46 @@ endif
 if BUILD_PLUGIN_INTERFACE
 pkglib_LTLIBRARIES += interface.la
 interface_la_SOURCES = interface.c
+interface_la_CFLAGS =
 interface_la_LDFLAGS = -module -avoid-version
+interface_la_LIBADD =
 collectd_LDADD += "-dlopen" interface.la
 collectd_DEPENDENCIES += interface.la
+if BUILD_WITH_LIBSTATGRAB
+interface_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+interface_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+else
 if BUILD_WITH_LIBKSTAT
 interface_la_LDFLAGS += -lkstat
 endif
 if BUILD_WITH_LIBDEVINFO
 interface_la_LDFLAGS += -ldevinfo
-endif
-if BUILD_WITH_LIBSTATGRAB
-if BUILD_WITH_LIBKVM
-interface_la_LDFLAGS += -lkvm
-endif
-if BUILD_WITH_LIBDEVSTAT
-interface_la_LDFLAGS += -ldevstat
-endif
-interface_la_LDFLAGS += -lstatgrab
-endif
-endif
+endif # BUILD_WITH_LIBDEVINFO
+endif # !BUILD_WITH_LIBSTATGRAB
+endif # BUILD_PLUGIN_INTERFACE
 
 if BUILD_PLUGIN_IPTABLES
 pkglib_LTLIBRARIES += iptables.la
 iptables_la_SOURCES = iptables.c
-iptables_la_LDFLAGS = -module -avoid-version -liptc
+iptables_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_OWN_LIBIPTC
+iptables_la_LIBADD  = libiptc/libiptc.la
+iptables_la_DEPENDENCIES = libiptc/libiptc.la
+else
+iptables_la_LDFLAGS += -liptc
+endif
 collectd_LDADD += "-dlopen" iptables.la
 collectd_DEPENDENCIES += iptables.la
+endif
+
+if BUILD_PLUGIN_IPMI
+pkglib_LTLIBRARIES += ipmi.la
+ipmi_la_SOURCES = ipmi.c
+ipmi_la_CFLAGS = $(BUILD_WITH_OPENIPMI_CFLAGS)
+ipmi_la_LDFLAGS = -module -avoid-version
+ipmi_la_LIBADD = $(BUILD_WITH_OPENIPMI_LIBS)
+collectd_LDADD += "-dlopen" ipmi.la
+collectd_DEPENDENCIES += ipmi.la
 endif
 
 if BUILD_PLUGIN_IPVS
@@ -298,19 +337,16 @@ endif
 if BUILD_PLUGIN_LOAD
 pkglib_LTLIBRARIES += load.la
 load_la_SOURCES = load.c
+load_la_CFLAGS =
 load_la_LDFLAGS = -module -avoid-version
+load_la_LIBADD =
 collectd_LDADD += "-dlopen" load.la
 collectd_DEPENDENCIES += load.la
 if BUILD_WITH_LIBSTATGRAB
-if BUILD_WITH_LIBKVM
-load_la_LDFLAGS += -lkvm
-endif
-if BUILD_WITH_LIBDEVSTAT
-load_la_LDFLAGS += -ldevstat
-endif
-load_la_LDFLAGS += -lstatgrab
-endif
-endif
+load_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+load_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+endif # BUILD_WITH_LIBSTATGRAB
+endif # BUILD_PLUGIN_LOAD
 
 if BUILD_PLUGIN_LOGFILE
 pkglib_LTLIBRARIES += logfile.la
@@ -347,23 +383,20 @@ endif
 if BUILD_PLUGIN_MEMORY
 pkglib_LTLIBRARIES += memory.la
 memory_la_SOURCES = memory.c
+memory_la_CFLAGS =
 memory_la_LDFLAGS = -module -avoid-version
+memory_la_LIBADD =
 collectd_LDADD += "-dlopen" memory.la
 collectd_DEPENDENCIES += memory.la
 if BUILD_WITH_LIBKSTAT
-memory_la_LDFLAGS += -lkstat
+memory_la_LIBADD += -lkstat
 endif
 if BUILD_WITH_LIBDEVINFO
-memory_la_LDFLAGS += -ldevinfo
+memory_la_LIBADD += -ldevinfo
 endif
 if BUILD_WITH_LIBSTATGRAB
-if BUILD_WITH_LIBKVM
-memory_la_LDFLAGS += -lkvm
-endif
-if BUILD_WITH_LIBDEVSTAT
-memory_la_LDFLAGS += -ldevstat
-endif
-memory_la_LDFLAGS += -lstatgrab
+memory_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+memory_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 endif
 endif
 
@@ -481,6 +514,14 @@ collectd_LDADD += "-dlopen" ping.la
 collectd_DEPENDENCIES += ping.la
 endif
 
+if BUILD_PLUGIN_POWERDNS
+pkglib_LTLIBRARIES += powerdns.la
+powerdns_la_SOURCES = powerdns.c
+powerdns_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" powerdns.la
+collectd_DEPENDENCIES += powerdns.la
+endif
+
 if BUILD_PLUGIN_PROCESSES
 pkglib_LTLIBRARIES += processes.la
 processes_la_SOURCES = processes.c
@@ -537,23 +578,23 @@ endif
 if BUILD_PLUGIN_SWAP
 pkglib_LTLIBRARIES += swap.la
 swap_la_SOURCES = swap.c
+swap_la_CFLAGS =
 swap_la_LDFLAGS = -module -avoid-version
+swap_la_LIBADD =
 collectd_LDADD += "-dlopen" swap.la
 collectd_DEPENDENCIES += swap.la
 if BUILD_WITH_LIBKSTAT
-swap_la_LDFLAGS += -lkstat
+swap_la_LIBADD += -lkstat
 endif
 if BUILD_WITH_LIBDEVINFO
-swap_la_LDFLAGS += -ldevinfo
+swap_la_LIBADD += -ldevinfo
 endif
 if BUILD_WITH_LIBKVM
-swap_la_LDFLAGS += -lkvm
+swap_la_LIBADD += -lkvm
 endif
 if BUILD_WITH_LIBSTATGRAB
-if BUILD_WITH_LIBDEVSTAT
-swap_la_LDFLAGS += -ldevstat
-endif
-swap_la_LDFLAGS += -lstatgrab
+swap_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+swap_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 endif
 endif
 
@@ -563,6 +604,14 @@ syslog_la_SOURCES = syslog.c
 syslog_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" syslog.la
 collectd_DEPENDENCIES += syslog.la
+endif
+
+if BUILD_PLUGIN_TAIL
+pkglib_LTLIBRARIES += tail.la
+tail_la_SOURCES = tail.c
+tail_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" tail.la
+collectd_DEPENDENCIES += tail.la
 endif
 
 if BUILD_PLUGIN_TAPE
@@ -581,9 +630,22 @@ collectd_LDADD += "-dlopen" tcpconns.la
 collectd_DEPENDENCIES += tcpconns.la
 endif
 
+if BUILD_PLUGIN_TEAMSPEAK2
+pkglib_LTLIBRARIES += teamspeak2.la
+teamspeak2_la_SOURCES = teamspeak2.c
+teamspeak2_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" teamspeak2.la
+collectd_DEPENDENCIES += teamspeak2.la
+endif
+
 if BUILD_PLUGIN_UNIXSOCK
 pkglib_LTLIBRARIES += unixsock.la
-unixsock_la_SOURCES = unixsock.c utils_cmd_putval.h utils_cmd_putval.c utils_cmd_putnotif.h utils_cmd_putnotif.c
+unixsock_la_SOURCES = unixsock.c \
+		      utils_cmd_flush.h utils_cmd_flush.c \
+		      utils_cmd_getval.h utils_cmd_getval.c \
+		      utils_cmd_listval.h utils_cmd_listval.c \
+		      utils_cmd_putval.h utils_cmd_putval.c \
+		      utils_cmd_putnotif.h utils_cmd_putnotif.c
 unixsock_la_LDFLAGS = -module -avoid-version -lpthread
 collectd_LDADD += "-dlopen" unixsock.la
 collectd_DEPENDENCIES += unixsock.la
@@ -592,7 +654,13 @@ endif
 if BUILD_PLUGIN_USERS
 pkglib_LTLIBRARIES += users.la
 users_la_SOURCES = users.c
+users_la_CFLAGS =
 users_la_LDFLAGS = -module -avoid-version
+users_la_LIBADD =
+if BUILD_WITH_LIBSTATGRAB
+users_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+users_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+endif
 collectd_LDADD += "-dlopen" users.la
 collectd_DEPENDENCIES += users.la
 endif
@@ -605,6 +673,14 @@ uuid_la_LIBADD  = $(BUILD_WITH_LIBHAL_LIBS)
 uuid_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" uuid.la
 collectd_DEPENDENCIES += uuid.la
+endif
+
+if BUILD_PLUGIN_VMEM
+pkglib_LTLIBRARIES += vmem.la
+vmem_la_SOURCES = vmem.c
+vmem_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" vmem.la
+collectd_DEPENDENCIES += vmem.la
 endif
 
 if BUILD_PLUGIN_VSERVER

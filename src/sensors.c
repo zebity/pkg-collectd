@@ -1,6 +1,6 @@
 /**
  * collectd - src/sensors.c
- * Copyright (C) 2005-2007  Florian octo Forster
+ * Copyright (C) 2005-2008  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -189,14 +189,14 @@ static int sensors_snprintf_chip_name (char *buf, size_t buf_size,
 	}
 	else if (chip->bus == SENSORS_CHIP_NAME_BUS_DUMMY)
 	{
-		snprintf (buf, buf_size, "%s-%s-%04x",
+		status = snprintf (buf, buf_size, "%s-%s-%04x",
 				chip->prefix,
 				chip->busname,
 				chip->addr);
 	}
 	else
 	{
-		snprintf (buf, buf_size, "%s-i2c-%d-%02x",
+		status = snprintf (buf, buf_size, "%s-i2c-%d-%02x",
 				chip->prefix,
 				chip->bus,
 				chip->addr);

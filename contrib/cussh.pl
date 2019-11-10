@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # collectd - contrib/cussh.pl
-# Copyright (C) 2007  Sebastian Harl
+# Copyright (C) 2007-2008  Sebastian Harl
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -56,12 +56,20 @@ use Collectd::Unixsock();
 	my $path = $ARGV[0] || "/var/run/collectd-unixsock";
 	my $sock = Collectd::Unixsock->new($path);
 
+	my $cmds = {
+		HELP    => \&cmd_help,
+		PUTVAL  => \&putval,
+		GETVAL  => \&getval,
+		FLUSH   => \&flush,
+		LISTVAL => \&listval,
+	};
+
 	if (! $sock) {
 		print STDERR "Unable to connect to $path!\n";
 		exit 1;
 	}
 
-	print "cussh version 0.1, Copyright (C) 2007 Sebastian Harl\n"
+	print "cussh version 0.2, Copyright (C) 2007-2008 Sebastian Harl\n"
 		. "cussh comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 		. "and you are welcome to redistribute it under certain conditions.\n"
 		. "See the GNU General Public License 2 for more details.\n\n";
@@ -70,20 +78,21 @@ use Collectd::Unixsock();
 		print "cussh> ";
 		my $line = <STDIN>;
 
-		last if ((! $line) || ($line =~ m/^quit$/i));
+		last if (! $line);
 
-		my ($cmd) = $line =~ m/^(\w+)\s+/;
+		chomp $line;
+
+		last if ($line =~ m/^quit$/i);
+
+		my ($cmd) = $line =~ m/^(\w+)\s*/;
 		$line = $';
 
 		next if (! $cmd);
 		$cmd = uc $cmd;
 
 		my $f = undef;
-		if ($cmd eq "PUTVAL") {
-			$f = \&putval;
-		}
-		elsif ($cmd eq "GETVAL") {
-			$f = \&getval;
+		if (defined $cmds->{$cmd}) {
+			$f = $cmds->{$cmd};
 		}
 		else {
 			print STDERR "ERROR: Unknown command $cmd!\n";
@@ -105,7 +114,7 @@ sub getid {
 
 	print $$string . $/;
 	my ($h, $p, $pi, $t, $ti) =
-		$$string =~ m/^(\w+)\/(\w+)(?:-(\w+))?\/(\w+)(?:-(\w+))?\s+/;
+		$$string =~ m#^([^/]+)/([^/-]+)(?:-([^/]+))?/([^/-]+)(?:-([^/]+))?\s*#;
 	$$string = $';
 
 	return if ((! $h) || (! $p) || (! $t));
@@ -114,21 +123,54 @@ sub getid {
 
 	($id{'host'}, $id{'plugin'}, $id{'type'}) = ($h, $p, $t);
 
-	$id{'plugin_instance'} = $pi if ($pi);
-	$id{'type_instance'} = $ti if ($ti);
+	$id{'plugin_instance'} = $pi if defined ($pi);
+	$id{'type_instance'} = $ti if defined ($ti);
 	return \%id;
+}
+
+sub putid {
+	my $ident = shift || return;
+
+	my $string;
+
+	$string = $ident->{'host'} . "/" . $ident->{'plugin'};
+
+	if (defined $ident->{'plugin_instance'}) {
+		$string .= "-" . $ident->{'plugin_instance'};
+	}
+
+	$string .= "/" . $ident->{'type'};
+
+	if (defined $ident->{'type_instance'}) {
+		$string .= "-" . $ident->{'type_instance'};
+	}
+	return $string;
 }
 
 =head1 COMMANDS
 
 =over 4
 
+=item B<HELP>
+
+=cut
+
+sub cmd_help {
+	print <<HELP;
+Available commands:
+  HELP
+  PUTVAL
+  GETVAL
+  FLUSH
+  LISTVAL
+
+See the embedded Perldoc documentation for details. To do that, run:
+  perldoc $0
+HELP
+	return 1;
+} # cmd_help
+
 =item B<GETVAL> I<Identifier>
-
-=item B<PUTVAL> I<Identifier> I<Valuelist>
-
-These commands follow the exact same syntax as described in
-L<collectd-unixsock(5)>.
 
 =cut
 
@@ -138,11 +180,18 @@ sub putval {
 
 	my $id = getid(\$line);
 
-	return if (! $id);
+	if (! $id) {
+		print STDERR $sock->{'error'} . $/;
+		return;
+	}
 
 	my ($time, @values) = split m/:/, $line;
-	return $sock->putval(%$id, $time, \@values);
+	return $sock->putval(%$id, time => $time, values => \@values);
 }
+
+=item B<PUTVAL> I<Identifier> I<Valuelist>
+
+=cut
 
 sub getval {
 	my $sock = shift || return;
@@ -150,17 +199,92 @@ sub getval {
 
 	my $id = getid(\$line);
 
-	return if (! $id);
+	if (! $id) {
+		print STDERR $sock->{'error'} . $/;
+		return;
+	}
 
 	my $vals = $sock->getval(%$id);
 
-	return if (! $vals);
+	if (! $vals) {
+		print STDERR $sock->{'error'} . $/;
+		return;
+	}
 
 	foreach my $key (keys %$vals) {
 		print "\t$key: $vals->{$key}\n";
 	}
 	return 1;
 }
+
+=item B<FLUSH> [B<timeout>=I<$timeout>] [B<plugin>=I<$plugin>[ ...]]
+
+=cut
+
+sub flush {
+	my $sock = shift || return;
+	my $line = shift;
+
+	my $res;
+
+	if (! $line) {
+		$res = $sock->flush();
+	}
+	else {
+		my %args = ();
+
+		foreach my $i (split m/ /, $line) {
+			my ($option, $value) = $i =~ m/^([^=]+)=(.+)$/;
+			next if (! ($option && $value));
+
+			if ($option eq "plugin") {
+				push @{$args{"plugins"}}, $value;
+			}
+			elsif ($option eq "timeout") {
+				$args{"timeout"} = $value;
+			}
+			else {
+				print STDERR "Invalid option \"$option\".\n";
+				return;
+			}
+		}
+
+		$res = $sock->flush(%args);
+	}
+
+	if (! $res) {
+		print STDERR $sock->{'error'} . $/;
+		return;
+	}
+	return 1;
+}
+
+=item B<LISTVAL>
+
+=cut
+
+sub listval {
+	my $sock = shift || return;
+
+	my @res;
+
+	@res = $sock->listval();
+
+	if (! @res) {
+		print STDERR $sock->{'error'} . $/;
+		return;
+	}
+
+	foreach my $ident (@res) {
+		print $ident->{'time'} . " " . putid($ident) . $/;
+	}
+	return 1;
+}
+
+=back
+
+These commands follow the exact same syntax as described in
+L<collectd-unixsock(5)>.
 
 =head1 SEE ALSO
 

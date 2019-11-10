@@ -122,6 +122,28 @@
 # endif /* !defined(isnan) */
 #endif /* NAN_ZERO_ZERO */
 
+#if HAVE_ENDIAN_H
+# include <endian.h>
+#endif
+
+#ifndef BYTE_ORDER
+# if defined(_BYTE_ORDER)
+#  define BYTE_ORDER _BYTE_ORDER
+# elif defined(__BYTE_ORDER)
+#  define BYTE_ORDER __BYTE_ORDER
+# endif
+#endif
+#ifndef BIG_ENDIAN
+# if defined(_BIG_ENDIAN)
+#  define BIG_ENDIAN _BIG_ENDIAN
+# elif defined(__BIG_ENDIAN)
+#  define BIG_ENDIAN __BIG_ENDIAN
+# endif
+#endif
+#if !defined(BYTE_ORDER) || !defined(BIG_ENDIAN)
+# error "Cannot determine byte order"
+#endif
+
 #if HAVE_DIRENT_H
 # include <dirent.h>
 # define NAMLEN(dirent) strlen((dirent)->d_name)
@@ -155,9 +177,6 @@
 
 #if HAVE_PTH_H
 # include <pth.h>
-#endif
-#if HAVE_STATGRAB_H
-# include <statgrab.h>
 #endif
 #if HAVE_SENSORS_SENSORS_H
 # include <sensors/sensors.h>

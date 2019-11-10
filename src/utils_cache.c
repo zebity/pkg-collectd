@@ -1,6 +1,6 @@
 /**
  * collectd - src/utils_cache.c
- * Copyright (C) 2007  Florian octo Forster
+ * Copyright (C) 2007,2008  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -460,40 +460,154 @@ int uc_update (const data_set_t *ds, const value_list_t *vl)
   return (0);
 } /* int uc_update */
 
-gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
+int uc_get_rate_by_name (const char *name, gauge_t **ret_values, size_t *ret_values_num)
 {
-  char name[6 * DATA_MAX_NAME_LEN];
   gauge_t *ret = NULL;
+  size_t ret_num = 0;
   cache_entry_t *ce = NULL;
-
-  if (FORMAT_VL (name, sizeof (name), vl, ds) != 0)
-  {
-    ERROR ("uc_get_rate: FORMAT_VL failed.");
-    return (NULL);
-  }
+  int status = 0;
 
   pthread_mutex_lock (&cache_lock);
 
   if (c_avl_get (cache_tree, name, (void *) &ce) == 0)
   {
     assert (ce != NULL);
-    assert (ce->values_num == ds->ds_num);
 
-    ret = (gauge_t *) malloc (ce->values_num * sizeof (gauge_t));
+    ret_num = ce->values_num;
+    ret = (gauge_t *) malloc (ret_num * sizeof (gauge_t));
     if (ret == NULL)
     {
-      ERROR ("uc_get_rate: malloc failed.");
+      ERROR ("utils_cache: uc_get_rate_by_name: malloc failed.");
+      status = -1;
     }
     else
     {
-      memcpy (ret, ce->values_gauge, ce->values_num * sizeof (gauge_t));
+      memcpy (ret, ce->values_gauge, ret_num * sizeof (gauge_t));
     }
+  }
+  else
+  {
+    DEBUG ("utils_cache: uc_get_rate_by_name: No such value: %s", name);
+    status = -1;
   }
 
   pthread_mutex_unlock (&cache_lock);
 
+  if (status == 0)
+  {
+    *ret_values = ret;
+    *ret_values_num = ret_num;
+  }
+
+  return (status);
+} /* gauge_t *uc_get_rate_by_name */
+
+gauge_t *uc_get_rate (const data_set_t *ds, const value_list_t *vl)
+{
+  char name[6 * DATA_MAX_NAME_LEN];
+  gauge_t *ret = NULL;
+  size_t ret_num = 0;
+  int status;
+
+  if (FORMAT_VL (name, sizeof (name), vl, ds) != 0)
+  {
+    ERROR ("uc_insert: FORMAT_VL failed.");
+    return (NULL);
+  }
+
+  status = uc_get_rate_by_name (name, &ret, &ret_num);
+  if (status != 0)
+    return (NULL);
+
+  /* This is important - the caller has no other way of knowing how many
+   * values are returned. */
+  if (ret_num != ds->ds_num)
+  {
+    ERROR ("utils_cache: uc_get_rate: ds[%s] has %i values, "
+	"but uc_get_rate_by_name returned %i.",
+	ds->type, ds->ds_num, ret_num);
+    sfree (ret);
+    return (NULL);
+  }
+
   return (ret);
 } /* gauge_t *uc_get_rate */
+
+int uc_get_names (char ***ret_names, time_t **ret_times, size_t *ret_number)
+{
+  c_avl_iterator_t *iter;
+  char *key;
+  cache_entry_t *value;
+
+  char **names = NULL;
+  time_t *times = NULL;
+  size_t number = 0;
+
+  int status = 0;
+
+  if ((ret_names == NULL) || (ret_number == NULL))
+    return (-1);
+
+  pthread_mutex_lock (&cache_lock);
+
+  iter = c_avl_get_iterator (cache_tree);
+  while (c_avl_iterator_next (iter, (void *) &key, (void *) &value) == 0)
+  {
+    char **temp;
+
+    if (ret_times != NULL)
+    {
+      time_t *tmp_times;
+
+      tmp_times = (time_t *) realloc (times, sizeof (time_t) * (number + 1));
+      if (tmp_times == NULL)
+      {
+	status = -1;
+	break;
+      }
+      times = tmp_times;
+      times[number] = value->last_time;
+    }
+
+    temp = (char **) realloc (names, sizeof (char *) * (number + 1));
+    if (temp == NULL)
+    {
+      status = -1;
+      break;
+    }
+    names = temp;
+    names[number] = strdup (key);
+    if (names[number] == NULL)
+    {
+      status = -1;
+      break;
+    }
+    number++;
+  } /* while (c_avl_iterator_next) */
+
+  c_avl_iterator_destroy (iter);
+  pthread_mutex_unlock (&cache_lock);
+
+  if (status != 0)
+  {
+    size_t i;
+    
+    for (i = 0; i < number; i++)
+    {
+      sfree (names[i]);
+    }
+    sfree (names);
+
+    return (-1);
+  }
+
+  *ret_names = names;
+  if (ret_times != NULL)
+    *ret_times = times;
+  *ret_number = number;
+
+  return (0);
+} /* int uc_get_names */
 
 int uc_get_state (const data_set_t *ds, const value_list_t *vl)
 {

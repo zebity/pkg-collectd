@@ -1,6 +1,6 @@
 /**
  * collectd - src/plugin.c
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2008  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +17,7 @@
  *
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
+ *   Sebastian Harl <sh at tokkee.org>
  **/
 
 #include "collectd.h"
@@ -53,6 +54,7 @@ typedef struct read_func_s read_func_t;
 static llist_t *list_init;
 static llist_t *list_read;
 static llist_t *list_write;
+static llist_t *list_flush;
 static llist_t *list_shutdown;
 static llist_t *list_log;
 static llist_t *list_notification;
@@ -312,7 +314,7 @@ int plugin_load (const char *type)
 {
 	DIR  *dh;
 	const char *dir;
-	char  filename[BUFSIZE];
+	char  filename[BUFSIZE] = "";
 	char  typename[BUFSIZE];
 	int   typename_len;
 	int   ret;
@@ -379,6 +381,9 @@ int plugin_load (const char *type)
 
 	closedir (dh);
 
+	if (filename[0] == '\0')
+		fprintf (stderr, "Could not find plugin %s.\n", type);
+
 	return (ret);
 }
 
@@ -433,6 +438,11 @@ int plugin_register_write (const char *name,
 {
 	return (register_callback (&list_write, name, (void *) callback));
 } /* int plugin_register_write */
+
+int plugin_register_flush (const char *name, int (*callback) (const int))
+{
+	return (register_callback (&list_flush, name, (void *) callback));
+} /* int plugin_register_flush */
 
 int plugin_register_shutdown (char *name,
 		int (*callback) (void))
@@ -526,6 +536,11 @@ int plugin_unregister_read (const char *name)
 int plugin_unregister_write (const char *name)
 {
 	return (plugin_unregister (list_write, name));
+}
+
+int plugin_unregister_flush (const char *name)
+{
+	return (plugin_unregister (list_flush, name));
 }
 
 int plugin_unregister_shutdown (const char *name)
@@ -640,6 +655,43 @@ void plugin_read_all (void)
 	pthread_mutex_unlock (&read_lock);
 } /* void plugin_read_all */
 
+int plugin_flush_one (int timeout, const char *name)
+{
+	int (*callback) (int);
+	llentry_t *le;
+	int status;
+
+	if (list_flush == NULL)
+		return (-1);
+
+	le = llist_search (list_flush, name);
+	if (le == NULL)
+		return (-1);
+	callback = (int (*) (int)) le->value;
+
+	status = (*callback) (timeout);
+
+	return (status);
+} /* int plugin_flush_ont */
+
+void plugin_flush_all (int timeout)
+{
+	int (*callback) (int);
+	llentry_t *le;
+
+	if (list_flush == NULL)
+		return;
+
+	le = llist_head (list_flush);
+	while (le != NULL)
+	{
+		callback = (int (*) (int)) le->value;
+		le = le->next;
+
+		(*callback) (timeout);
+	}
+} /* void plugin_flush_all */
+
 void plugin_shutdown_all (void)
 {
 	int (*callback) (void);
@@ -671,16 +723,29 @@ int plugin_dispatch_values (const char *name, value_list_t *vl)
 	data_set_t *ds;
 	llentry_t *le;
 
-	if ((list_write == NULL) || (data_sets == NULL))
-		return (-1);
-
-	if (c_avl_get (data_sets, name, (void *) &ds) != 0)
+	if (list_write == NULL)
 	{
-		DEBUG ("No such dataset registered: %s", name);
+		ERROR ("plugin_dispatch_values: No write callback has been "
+				"registered. Please load at least one plugin "
+				"that provides a write function.");
 		return (-1);
 	}
 
-	DEBUG ("plugin: plugin_dispatch_values: time = %u; interval = %i; "
+	if (data_sets == NULL)
+	{
+		ERROR ("plugin_dispatch_values: No data sets registered. "
+				"Could the types database be read? Check "
+				"your `TypesDB' setting!");
+		return (-1);
+	}
+
+	if (c_avl_get (data_sets, name, (void *) &ds) != 0)
+	{
+		INFO ("plugin_dispatch_values: Dataset not found: %s", name);
+		return (-1);
+	}
+
+	DEBUG ("plugin_dispatch_values: time = %u; interval = %i; "
 			"host = %s; "
 			"plugin = %s; plugin_instance = %s; "
 			"type = %s; type_instance = %s;",
@@ -694,7 +759,8 @@ int plugin_dispatch_values (const char *name, value_list_t *vl)
 #else
 	if (ds->ds_num != vl->values_len)
 	{
-		ERROR ("plugin: ds->type = %s: (ds->ds_num = %i) != "
+		ERROR ("plugin_dispatch_values: ds->type = %s: "
+				"(ds->ds_num = %i) != "
 				"(vl->values_len = %i)",
 				ds->type, ds->ds_num, vl->values_len);
 		return (-1);
