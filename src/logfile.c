@@ -1,6 +1,7 @@
 /**
  * collectd - src/logfile.c
  * Copyright (C) 2007  Sebastian Harl
+ * Copyright (C) 2007  Florian Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,7 +71,7 @@ static int logfile_config (const char *key, const char *value)
 		sfree (log_file);
 		log_file = strdup (value);
 	}
-	else if (0 == strcasecmp (key, "File")) {
+	else if (0 == strcasecmp (key, "Timestamp")) {
 		if ((strcasecmp (value, "false") == 0)
 				|| (strcasecmp (value, "no") == 0)
 				|| (strcasecmp (value, "off") == 0))

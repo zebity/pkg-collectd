@@ -1,6 +1,6 @@
 /**
  * collectd - src/configfile.c
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2008  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -126,7 +126,9 @@ static int cf_dispatch (const char *type, const char *orig_key,
 
 	if ((cf_cb = cf_search (type)) == NULL)
 	{
-		WARNING ("Plugin `%s' did not register a callback.", type);
+		WARNING ("Found a configuration for the `%s' plugin, but "
+				"the plugin isn't loaded or didn't register "
+				"a configuration callback.", type);
 		return (-1);
 	}
 

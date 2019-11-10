@@ -32,6 +32,12 @@ ignored. Values are either string, enclosed in double-quotes,
 B<false>. String containing of only alphanumeric characters and underscores do
 not need to be quoted.
 
+The configuration is read and processed in order, i.E<nbsp>e. from top to
+bottom. So the plugins are loaded in the order listed in this config file. It
+is a good idea to load any logging plugins first in order to catch messages
+from plugins during configuration. Also, the C<LoadPlugin> option B<must> occur
+B<before> the C<E<lt>Plugin ...E<gt>> block.
+
 =head1 GLOBAL OPTIONS
 
 =over 4
@@ -229,7 +235,7 @@ Sets the socket-file which is to be created.
 
 =item B<SocketGroup> I<Group>
 
-If running as root change the group of the UNIX-socket after it has been 
+If running as root change the group of the UNIX-socket after it has been
 created. Defaults to B<collectd>.
 
 =item B<SocketPerms> I<Permissions>
@@ -363,6 +369,9 @@ and all other interrupts are collected.
 
 Sets the log-level. If, for example, set to B<notice>, then all events with
 severity B<notice>, B<warning>, or B<err> will be written to the logfile.
+
+Please note that B<debug> is only available if collectd has been compiled with
+debugging support.
 
 =item B<File> I<File>
 
@@ -808,6 +817,9 @@ Sets the log-level. If, for example, set to B<notice>, then all events with
 severity B<notice>, B<warning>, or B<err> will be submitted to the
 syslog-daemon.
 
+Please note that B<debug> is only available if collectd has been compiled with
+debugging support.
+
 =back
 
 =head2 Plugin C<tcpconns>
@@ -858,7 +870,7 @@ Sets the socket-file which is to be created.
 
 =item B<SocketGroup> I<Group>
 
-If running as root change the group of the UNIX-socket after it has been 
+If running as root change the group of the UNIX-socket after it has been
 created. Defaults to B<collectd>.
 
 =item B<SocketPerms> I<Permissions>

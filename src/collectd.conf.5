@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2007-11-08" "4.2.1" "collectd"
+.TH COLLECTD.CONF 5 "2008-01-21" "4.2.4" "collectd"
 .SH "NAME"
 collectd.conf \- Configuration for the system statistics collection daemon \fBcollectd\fR
 .SH "SYNOPSIS"
@@ -166,6 +166,12 @@ ignored. Values are either string, enclosed in double\-quotes,
 (floating\-point\-)numbers or a boolean expression, i.\ e. either \fBtrue\fR or
 \&\fBfalse\fR. String containing of only alphanumeric characters and underscores do
 not need to be quoted.
+.PP
+The configuration is read and processed in order, i.\ e. from top to
+bottom. So the plugins are loaded in the order listed in this config file. It
+is a good idea to load any logging plugins first in order to catch messages
+from plugins during configuration. Also, the \f(CW\*(C`LoadPlugin\*(C'\fR option \fBmust\fR occur
+\&\fBbefore\fR the \f(CW\*(C`<Plugin ...>\*(C'\fR block.
 .SH "GLOBAL OPTIONS"
 .IX Header "GLOBAL OPTIONS"
 .IP "\fBBaseDir\fR \fIDirectory\fR" 4
@@ -321,7 +327,7 @@ Ignore packets that originate from this address.
 Sets the socket-file which is to be created.
 .IP "\fBSocketGroup\fR \fIGroup\fR" 4
 .IX Item "SocketGroup Group"
-If running as root change the group of the UNIX-socket after it has been 
+If running as root change the group of the UNIX-socket after it has been
 created. Defaults to \fBcollectd\fR.
 .IP "\fBSocketPerms\fR \fIPermissions\fR" 4
 .IX Item "SocketPerms Permissions"
@@ -424,6 +430,9 @@ and all other interrupts are collected.
 .IX Item "LogLevel debug|info|notice|warning|err"
 Sets the log\-level. If, for example, set to \fBnotice\fR, then all events with
 severity \fBnotice\fR, \fBwarning\fR, or \fBerr\fR will be written to the logfile.
+.Sp
+Please note that \fBdebug\fR is only available if collectd has been compiled with
+debugging support.
 .IP "\fBFile\fR \fIFile\fR" 4
 .IX Item "File File"
 Sets the file to write log messages to. The special strings \fBstdout\fR and
@@ -794,6 +803,9 @@ other plugins, its documentation has been moved to an own manpage,
 Sets the log\-level. If, for example, set to \fBnotice\fR, then all events with
 severity \fBnotice\fR, \fBwarning\fR, or \fBerr\fR will be submitted to the
 syslog\-daemon.
+.Sp
+Please note that \fBdebug\fR is only available if collectd has been compiled with
+debugging support.
 .ie n .Sh "Plugin ""tcpconns"""
 .el .Sh "Plugin \f(CWtcpconns\fP"
 .IX Subsection "Plugin tcpconns"
@@ -833,7 +845,7 @@ port in numeric form.
 Sets the socket-file which is to be created.
 .IP "\fBSocketGroup\fR \fIGroup\fR" 4
 .IX Item "SocketGroup Group"
-If running as root change the group of the UNIX-socket after it has been 
+If running as root change the group of the UNIX-socket after it has been
 created. Defaults to \fBcollectd\fR.
 .IP "\fBSocketPerms\fR \fIPermissions\fR" 4
 .IX Item "SocketPerms Permissions"
