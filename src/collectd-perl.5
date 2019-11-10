@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PERL 5"
-.TH COLLECTD-PERL 5 "2009-06-02" "4.6.3" "collectd"
+.TH COLLECTD-PERL 5 "2009-07-18" "4.7.2" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -402,6 +402,10 @@ data-set. For the exact layout see \fBData-Set\fR above. Please note that
 there is a large number of predefined data-sets available in the \fBtypes.db\fR
 file which are automatically registered with collectd \- see \fItypes.db\fR\|(5) for
 a description of the format of this file.
+.Sp
+\&\fBNote\fR: Using \fBplugin_register\fR to register a data-set is deprecated. Add
+the new type to a custom \fItypes.db\fR\|(5) file instead. This functionality might
+be removed in a future version of collectd.
 .Sp
 If the \fItype\fR argument is any of the other types (\fB\s-1TYPE_INIT\s0\fR, \fB\s-1TYPE_READ\s0\fR,
 \&...) then \fIdata\fR is expected to be a function name. If the name is not

@@ -19,6 +19,8 @@
  *   Florian octo Forster <octo at verplant.org>
  **/
 
+#define _BSD_SOURCE
+
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
@@ -211,7 +213,7 @@ static void *dns_child_loop (void __attribute__((unused)) *dummy)
 	}
 
 	/* Passing `pcap_device == NULL' is okay and the same as passign "any" */
-	DEBUG ("Creating PCAP object..");
+	DEBUG ("dns plugin: Creating PCAP object..");
 	pcap_obj = pcap_open_live ((pcap_device != NULL) ? pcap_device : "any",
 			PCAP_SNAPLEN,
 			0 /* Not promiscuous */,

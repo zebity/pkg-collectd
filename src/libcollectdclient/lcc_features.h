@@ -33,12 +33,12 @@
 #define LCC_API_VERSION 0
 
 #define LCC_VERSION_MAJOR 4
-#define LCC_VERSION_MINOR 6
-#define LCC_VERSION_PATCH 3
+#define LCC_VERSION_MINOR 7
+#define LCC_VERSION_PATCH 2
 
 #define LCC_VERSION_EXTRA ""
 
-#define LCC_VERSION_STRING "4.6.3"
+#define LCC_VERSION_STRING "4.7.2"
 
 #define LCC_VERSION_ENCODE(major, minor, patch) \
 	((major) * 10000 + (minor) * 100 + (patch))

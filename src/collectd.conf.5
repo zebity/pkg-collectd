@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2009-06-02" "4.6.3" "collectd"
+.TH COLLECTD.CONF 5 "2009-07-18" "4.7.2" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -738,7 +738,7 @@ separated by dashes \fI(\*(L"\-\*(R")\fR.
 .IX Item "InstancesFrom column0 [column1 ...]"
 Specifies the columns whose values will be used to create the \*(L"type-instance\*(R"
 for each row. If you specify more than one column, the value of all columns
-will be join together with the dashes \fI(\*(L"\-\*(R")\fR as separation character.
+will be joined together with dashes \fI(\*(L"\-\*(R")\fR as separation characters.
 .Sp
 The plugin itself does not check whether or not all built instances are
 different. It's your responsibility to assure that each is unique. This is
@@ -991,6 +991,67 @@ note that there are 1000 bytes in a kilobyte, not 1024.
 .IP "\fBRecursive\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "Recursive true|false"
 Controls whether or not to recurse into subdirectories. Enabled by default.
+.ie n .SS "Plugin ""gmond"""
+.el .SS "Plugin \f(CWgmond\fP"
+.IX Subsection "Plugin gmond"
+The \fIgmond\fR plugin received the multicast traffic sent by \fBgmond\fR, the
+statistics collection daemon of Ganglia. Mappings for the standard \*(L"metrics\*(R"
+are built-in, custom mappings may be added via \fBMetric\fR blocks, see below.
+.PP
+Synopsis:
+.PP
+.Vb 10
+\& <Plugin "gmond">
+\&   MCReceiveFrom "239.2.11.71" "8649"
+\&   <Metric "swap_total">
+\&     Type "swap"
+\&     TypeInstance "total"
+\&     DataSource "value"
+\&   </Metric>
+\&   <Metric "swap_free">
+\&     Type "swap"
+\&     TypeInstance "free"
+\&     DataSource "value"
+\&   </Metric>
+\& </Plugin>
+.Ve
+.PP
+The following metrics are built-in:
+.IP "\(bu" 4
+load_one, load_five, load_fifteen
+.IP "\(bu" 4
+cpu_user, cpu_system, cpu_idle, cpu_nice, cpu_wio
+.IP "\(bu" 4
+mem_free, mem_shared, mem_buffers, mem_cached, mem_total
+.IP "\(bu" 4
+bytes_in, bytes_out
+.IP "\(bu" 4
+pkts_in, pkts_out
+.PP
+Available configuration options:
+.IP "\fBMCReceiveFrom\fR \fIMCGroup\fR [\fIPort\fR]" 4
+.IX Item "MCReceiveFrom MCGroup [Port]"
+Sets sets the multicast group and \s-1UDP\s0 port to which to subscribe.
+.Sp
+Default: \fB239.2.11.71\fR\ /\ \fB8649\fR
+.IP "<\fBMetric\fR \fIName\fR>" 4
+.IX Item "<Metric Name>"
+These blocks add a new metric conversion to the internal table. \fIName\fR, the
+string argument to the \fBMetric\fR block, is the metric name as used by Ganglia.
+.RS 4
+.IP "\fBType\fR \fIType\fR" 4
+.IX Item "Type Type"
+Type to map this metric to. Required.
+.IP "\fBTypeInstance\fR \fIInstance\fR" 4
+.IX Item "TypeInstance Instance"
+Type-instance to use. Optional.
+.IP "\fBDataSource\fR \fIName\fR" 4
+.IX Item "DataSource Name"
+Data source to map this metric to. If the configured type has exactly one data
+source, this is optional. Otherwise the option is required.
+.RE
+.RS 4
+.RE
 .ie n .SS "Plugin ""hddtemp"""
 .el .SS "Plugin \f(CWhddtemp\fP"
 .IX Subsection "Plugin hddtemp"
@@ -1086,6 +1147,57 @@ Sometimes, however, it's easier/preferred to collect all interrupts \fIexcept\fR
 few ones. This option enables you to do that: By setting \fBIgnoreSelected\fR to
 \&\fItrue\fR the effect of \fBIrq\fR is inverted: All selected interrupts are ignored
 and all other interrupts are collected.
+.ie n .SS "Plugin ""java"""
+.el .SS "Plugin \f(CWjava\fP"
+.IX Subsection "Plugin java"
+The \fIJava\fR plugin makes it possible to write extensions for collectd in Java.
+This section only discusses the syntax and semantic of the configuration
+options. For more in-depth information on the \fIJava\fR plugin, please read
+\&\fIcollectd\-java\fR\|(5).
+.PP
+Synopsis:
+.PP
+.Vb 8
+\& <Plugin "java">
+\&   JVMArg "\-verbose:jni"
+\&   JVMArg "\-Djava.class.path=/opt/collectd/lib/collectd/bindings/java"
+\&   LoadPlugin "org.collectd.java.Foobar"
+\&   <Plugin "org.collectd.java.Foobar">
+\&     # To be parsed by the plugin
+\&   </Plugin>
+\& </Plugin>
+.Ve
+.PP
+Available configuration options:
+.IP "\fBJVMArg\fR \fIArgument\fR" 4
+.IX Item "JVMArg Argument"
+Argument that is to be passed to the \fIJava Virtual Machine\fR (\s-1JVM\s0). This works
+exactly the way the arguments to the \fIjava\fR binary on the command line work.
+Execute \f(CW\*(C`java\ \-\-help\*(C'\fR for details.
+.Sp
+Please note that \fBall\fR these options must appear \fBbefore\fR (i.\ e. above)
+any other options! When another option is found, the \s-1JVM\s0 will be started and
+later options will have to be ignored!
+.IP "\fBLoadPlugin\fR \fIJavaClass\fR" 4
+.IX Item "LoadPlugin JavaClass"
+Instantiates a new \fIJavaClass\fR object. The constructor of this object very
+likely then registers one or more callback methods with the server.
+.Sp
+See \fIcollectd\-java\fR\|(5) for details.
+.Sp
+When the first such option is found, the virtual machine (\s-1JVM\s0) is created. This
+means that all \fBJVMArg\fR options must appear before (i.\ e. above) all
+\&\fBLoadPlugin\fR options!
+.IP "\fBPlugin\fR \fIName\fR" 4
+.IX Item "Plugin Name"
+The entire block is passed to the Java plugin as an
+\&\fIorg.collectd.api.OConfigItem\fR object.
+.Sp
+For this to work, the plugin has to register a configuration callback first,
+see \*(L"config callback\*(R" in \fIcollectd\-java\fR\|(5). This means, that the \fBPlugin\fR block
+must appear after the appropriate \fBLoadPlugin\fR block. Also note, that \fIName\fR
+depends on the (Java) plugin registering the callback and is completely
+independent from the \fIJavaClass\fR argument passed to \fBLoadPlugin\fR.
 .ie n .SS "Plugin ""libvirt"""
 .el .SS "Plugin \f(CWlibvirt\fP"
 .IX Subsection "Plugin libvirt"
@@ -1203,6 +1315,51 @@ Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB411\fR.
+.ie n .SS "Plugin ""memcachec"""
+.el .SS "Plugin \f(CWmemcachec\fP"
+.IX Subsection "Plugin memcachec"
+The \f(CW\*(C`memcachec plugin\*(C'\fR connects to a memcached server, queries one or more
+given \fIpages\fR and parses the returned data according to user specification.
+The \fImatches\fR used are the same as the matches used in the \f(CW\*(C`curl\*(C'\fR and \f(CW\*(C`tail\*(C'\fR
+plugins.
+.PP
+In order to talk to the memcached server, this plugin uses the \fIlibmemcached\fR
+library. Please note that there is another library with a very similar name,
+libmemcache (notice the missing `d'), which is not applicable.
+.PP
+Synopsis of the configuration:
+.PP
+.Vb 12
+\& <Plugin "memcachec">
+\&   <Page "plugin_instance">
+\&     Server "localhost"
+\&     Key "page_key"
+\&     <Match>
+\&       Regex "(\e\ed+) bytes sent"
+\&       DSType CounterAdd
+\&       Type "ipt_octets"
+\&       Instance "type_instance"
+\&     </Match>
+\&   </Page>
+\& </Plugin>
+.Ve
+.PP
+The configuration options are:
+.IP "<\fBPage\fR \fIName\fR>" 4
+.IX Item "<Page Name>"
+Each \fBPage\fR block defines one \fIpage\fR to be queried from the memcached server.
+The block requires one string argument which is used as \fIplugin instance\fR.
+.IP "\fBServer\fR \fIAddress\fR" 4
+.IX Item "Server Address"
+Sets the server address to connect to when querying the page. Must be inside a
+\&\fBPage\fR block.
+.IP "\fBKey\fR \fIKey\fR" 4
+.IX Item "Key Key"
+When connected to the memcached server, asks for the page \fIKey\fR.
+.IP "<\fBMatch\fR>" 4
+.IX Item "<Match>"
+Match blocks define which strings to look for and how matches substrings are
+interpreted. For a description of match blocks, please see \*(L"Plugin tail\*(R".
 .ie n .SS "Plugin ""memcached"""
 .el .SS "Plugin \f(CWmemcached\fP"
 .IX Subsection "Plugin memcached"
@@ -1218,19 +1375,52 @@ TCP-Port to connect to. Defaults to \fB11211\fR.
 .ie n .SS "Plugin ""mysql"""
 .el .SS "Plugin \f(CWmysql\fP"
 .IX Subsection "Plugin mysql"
-The \f(CW\*(C`mysql plugin\*(C'\fR requires \fBmysqlclient\fR to be installed. It connects to the
-database when started and keeps the connection up as long as possible. When the
-connection is interrupted for whatever reason it will try to re-connect. The
-plugin will complaint loudly in case anything goes wrong.
+The \f(CW\*(C`mysql plugin\*(C'\fR requires \fBmysqlclient\fR to be installed. It connects to
+one or more databases when started and keeps the connection up as long as
+possible. When the connection is interrupted for whatever reason it will try
+to re-connect. The plugin will complaint loudly in case anything goes wrong.
 .PP
-This plugin issues the MySQL \f(CW\*(C`SHOW STATUS\*(C'\fR command and collects information
-about MySQL network traffic, executed statements, requests, the query cache
-and threads by evaluating the \f(CW\*(C`Bytes_{received,sent}\*(C'\fR, \f(CW\*(C`Com_*\*(C'\fR,
-\&\f(CW\*(C`Handler_*\*(C'\fR, \f(CW\*(C`Qcache_*\*(C'\fR and \f(CW\*(C`Threads_*\*(C'\fR return values. Please refer to the
-\&\fBMySQL reference manual\fR, \fI5.1.6. Server Status Variables\fR for an
-explanation of these values.
+This plugin issues the MySQL \f(CW\*(C`SHOW STATUS\*(C'\fR / \f(CW\*(C`SHOW GLOBAL STATUS\*(C'\fR command
+and collects information about MySQL network traffic, executed statements,
+requests, the query cache and threads by evaluating the
+\&\f(CW\*(C`Bytes_{received,sent}\*(C'\fR, \f(CW\*(C`Com_*\*(C'\fR, \f(CW\*(C`Handler_*\*(C'\fR, \f(CW\*(C`Qcache_*\*(C'\fR and \f(CW\*(C`Threads_*\*(C'\fR
+return values. Please refer to the \fBMySQL reference manual\fR, \fI5.1.6. Server
+Status Variables\fR for an explanation of these values.
 .PP
-Use the following options to configure the plugin:
+Optionally, master and slave statistics may be collected in a MySQL
+replication setup. In that case, information about the synchronization state
+of the nodes are collected by evaluating the \f(CW\*(C`Position\*(C'\fR return value of the
+\&\f(CW\*(C`SHOW MASTER STATUS\*(C'\fR command and the \f(CW\*(C`Seconds_Behind_Master\*(C'\fR,
+\&\f(CW\*(C`Read_Master_Log_Pos\*(C'\fR and \f(CW\*(C`Exec_Master_Log_Pos\*(C'\fR return values of the
+\&\f(CW\*(C`SHOW SLAVE STATUS\*(C'\fR command. See the \fBMySQL reference manual\fR,
+\&\fI12.5.5.21 \s-1SHOW\s0 \s-1MASTER\s0 \s-1STATUS\s0 Syntax\fR and
+\&\fI12.5.5.31 \s-1SHOW\s0 \s-1SLAVE\s0 \s-1STATUS\s0 Syntax\fR for details.
+.PP
+Synopsis:
+.PP
+.Vb 8
+\&  <Plugin mysql>
+\&    <Database foo>
+\&      Host "hostname"
+\&      User "username"
+\&      Password "password"
+\&      Port "3306"
+\&      MasterStats true
+\&    </Database>
+\&
+\&    <Database bar>
+\&      Host "localhost"
+\&      Socket "/var/run/mysql/mysqld.sock"
+\&      SlaveStats true
+\&      SlaveNotifications true
+\&    </Database>
+\&  </Plugin>
+.Ve
+.PP
+A \fBDatabase\fR block defines one connection to a MySQL database. It accepts a
+single argument which specifies the name of the database. None of the other
+options are required. MySQL will use default values as documented in the
+section \*(L"\fImysql_real_connect()\fR\*(R" in the \fBMySQL reference manual\fR.
 .IP "\fBHost\fR \fIHostname\fR" 4
 .IX Item "Host Hostname"
 Hostname of the database server. Defaults to \fBlocalhost\fR.
@@ -1263,6 +1453,17 @@ Specifies the path to the \s-1UNIX\s0 domain socket of the MySQL server. This op
 only has any effect, if \fBHost\fR is set to \fBlocalhost\fR (the default).
 Otherwise, use the \fBPort\fR option above. See the documentation for the
 \&\f(CW\*(C`mysql_real_connect\*(C'\fR function for details.
+.IP "\fBMasterStats\fR \fItrue|false\fR" 4
+.IX Item "MasterStats true|false"
+.PD 0
+.IP "\fBSlaveStats\fR \fItrue|false\fR" 4
+.IX Item "SlaveStats true|false"
+.PD
+Enable the collection of master / slave statistics in a replication setup.
+.IP "\fBSlaveNotifications\fR \fItrue|false\fR" 4
+.IX Item "SlaveNotifications true|false"
+If enabled, the plugin sends a notification if the replication slave I/O and /
+or \s-1SQL\s0 threads are not running.
 .ie n .SS "Plugin ""netlink"""
 .el .SS "Plugin \f(CWnetlink\fP"
 .IX Subsection "Plugin netlink"
@@ -1344,32 +1545,114 @@ specified statistics will not be collected.
 .ie n .SS "Plugin ""network"""
 .el .SS "Plugin \f(CWnetwork\fP"
 .IX Subsection "Plugin network"
-.IP "\fBListen\fR \fIHost\fR [\fIPort\fR]" 4
-.IX Item "Listen Host [Port]"
-.PD 0
-.IP "\fBServer\fR \fIHost\fR [\fIPort\fR]" 4
-.IX Item "Server Host [Port]"
-.PD
-The \fBServer\fR statement sets the server to send datagrams \fBto\fR.  The statement
-may occur multiple times to send each datagram to multiple destinations.
+The Network plugin sends data to a remote instance of collectd, receives data
+from a remote instance, or both at the same time. Data which has been received
+from the network is usually not transmitted again, but this can be actived, see
+the \fBForward\fR option below.
+.PP
+The default IPv6 multicast group is \f(CW\*(C`ff18::efc0:4a42\*(C'\fR. The default IPv4
+multicast group is \f(CW239.192.74.66\fR. The default \fI\s-1UDP\s0\fR port is \fB25826\fR.
+.PP
+Both, \fBServer\fR and \fBListen\fR can be used as single option or as block. When
+used as block, given options are valid for this socket only. For example:
+.PP
+.Vb 8
+\& <Plugin "network">
+\&   Server "collectd.internal.tld"
+\&   <Server "collectd.external.tld">
+\&     SecurityLevel "sign"
+\&     Username "myhostname"
+\&     Password "ohl0eQue"
+\&   </Server>
+\& </Plugin>
+.Ve
+.IP "\fB<Server\fR \fIHost\fR [\fIPort\fR]\fB>\fR" 4
+.IX Item "<Server Host [Port]>"
+The \fBServer\fR statement/block sets the server to send datagrams to. The
+statement may occur multiple times to send each datagram to multiple
+destinations.
 .Sp
+The argument \fIHost\fR may be a hostname, an IPv4 address or an IPv6 address. The
+optional second argument specifies a port number or a service name. If not
+given, the default, \fB25826\fR, is used.
+.Sp
+The following options are recognized within \fBServer\fR blocks:
+.RS 4
+.IP "\fBSecurityLevel\fR \fBEncrypt\fR|\fBSign\fR|\fBNone\fR" 4
+.IX Item "SecurityLevel Encrypt|Sign|None"
+Set the security you require for network communication. When the security level
+has been set to \fBEncrypt\fR, data sent over the network will be encrypted using
+\&\fI\s-1AES\-256\s0\fR. The integrity of encrypted packets is ensured using \fI\s-1SHA\-1\s0\fR. When
+set to \fBSign\fR, transmitted data is signed using the \fI\s-1HMAC\-SHA\-256\s0\fR message
+authentication code. When set to \fBNone\fR, data is sent without any security.
+.Sp
+This feature is only available if the \fInetwork\fR plugin was linked with
+\&\fIlibgcrypt\fR.
+.IP "\fBUsername\fR \fIUsername\fR" 4
+.IX Item "Username Username"
+Sets the username to transmit. This is used by the server to lookup the
+password. See \fBAuthFile\fR below. All security levels except \fBNone\fR require
+this setting.
+.Sp
+This feature is only available if the \fInetwork\fR plugin was linked with
+\&\fIlibgcrypt\fR.
+.IP "\fBPassword\fR \fIPassword\fR" 4
+.IX Item "Password Password"
+Sets a password (shared secret) for this socket. All security levels except
+\&\fBNone\fR require this setting.
+.Sp
+This feature is only available if the \fInetwork\fR plugin was linked with
+\&\fIlibgcrypt\fR.
+.RE
+.RS 4
+.RE
+.IP "\fB<Listen\fR \fIHost\fR [\fIPort\fR]\fB>\fR" 4
+.IX Item "<Listen Host [Port]>"
 The \fBListen\fR statement sets the interfaces to bind to. When multiple
 statements are found the daemon will bind to multiple interfaces.
 .Sp
 The argument \fIHost\fR may be a hostname, an IPv4 address or an IPv6 address. If
 the argument is a multicast address the daemon will join that multicast group.
+The optional second argument specifies a port number or a service name. If not
+given, the default, \fB25826\fR, is used.
 .Sp
-If no \fBListen\fR statement is found the server tries join both, the default IPv6
-multicast group and the default IPv4 multicast group. If no \fBServer\fR statement
-is found the client will try to send data to the IPv6 multicast group first. If
-that fails the client will try the IPv4 multicast group.
+The following options are recognized within \f(CW\*(C`<Listen>\*(C'\fR blocks:
+.RS 4
+.IP "\fBSecurityLevel\fR \fBEncrypt\fR|\fBSign\fR|\fBNone\fR" 4
+.IX Item "SecurityLevel Encrypt|Sign|None"
+Set the security you require for network communication. When the security level
+has been set to \fBEncrypt\fR, only encrypted data will be accepted. The integrity
+of encrypted packets is ensured using \fI\s-1SHA\-1\s0\fR. When set to \fBSign\fR, only
+signed and encrypted data is accepted. When set to \fBNone\fR, all data will be
+accepted. If an \fBAuthFile\fR option was given (see below), encrypted data is
+decrypted if possible.
 .Sp
-The default IPv6 multicast group is \f(CW\*(C`ff18::efc0:4a42\*(C'\fR. The default IPv4
-multicast group is \f(CW239.192.74.66\fR.
+This feature is only available if the \fInetwork\fR plugin was linked with
+\&\fIlibgcrypt\fR.
+.IP "\fBAuthFile\fR \fIFilename\fR" 4
+.IX Item "AuthFile Filename"
+Sets a file in which usernames are mapped to passwords. These passwords are
+used to verify signatures and to decrypt encrypted network packets. If
+\&\fBSecurityLevel\fR is set to \fBNone\fR, this is optional. If given, signed data is
+verified and encrypted packets are decrypted. Otherwise, signed data is
+accepted without checking the signature and encrypted data cannot be decrypted.
+For the other security levels this option is mandatory.
 .Sp
-The optional \fIPort\fR argument sets the port to use. It can either be given
-using a numeric port number or a service name. If the argument is omitted the
-default port \fB25826\fR is assumed.
+The file format is very simple: Each line consists of a username followed by a
+colon and any number of spaces followed by the password. To demonstrate, an
+example file could look like this:
+.Sp
+.Vb 2
+\&  user0: foo
+\&  user1: bar
+.Ve
+.Sp
+Each time a packet is received, the modification time of the file is checked
+using \fIstat\fR\|(2). If the file has been changed, the contents is re-read. While
+the file is being read, it is locked using \fIfcntl\fR\|(2).
+.RE
+.RS 4
+.RE
 .IP "\fBTimeToLive\fR \fI1\-255\fR" 4
 .IX Item "TimeToLive 1-255"
 Set the time-to-live of sent packets. This applies to all, unicast and
@@ -1564,6 +1847,10 @@ specific sensors or all sensors \fIexcept\fR a few specified ones. This option
 enables you to do that: By setting \fBIgnoreSelected\fR to \fItrue\fR the effect of
 \&\fBSensor\fR is inverted: All selected interfaces are ignored and all other
 interfaces are collected.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Sets the interval in which all sensors should be read. If not specified, the
+global \fBInterval\fR setting is used.
 .PP
 \&\fB\s-1EXPERIMENTAL\s0!\fR The \f(CW\*(C`onewire\*(C'\fR plugin is experimental, because it doesn't yet
 work with big setups. It works with one sensor being attached to one
@@ -1664,10 +1951,34 @@ to collectd's plugin system. See \fIcollectd\-perl\fR\|(5) for its documentation
 .ie n .SS "Plugin ""ping"""
 .el .SS "Plugin \f(CWping\fP"
 .IX Subsection "Plugin ping"
+The \fIPing\fR plugin starts a new thread which sends \s-1ICMP\s0 \*(L"ping\*(R" packets to the
+configured hosts periodically and measures the network latency. Whenever the
+\&\f(CW\*(C`read\*(C'\fR function of the plugin is called, it submits the average latency, the
+standard deviation and the drop rate for each host.
+.PP
+Available configuration options:
 .IP "\fBHost\fR \fIIP-address\fR" 4
 .IX Item "Host IP-address"
 Host to ping periodically. This option may be repeated several times to ping
 multiple hosts.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Sets the interval in which to send \s-1ICMP\s0 echo packets to the configured hosts.
+This is \fBnot\fR the interval in which statistics are queries from the plugin but
+the interval in which the hosts are \*(L"pinged\*(R". Therefore, the setting here
+should be smaller than or equal to the global \fBInterval\fR setting. Fractional
+times, such as \*(L"1.24\*(R" are allowed.
+.Sp
+Default: \fB1.0\fR
+.IP "\fBTimeout\fR \fISeconds\fR" 4
+.IX Item "Timeout Seconds"
+Time to wait for a response from the host to which an \s-1ICMP\s0 packet had been
+sent. If a reply was not received after \fISeconds\fR seconds, the host is assumed
+to be down or the packet to be dropped. This setting must be smaller than the
+\&\fBInterval\fR setting above for the plugin to work correctly. Fractional
+arguments are accepted.
+.Sp
+Default: \fB0.9\fR
 .IP "\fB\s-1TTL\s0\fR \fI0\-255\fR" 4
 .IX Item "TTL 0-255"
 Sets the Time-To-Live of generated \s-1ICMP\s0 packets.
@@ -2117,6 +2428,35 @@ details). The statistics of all matching processes are summed up and
 dispatched to the daemon using the specified \fIname\fR as an identifier. This
 allows to \*(L"group\*(R" several processes together. \fIname\fR must not contain
 slashes.
+.ie n .SS "Plugin ""protocols"""
+.el .SS "Plugin \f(CWprotocols\fP"
+.IX Subsection "Plugin protocols"
+Collects a lot of information about various network protocols, such as \fI\s-1IP\s0\fR,
+\&\fI\s-1TCP\s0\fR, \fI\s-1UDP\s0\fR, etc.
+.PP
+Available configuration options:
+.IP "\fBValue\fR \fISelector\fR" 4
+.IX Item "Value Selector"
+Selects whether or not to select a specific value. The string being matched is
+of the form "\fIProtocol\fR:\fIValueName\fR", where \fIProtocol\fR will be used as the
+plugin instance and \fIValueName\fR will be used as type instance. An example of
+the string being used would be \f(CW\*(C`Tcp:RetransSegs\*(C'\fR.
+.Sp
+You can use regular expressions to match a large number of values with just one
+configuration option. To select all \*(L"extended\*(R" \fI\s-1TCP\s0\fR values, you could use the
+following statement:
+.Sp
+.Vb 1
+\&  Value "/^TcpExt:/"
+.Ve
+.Sp
+Whether only matched values are selected or all matched values are ignored
+depends on the \fBIgnoreSelected\fR. By default, only matched values are selected.
+If no value is configured at all, all values will be selected.
+.IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "IgnoreSelected true|false"
+If set to \fBtrue\fR, inverts the selection made by \fBValue\fR, i.\ e. all
+matching values will be ignored.
 .ie n .SS "Plugin ""rrdcached"""
 .el .SS "Plugin \f(CWrrdcached\fP"
 .IX Subsection "Plugin rrdcached"
@@ -2294,10 +2634,98 @@ syslog-daemon.
 .Sp
 Please note that \fBdebug\fR is only available if collectd has been compiled with
 debugging support.
+.ie n .SS "Plugin ""table"""
+.el .SS "Plugin \f(CWtable\fP"
+.IX Subsection "Plugin table"
+The \f(CW\*(C`table plugin\*(C'\fR provides generic means to parse tabular data and dispatch
+user specified values. Values are selected based on column numbers. For
+example, this plugin may be used to get values from the Linux \fIproc\fR\|(5)
+filesystem or \s-1CSV\s0 (comma separated values) files.
+.PP
+.Vb 10
+\&  <Plugin table>
+\&    <Table "/proc/slabinfo">
+\&      Instance "slabinfo"
+\&      Separator " "
+\&      <Result>
+\&        Type gauge
+\&        InstancePrefix "active_objs"
+\&        InstancesFrom 0
+\&        ValuesFrom 1
+\&      </Result>
+\&      <Result>
+\&        Type gauge
+\&        InstancePrefix "objperslab"
+\&        InstancesFrom 0
+\&        ValuesFrom 4
+\&      </Result>
+\&    </Table>
+\&  </Plugin>
+.Ve
+.PP
+The configuration consists of one or more \fBTable\fR blocks, each of which
+configures one file to parse. Within each \fBTable\fR block, there are one or
+more \fBResult\fR blocks, which configure which data to select and how to
+interpret it.
+.PP
+The following options are available inside a \fBTable\fR block:
+.IP "\fBInstance\fR \fIinstance\fR" 4
+.IX Item "Instance instance"
+If specified, \fIinstance\fR is used as the plugin instance. So, in the above
+example, the plugin name \f(CW\*(C`table\-slabinfo\*(C'\fR would be used. If omitted, the
+filename of the table is used instead, with all special characters replaced
+with an underscore (\f(CW\*(C`_\*(C'\fR).
+.IP "\fBSeparator\fR \fIstring\fR" 4
+.IX Item "Separator string"
+Any character of \fIstring\fR is interpreted as a delimiter between the different
+columns of the table. A sequence of two or more contiguous delimiters in the
+table is considered to be a single delimiter, i.\ e. there cannot be any
+empty columns. The plugin uses the \fIstrtok_r\fR\|(3) function to parse the lines
+of a table \- see its documentation for more details. This option is mandatory.
+.Sp
+A horizontal tab, newline and carriage return may be specified by \f(CW\*(C`\e\et\*(C'\fR,
+\&\f(CW\*(C`\e\en\*(C'\fR and \f(CW\*(C`\e\er\*(C'\fR respectively. Please note that the double backslashes are
+required because of collectd's config parsing.
+.PP
+The following options are available inside a \fBResult\fR block:
+.IP "\fBType\fR \fItype\fR" 4
+.IX Item "Type type"
+Sets the type used to dispatch the values to the daemon. Detailed information
+about types and their configuration can be found in \fItypes.db\fR\|(5). This
+option is mandatory.
+.IP "\fBInstancePrefix\fR \fIprefix\fR" 4
+.IX Item "InstancePrefix prefix"
+If specified, prepend \fIprefix\fR to the type instance. If omitted, only the
+\&\fBInstancesFrom\fR option is considered for the type instance.
+.IP "\fBInstancesFrom\fR \fIcolumn0\fR [\fIcolumn1\fR ...]" 4
+.IX Item "InstancesFrom column0 [column1 ...]"
+If specified, the content of the given columns (identified by the column
+number starting at zero) will be used to create the type instance for each
+row. Multiple values (and the instance prefix) will be joined together with
+dashes (\fI\-\fR) as separation character. If omitted, only the \fBInstancePrefix\fR
+option is considered for the type instance.
+.Sp
+The plugin itself does not check whether or not all built instances are
+different. Ita\*^XXs your responsibility to assure that each is unique. This is
+especially true, if you do not specify \fBInstancesFrom\fR: \fBYou\fR have to make
+sure that the table only contains one row.
+.Sp
+If neither \fBInstancePrefix\fR nor \fBInstancesFrom\fR is given, the type instance
+will be empty.
+.IP "\fBValuesFrom\fR \fIcolumn0\fR [\fIcolumn1\fR ...]" 4
+.IX Item "ValuesFrom column0 [column1 ...]"
+Specifies the columns (identified by the column numbers starting at zero)
+whose content is used as the actual data for the data sets that are dispatched
+to the daemon. How many such columns you need is determined by the \fBType\fR
+setting above. If you specify too many or not enough columns, the plugin will
+complain about that and no data will be submitted to the daemon. The plugin
+uses \fIstrtoll\fR\|(3) and \fIstrtod\fR\|(3) to parse counter and gauge values
+respectively, so anything supported by those functions is supported by the
+plugin as well. This option is mandatory.
 .ie n .SS "Plugin ""tail"""
 .el .SS "Plugin \f(CWtail\fP"
 .IX Subsection "Plugin tail"
-The \f(CW\*(C`tail plugin\*(C'\fR plugins follows logfiles, just like \fItail\fR\|(1) does, parses
+The \f(CW\*(C`tail plugin\*(C'\fR follows logfiles, just like \fItail\fR\|(1) does, parses
 each line and dispatches found values. What is matched can be configured by the
 user using (extended) regular expressions, as described in \fIregex\fR\|(7).
 .PP
@@ -2389,6 +2817,59 @@ their configuration can be found in \fItypes.db\fR\|(5).
 .IP "\fBInstance\fR \fITypeInstance\fR" 4
 .IX Item "Instance TypeInstance"
 This optional setting sets the type instance to use.
+.ie n .SS "Plugin ""teamspeak2"""
+.el .SS "Plugin \f(CWteamspeak2\fP"
+.IX Subsection "Plugin teamspeak2"
+The \f(CW\*(C`teamspeak2 plugin\*(C'\fR connects to the query port of a teamspeak2 server and
+polls interesting global and virtual server data. The plugin can query only one
+physical server but unlimited virtual servers. You can use the following
+options to configure it:
+.IP "\fBHost\fR \fIhostname/ip\fR" 4
+.IX Item "Host hostname/ip"
+The hostname or ip which identifies the physical server.
+Default: 127.0.0.1
+.IP "\fBPort\fR \fIport\fR" 4
+.IX Item "Port port"
+The query port of the physical server. This needs to be a string.
+Default: \*(L"51234\*(R"
+.IP "\fBServer\fR \fIport\fR" 4
+.IX Item "Server port"
+This option has to be added once for every virtual server the plugin should
+query. If you want to query the virtual server on port 8767 this is what the
+option would look like:
+.Sp
+.Vb 1
+\&  Server "8767"
+.Ve
+.Sp
+This option, although numeric, needs to be a string, i.\ e. you \fBmust\fR
+use quotes around it! If no such statement is given only global information
+will be collected.
+.ie n .SS "Plugin ""ted"""
+.el .SS "Plugin \f(CWted\fP"
+.IX Subsection "Plugin ted"
+The \fI\s-1TED\s0\fR plugin connects to a device of \*(L"The Energy Detective\*(R", a device to
+measure power consumption. These devices are usually connected to a serial
+(\s-1RS232\s0) or \s-1USB\s0 port. The plugin opens a configured device and tries to read the
+current energy readings. For more information on \s-1TED\s0, visit
+<http://www.theenergydetective.com/>.
+.PP
+Available configuration options:
+.IP "\fBDevice\fR \fIPath\fR" 4
+.IX Item "Device Path"
+Path to the device on which \s-1TED\s0 is connected. collectd will need read and write
+permissions on that file.
+.Sp
+Default: \fB/dev/ttyUSB0\fR
+.IP "\fBRetries\fR \fINum\fR" 4
+.IX Item "Retries Num"
+Apparently reading from \s-1TED\s0 is not that reliable. You can therefore configure a
+number of retries here. You only configure the \fIretries\fR here, to if you
+specify zero, one reading will be performed (but no retries if that fails); if
+you specify three, a maximum of four readings are performed. Negative values
+are illegal.
+.Sp
+Default: \fB0\fR
 .ie n .SS "Plugin ""tcpconns"""
 .el .SS "Plugin \f(CWtcpconns\fP"
 .IX Subsection "Plugin tcpconns"
@@ -2420,34 +2901,6 @@ connections a local service has opened to remote services, e.\ g. how many
 connections a mail server or news server has to other mail or news servers, or
 how many connections a web proxy holds to web servers. You have to give the
 port in numeric form.
-.ie n .SS "Plugin ""teamspeak2"""
-.el .SS "Plugin \f(CWteamspeak2\fP"
-.IX Subsection "Plugin teamspeak2"
-The \f(CW\*(C`teamspeak2 plugin\*(C'\fR connects to the query port of a teamspeak2 server and
-polls interesting global and virtual server data. The plugin can query only one
-physical server but unlimited virtual servers. You can use the following
-options to configure it:
-.IP "\fBHost\fR \fIhostname/ip\fR" 4
-.IX Item "Host hostname/ip"
-The hostname or ip which identifies the physical server.
-Default: 127.0.0.1
-.IP "\fBPort\fR \fIport\fR" 4
-.IX Item "Port port"
-The query port of the physical server. This needs to be a string.
-Default: \*(L"51234\*(R"
-.IP "\fBServer\fR \fIport\fR" 4
-.IX Item "Server port"
-This option has to be added once for every virtual server the plugin should
-query. If you want to query the virtual server on port 8767 this is what the
-option would look like:
-.Sp
-.Vb 1
-\&  Server "8767"
-.Ve
-.Sp
-This option, although numeric, needs to be a string, i.\ e. you \fBmust\fR
-use quotes around it! If no such statement is given only global information
-will be collected.
 .ie n .SS "Plugin ""thermal"""
 .el .SS "Plugin \f(CWthermal\fP"
 .IX Subsection "Plugin thermal"

@@ -23,11 +23,6 @@
 # include "config.h"
 #endif
 
-/* Set to C99 and POSIX code */
-#if COLLECT_STANDARDS
-# include "standards.h"
-#endif /* COLLECT_STANDARDS */
-
 #if !defined(__GNUC__) || !__GNUC__
 # define __attribute__(x) /**/
 #endif
@@ -121,12 +116,12 @@ typedef struct lcc_response_s lcc_response_t;
 /* Even though Posix requires "strerror_r" to return an "int",
  * some systems (e.g. the GNU libc) return a "char *" _and_
  * ignore the second argument ... -tokkee */
-char *sstrerror (int errnum, char *buf, size_t buflen)
+static char *sstrerror (int errnum, char *buf, size_t buflen)
 {
   buf[0] = 0;
 
 #if !HAVE_STRERROR_R
-  snprintf (buf, buflen "Error #%i; strerror_r is not available.", errnum);
+  snprintf (buf, buflen, "Error #%i; strerror_r is not available.", errnum);
 /* #endif !HAVE_STRERROR_R */
 
 #elif STRERROR_R_CHAR_P
