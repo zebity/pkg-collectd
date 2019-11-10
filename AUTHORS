@@ -23,6 +23,7 @@ Alvaro Barcellos <alvaro.barcellos at gmail.com>
 
 Amit Gupta <amit.gupta221 at gmail.com>
  - Multiple servers in the apache plugin.
+ - curl_xml plugin.
 
 Anthony Dewhurst <dewhurst at gmail.com>
  - zfs_arc plugin.
@@ -138,6 +139,9 @@ Peter Holik <peter at holik.at>
  - irq plugin.
  - Some bugfixes in the exec plugin.
  - Notifications in the ipmi plugin.
+
+Phoenix Kayo <kayo.k11.4 at gmail.com>
+ - pinba plugin.
 
 Piotr Hosowicz <the55 at wp.pl>
  - SMF manifest for collectd.

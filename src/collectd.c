@@ -41,6 +41,7 @@
  */
 char hostname_g[DATA_MAX_NAME_LEN];
 int  interval_g;
+int  timeout_g;
 #if HAVE_LIBKSTAT
 kstat_ctl_t *kc;
 #endif /* HAVE_LIBKSTAT */
@@ -147,6 +148,18 @@ static int init_global_variables (void)
 		return (-1);
 	}
 	DEBUG ("interval_g = %i;", interval_g);
+
+	str = global_option_get ("Timeout");
+	if (str == NULL)
+		str = "2";
+	timeout_g = atoi (str);
+	if (timeout_g <= 1)
+	{
+		fprintf (stderr, "Cannot set the timeout to a correct value.\n"
+				"Please check your settings.\n");
+		return (-1);
+	}
+	DEBUG ("timeout_g = %i;", timeout_g);
 
 	if (init_hostname () != 0)
 		return (-1);
@@ -259,9 +272,10 @@ static void exit_usage (int status)
 #endif
 			"    -h              Display help (this message)\n"
 			"\nBuiltin defaults:\n"
-			"  Config-File       "CONFIGFILE"\n"
-			"  PID-File          "PIDFILE"\n"
-			"  Data-Directory    "PKGLOCALSTATEDIR"\n"
+			"  Config file       "CONFIGFILE"\n"
+			"  PID file          "PIDFILE"\n"
+			"  Plugin directory  "PLUGINDIR"\n"
+			"  Data directory    "PKGLOCALSTATEDIR"\n"
 			"\n"PACKAGE" "VERSION", http://collectd.org/\n"
 			"by Florian octo Forster <octo@verplant.org>\n"
 			"for contributions see `AUTHORS'\n");

@@ -49,6 +49,7 @@ struct wh_callback_s
         int   verify_peer;
         int   verify_host;
         char *cacert;
+        int   store_rates;
 
 #define WH_FORMAT_COMMAND 0
 #define WH_FORMAT_JSON    1
@@ -142,7 +143,7 @@ static int wh_callback_init (wh_callback_t *cb) /* {{{ */
                 ssnprintf (cb->credentials, credentials_size, "%s:%s",
                                 cb->user, (cb->pass == NULL) ? "" : cb->pass);
                 curl_easy_setopt (cb->curl, CURLOPT_USERPWD, cb->credentials);
-                curl_easy_setopt (cb->curl, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+                curl_easy_setopt (cb->curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
         }
 
         curl_easy_setopt (cb->curl, CURLOPT_SSL_VERIFYPEER, cb->verify_peer);
@@ -271,11 +272,13 @@ static void wh_callback_free (void *data) /* {{{ */
 
 static int wh_value_list_to_string (char *buffer, /* {{{ */
                 size_t buffer_size,
-                const data_set_t *ds, const value_list_t *vl)
+                const data_set_t *ds, const value_list_t *vl,
+                wh_callback_t *cb)
 {
         size_t offset = 0;
         int status;
         int i;
+        gauge_t *rates = NULL;
 
         assert (0 == strcmp (ds->type, vl->type));
 
@@ -285,9 +288,15 @@ static int wh_value_list_to_string (char *buffer, /* {{{ */
         status = ssnprintf (buffer + offset, buffer_size - offset, \
                         __VA_ARGS__); \
         if (status < 1) \
+        { \
+                sfree (rates); \
                 return (-1); \
+        } \
         else if (((size_t) status) >= (buffer_size - offset)) \
+        { \
+                sfree (rates); \
                 return (-1); \
+        } \
         else \
                 offset += ((size_t) status); \
 } while (0)
@@ -295,26 +304,40 @@ static int wh_value_list_to_string (char *buffer, /* {{{ */
         BUFFER_ADD ("%lu", (unsigned long) vl->time);
 
         for (i = 0; i < ds->ds_num; i++)
-{
-        if (ds->ds[i].type == DS_TYPE_GAUGE)
-                BUFFER_ADD (":%f", vl->values[i].gauge);
-        else if (ds->ds[i].type == DS_TYPE_COUNTER)
-                BUFFER_ADD (":%llu", vl->values[i].counter);
-        else if (ds->ds[i].type == DS_TYPE_DERIVE)
-                BUFFER_ADD (":%"PRIi64, vl->values[i].derive);
-        else if (ds->ds[i].type == DS_TYPE_ABSOLUTE)
-                BUFFER_ADD (":%"PRIu64, vl->values[i].absolute);
-        else
         {
-                ERROR ("write_http plugin: Unknown data source type: %i",
-                                ds->ds[i].type);
-                return (-1);
-        }
-} /* for ds->ds_num */
+                if (ds->ds[i].type == DS_TYPE_GAUGE)
+                        BUFFER_ADD (":%f", vl->values[i].gauge);
+                else if (cb->store_rates)
+                {
+                        if (rates == NULL)
+                                rates = uc_get_rate (ds, vl);
+                        if (rates == NULL)
+                        {
+                                WARNING ("write_http plugin: "
+                                                "uc_get_rate failed.");
+                                return (-1);
+                        }
+                        BUFFER_ADD (":%g", rates[i]);
+                }
+                else if (ds->ds[i].type == DS_TYPE_COUNTER)
+                        BUFFER_ADD (":%llu", vl->values[i].counter);
+                else if (ds->ds[i].type == DS_TYPE_DERIVE)
+                        BUFFER_ADD (":%"PRIi64, vl->values[i].derive);
+                else if (ds->ds[i].type == DS_TYPE_ABSOLUTE)
+                        BUFFER_ADD (":%"PRIu64, vl->values[i].absolute);
+                else
+                {
+                        ERROR ("write_http plugin: Unknown data source type: %i",
+                                        ds->ds[i].type);
+                        sfree (rates);
+                        return (-1);
+                }
+        } /* for ds->ds_num */
 
 #undef BUFFER_ADD
 
-return (0);
+        sfree (rates);
+        return (0);
 } /* }}} int wh_value_list_to_string */
 
 static int wh_write_command (const data_set_t *ds, const value_list_t *vl, /* {{{ */
@@ -343,7 +366,7 @@ static int wh_write_command (const data_set_t *ds, const value_list_t *vl, /* {{
 
         /* Convert the values to an ASCII representation and put that into
          * `values'. */
-        status = wh_value_list_to_string (values, sizeof (values), ds, vl);
+        status = wh_value_list_to_string (values, sizeof (values), ds, vl, cb);
         if (status != 0) {
                 ERROR ("write_http plugin: error with "
                                 "wh_value_list_to_string");
@@ -423,7 +446,7 @@ static int wh_write_json (const data_set_t *ds, const value_list_t *vl, /* {{{ *
         status = format_json_value_list (cb->send_buffer,
                         &cb->send_buffer_fill,
                         &cb->send_buffer_free,
-                        ds, vl);
+                        ds, vl, cb->store_rates);
         if (status == (-ENOMEM))
         {
                 status = wh_flush_nolock (/* timeout = */ -1, cb);
@@ -437,7 +460,7 @@ static int wh_write_json (const data_set_t *ds, const value_list_t *vl, /* {{{ *
                 status = format_json_value_list (cb->send_buffer,
                                 &cb->send_buffer_fill,
                                 &cb->send_buffer_free,
-                                ds, vl);
+                                ds, vl, cb->store_rates);
         }
         if (status != 0)
         {
@@ -589,6 +612,8 @@ static int wh_config_url (oconfig_item_t *ci) /* {{{ */
                         config_set_string (&cb->cacert, child);
                 else if (strcasecmp ("Format", child->key) == 0)
                         config_set_format (cb, child);
+                else if (strcasecmp ("StoreRates", child->key) == 0)
+                        config_set_boolean (&cb->store_rates, child);
                 else
                 {
                         ERROR ("write_http plugin: Invalid configuration "

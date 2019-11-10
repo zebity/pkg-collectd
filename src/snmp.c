@@ -655,8 +655,9 @@ static int csnmp_config_add_host (oconfig_item_t *ci)
   if (hd->interval != 0)
     cb_interval.tv_sec = (time_t) hd->interval;
 
-  status = plugin_register_complex_read (cb_name, csnmp_read_host,
-      /* interval = */ &cb_interval, /* user_data = */ &cb_data);
+  status = plugin_register_complex_read (/* group = */ NULL, cb_name,
+      csnmp_read_host, /* interval = */ &cb_interval,
+      /* user_data = */ &cb_data);
   if (status != 0)
   {
     ERROR ("snmp plugin: Registering complex read function failed.");
@@ -1127,7 +1128,7 @@ static int csnmp_dispatch_table (host_definition_t *host, data_definition_t *dat
       char temp[DATA_MAX_NAME_LEN];
 
       if (instance_list_ptr == NULL)
-	ssnprintf (temp, sizeof (temp), "%u", (uint32_t) subid);
+	ssnprintf (temp, sizeof (temp), "%"PRIu32, (uint32_t) subid);
       else
 	sstrncpy (temp, instance_list_ptr->instance, sizeof (temp));
 

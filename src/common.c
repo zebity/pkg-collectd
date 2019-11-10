@@ -668,6 +668,7 @@ long long get_kstat_value (kstat_t *ksp, char *name)
 }
 #endif /* HAVE_LIBKSTAT */
 
+#ifndef HAVE_HTONLL
 unsigned long long ntohll (unsigned long long n)
 {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -685,6 +686,7 @@ unsigned long long htonll (unsigned long long n)
 	return (((unsigned long long) htonl (n)) << 32) + htonl (n >> 32);
 #endif
 } /* unsigned long long htonll */
+#endif /* HAVE_HTONLL */
 
 #if FP_LAYOUT_NEED_NOTHING
 /* Well, we need nothing.. */
@@ -1008,7 +1010,7 @@ int notification_init (notification_t *n, int severity, const char *message,
 } /* int notification_init */
 
 int walk_directory (const char *dir, dirwalk_callback_f callback,
-		void *user_data)
+		void *user_data, int include_hidden)
 {
 	struct dirent *ent;
 	DIR *dh;
@@ -1029,9 +1031,18 @@ int walk_directory (const char *dir, dirwalk_callback_f callback,
 	while ((ent = readdir (dh)) != NULL)
 	{
 		int status;
-
-		if (ent->d_name[0] == '.')
-			continue;
+		
+		if (include_hidden)
+		{
+			if ((strcmp (".", ent->d_name) == 0)
+					|| (strcmp ("..", ent->d_name) == 0))
+				continue;
+		}
+		else /* if (!include_hidden) */
+		{
+			if (ent->d_name[0]=='.')
+				continue;
+		}
 
 		status = (*callback) (dir, ent->d_name, user_data);
 		if (status != 0)
@@ -1133,3 +1144,21 @@ int service_name_to_port_number (const char *service_name)
 		return (service_number);
 	return (-1);
 } /* int service_name_to_port_number */
+
+int strtoderive (const char *string, derive_t *ret_value) /* {{{ */
+{
+	derive_t tmp;
+	char *endptr;
+
+	if ((string == NULL) || (ret_value == NULL))
+		return (EINVAL);
+
+	errno = 0;
+	endptr = NULL;
+	tmp = (derive_t) strtoll (string, &endptr, /* base = */ 0);
+	if ((endptr == string) || (errno != 0))
+		return (-1);
+
+	*ret_value = tmp;
+	return (0);
+} /* }}} int strtoderive */

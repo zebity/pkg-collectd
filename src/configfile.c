@@ -99,6 +99,7 @@ static cf_global_option_t cf_global_options[] =
 	{"FQDNLookup",  NULL, "false"},
 	{"Interval",    NULL, "10"},
 	{"ReadThreads", NULL, "5"},
+	{"Timeout",     NULL, "2"},
 	{"PreCacheChain",  NULL, "PreCache"},
 	{"PostCacheChain", NULL, "PostCache"}
 };
@@ -575,14 +576,14 @@ static oconfig_item_t *cf_read_dir (const char *dir, int depth)
 		ERROR ("configfile: malloc failed.");
 		return (NULL);
 	}
-	memset (root, '\0', sizeof (oconfig_item_t));
+	memset (root, 0, sizeof (oconfig_item_t));
 
 	while ((de = readdir (dh)) != NULL)
 	{
 		char   name[1024];
 		char **tmp;
 
-		if ((de->d_name[0] == '.') || (de->d_name[0] == '\0'))
+		if ((de->d_name[0] == '.') || (de->d_name[0] == 0))
 			continue;
 
 		status = ssnprintf (name, sizeof (name), "%s/%s",
@@ -624,13 +625,11 @@ static oconfig_item_t *cf_read_dir (const char *dir, int depth)
 		char *name = filenames[i];
 
 		temp = cf_read_generic (name, depth);
-		if (temp == NULL) {
-			int j;
-			for (j = i; j < filenames_num; ++j)
-				free (filenames[j]);
-			free (filenames);
-			oconfig_free (root);
-			return (NULL);
+		if (temp == NULL)
+		{
+			/* An error should already have been reported. */
+			sfree (name);
+			continue;
 		}
 
 		cf_ci_append_children (root, temp);
@@ -959,6 +958,45 @@ int cf_util_get_string (const oconfig_item_t *ci, char **ret_string) /* {{{ */
 	return (0);
 } /* }}} int cf_util_get_string */
 
+/* Assures the config option is a string and copies it to the provided buffer.
+ * Assures null-termination. */
+int cf_util_get_string_buffer (const oconfig_item_t *ci, char *buffer, /* {{{ */
+		size_t buffer_size)
+{
+	if ((ci == NULL) || (buffer == NULL) || (buffer_size < 1))
+		return (EINVAL);
+
+	if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_STRING))
+	{
+		ERROR ("cf_util_get_string_buffer: The %s option requires "
+				"exactly one string argument.", ci->key);
+		return (-1);
+	}
+
+	strncpy (buffer, ci->values[0].value.string, buffer_size);
+	buffer[buffer_size - 1] = 0;
+
+	return (0);
+} /* }}} int cf_util_get_string_buffer */
+
+/* Assures the config option is a number and returns it as an int. */
+int cf_util_get_int (const oconfig_item_t *ci, int *ret_value) /* {{{ */
+{
+	if ((ci == NULL) || (ret_value == NULL))
+		return (EINVAL);
+
+	if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_NUMBER))
+	{
+		ERROR ("cf_util_get_int: The %s option requires "
+				"exactly one numeric argument.", ci->key);
+		return (-1);
+	}
+
+	*ret_value = (int) ci->values[0].value.number;
+
+	return (0);
+} /* }}} int cf_util_get_int */
+
 int cf_util_get_boolean (const oconfig_item_t *ci, _Bool *ret_bool) /* {{{ */
 {
 	if ((ci == NULL) || (ret_bool == NULL))
@@ -967,7 +1005,7 @@ int cf_util_get_boolean (const oconfig_item_t *ci, _Bool *ret_bool) /* {{{ */
 	if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_BOOLEAN))
 	{
 		ERROR ("cf_util_get_boolean: The %s option requires "
-				"exactly one string argument.", ci->key);
+				"exactly one boolean argument.", ci->key);
 		return (-1);
 	}
 

@@ -178,8 +178,14 @@
 /* Define to 1 if you have the `host_statistics' function. */
 #undef HAVE_HOST_STATISTICS
 
+/* Define if the function htonll exists. */
+#undef HAVE_HTONLL
+
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
+
+/* Define to 1 if you have the `if_indextoname' function. */
+#undef HAVE_IF_INDEXTONAME
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -448,6 +454,9 @@
 /* Define to 1 if you have the <mnttab.h> header file. */
 #undef HAVE_MNTTAB_H
 
+/* Define to 1 if you have the <modbus/modbus.h> header file. */
+#undef HAVE_MODBUS_MODBUS_H
+
 /* Define to 1 if you have the <mysql.h> header file. */
 #undef HAVE_MYSQL_H
 
@@ -589,6 +598,9 @@
 /* Define to 1 if the curl_json plugin is enabled. */
 #undef HAVE_PLUGIN_CURL_JSON
 
+/* Define to 1 if the curl_xml plugin is enabled. */
+#undef HAVE_PLUGIN_CURL_XML
+
 /* Define to 1 if the dbi plugin is enabled. */
 #undef HAVE_PLUGIN_DBI
 
@@ -679,6 +691,9 @@
 /* Define to 1 if the memory plugin is enabled. */
 #undef HAVE_PLUGIN_MEMORY
 
+/* Define to 1 if the modbus plugin is enabled. */
+#undef HAVE_PLUGIN_MODBUS
+
 /* Define to 1 if the multimeter plugin is enabled. */
 #undef HAVE_PLUGIN_MULTIMETER
 
@@ -726,6 +741,9 @@
 
 /* Define to 1 if the perl plugin is enabled. */
 #undef HAVE_PLUGIN_PERL
+
+/* Define to 1 if the pinba plugin is enabled. */
+#undef HAVE_PLUGIN_PINBA
 
 /* Define to 1 if the ping plugin is enabled. */
 #undef HAVE_PLUGIN_PING
@@ -889,6 +907,9 @@
 /* Define if the function getmntent exists. It's the version from libseq. */
 #undef HAVE_SEQ_GETMNTENT
 
+/* Define to 1 if you have the `setenv' function. */
+#undef HAVE_SETENV
+
 /* Define to 1 if you have the `setgroups' function. */
 #undef HAVE_SETGROUPS
 
@@ -981,6 +1002,9 @@
 
 /* Define to 1 if `ifi_opackets' is a member of `struct if_data'. */
 #undef HAVE_STRUCT_IF_DATA_IFI_OPACKETS
+
+/* Define to 1 if `imr_ifindex' is a member of `struct ip_mreqn'. */
+#undef HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
 
 /* Define if struct kinfo_proc exists in the FreeBSD variant. */
 #undef HAVE_STRUCT_KINFO_PROC_FREEBSD

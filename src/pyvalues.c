@@ -32,6 +32,72 @@
 
 #include "cpython.h"
 
+static PyObject *cpy_common_repr(PyObject *s) {
+	PyObject *ret, *tmp;
+	static PyObject *l_type = NULL, *l_type_instance = NULL, *l_plugin = NULL, *l_plugin_instance = NULL;
+	static PyObject *l_host = NULL, *l_time = NULL;
+	PluginData *self = (PluginData *) s;
+	
+	if (l_type == NULL)
+		l_type = cpy_string_to_unicode_or_bytes("(type=");
+	if (l_type_instance == NULL)
+		l_type_instance = cpy_string_to_unicode_or_bytes(",type_instance=");
+	if (l_plugin == NULL)
+		l_plugin = cpy_string_to_unicode_or_bytes(",plugin=");
+	if (l_plugin_instance == NULL)
+		l_plugin_instance = cpy_string_to_unicode_or_bytes(",plugin_instance=");
+	if (l_host == NULL)
+		l_host = cpy_string_to_unicode_or_bytes(",host=");
+	if (l_time == NULL)
+		l_time = cpy_string_to_unicode_or_bytes(",time=");
+	
+	if (!l_type || !l_type_instance || !l_plugin || !l_plugin_instance || !l_host || !l_time)
+		return NULL;
+	
+	ret = cpy_string_to_unicode_or_bytes(s->ob_type->tp_name);
+
+	CPY_STRCAT(&ret, l_type);
+	tmp = cpy_string_to_unicode_or_bytes(self->type);
+	CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+	CPY_STRCAT_AND_DEL(&ret, tmp);
+
+	if (self->type_instance[0] != 0) {
+		CPY_STRCAT(&ret, l_type_instance);
+		tmp = cpy_string_to_unicode_or_bytes(self->type_instance);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+
+	if (self->plugin[0] != 0) {
+		CPY_STRCAT(&ret, l_plugin);
+		tmp = cpy_string_to_unicode_or_bytes(self->plugin);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+
+	if (self->plugin_instance[0] != 0) {
+		CPY_STRCAT(&ret, l_plugin_instance);
+		tmp = cpy_string_to_unicode_or_bytes(self->plugin_instance);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+
+	if (self->host[0] != 0) {
+		CPY_STRCAT(&ret, l_host);
+		tmp = cpy_string_to_unicode_or_bytes(self->host);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+
+	if (self->time != 0) {
+		CPY_STRCAT(&ret, l_time);
+		tmp = PyInt_FromLong(self->time);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+	return ret;
+}
+
 static char time_doc[] = "This is the Unix timestap of the time this value was read.\n"
 		"For dispatching values this can be set to 0 which means \"now\".\n"
 		"This means the time the value is actually dispatched, not the time\n"
@@ -81,8 +147,8 @@ static int PluginData_init(PyObject *s, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"type", "plugin_instance", "type_instance",
 			"plugin", "host", "time", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|sssssd", kwlist, &type,
-			&plugin_instance, &type_instance, &plugin, &host, &time))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|etetetetetd", kwlist, NULL, &type,
+			NULL, &plugin_instance, NULL, &type_instance, NULL, &plugin, NULL, &host, &time))
 		return -1;
 	
 	if (type[0] != 0 && plugin_get_ds(type) == NULL) {
@@ -101,14 +167,18 @@ static int PluginData_init(PyObject *s, PyObject *args, PyObject *kwds) {
 }
 
 static PyObject *PluginData_repr(PyObject *s) {
-	PluginData *self = (PluginData *) s;
+	PyObject *ret;
+	static PyObject *l_closing = NULL;
 	
-	return PyString_FromFormat("collectd.Values(type='%s%s%s%s%s%s%s%s%s',time=%lu)", self->type,
-			*self->type_instance ? "',type_instance='" : "", self->type_instance,
-			*self->plugin ? "',plugin='" : "", self->plugin,
-			*self->plugin_instance ? "',plugin_instance='" : "", self->plugin_instance,
-			*self->host ? "',host='" : "", self->host,
-			(long unsigned) self->time);
+	if (l_closing == NULL)
+		l_closing = cpy_string_to_unicode_or_bytes(")");
+	
+	if (l_closing == NULL)
+		return NULL;
+	
+	ret = cpy_common_repr(s);
+	CPY_STRCAT(&ret, l_closing);
+	return ret;
 }
 
 static PyMemberDef PluginData_members[] = {
@@ -119,7 +189,7 @@ static PyMemberDef PluginData_members[] = {
 static PyObject *PluginData_getstring(PyObject *self, void *data) {
 	const char *value = ((char *) self) + (intptr_t) data;
 	
-	return PyString_FromString(value);
+	return cpy_string_to_unicode_or_bytes(value);
 }
 
 static int PluginData_setstring(PyObject *self, PyObject *value, void *data) {
@@ -130,10 +200,15 @@ static int PluginData_setstring(PyObject *self, PyObject *value, void *data) {
 		PyErr_SetString(PyExc_TypeError, "Cannot delete this attribute");
 		return -1;
 	}
-	new = PyString_AsString(value);
-	if (new == NULL) return -1;
+	Py_INCREF(value);
+	new = cpy_unicode_or_bytes_to_string(&value);
+	if (new == NULL) {
+		Py_DECREF(value);
+		return -1;
+	}
 	old = ((char *) self) + (intptr_t) data;
 	sstrncpy(old, new, DATA_MAX_NAME_LEN);
+	Py_DECREF(value);
 	return 0;
 }
 
@@ -145,16 +220,22 @@ static int PluginData_settype(PyObject *self, PyObject *value, void *data) {
 		PyErr_SetString(PyExc_TypeError, "Cannot delete this attribute");
 		return -1;
 	}
-	new = PyString_AsString(value);
-	if (new == NULL) return -1;
+	Py_INCREF(value);
+	new = cpy_unicode_or_bytes_to_string(&value);
+	if (new == NULL) {
+		Py_DECREF(value);
+		return -1;
+	}
 
 	if (plugin_get_ds(new) == NULL) {
 		PyErr_Format(PyExc_TypeError, "Dataset %s not found", new);
+		Py_DECREF(value);
 		return -1;
 	}
 
 	old = ((char *) self) + (intptr_t) data;
 	sstrncpy(old, new, DATA_MAX_NAME_LEN);
+	Py_DECREF(value);
 	return 0;
 }
 
@@ -168,8 +249,7 @@ static PyGetSetDef PluginData_getseters[] = {
 };
 
 PyTypeObject PluginDataType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                         /* Always 0 */
+	CPY_INIT_TYPE
 	"collectd.PluginData",     /* tp_name */
 	sizeof(PluginData),        /* tp_basicsize */
 	0,                         /* Will be filled in later */
@@ -228,6 +308,14 @@ static char values_doc[] = "These are the actual values that get dispatched to c
 		"exception will be raised. If the content of the sequence is not a number,\n"
 		"a TypeError exception will be raised.";
 
+static char meta_doc[] = "These are the meta data for this Value object.\n"
+		"It has to be a dictionary of numbers, strings or bools. All keys must be\n"
+		"strings. int and long objects will be dispatched as signed integers unless\n"
+		"they are between 2**63 and 2**64-1, which will result in a unsigned integer.\n"
+		"You can force one of these storage classes by using the classes\n"
+		"collectd.Signed and collectd.Unsigned. A meta object received by a write\n"
+		"callback will always contain Signed or Unsigned objects.";
+
 static char dispatch_doc[] = "dispatch([type][, values][, plugin_instance][, type_instance]"
 		"[, plugin][, host][, time][, interval]) -> None.  Dispatch a value list.\n"
 		"\n"
@@ -256,32 +344,37 @@ static PyObject *Values_new(PyTypeObject *type, PyObject *args, PyObject *kwds) 
 		return NULL;
 	
 	self->values = PyList_New(0);
+	self->meta = PyDict_New();
 	self->interval = 0;
 	return (PyObject *) self;
 }
 
 static int Values_init(PyObject *s, PyObject *args, PyObject *kwds) {
 	Values *self = (Values *) s;
-	int interval = 0, ret;
+	int interval = 0;
 	double time = 0;
-	PyObject *values = NULL, *tmp;
+	PyObject *values = NULL, *meta = NULL, *tmp;
 	const char *type = "", *plugin_instance = "", *type_instance = "", *plugin = "", *host = "";
 	static char *kwlist[] = {"type", "values", "plugin_instance", "type_instance",
-			"plugin", "host", "time", "interval", NULL};
+			"plugin", "host", "time", "interval", "meta", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|sOssssdi", kwlist,
-			&type, &values, &plugin_instance, &type_instance,
-			&plugin, &host, &time, &interval))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|etOetetetetdiO", kwlist,
+			NULL, &type, &values, NULL, &plugin_instance, NULL, &type_instance,
+			NULL, &plugin, NULL, &host, &time, &interval, &meta))
 		return -1;
 	
-	tmp = Py_BuildValue("sssssd", type, plugin_instance, type_instance, plugin, host, time);
-	if (tmp == NULL)
+	if (type[0] != 0 && plugin_get_ds(type) == NULL) {
+		PyErr_Format(PyExc_TypeError, "Dataset %s not found", type);
 		return -1;
-	ret = PluginDataType.tp_init(s, tmp, NULL);
-	Py_DECREF(tmp);
-	if (ret != 0)
-		return -1;
-	
+	}
+
+	sstrncpy(self->data.host, host, sizeof(self->data.host));
+	sstrncpy(self->data.plugin, plugin, sizeof(self->data.plugin));
+	sstrncpy(self->data.plugin_instance, plugin_instance, sizeof(self->data.plugin_instance));
+	sstrncpy(self->data.type, type, sizeof(self->data.type));
+	sstrncpy(self->data.type_instance, type_instance, sizeof(self->data.type_instance));
+	self->data.time = time;
+
 	if (values == NULL) {
 		values = PyList_New(0);
 		PyErr_Clear();
@@ -289,12 +382,100 @@ static int Values_init(PyObject *s, PyObject *args, PyObject *kwds) {
 		Py_INCREF(values);
 	}
 	
+	if (meta == NULL) {
+		meta = PyDict_New();
+		PyErr_Clear();
+	} else {
+		Py_INCREF(meta);
+	}
+	
 	tmp = self->values;
 	self->values = values;
 	Py_XDECREF(tmp);
 	
+	tmp = self->meta;
+	self->meta = meta;
+	Py_XDECREF(tmp);
+
 	self->interval = interval;
 	return 0;
+}
+
+static meta_data_t *cpy_build_meta(PyObject *meta) {
+	int i, s;
+	meta_data_t *m = NULL;
+	PyObject *l;
+	
+	if (!meta)
+		return NULL;
+
+	m = meta_data_create();
+	l = PyDict_Items(meta);
+	s = PyList_Size(l);
+	for (i = 0; i < s; ++i) {
+		const char *string, *keystring;
+		PyObject *key, *value, *item, *tmp;
+		
+		item = PyList_GET_ITEM(l, i);
+		key = PyTuple_GET_ITEM(item, 0);
+		Py_INCREF(key);
+		keystring = cpy_unicode_or_bytes_to_string(&key);
+		if (!keystring) {
+			PyErr_Clear();
+			Py_XDECREF(key);
+			continue;
+		}
+		value = PyTuple_GET_ITEM(item, 1);
+		Py_INCREF(value);
+		if (value == Py_True) {
+			meta_data_add_boolean(m, keystring, 1);
+		} else if (value == Py_False) {
+			meta_data_add_boolean(m, keystring, 0);
+		} else if (PyFloat_Check(value)) {
+			meta_data_add_double(m, keystring, PyFloat_AsDouble(value));
+		} else if (PyObject_TypeCheck(value, &SignedType)) {
+			long long int lli;
+			lli = PyLong_AsLongLong(value);
+			if (!PyErr_Occurred() && (lli == (int64_t) lli))
+				meta_data_add_signed_int(m, keystring, lli);
+		} else if (PyObject_TypeCheck(value, &UnsignedType)) {
+			long long unsigned llu;
+			llu = PyLong_AsUnsignedLongLong(value);
+			if (!PyErr_Occurred() && (llu == (uint64_t) llu))
+				meta_data_add_unsigned_int(m, keystring, llu);
+		} else if (PyNumber_Check(value)) {
+			long long int lli;
+			long long unsigned llu;
+			tmp = PyNumber_Long(value);
+			lli = PyLong_AsLongLong(tmp);
+			if (!PyErr_Occurred() && (lli == (int64_t) lli)) {
+				meta_data_add_signed_int(m, keystring, lli);
+			} else {
+				PyErr_Clear();
+				llu = PyLong_AsUnsignedLongLong(tmp);
+				if (!PyErr_Occurred() && (llu == (uint64_t) llu))
+					meta_data_add_unsigned_int(m, keystring, llu);
+			}
+			Py_XDECREF(tmp);
+		} else {
+			string = cpy_unicode_or_bytes_to_string(&value);
+			if (string) {
+				meta_data_add_string(m, keystring, string);
+			} else {
+				PyErr_Clear();
+				tmp = PyObject_Str(value);
+				string = cpy_unicode_or_bytes_to_string(&tmp);
+				if (string)
+					meta_data_add_string(m, keystring, string);
+				Py_XDECREF(tmp);
+			}
+		}
+		if (PyErr_Occurred())
+			cpy_log_exception("building meta data");
+		Py_XDECREF(value);
+		Py_DECREF(key);
+	}
+	return m;
 }
 
 static PyObject *Values_dispatch(Values *self, PyObject *args, PyObject *kwds) {
@@ -303,7 +484,7 @@ static PyObject *Values_dispatch(Values *self, PyObject *args, PyObject *kwds) {
 	int size;
 	value_t *value;
 	value_list_t value_list = VALUE_LIST_INIT;
-	PyObject *values = self->values;
+	PyObject *values = self->values, *meta = self->meta;
 	double time = self->data.time;
 	int interval = self->interval;
 	const char *host = self->data.host;
@@ -313,10 +494,10 @@ static PyObject *Values_dispatch(Values *self, PyObject *args, PyObject *kwds) {
 	const char *type_instance = self->data.type_instance;
 	
 	static char *kwlist[] = {"type", "values", "plugin_instance", "type_instance",
-			"plugin", "host", "time", "interval", NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|sOssssdi", kwlist,
-			&type, &values, &plugin_instance, &type_instance,
-			&plugin, &host, &time, &interval))
+			"plugin", "host", "time", "interval", "meta", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|etOetetetetdiO", kwlist,
+			NULL, &type, &values, NULL, &plugin_instance, NULL, &type_instance,
+			NULL, &plugin, NULL, &host, &time, &interval, &meta))
 		return NULL;
 
 	if (type[0] == 0) {
@@ -330,6 +511,10 @@ static PyObject *Values_dispatch(Values *self, PyObject *args, PyObject *kwds) {
 	}
 	if (values == NULL || (PyTuple_Check(values) == 0 && PyList_Check(values) == 0)) {
 		PyErr_Format(PyExc_TypeError, "values must be list or tuple");
+		return NULL;
+	}
+	if (meta != NULL && meta != Py_None && !PyDict_Check(meta)) {
+		PyErr_Format(PyExc_TypeError, "meta must be a dict");
 		return NULL;
 	}
 	size = (int) PySequence_Length(values);
@@ -372,6 +557,7 @@ static PyObject *Values_dispatch(Values *self, PyObject *args, PyObject *kwds) {
 		}
 	}
 	value_list.values = value;
+	value_list.meta = cpy_build_meta(meta);
 	value_list.values_len = size;
 	value_list.time = time;
 	value_list.interval = interval;
@@ -380,7 +566,6 @@ static PyObject *Values_dispatch(Values *self, PyObject *args, PyObject *kwds) {
 	sstrncpy(value_list.plugin_instance, plugin_instance, sizeof(value_list.plugin_instance));
 	sstrncpy(value_list.type, type, sizeof(value_list.type));
 	sstrncpy(value_list.type_instance, type_instance, sizeof(value_list.type_instance));
-	value_list.meta = NULL;
 	if (value_list.host[0] == 0)
 		sstrncpy(value_list.host, hostname_g, sizeof(value_list.host));
 	if (value_list.plugin[0] == 0)
@@ -402,7 +587,7 @@ static PyObject *Values_write(Values *self, PyObject *args, PyObject *kwds) {
 	int size;
 	value_t *value;
 	value_list_t value_list = VALUE_LIST_INIT;
-	PyObject *values = self->values;
+	PyObject *values = self->values, *meta = self->meta;
 	double time = self->data.time;
 	int interval = self->interval;
 	const char *host = self->data.host;
@@ -413,10 +598,10 @@ static PyObject *Values_write(Values *self, PyObject *args, PyObject *kwds) {
 	const char *dest = NULL;
 	
 	static char *kwlist[] = {"destination", "type", "values", "plugin_instance", "type_instance",
-			"plugin", "host", "time", "interval", NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|sOssssdi", kwlist,
-			&type, &values, &plugin_instance, &type_instance,
-			&plugin, &host, &time, &interval))
+			"plugin", "host", "time", "interval", "meta", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|etOetetetetdiO", kwlist,
+			NULL, &type, &values, NULL, &plugin_instance, NULL, &type_instance,
+			NULL, &plugin, NULL, &host, &time, &interval, &meta))
 		return NULL;
 
 	if (type[0] == 0) {
@@ -480,7 +665,7 @@ static PyObject *Values_write(Values *self, PyObject *args, PyObject *kwds) {
 	sstrncpy(value_list.plugin_instance, plugin_instance, sizeof(value_list.plugin_instance));
 	sstrncpy(value_list.type, type, sizeof(value_list.type));
 	sstrncpy(value_list.type_instance, type_instance, sizeof(value_list.type_instance));
-	value_list.meta = NULL;
+	value_list.meta = cpy_build_meta(meta);;
 	if (value_list.host[0] == 0)
 		sstrncpy(value_list.host, hostname_g, sizeof(value_list.host));
 	if (value_list.plugin[0] == 0)
@@ -497,34 +682,54 @@ static PyObject *Values_write(Values *self, PyObject *args, PyObject *kwds) {
 }
 
 static PyObject *Values_repr(PyObject *s) {
-	PyObject *ret, *valuestring = NULL;
+	PyObject *ret, *tmp;
+	static PyObject *l_interval = NULL, *l_values = NULL, *l_meta = NULL, *l_closing = NULL;
 	Values *self = (Values *) s;
 	
-	if (self->values != NULL)
-		valuestring = PyObject_Repr(self->values);
-	if (valuestring == NULL)
+	if (l_interval == NULL)
+		l_interval = cpy_string_to_unicode_or_bytes(",interval=");
+	if (l_values == NULL)
+		l_values = cpy_string_to_unicode_or_bytes(",values=");
+	if (l_meta == NULL)
+		l_meta = cpy_string_to_unicode_or_bytes(",meta=");
+	if (l_closing == NULL)
+		l_closing = cpy_string_to_unicode_or_bytes(")");
+	
+	if (l_interval == NULL || l_values == NULL || l_meta == NULL || l_closing == NULL)
 		return NULL;
 	
-	ret = PyString_FromFormat("collectd.Values(type='%s%s%s%s%s%s%s%s%s',time=%lu,interval=%i,values=%s)", self->data.type,
-			*self->data.type_instance ? "',type_instance='" : "", self->data.type_instance,
-			*self->data.plugin ? "',plugin='" : "", self->data.plugin,
-			*self->data.plugin_instance ? "',plugin_instance='" : "", self->data.plugin_instance,
-			*self->data.host ? "',host='" : "", self->data.host,
-			(long unsigned) self->data.time, self->interval,
-			valuestring ? PyString_AsString(valuestring) : "[]");
-	Py_XDECREF(valuestring);
+	ret = cpy_common_repr(s);
+	if (self->interval != 0) {
+		CPY_STRCAT(&ret, l_interval);
+		tmp = PyInt_FromLong(self->interval);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+	if (self->values && (!PyList_Check(self->values) || PySequence_Length(self->values) > 0)) {
+		CPY_STRCAT(&ret, l_values);
+		tmp = PyObject_Repr(self->values);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+	if (self->meta && (!PyDict_Check(self->meta) || PyDict_Size(self->meta) > 0)) {
+		CPY_STRCAT(&ret, l_meta);
+		tmp = PyObject_Repr(self->meta);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+	CPY_STRCAT(&ret, l_closing);
 	return ret;
 }
 
 static int Values_traverse(PyObject *self, visitproc visit, void *arg) {
 	Values *v = (Values *) self;
 	Py_VISIT(v->values);
+	Py_VISIT(v->meta);
 	return 0;
 }
 
 static int Values_clear(PyObject *self) {
 	Values *v = (Values *) self;
 	Py_CLEAR(v->values);
+	Py_CLEAR(v->meta);
 	return 0;
 }
 
@@ -536,6 +741,7 @@ static void Values_dealloc(PyObject *self) {
 static PyMemberDef Values_members[] = {
 	{"interval", T_INT, offsetof(Values, interval), 0, interval_doc},
 	{"values", T_OBJECT_EX, offsetof(Values, values), 0, values_doc},
+	{"meta", T_OBJECT_EX, offsetof(Values, meta), 0, meta_doc},
 	{NULL}
 };
 
@@ -546,8 +752,7 @@ static PyMethodDef Values_methods[] = {
 };
 
 PyTypeObject ValuesType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                         /* Always 0 */
+	CPY_INIT_TYPE
 	"collectd.Values",         /* tp_name */
 	sizeof(Values),            /* tp_basicsize */
 	0,                         /* Will be filled in later */
@@ -600,27 +805,30 @@ static char Notification_doc[] = "The Notification class is a wrapper around the
 
 static int Notification_init(PyObject *s, PyObject *args, PyObject *kwds) {
 	Notification *self = (Notification *) s;
-	PyObject *tmp;
-	int severity = 0, ret;
+	int severity = 0;
 	double time = 0;
 	const char *message = "";
 	const char *type = "", *plugin_instance = "", *type_instance = "", *plugin = "", *host = "";
 	static char *kwlist[] = {"type", "message", "plugin_instance", "type_instance",
 			"plugin", "host", "time", "severity", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssssssdi", kwlist,
-			&type, &message, &plugin_instance, &type_instance,
-			&plugin, &host, &time, &severity))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|etetetetetetdi", kwlist,
+			NULL, &type, NULL, &message, NULL, &plugin_instance, NULL, &type_instance,
+			NULL, &plugin, NULL, &host, &time, &severity))
 		return -1;
 	
-	tmp = Py_BuildValue("sssssd", type, plugin_instance, type_instance, plugin, host, time);
-	if (tmp == NULL)
+	if (type[0] != 0 && plugin_get_ds(type) == NULL) {
+		PyErr_Format(PyExc_TypeError, "Dataset %s not found", type);
 		return -1;
-	ret = PluginDataType.tp_init(s, tmp, NULL);
-	Py_DECREF(tmp);
-	if (ret != 0)
-		return -1;
-	
+	}
+
+	sstrncpy(self->data.host, host, sizeof(self->data.host));
+	sstrncpy(self->data.plugin, plugin, sizeof(self->data.plugin));
+	sstrncpy(self->data.plugin_instance, plugin_instance, sizeof(self->data.plugin_instance));
+	sstrncpy(self->data.type, type, sizeof(self->data.type));
+	sstrncpy(self->data.type_instance, type_instance, sizeof(self->data.type_instance));
+	self->data.time = time;
+
 	sstrncpy(self->message, message, sizeof(self->message));
 	self->severity = severity;
 	return 0;
@@ -641,9 +849,9 @@ static PyObject *Notification_dispatch(Notification *self, PyObject *args, PyObj
 	
 	static char *kwlist[] = {"type", "message", "plugin_instance", "type_instance",
 			"plugin", "host", "time", "severity", NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssssssdi", kwlist,
-			&type, &message, &plugin_instance, &type_instance,
-			&plugin, &host, &t, &severity))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|etetetetetetdi", kwlist,
+			NULL, &type, NULL, &message, NULL, &plugin_instance, NULL, &type_instance,
+			NULL, &plugin, NULL, &host, &t, &severity))
 		return NULL;
 
 	if (type[0] == 0) {
@@ -701,24 +909,47 @@ static int Notification_setstring(PyObject *self, PyObject *value, void *data) {
 		PyErr_SetString(PyExc_TypeError, "Cannot delete this attribute");
 		return -1;
 	}
-	new = PyString_AsString(value);
-	if (new == NULL) return -1;
+	Py_INCREF(value);
+	new = cpy_unicode_or_bytes_to_string(&value);
+	if (new == NULL) {
+		Py_DECREF(value);
+		return -1;
+	}
 	old = ((char *) self) + (intptr_t) data;
 	sstrncpy(old, new, NOTIF_MAX_MSG_LEN);
+	Py_DECREF(value);
 	return 0;
 }
 
 static PyObject *Notification_repr(PyObject *s) {
-	PyObject *ret;
+	PyObject *ret, *tmp;
+	static PyObject *l_severity = NULL, *l_message = NULL, *l_closing = NULL;
 	Notification *self = (Notification *) s;
 	
-	ret = PyString_FromFormat("collectd.Values(type='%s%s%s%s%s%s%s%s%s%s%s',time=%lu,interval=%i)", self->data.type,
-			*self->data.type_instance ? "',type_instance='" : "", self->data.type_instance,
-			*self->data.plugin ? "',plugin='" : "", self->data.plugin,
-			*self->data.plugin_instance ? "',plugin_instance='" : "", self->data.plugin_instance,
-			*self->data.host ? "',host='" : "", self->data.host,
-			*self->message ? "',message='" : "", self->message,
-			(long unsigned) self->data.time, self->severity);
+	if (l_severity == NULL)
+		l_severity = cpy_string_to_unicode_or_bytes(",severity=");
+	if (l_message == NULL)
+		l_message = cpy_string_to_unicode_or_bytes(",message=");
+	if (l_closing == NULL)
+		l_closing = cpy_string_to_unicode_or_bytes(")");
+	
+	if (l_severity == NULL || l_message == NULL || l_closing == NULL)
+		return NULL;
+	
+	ret = cpy_common_repr(s);
+	if (self->severity != 0) {
+		CPY_STRCAT(&ret, l_severity);
+		tmp = PyInt_FromLong(self->severity);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+	if (self->message[0] != 0) {
+		CPY_STRCAT(&ret, l_message);
+		tmp = cpy_string_to_unicode_or_bytes(self->message);
+		CPY_SUBSTITUTE(PyObject_Repr, tmp, tmp);
+		CPY_STRCAT_AND_DEL(&ret, tmp);
+	}
+	CPY_STRCAT(&ret, l_closing);
 	return ret;
 }
 
@@ -738,8 +969,7 @@ static PyGetSetDef Notification_getseters[] = {
 };
 
 PyTypeObject NotificationType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                         /* Always 0 */
+	CPY_INIT_TYPE
 	"collectd.Notification",   /* tp_name */
 	sizeof(Notification),      /* tp_basicsize */
 	0,                         /* Will be filled in later */
@@ -777,4 +1007,58 @@ PyTypeObject NotificationType = {
 	Notification_init,         /* tp_init */
 	0,                         /* tp_alloc */
 	Notification_new           /* tp_new */
+};
+
+static const char Signed_doc[] = "This is a long by another name. Use it in meta data dicts\n"
+		"to choose the way it is stored in the meta data.";
+
+PyTypeObject SignedType = {
+	CPY_INIT_TYPE
+	"collectd.Signed",         /* tp_name */
+	sizeof(Signed),            /* tp_basicsize */
+	0,                         /* Will be filled in later */
+	0,                         /* tp_dealloc */
+	0,                         /* tp_print */
+	0,                         /* tp_getattr */
+	0,                         /* tp_setattr */
+	0,                         /* tp_compare */
+	0,                         /* tp_repr */
+	0,                         /* tp_as_number */
+	0,                         /* tp_as_sequence */
+	0,                         /* tp_as_mapping */
+	0,                         /* tp_hash */
+	0,                         /* tp_call */
+	0,                         /* tp_str */
+	0,                         /* tp_getattro */
+	0,                         /* tp_setattro */
+	0,                         /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+	Signed_doc                 /* tp_doc */
+};
+
+static const char Unsigned_doc[] = "This is a long by another name. Use it in meta data dicts\n"
+		"to choose the way it is stored in the meta data.";
+
+PyTypeObject UnsignedType = {
+	CPY_INIT_TYPE
+	"collectd.Unsigned",       /* tp_name */
+	sizeof(Unsigned),          /* tp_basicsize */
+	0,                         /* Will be filled in later */
+	0,                         /* tp_dealloc */
+	0,                         /* tp_print */
+	0,                         /* tp_getattr */
+	0,                         /* tp_setattr */
+	0,                         /* tp_compare */
+	0,                         /* tp_repr */
+	0,                         /* tp_as_number */
+	0,                         /* tp_as_sequence */
+	0,                         /* tp_as_mapping */
+	0,                         /* tp_hash */
+	0,                         /* tp_call */
+	0,                         /* tp_str */
+	0,                         /* tp_getattro */
+	0,                         /* tp_setattro */
+	0,                         /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+	Unsigned_doc               /* tp_doc */
 };

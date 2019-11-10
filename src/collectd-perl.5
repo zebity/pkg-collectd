@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PERL 5"
-.TH COLLECTD-PERL 5 "2010-01-14" "4.9.1" "collectd"
+.TH COLLECTD-PERL 5 "2010-05-01" "4.10.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -138,7 +138,7 @@ collectd\-perl \- Documentation of collectd's \f(CW\*(C`perl plugin\*(C'\fR
 \&  # ...
 \&  <Plugin perl>
 \&    IncludeDir "/path/to/perl/plugins"
-\&    BaseName "Collectd::Plugin"
+\&    BaseName "Collectd::Plugins"
 \&    EnableDebugger ""
 \&    LoadPlugin "FooBar"
 \&
@@ -164,7 +164,9 @@ causes the Perl-interpreter to be initialized.
 .IP "\fBBaseName\fR \fIName\fR" 4
 .IX Item "BaseName Name"
 Prepends \fIName\fR\fB::\fR to all plugin names loaded after this option. This is
-provided for convenience to keep plugin names short.
+provided for convenience to keep plugin names short. All Perl-based plugins
+provided with the \fIcollectd\fR distributions reside in the \f(CW\*(C`Collectd::Plugins\*(C'\fR
+namespace.
 .IP "<\fBPlugin\fR \fIName\fR> block" 4
 .IX Item "<Plugin Name> block"
 This block may be used to pass on configuration settings to a Perl plugin. The
@@ -267,7 +269,7 @@ The following complex types are used to pass values between the Perl plugin
 and collectd:
 .IP "Config-Item" 4
 .IX Item "Config-Item"
-A config-item is one structure which keeps the informations provided in the
+A config-item is one structure which keeps the information provided in the
 configuration file. The array of children keeps one entry for each
 configuration option. Each such entry is another config-item structure, which
 may nest further if nested blocks are used.
@@ -793,7 +795,7 @@ types used by the read, write and match functions.
 .SH "NOTES"
 .IX Header "NOTES"
 .IP "\(bu" 4
-Please feel free to send in new plugins to collectd's mailinglist at
+Please feel free to send in new plugins to collectd's mailing list at
 <collectd\ at\ verplant.org> for review and, possibly,
 inclusion in the main distribution. In the latter case, we will take care of
 keeping the plugin up to date and adapting it to new versions of collectd.

@@ -63,6 +63,7 @@ FQDNLookup   true
 @LOAD_PLUGIN_CSV@LoadPlugin csv
 #@BUILD_PLUGIN_CURL_TRUE@LoadPlugin curl
 #@BUILD_PLUGIN_CURL_JSON_TRUE@LoadPlugin curl_json
+#@BUILD_PLUGIN_CURL_XML_TRUE@LoadPlugin curl_xml
 #@BUILD_PLUGIN_DBI_TRUE@LoadPlugin dbi
 #@BUILD_PLUGIN_DF_TRUE@LoadPlugin df
 #@BUILD_PLUGIN_DISK_TRUE@LoadPlugin disk
@@ -103,6 +104,7 @@ FQDNLookup   true
 #@BUILD_PLUGIN_OPENVPN_TRUE@LoadPlugin openvpn
 #@BUILD_PLUGIN_ORACLE_TRUE@LoadPlugin oracle
 #@BUILD_PLUGIN_PERL_TRUE@LoadPlugin perl
+#@BUILD_PLUGIN_PINBA_TRUE@LoadPlugin pinba
 #@BUILD_PLUGIN_PING_TRUE@LoadPlugin ping
 #@BUILD_PLUGIN_POSTGRESQL_TRUE@LoadPlugin postgresql
 #@BUILD_PLUGIN_POWERDNS_TRUE@LoadPlugin powerdns
@@ -231,6 +233,25 @@ FQDNLookup   true
 #  </URL>
 #</Plugin>
 
+#<Plugin "curl_xml">
+#  <URL "http://localhost/stats.xml">
+#    Host "my_host"
+#    Instance "some_instance"
+#    User "collectd"
+#    Password "thaiNg0I"
+#    VerifyPeer true
+#    VerifyHost true
+#    CACert "/path/to/ca.crt"
+#
+#    <XPath "table[@id=\"magic_level\"]/tr">
+#      Type "magic_level"
+#      #InstancePrefix "prefix-"
+#      InstanceFrom "td[1]"
+#      ValuesFrom "td[2]/span[@class=\"level\"]"
+#    </XPath>
+#  </URL>
+#</Plugin>
+
 #<Plugin dbi>
 #	<Query "num_of_customers">
 #		Statement "SELECT 'customers' AS c_key, COUNT(*) AS c_value FROM customers_tbl"
@@ -349,7 +370,7 @@ FQDNLookup   true
 
 #<Plugin "java">
 #	JVMArg "-verbose:jni"
-#	JVMArg "-Djava.class.path=@prefix@/share/collectd/java"
+#	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 #
 #	LoadPlugin "org.collectd.java.Foobar"
 #	<Plugin "org.collectd.java.Foobar">
@@ -562,7 +583,7 @@ FQDNLookup   true
 
 #<Plugin perl>
 #	IncludeDir "/my/include/path"
-#	BaseName "Collectd::Plugin"
+#	BaseName "Collectd::Plugins"
 #	EnableDebugger ""
 #	LoadPlugin Monitorus
 #	LoadPlugin OpenVZ
@@ -571,6 +592,16 @@ FQDNLookup   true
 #		Foo "Bar"
 #		Qux "Baz"
 #	</Plugin>
+#</Plugin>
+
+#<Plugin pinba>
+#	Address "::0"
+#	Port "30002"
+#	<View "name">
+#		Host "host name"
+#		Server "server name"
+#		Script "script name"
+#	</View>
 #</Plugin>
 
 #<Plugin ping>
@@ -665,6 +696,10 @@ FQDNLookup   true
 #		Password "dozaiTh4"
 #		CollectInterface true
 #		CollectRegistrationTable true
+#		CollectCPULoad true
+#		CollectMemory true
+#		CollectDF true
+#		CollectDisk true
 #	</Router>
 #</Plugin>
 
@@ -760,6 +795,7 @@ FQDNLookup   true
 #    </Match>
 #    <Match>
 #      Regex "\\<R=local_user\\>"
+#      ExcludeRegex "\\<R=local_user\\>.*mail_spool defer"
 #      DSType "CounterInc"
 #      Type "counter"
 #      Instance "local_user"

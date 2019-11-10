@@ -52,6 +52,9 @@
 #if HAVE_POLL_H
 # include <poll.h>
 #endif
+#if HAVE_NET_IF_H
+# include <net/if.h>
+#endif
 
 #if HAVE_LIBGCRYPT
 # include <gcrypt.h>
@@ -118,6 +121,7 @@ typedef struct sockent
 
 	char *node;
 	char *service;
+	int interface;
 
 	union
 	{
@@ -346,7 +350,8 @@ static _Bool check_send_okay (const value_list_t *vl) /* {{{ */
   return (!received);
 } /* }}} _Bool check_send_okay */
 
-static int network_dispatch_values (value_list_t *vl) /* {{{ */
+static int network_dispatch_values (value_list_t *vl, /* {{{ */
+    const char *username)
 {
   int status;
 
@@ -385,6 +390,18 @@ static int network_dispatch_values (value_list_t *vl) /* {{{ */
     meta_data_destroy (vl->meta);
     vl->meta = NULL;
     return (status);
+  }
+
+  if (username != NULL)
+  {
+    status = meta_data_add_string (vl->meta, "network:username", username);
+    if (status != 0)
+    {
+      ERROR ("network plugin: meta_data_add_string failed.");
+      meta_data_destroy (vl->meta);
+      vl->meta = NULL;
+      return (status);
+    }
   }
 
   plugin_dispatch_values (vl);
@@ -740,11 +757,11 @@ static int parse_part_values (void **ret_buffer, size_t *ret_buffer_len,
 		    break;
 
 		  default:
-		    sfree (pkg_types);
-		    sfree (pkg_values);
 		    NOTICE ("network plugin: parse_part_values: "
 			"Don't know how to handle data source type %"PRIu8,
 			pkg_types[i]);
+		    sfree (pkg_types);
+		    sfree (pkg_values);
 		    return (-1);
 		} /* switch (pkg_types[i]) */
 	}
@@ -888,7 +905,8 @@ static int parse_part_string (void **ret_buffer, size_t *ret_buffer_len,
 #define PP_SIGNED    0x01
 #define PP_ENCRYPTED 0x02
 static int parse_packet (sockent_t *se,
-		void *buffer, size_t buffer_size, int flags);
+		void *buffer, size_t buffer_size, int flags,
+		const char *username);
 
 #define BUFFER_READ(p,s) do { \
   memcpy ((p), buffer + buffer_offset, (s)); \
@@ -983,6 +1001,8 @@ static int parse_part_sign_sha256 (sockent_t *se, /* {{{ */
   {
     ERROR ("network plugin: gcry_md_setkey failed: %s", gcry_strerror (err));
     gcry_md_close (hd);
+    sfree (secret);
+    sfree (pss.username);
     return (-1);
   }
 
@@ -1004,9 +1024,6 @@ static int parse_part_sign_sha256 (sockent_t *se, /* {{{ */
   gcry_md_close (hd);
   hd = NULL;
 
-  sfree (secret);
-  sfree (pss.username);
-
   if (memcmp (pss.hash, hash, sizeof (pss.hash)) != 0)
   {
     WARNING ("network plugin: Verifying HMAC-SHA-256 signature failed: "
@@ -1015,8 +1032,11 @@ static int parse_part_sign_sha256 (sockent_t *se, /* {{{ */
   else
   {
     parse_packet (se, buffer + buffer_offset, buffer_len - buffer_offset,
-        flags | PP_SIGNED);
+        flags | PP_SIGNED, pss.username);
   }
+
+  sfree (secret);
+  sfree (pss.username);
 
   *ret_buffer = buffer + buffer_len;
   *ret_buffer_len = 0;
@@ -1061,7 +1081,8 @@ static int parse_part_sign_sha256 (sockent_t *se, /* {{{ */
     warning_has_been_printed = 1;
   }
 
-  parse_packet (se, buffer + part_len, buffer_size - part_len, flags);
+  parse_packet (se, buffer + part_len, buffer_size - part_len, flags,
+      /* username = */ NULL);
 
   *ret_buffer = buffer + buffer_size;
   *ret_buffer_size = 0;
@@ -1140,7 +1161,10 @@ static int parse_part_encr_aes256 (sockent_t *se, /* {{{ */
   cypher = network_get_aes256_cypher (se, pea.iv, sizeof (pea.iv),
       pea.username);
   if (cypher == NULL)
+  {
+    sfree (pea.username);
     return (-1);
+  }
 
   payload_len = part_size - (PART_ENCRYPTION_AES256_SIZE + username_len);
   assert (payload_len > 0);
@@ -1152,6 +1176,7 @@ static int parse_part_encr_aes256 (sockent_t *se, /* {{{ */
       /* in = */ NULL, /* in len = */ 0);
   if (err != 0)
   {
+    sfree (pea.username);
     ERROR ("network plugin: gcry_cipher_decrypt returned: %s",
         gcry_strerror (err));
     return (-1);
@@ -1170,16 +1195,21 @@ static int parse_part_encr_aes256 (sockent_t *se, /* {{{ */
       buffer + buffer_offset, payload_len);
   if (memcmp (hash, pea.hash, sizeof (hash)) != 0)
   {
+    sfree (pea.username);
     ERROR ("network plugin: Decryption failed: Checksum mismatch.");
     return (-1);
   }
 
   parse_packet (se, buffer + buffer_offset, payload_len,
-      flags | PP_ENCRYPTED);
+      flags | PP_ENCRYPTED, pea.username);
+
+  /* XXX: Free pea.username?!? */
 
   /* Update return values */
   *ret_buffer =     buffer     + part_size;
   *ret_buffer_len = buffer_len - part_size;
+
+  sfree (pea.username);
 
   return (0);
 } /* }}} int parse_part_encr_aes256 */
@@ -1235,7 +1265,8 @@ static int parse_part_encr_aes256 (sockent_t *se, /* {{{ */
 #undef BUFFER_READ
 
 static int parse_packet (sockent_t *se, /* {{{ */
-		void *buffer, size_t buffer_size, int flags)
+		void *buffer, size_t buffer_size, int flags,
+		const char *username)
 {
 	int status;
 
@@ -1335,7 +1366,7 @@ static int parse_packet (sockent_t *se, /* {{{ */
 			if (status != 0)
 				break;
 
-			network_dispatch_values (&vl);
+			network_dispatch_values (&vl, username);
 
 			sfree (vl.values);
 		}
@@ -1549,7 +1580,7 @@ static int network_set_ttl (const sockent_t *se, const struct addrinfo *ai)
 
 		if (setsockopt (se->data.client.fd, IPPROTO_IP, optname,
 					&network_config_ttl,
-					sizeof (network_config_ttl)) == -1)
+					sizeof (network_config_ttl)) != 0)
 		{
 			char errbuf[1024];
 			ERROR ("setsockopt: %s",
@@ -1570,7 +1601,7 @@ static int network_set_ttl (const sockent_t *se, const struct addrinfo *ai)
 
 		if (setsockopt (se->data.client.fd, IPPROTO_IPV6, optname,
 					&network_config_ttl,
-					sizeof (network_config_ttl)) == -1)
+					sizeof (network_config_ttl)) != 0)
 		{
 			char errbuf[1024];
 			ERROR ("setsockopt: %s",
@@ -1583,7 +1614,110 @@ static int network_set_ttl (const sockent_t *se, const struct addrinfo *ai)
 	return (0);
 } /* int network_set_ttl */
 
-static int network_bind_socket (int fd, const struct addrinfo *ai)
+static int network_set_interface (const sockent_t *se, const struct addrinfo *ai) /* {{{ */
+{
+	DEBUG ("network plugin: network_set_interface: interface index = %i;",
+			se->interface);
+
+        assert (se->type == SOCKENT_TYPE_CLIENT);
+
+	if (ai->ai_family == AF_INET)
+	{
+		struct sockaddr_in *addr = (struct sockaddr_in *) ai->ai_addr;
+
+		if (IN_MULTICAST (ntohl (addr->sin_addr.s_addr)))
+		{
+#if HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
+			/* If possible, use the "ip_mreqn" structure which has
+			 * an "interface index" member. Using the interface
+			 * index is preferred here, because of its similarity
+			 * to the way IPv6 handles this. Unfortunately, it
+			 * appears not to be portable. */
+			struct ip_mreqn mreq;
+
+			memset (&mreq, 0, sizeof (mreq));
+			mreq.imr_multiaddr.s_addr = addr->sin_addr.s_addr;
+			mreq.imr_address.s_addr = ntohl (INADDR_ANY);
+			mreq.imr_ifindex = se->interface;
+#else
+			struct ip_mreq mreq;
+
+			memset (&mreq, 0, sizeof (mreq));
+			mreq.imr_multiaddr.s_addr = addr->sin_addr.s_addr;
+			mreq.imr_interface.s_addr = ntohl (INADDR_ANY);
+#endif
+
+			if (setsockopt (se->data.client.fd, IPPROTO_IP, IP_MULTICAST_IF,
+						&mreq, sizeof (mreq)) != 0)
+			{
+				char errbuf[1024];
+				ERROR ("setsockopt: %s",
+						sstrerror (errno, errbuf, sizeof (errbuf)));
+				return (-1);
+			}
+
+			return (0);
+		}
+	}
+	else if (ai->ai_family == AF_INET6)
+	{
+		struct sockaddr_in6 *addr = (struct sockaddr_in6 *) ai->ai_addr;
+
+		if (IN6_IS_ADDR_MULTICAST (&addr->sin6_addr))
+		{
+			if (setsockopt (se->data.client.fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+						&se->interface,
+						sizeof (se->interface)) != 0)
+			{
+				char errbuf[1024];
+				ERROR ("setsockopt: %s",
+						sstrerror (errno, errbuf,
+							sizeof (errbuf)));
+				return (-1);
+			}
+
+			return (0);
+		}
+	}
+
+	/* else: Not a multicast interface. */
+#if defined(HAVE_IF_INDEXTONAME) && HAVE_IF_INDEXTONAME && defined(SO_BINDTODEVICE)
+	if (se->interface != 0)
+	{
+		char interface_name[IFNAMSIZ];
+
+		if (if_indextoname (se->interface, interface_name) == NULL)
+			return (-1);
+
+		DEBUG ("network plugin: Binding socket to interface %s", interface_name);
+
+		if (setsockopt (se->data.client.fd, SOL_SOCKET, SO_BINDTODEVICE,
+					interface_name,
+					sizeof(interface_name)) == -1 )
+		{
+			char errbuf[1024];
+			ERROR ("setsockopt: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+			return (-1);
+		}
+	}
+/* #endif HAVE_IF_INDEXTONAME && SO_BINDTODEVICE */
+
+#else
+	WARNING ("network plugin: Cannot set the interface on a unicast "
+			"socket because "
+# if !defined(SO_BINDTODEVICE)
+			"the the \"SO_BINDTODEVICE\" socket option "
+# else
+			"the \"if_indextoname\" function "
+# endif
+			"is not available on your system.");
+#endif
+
+	return (0);
+} /* }}} network_set_interface */
+
+static int network_bind_socket (int fd, const struct addrinfo *ai, const int interface_idx)
 {
 	int loop = 0;
 	int yes  = 1;
@@ -1612,12 +1746,24 @@ static int network_bind_socket (int fd, const struct addrinfo *ai)
 		struct sockaddr_in *addr = (struct sockaddr_in *) ai->ai_addr;
 		if (IN_MULTICAST (ntohl (addr->sin_addr.s_addr)))
 		{
+#if HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
+			struct ip_mreqn mreq;
+#else
 			struct ip_mreq mreq;
+#endif
 
 			DEBUG ("fd = %i; IPv4 multicast address found", fd);
 
 			mreq.imr_multiaddr.s_addr = addr->sin_addr.s_addr;
-			mreq.imr_interface.s_addr = htonl (INADDR_ANY);
+#if HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
+			/* Set the interface using the interface index if
+			 * possible (available). Unfortunately, the struct
+			 * ip_mreqn is not portable. */
+			mreq.imr_address.s_addr = ntohl (INADDR_ANY);
+			mreq.imr_ifindex = interface_idx;
+#else
+			mreq.imr_interface.s_addr = ntohl (INADDR_ANY);
+#endif
 
 			if (setsockopt (fd, IPPROTO_IP, IP_MULTICAST_LOOP,
 						&loop, sizeof (loop)) == -1)
@@ -1638,6 +1784,8 @@ static int network_bind_socket (int fd, const struct addrinfo *ai)
 							sizeof (errbuf)));
 				return (-1);
 			}
+
+			return (0);
 		}
 	}
 	else if (ai->ai_family == AF_INET6)
@@ -1663,7 +1811,7 @@ static int network_bind_socket (int fd, const struct addrinfo *ai)
 			 * single interface; programs running on
 			 * multihomed hosts may need to join the same
 			 * group on more than one interface.*/
-			mreq.ipv6mr_interface = 0;
+			mreq.ipv6mr_interface = interface_idx;
 
 			if (setsockopt (fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
 						&loop, sizeof (loop)) == -1)
@@ -1684,8 +1832,35 @@ static int network_bind_socket (int fd, const struct addrinfo *ai)
 							sizeof (errbuf)));
 				return (-1);
 			}
+
+			return (0);
 		}
 	}
+
+#if defined(HAVE_IF_INDEXTONAME) && HAVE_IF_INDEXTONAME && defined(SO_BINDTODEVICE)
+	/* if a specific interface was set, bind the socket to it. But to avoid
+ 	 * possible problems with multicast routing, only do that for non-multicast
+	 * addresses */
+	if (interface_idx != 0)
+	{
+		char interface_name[IFNAMSIZ];
+
+		if (if_indextoname (interface_idx, interface_name) == NULL)
+			return (-1);
+
+		DEBUG ("fd = %i; Binding socket to interface %s", fd, interface_name);
+
+		if (setsockopt (fd, SOL_SOCKET, SO_BINDTODEVICE,
+					interface_name,
+					sizeof(interface_name)) == -1 )
+		{
+			char errbuf[1024];
+			ERROR ("setsockopt: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+			return (-1);
+		}
+	}
+#endif /* HAVE_IF_INDEXTONAME && SO_BINDTODEVICE */
 
 	return (0);
 } /* int network_bind_socket */
@@ -1702,6 +1877,7 @@ static int sockent_init (sockent_t *se, int type) /* {{{ */
 	se->type = SOCKENT_TYPE_CLIENT;
 	se->node = NULL;
 	se->service = NULL;
+	se->interface = 0;
 	se->next = NULL;
 
 	if (type == SOCKENT_TYPE_SERVER)
@@ -1850,7 +2026,7 @@ static int sockent_open (sockent_t *se) /* {{{ */
 				continue;
 			}
 
-			status = network_bind_socket (*tmp, ai_ptr);
+			status = network_bind_socket (*tmp, ai_ptr, se->interface);
 			if (status != 0)
 			{
 				close (*tmp);
@@ -1890,6 +2066,7 @@ static int sockent_open (sockent_t *se) /* {{{ */
 			se->data.client.addrlen = ai_ptr->ai_addrlen;
 
 			network_set_ttl (se, ai_ptr);
+			network_set_interface (se, ai_ptr);
 
 			/* We don't open more than one write-socket per
 			 * node/service pair.. */
@@ -2023,7 +2200,8 @@ static void *dispatch_thread (void __attribute__((unused)) *arg) /* {{{ */
       continue;
     }
 
-    parse_packet (se, ent->data, ent->data_len, /* flags = */ 0);
+    parse_packet (se, ent->data, ent->data_len, /* flags = */ 0,
+	/* username = */ NULL);
     sfree (ent->data);
     sfree (ent);
   } /* while (42) */
@@ -2601,6 +2779,25 @@ static int network_config_set_ttl (const oconfig_item_t *ci) /* {{{ */
   return (0);
 } /* }}} int network_config_set_ttl */
 
+static int network_config_set_interface (const oconfig_item_t *ci, /* {{{ */
+    int *interface)
+{
+  if ((ci->values_num != 1)
+      || (ci->values[0].type != OCONFIG_TYPE_STRING))
+  {
+    WARNING ("network plugin: The `Interface' config option needs exactly "
+        "one string argument.");
+    return (-1);
+  }
+
+  if (interface == NULL)
+    return (-1);
+
+  *interface = if_nametoindex (ci->values[0].value.string);
+
+  return (0);
+} /* }}} int network_config_set_interface */
+
 static int network_config_set_buffer_size (const oconfig_item_t *ci) /* {{{ */
 {
   int tmp;
@@ -2712,6 +2909,10 @@ static int network_config_add_listen (const oconfig_item_t *ci) /* {{{ */
           &se->data.server.security_level);
     else
 #endif /* HAVE_LIBGCRYPT */
+    if (strcasecmp ("Interface", child->key) == 0)
+      network_config_set_interface (child,
+          &se->interface);
+    else
     {
       WARNING ("network plugin: Option `%s' is not allowed here.",
           child->key);
@@ -2790,6 +2991,10 @@ static int network_config_add_server (const oconfig_item_t *ci) /* {{{ */
           &se->data.client.security_level);
     else
 #endif /* HAVE_LIBGCRYPT */
+    if (strcasecmp ("Interface", child->key) == 0)
+      network_config_set_interface (child,
+          &se->interface);
+    else
     {
       WARNING ("network plugin: Option `%s' is not allowed here.",
           child->key);

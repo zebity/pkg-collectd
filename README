@@ -57,6 +57,10 @@ Features
       Retrieves JSON data via cURL and parses it according to user
       configuration.
 
+    - curl_xml
+      Retrieves XML data via cURL and parses it according to user
+      configuration.
+
     - dbi
       Executes SQL statements on various databases and interprets the returned
       data.
@@ -143,6 +147,10 @@ Features
       Memory utilization: Memory occupied by running processes, page cache,
       buffer cache and free.
 
+    - modbus
+      Reads values from Modbus/TCP enabled devices. Supports reading values
+      from multiple "slaves" so gateway devices can be used.
+
     - multimeter
       Information provided by serial multimeters, such as the `Metex
       M-4650CR'.
@@ -199,6 +207,10 @@ Features
       The perl plugin implements a Perl-interpreter into collectd. You can
       write your own plugins in Perl and return arbitrary values using this
       API. See collectd-perl(5).
+
+    - pinba
+      Receive and dispatch timing values from Pinba, a profiling extension for
+      PHP.
 
     - ping
       Network latency: Time to reach the default gateway or another given
@@ -293,7 +305,7 @@ Features
     - zfs_arc
       Statistics for ZFS' “Adaptive Replacement Cache” (ARC).
 
-  * Output can be written or send to various destinations by the following
+  * Output can be written or sent to various destinations by the following
     plugins:
 
     - csv
@@ -426,7 +438,7 @@ Features
     network plugins, makes sure your resources are used efficiently. Also,
     since collectd is programmed multithreaded it benefits from hyperthreading
     and multicore processors and makes sure that the daemon isn't idle if only
-    one plugins waits for an IO-operation to complete.
+    one plugin waits for an IO-operation to complete.
 
   * Once set up, hardly any maintenance is necessary. Setup is kept as easy
     as possible and the default values should be okay for most users.
@@ -537,11 +549,15 @@ Prerequisites
     Used by the `memcachec' plugin to connect to a memcache daemon.
     <http://tangent.org/552/libmemcached.html>
 
+  * libmodbus (optional)
+    Used by the `modbus' plugin to communicate with Modbus/TCP devices.
+    <https://launchpad.net/libmodbus>
+
   * libmysqlclient (optional)
     Unsurprisingly used by the `mysql' plugin.
     <http://dev.mysql.com/>
 
-  * libnatapp (optional)
+  * libnetapp (optional)
     Required for the “netapp” plugin.
     This library is part of the “Manage ONTAP SDK” published by NetApp.
 
@@ -578,6 +594,11 @@ Prerequisites
   * libpq (optional)
     The PostgreSQL C client library used by the `postgresql' plugin.
     <http://www.postgresql.org/>
+
+  * libprotobuf-c, protoc-c (optional)
+    Used by the `pinba' plugin to generate a parser for the network packets
+    sent by the Pinba PHP extension.
+    <http://code.google.com/p/protobuf-c/>
 
   * libpython (optional)
     Used by the `python' plugin. Currently, only 2.3 ≦ Python < 3 is supported.

@@ -26,15 +26,6 @@
 #include <pthread.h>
 
 /*
- * Defines
- */
-#define MD_TYPE_STRING       1
-#define MD_TYPE_SIGNED_INT   2
-#define MD_TYPE_UNSIGNED_INT 3
-#define MD_TYPE_DOUBLE       4
-#define MD_TYPE_BOOLEAN      5
-
-/*
  * Data types
  */
 union meta_value_u
@@ -248,6 +239,49 @@ int meta_data_exists (meta_data_t *md, const char *key) /* {{{ */
   pthread_mutex_unlock (&md->lock);
   return (0);
 } /* }}} int meta_data_exists */
+
+int meta_data_type (meta_data_t *md, const char *key) /* {{{ */
+{
+  meta_entry_t *e;
+
+  if ((md == NULL) || (key == NULL))
+    return -EINVAL;
+
+  pthread_mutex_lock (&md->lock);
+
+  for (e = md->head; e != NULL; e = e->next)
+  {
+    if (strcasecmp (key, e->key) == 0)
+    {
+      pthread_mutex_unlock (&md->lock);
+      return e->type;
+    }
+  }
+
+  pthread_mutex_unlock (&md->lock);
+  return 0;
+} /* }}} int meta_data_type */
+
+int meta_data_toc (meta_data_t *md, char ***toc) /* {{{ */
+{
+  int i = 0, count = 0;
+  meta_entry_t *e;
+
+  if ((md == NULL) || (toc == NULL))
+    return -EINVAL;
+
+  pthread_mutex_lock (&md->lock);
+
+  for (e = md->head; e != NULL; e = e->next)
+    ++count;    
+
+  *toc = malloc(count * sizeof(**toc));
+  for (e = md->head; e != NULL; e = e->next)
+    (*toc)[i++] = strdup(e->key);
+  
+  pthread_mutex_unlock (&md->lock);
+  return count;
+} /* }}} int meta_data_toc */
 
 int meta_data_delete (meta_data_t *md, const char *key) /* {{{ */
 {

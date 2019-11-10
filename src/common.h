@@ -236,8 +236,10 @@ int get_kstat (kstat_t **ksp_ptr, char *module, int instance, char *name);
 long long get_kstat_value (kstat_t *ksp, char *name);
 #endif
 
+#ifndef HAVE_HTONLL
 unsigned long long ntohll (unsigned long long n);
 unsigned long long htonll (unsigned long long n);
+#endif
 
 #if FP_LAYOUT_NEED_NOTHING
 # define ntohd(d) (d)
@@ -280,7 +282,7 @@ int notification_init (notification_t *n, int severity, const char *message,
 typedef int (*dirwalk_callback_f)(const char *dirname, const char *filename,
 		void *user_data);
 int walk_directory (const char *dir, dirwalk_callback_f callback,
-		void *user_data);
+		void *user_data, int hidden);
 int read_file_contents (const char *filename, char *buf, int bufsize);
 
 counter_t counter_diff (counter_t old_value, counter_t new_value);
@@ -288,5 +290,7 @@ counter_t counter_diff (counter_t old_value, counter_t new_value);
 /* Converts a service name (a string) to a port number
  * (in the range [1-65535]). Returns less than zero on error. */
 int service_name_to_port_number (const char *service_name);
+
+int strtoderive (const char *string, derive_t *ret_value);
 
 #endif /* COMMON_H */

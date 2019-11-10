@@ -135,6 +135,12 @@ typedef bool _Bool;
 # ifndef isnan
 #  define isnan(f) ((f) != (f))
 # endif /* !defined(isnan) */
+# ifndef isfinite
+#  define isfinite(f) (((f) - (f)) == 0.0)
+# endif
+# ifndef isinf
+#  define isinf(f) (!isfinite(f) && !isnan(f))
+# endif
 #endif /* NAN_ZERO_ZERO */
 
 /* Try really, really hard to determine endianess. Under NexentaStor 1.0.2 this
@@ -294,5 +300,6 @@ typedef bool _Bool;
 
 extern char hostname_g[];
 extern int  interval_g;
+extern int  timeout_g;
 
 #endif /* COLLECTD_H */

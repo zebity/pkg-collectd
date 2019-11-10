@@ -1,6 +1,7 @@
 absolute		count:ABSOLUTE:0:U
 apache_bytes		count:COUNTER:0:134217728
 apache_connections	count:GAUGE:0:65535
+apache_idle_workers	count:GAUGE:0:65535
 apache_requests		count:COUNTER:0:134217728
 apache_scoreboard	count:GAUGE:0:65535
 arc_counts		demand_data:COUNTER:0:U, demand_metadata:COUNTER:0:U, prefetch_data:COUNTER:0:U, prefetch_metadata:COUNTER:0:U
@@ -127,6 +128,8 @@ ps_pagefaults		minflt:COUNTER:0:9223372036854775807, majflt:COUNTER:0:9223372036
 ps_disk_octets		read:DERIVE:0:U, write:DERIVE:0:U
 ps_disk_ops		read:DERIVE:0:U, write:DERIVE:0:U
 ps_rss			value:GAUGE:0:9223372036854775807
+ps_code			value:GAUGE:0:9223372036854775807
+ps_data			value:GAUGE:0:9223372036854775807
 ps_stacksize		value:GAUGE:0:9223372036854775807
 ps_state		value:GAUGE:0:65535
 ps_vm			value:GAUGE:0:9223372036854775807
@@ -151,6 +154,7 @@ threads			value:GAUGE:0:U
 time_dispersion		seconds:GAUGE:-1000000:1000000
 timeleft		timeleft:GAUGE:0:3600
 time_offset		seconds:GAUGE:-1000000:1000000
+total_bytes		value:DERIVE:0:U
 total_requests		value:DERIVE:0:U
 total_time_in_ms	value:DERIVE:0:U
 total_values		value:DERIVE:0:U
@@ -167,3 +171,4 @@ voltage			value:GAUGE:U:U
 vs_memory		value:GAUGE:0:9223372036854775807
 vs_processes		value:GAUGE:0:65535
 vs_threads		value:GAUGE:0:65535
+pinba_view              req_per_sec:GAUGE:0:U, req_time:GAUGE:0:U, ru_utime:GAUGE:0:U, ru_stime:GAUGE:0:U, doc_size:GAUGE:0:U, mem_peak:GAUGE:0:U

@@ -53,6 +53,9 @@ collectd_DEPENDENCIES =
 if BUILD_WITH_LIBRT
 collectd_LDADD += -lrt
 endif
+if BUILD_WITH_LIBPOSIX4
+collectd_LDADD += -lposix4
+endif
 if BUILD_WITH_LIBSOCKET
 collectd_LDADD += -lsocket
 endif
@@ -103,6 +106,8 @@ collectd_nagios_LDADD += libcollectdclient/libcollectdclient.la
 collectd_nagios_DEPENDENCIES = libcollectdclient/libcollectdclient.la
 
 pkglib_LTLIBRARIES = 
+
+BUILT_SOURCES = 
 
 if BUILD_PLUGIN_APACHE
 pkglib_LTLIBRARIES += apache.la
@@ -255,6 +260,17 @@ curl_json_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
 endif
 collectd_LDADD += "-dlopen" curl_json.la
 collectd_DEPENDENCIES += curl_json.la
+endif
+
+if BUILD_PLUGIN_CURL_XML
+pkglib_LTLIBRARIES += curl_xml.la
+curl_xml_la_SOURCES = curl_xml.c
+curl_xml_la_LDFLAGS = -module -avoid-version
+curl_xml_la_CFLAGS = $(AM_CFLAGS) \
+		$(BUILD_WITH_LIBCURL_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
+curl_xml_la_LIBADD = $(BUILD_WITH_LIBCURL_LIBS) $(BUILD_WITH_LIBXML2_LIBS)
+collectd_LDADD += "-dlopen" curl_xml.la
+collectd_DEPENDENCIES += curl_xml.la
 endif
 
 if BUILD_PLUGIN_DBI
@@ -587,6 +603,16 @@ memory_la_LIBADD += -lperfstat
 endif
 endif
 
+if BUILD_PLUGIN_MODBUS
+pkglib_LTLIBRARIES += modbus.la
+modbus_la_SOURCES = modbus.c
+modbus_la_LDFLAGS = -module -avoid-version
+modbus_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBMODBUS_CFLAGS)
+modbus_la_LIBADD = $(BUILD_WITH_LIBMODBUS_LIBS)
+collectd_LDADD += "-dlopen" modbus.la
+collectd_DEPENDENCIES += modbus.la
+endif
+
 if BUILD_PLUGIN_MULTIMETER
 pkglib_LTLIBRARIES += multimeter.la
 multimeter_la_SOURCES = multimeter.c
@@ -781,6 +807,16 @@ perl_la_LDFLAGS = -module -avoid-version \
 		$(PERL_LDFLAGS)
 collectd_LDADD += "-dlopen" perl.la
 collectd_DEPENDENCIES += perl.la
+endif
+
+if BUILD_PLUGIN_PINBA
+BUILT_SOURCES += pinba.pb-c.c pinba.pb-c.h
+pkglib_LTLIBRARIES += pinba.la
+pinba_la_SOURCES = pinba.c pinba.pb-c.c pinba.pb-c.h
+pinba_la_LDFLAGS = -module -avoid-version
+pinba_la_LIBADD = -lprotobuf-c
+collectd_LDADD += "-dlopen" pinba.la
+collectd_DEPENDENCIES += pinba.la
 endif
 
 if BUILD_PLUGIN_PING
@@ -1160,7 +1196,6 @@ collectd_LDADD += "-dlopen" zfs_arc.la
 collectd_DEPENDENCIES += zfs_arc.la
 endif
 
-
 dist_man_MANS = collectd.1 \
 		collectd.conf.5 \
 		collectd-email.5 \
@@ -1176,7 +1211,7 @@ dist_man_MANS = collectd.1 \
 
 #collectd_1_SOURCES = collectd.pod
 
-EXTRA_DIST = types.db
+EXTRA_DIST = types.db pinba.proto
 
 EXTRA_DIST +=   collectd.conf.pod \
 		collectd-email.pod \
@@ -1207,6 +1242,11 @@ EXTRA_DIST +=   collectd.conf.pod \
 	then \
 		echo "$@ has some POD errors!"; false; \
 	fi
+
+if HAVE_PROTOC_C
+pinba.pb-c.c pinba.pb-c.h: pinba.proto
+	protoc-c --c_out $(builddir) pinba.proto
+endif
 
 install-exec-hook:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)

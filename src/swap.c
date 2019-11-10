@@ -96,7 +96,7 @@ int kvm_pagesize;
 #elif HAVE_PERFSTAT
 static int pagesize;
 static perfstat_memory_total_t pmemory;
-/*# endif HAVE_PERFSTAT */ 
+/*# endif HAVE_PERFSTAT */
 
 #else
 # error "No applicable input method."
@@ -193,6 +193,8 @@ static int swap_read (void)
 	char *fields[8];
 	int numfields;
 
+	_Bool old_kernel=0;
+
 	derive_t swap_used   = 0;
 	derive_t swap_cached = 0;
 	derive_t swap_free   = 0;
@@ -243,30 +245,44 @@ static int swap_read (void)
 
 	if ((fh = fopen ("/proc/vmstat", "r")) == NULL)
 	{
-		char errbuf[1024];
-		WARNING ("swap: fopen: %s",
-				sstrerror (errno, errbuf, sizeof (errbuf)));
-		return (-1);
+		// /proc/vmstat does not exist in kernels <2.6
+		if ((fh = fopen ("/proc/stat", "r")) == NULL )
+		{
+			char errbuf[1024];
+			WARNING ("swap: fopen: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+			return (-1);
+		}
+		else
+			old_kernel = 1;
 	}
 
 	while (fgets (buffer, 1024, fh) != NULL)
 	{
-		derive_t *val = NULL;
+		numfields = strsplit (buffer, fields, STATIC_ARRAY_SIZE (fields));
 
-		if (strncasecmp (buffer, "pswpin", 6) == 0)
-			val = &swap_in;
-		else if (strncasecmp (buffer, "pswpout", 7) == 0)
-			val = &swap_out;
-		else
-			continue;
+		if (!old_kernel)
+		{
+			if (numfields != 2)
+				continue;
 
-		numfields = strsplit (buffer, fields, 8);
+			if (strcasecmp ("pswpin", fields[0]) != 0)
+				strtoderive (fields[1], &swap_in);
+			else if (strcasecmp ("pswpout", fields[0]) == 0)
+				strtoderive (fields[1], &swap_out);
+		}
+		else /* if (old_kernel) */
+		{
+			if (numfields != 3)
+				continue;
 
-		if (numfields < 2)
-			continue;
-
-		*val = (derive_t) atoll (fields[1]);
-	}
+			if (strcasecmp ("page", fields[0]) == 0)
+			{
+				strtoderive (fields[1], &swap_in);
+				strtoderive (fields[2], &swap_out);
+			}
+		}
+	} /* while (fgets) */
 
 	if (fclose (fh))
 	{
@@ -280,7 +296,6 @@ static int swap_read (void)
 	swap_submit ("cached", swap_cached, DS_TYPE_GAUGE);
 	swap_submit ("in", swap_in, DS_TYPE_DERIVE);
 	swap_submit ("out", swap_out, DS_TYPE_DERIVE);
-
 /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
@@ -310,7 +325,7 @@ static int swap_read (void)
 	 * However, Solaris does not allow to allocated/reserved more than the
 	 * available swap (physical memory + disk swap), so the pedant may
 	 * prefer: allocated + unallocated = reserved, available
-	 * 
+	 *
 	 * We map the above to: used + resv = n/a, free
 	 *
 	 * Does your brain hurt yet?  - Christophe Kalt

@@ -1,6 +1,6 @@
 /**
  * collectd - src/exec.c
- * Copyright (C) 2007-2009  Florian octo Forster
+ * Copyright (C) 2007-2010  Florian octo Forster
  * Copyright (C) 2007-2009  Sebastian Harl
  * Copyright (C) 2008       Peter Holik
  *
@@ -269,13 +269,26 @@ static void set_environment (void) /* {{{ */
 {
   char buffer[1024];
 
+#ifdef HAVE_SETENV
   ssnprintf (buffer, sizeof (buffer), "%i", interval_g);
   setenv ("COLLECTD_INTERVAL", buffer, /* overwrite = */ 1);
 
   ssnprintf (buffer, sizeof (buffer), "%s", hostname_g);
   setenv ("COLLECTD_HOSTNAME", buffer, /* overwrite = */ 1);
+#else
+  ssnprintf (buffer, sizeof (buffer), "COLLECTD_INTERVAL=%i", interval_g);
+  putenv (buffer);
+
+  ssnprintf (buffer, sizeof (buffer), "COLLECTD_HOSTNAME=%s", hostname_g);
+  putenv (buffer);
+#endif
+
+#ifdef HAVE_SETENV
+#else
+#endif
 } /* }}} void set_environment */
 
+__attribute__((noreturn))
 static void exec_child (program_list_t *pl) /* {{{ */
 {
   int status;
@@ -292,8 +305,8 @@ static void exec_child (program_list_t *pl) /* {{{ */
   status = getpwnam_r (pl->user, &sp, nambuf, sizeof (nambuf), &sp_ptr);
   if (status != 0)
   {
-    ERROR ("exec plugin: getpwnam_r failed: %s",
-	sstrerror (errno, errbuf, sizeof (errbuf)));
+    ERROR ("exec plugin: Failed to get user information for user ``%s'': %s",
+	pl->user, sstrerror (errno, errbuf, sizeof (errbuf)));
     exit (-1);
   }
   if (sp_ptr == NULL)
@@ -322,7 +335,8 @@ static void exec_child (program_list_t *pl) /* {{{ */
       status = getgrnam_r (pl->group, &gr, nambuf, sizeof (nambuf), &gr_ptr);
       if (0 != status)
       {
-	ERROR ("exec plugin: getgrnam_r failed: %s",
+	ERROR ("exec plugin: Failed to get group information "
+	    "for group ``%s'': %s", pl->group,
 	    sstrerror (errno, errbuf, sizeof (errbuf)));
 	exit (-1);
       }
@@ -388,8 +402,8 @@ static void exec_child (program_list_t *pl) /* {{{ */
 
   status = execvp (pl->exec, pl->argv);
 
-  ERROR ("exec plugin: exec failed: %s",
-      sstrerror (errno, errbuf, sizeof (errbuf)));
+  ERROR ("exec plugin: Failed to execute ``%s'': %s",
+      pl->exec, sstrerror (errno, errbuf, sizeof (errbuf)));
   exit (-1);
 } /* void exec_child }}} */
 
@@ -549,7 +563,13 @@ static void *exec_read_one (void *arg) /* {{{ */
 
   status = fork_child (pl, NULL, &fd, &fd_err);
   if (status < 0)
+  {
+    /* Reset the "running" flag */
+    pthread_mutex_lock (&pl_lock);
+    pl->flags &= ~PL_RUNNING;
+    pthread_mutex_unlock (&pl_lock);
     pthread_exit ((void *) 1);
+  }
   pl->pid = status;
 
   assert (pl->pid != 0);
@@ -805,7 +825,7 @@ static int exec_read (void) /* {{{ */
   return (0);
 } /* int exec_read }}} */
 
-static int exec_notification (const notification_t *n,
+static int exec_notification (const notification_t *n, /* {{{ */
     user_data_t __attribute__((unused)) *user_data)
 {
   program_list_t *pl;

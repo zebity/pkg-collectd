@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2010-01-14" "4.9.1" "collectd"
+.TH COLLECTD.CONF 5 "2010-05-01" "4.10.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -224,6 +224,15 @@ Set one or more files that contain the data-set descriptions. See
 Configures the interval in which to query the read plugins. Obviously smaller
 values lead to a higher system load produced by collectd, while higher values
 lead to more coarse statistics.
+.IP "\fBTimeout\fR \fIIterations\fR" 4
+.IX Item "Timeout Iterations"
+Consider a value list \*(L"missing\*(R" when no update has been read or received for
+\&\fIIterations\fR iterations. By default, \fIcollectd\fR considers a value list
+missing when no update has been received for twice the update interval. Since
+this setting uses iterations, the maximum allowed time without update depends
+on the \fIInterval\fR information contained in each value list. This is used in
+the \fIThreshold\fR configuration to dispatch notifications about missing values,
+see \*(L"\s-1THRESHOLD\s0 \s-1CONFIGURATION\s0\*(R" below.
 .IP "\fBReadThreads\fR \fINum\fR" 4
 .IX Item "ReadThreads Num"
 Number of threads to start for reading plugins. The default value is \fB5\fR, but
@@ -233,7 +242,7 @@ a value higher than the number of plugins you've loaded is totally useless.
 .IP "\fBHostname\fR \fIName\fR" 4
 .IX Item "Hostname Name"
 Sets the hostname that identifies a host. If you omit this setting, the
-hostname will be determinded using the \fIgethostname\fR\|(2) system call.
+hostname will be determined using the \fIgethostname\fR\|(2) system call.
 .IP "\fBFQDNLookup\fR \fBtrue|false\fR" 4
 .IX Item "FQDNLookup true|false"
 If \fBHostname\fR is determined automatically this setting controls whether or not
@@ -521,7 +530,7 @@ The curl plugin uses the \fBlibcurl\fR (<http://curl.haxx.se/>) to read web page
 and the match infrastructure (the same code used by the tail plugin) to use
 regular expressions with the received data.
 .PP
-The following example will read the current value of \s-1AMD\s0 stock from google's
+The following example will read the current value of \s-1AMD\s0 stock from Google's
 finance page and dispatch the value to collectd.
 .PP
 .Vb 10
@@ -674,6 +683,96 @@ option is mandatory.
 .IP "\fBInstance\fR \fIInstance\fR" 4
 .IX Item "Instance Instance"
 Type-instance to use. Defaults to the current map key or current string array element value.
+.ie n .SS "Plugin ""curl_xml"""
+.el .SS "Plugin \f(CWcurl_xml\fP"
+.IX Subsection "Plugin curl_xml"
+The \fBcurl_xml plugin\fR uses \fBlibcurl\fR (<http://curl.haxx.se/>) and \fBlibxml2\fR
+(<http://xmlsoft.org/>) to retrieve \s-1XML\s0 data via cURL.
+.PP
+.Vb 9
+\& <Plugin "curl_xml">
+\&   <URL "http://localhost/stats.xml">
+\&     Host "my_host"
+\&     Instance "some_instance"
+\&     User "collectd"
+\&     Password "thaiNg0I"
+\&     VerifyPeer true
+\&     VerifyHost true
+\&     CACert "/path/to/ca.crt"
+\&
+\&     <XPath "table[@id=\e"magic_level\e"]/tr">
+\&       Type "magic_level"
+\&       #InstancePrefix "prefix\-"
+\&       InstanceFrom "td[1]"
+\&       ValuesFrom "td[2]/span[@class=\e"level\e"]"
+\&     </XPath>
+\&   </URL>
+\& </Plugin>
+.Ve
+.PP
+In the \fBPlugin\fR block, there may be one or more \fB\s-1URL\s0\fR blocks, each defining a
+\&\s-1URL\s0 to be fetched via \s-1HTTP\s0 (using libcurl). Within each \fB\s-1URL\s0\fR block there are
+options which specify the connection parameters, for example authentication
+information, and one or more \fBXPath\fR blocks.
+.PP
+Each \fBXPath\fR block specifies how to get one type of information. The
+string argument must be a valid XPath expression which returns a list
+of \*(L"base elements\*(R". One value is dispatched for each \*(L"base element\*(R". The
+\&\fItype instance\fR and values are looked up using further \fIXPath\fR expressions
+that should be relative to the base element.
+.PP
+Within the \fB\s-1URL\s0\fR block the following options are accepted:
+.IP "\fBHost\fR \fIName\fR" 4
+.IX Item "Host Name"
+Use \fIName\fR as the host name when submitting values. Defaults to the global
+host name setting.
+.IP "\fBInstance\fR \fIInstance\fR" 4
+.IX Item "Instance Instance"
+Use \fIInstance\fR as the plugin instance when submitting values. Defaults to an
+empty string (no plugin instance).
+.IP "\fBUser\fR \fIUser\fR =item \fBPassword\fR \fIPassword\fR =item \fBVerifyPeer\fR \fBtrue\fR|\fBfalse\fR =item \fBVerifyHost\fR \fBtrue\fR|\fBfalse\fR =item \fBCACert\fR \fI\s-1CA\s0 Cert File\fR" 4
+.IX Item "User User =item Password Password =item VerifyPeer true|false =item VerifyHost true|false =item CACert CA Cert File"
+These options behave exactly equivalent to the appropriate options of the
+\&\fIcURL\fR and \fIcURL-JSON\fR plugins. Please see there for a detailed description.
+.IP "<\fBXPath\fR \fIXPath-expression\fR>" 4
+.IX Item "<XPath XPath-expression>"
+Within each \fB\s-1URL\s0\fR block, there must be one or more \fBXPath\fR blocks. Each
+\&\fBXPath\fR block specifies how to get one type of information. The string
+argument must be a valid XPath expression which returns a list of \*(L"base
+elements\*(R". One value is dispatched for each \*(L"base element\*(R".
+.Sp
+Within the \fBXPath\fR block the following options are accepted:
+.RS 4
+.IP "\fBType\fR \fIType\fR" 4
+.IX Item "Type Type"
+Specifies the \fIType\fR used for submitting patches. This determines the number
+of values that are required / expected and whether the strings are parsed as
+signed or unsigned integer or as double values. See \fItypes.db\fR\|(5) for details.
+This option is required.
+.IP "\fBInstancePrefix\fR \fIInstancePrefix\fR" 4
+.IX Item "InstancePrefix InstancePrefix"
+Prefix the \fItype instance\fR with \fIInstancePrefix\fR. The values are simply
+concatenated together without any separator.
+This option is optional.
+.IP "\fBInstanceFrom\fR \fIInstanceFrom\fR" 4
+.IX Item "InstanceFrom InstanceFrom"
+Specifies a XPath expression to use for determining the \fItype instance\fR. The
+XPath expression must return exactly one element. The element's value is then
+used as \fItype instance\fR, possibly prefixed with \fIInstancePrefix\fR (see above).
+.Sp
+This value is required. As a special exception, if the \*(L"base XPath expression\*(R"
+(the argument to the \fBXPath\fR block) returns exactly one argument, then this
+option may be omitted.
+.IP "\fBValuesFrom\fR \fIValuesFrom\fR [\fIValuesFrom\fR ...]" 4
+.IX Item "ValuesFrom ValuesFrom [ValuesFrom ...]"
+Specifies one or more XPath expression to use for reading the values. The
+number of XPath expressions must match the number of data sources in the
+\&\fItype\fR specified with \fBType\fR (see above). Each XPath expression must return
+exactly one element. The element's value is then parsed as a number and used as
+value for the appropriate value in the value list dispatched to the daemon.
+.RE
+.RS 4
+.RE
 .ie n .SS "Plugin ""dbi"""
 .el .SS "Plugin \f(CWdbi\fP"
 .IX Subsection "Plugin dbi"
@@ -986,7 +1085,7 @@ is set to \fBtrue\fR, all disks are collected \fBexcept\fR the ones matched.
 .IX Subsection "Plugin dns"
 .IP "\fBInterface\fR \fIInterface\fR" 4
 .IX Item "Interface Interface"
-The dns plugin uses \fBlibpcap\fR to capture dns traffic and analyses it. This
+The dns plugin uses \fBlibpcap\fR to capture dns traffic and analyzes it. This
 option sets the interface that should be used. If this option is not set, or
 set to \*(L"any\*(R", the plugin will try to get packets from \fBall\fR interfaces. This
 may not work on certain platforms, such as Mac\ \s-1OS\s0\ X.
@@ -1118,6 +1217,11 @@ note that there are 1000 bytes in a kilobyte, not 1024.
 .IP "\fBRecursive\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "Recursive true|false"
 Controls whether or not to recurse into subdirectories. Enabled by default.
+.IP "\fBIncludeHidden\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "IncludeHidden true|false"
+Controls whether or not to include \*(L"hidden\*(R" files and directories in the count.
+\&\*(L"Hidden\*(R" files and directories are those, whose name begins with a dot.
+Defaults to \fIfalse\fR, i.e. by default hidden files and directories are ignored.
 .ie n .SS "Plugin ""GenericJMX"""
 .el .SS "Plugin \f(CWGenericJMX\fP"
 .IX Subsection "Plugin GenericJMX"
@@ -1424,6 +1528,10 @@ running in foreground\- or non-daemon-mode.
 .IP "\fBTimestamp\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "Timestamp true|false"
 Prefix all lines printed by the current time. Defaults to \fBtrue\fR.
+.IP "\fBPrintSeverity\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "PrintSeverity true|false"
+When enabled, all lines are prefixed by the severity of the log message, for
+example \*(L"warning\*(R". Defaults to \fBfalse\fR.
 .PP
 \&\fBNote\fR: There is no need to notify the daemon after moving or removing the
 log file (e.\ g. when rotating the logs). The plugin reopens the file
@@ -1504,6 +1612,118 @@ Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB11211\fR.
+.ie n .SS "Plugin ""modbus"""
+.el .SS "Plugin \f(CWmodbus\fP"
+.IX Subsection "Plugin modbus"
+The \fBmodbus plugin\fR connects to a Modbus \*(L"slave\*(R" via Modbus/TCP and reads
+register values. It supports reading single registers (unsigned 16\ bit
+values), large integer values (unsigned 32\ bit values) and floating point
+values (two registers interpreted as \s-1IEEE\s0 floats in big endian notation).
+.PP
+Synopsis:
+.PP
+.Vb 6
+\& <Data "voltage\-input\-1">
+\&   RegisterBase 0
+\&   RegisterType float
+\&   Type voltage
+\&   Instance "input\-1"
+\& </Data>
+\& 
+\& <Data "voltage\-input\-2">
+\&   RegisterBase 2
+\&   RegisterType float
+\&   Type voltage
+\&   Instance "input\-2"
+\& </Data>
+\& 
+\& <Host "modbus.example.com">
+\&   Address "192.168.0.42"
+\&   Port    "502"
+\&   Interval 60
+\&   
+\&   <Slave 1>
+\&     Instance "power\-supply"
+\&     Collect  "voltage\-input\-1"
+\&     Collect  "voltage\-input\-2"
+\&   </Slave>
+\& </Host>
+.Ve
+.IP "<\fBData\fR \fIName\fR> blocks" 4
+.IX Item "<Data Name> blocks"
+Data blocks define a mapping between register numbers and the \*(L"types\*(R" used by
+\&\fIcollectd\fR.
+.Sp
+Within <Data\ /> blocks, the following options are allowed:
+.RS 4
+.IP "\fBRegisterBase\fR \fINumber\fR" 4
+.IX Item "RegisterBase Number"
+Configures the base register to read from the device. If the option
+\&\fBRegisterType\fR has been set to \fBUint32\fR or \fBFloat\fR, this and the next
+register will be read (the register number is increased by one).
+.IP "\fBRegisterType\fR \fBUint16\fR|\fBUint32\fR|\fBFloat\fR" 4
+.IX Item "RegisterType Uint16|Uint32|Float"
+Specifies what kind of data is returned by the device. If the type is \fBUint32\fR
+or \fBFloat\fR, two 16\ bit registers will be read and the data is combined
+into one value. Defaults to \fBUint16\fR.
+.IP "\fBType\fR \fIType\fR" 4
+.IX Item "Type Type"
+Specifies the \*(L"type\*(R" (data set) to use when dispatching the value to
+\&\fIcollectd\fR. Currently, only data sets with exactly one data source are
+supported.
+.IP "\fBInstance\fR \fIInstance\fR" 4
+.IX Item "Instance Instance"
+Sets the type instance to use when dispatching the value to \fIcollectd\fR. If
+unset, an empty string (no type instance) is used.
+.RE
+.RS 4
+.RE
+.IP "<\fBHost\fR \fIName\fR> blocks" 4
+.IX Item "<Host Name> blocks"
+Host blocks are used to specify to which hosts to connect and what data to read
+from their \*(L"slaves\*(R". The string argument \fIName\fR is used as hostname when
+dispatching the values to \fIcollectd\fR.
+.Sp
+Within <Host\ /> blocks, the following options are allowed:
+.RS 4
+.IP "\fBAddress\fR \fIHostname\fR" 4
+.IX Item "Address Hostname"
+Specifies the node name (the actual network address) used to connect to the
+host. This may be an \s-1IP\s0 address or a hostname. Please note that the used
+\&\fIlibmodbus\fR library only supports IPv4 at the moment.
+.IP "\fBPort\fR \fIService\fR" 4
+.IX Item "Port Service"
+Specifies the port used to connect to the host. The port can either be given as
+a number or as a service name. Please note that the \fIService\fR argument must be
+a string, even if ports are given in their numerical form. Defaults to \*(L"502\*(R".
+.IP "\fBInterval\fR \fIInterval\fR" 4
+.IX Item "Interval Interval"
+Sets the interval (in seconds) in which the values will be collected from this
+host. By default the global \fBInterval\fR setting will be used.
+.IP "<\fBSlave\fR \fI\s-1ID\s0\fR>" 4
+.IX Item "<Slave ID>"
+Over each \s-1TCP\s0 connection, multiple Modbus devices may be reached. The slave \s-1ID\s0
+is used to specify which device should be addressed. For each device you want
+to query, one \fBSlave\fR block must be given.
+.Sp
+Within <Slave\ /> blocks, the following options are allowed:
+.RS 4
+.IP "\fBInstance\fR \fIInstance\fR" 4
+.IX Item "Instance Instance"
+Specify the plugin instance to use when dispatching the values to \fIcollectd\fR.
+By default "slave_\fI\s-1ID\s0\fR" is used.
+.IP "\fBCollect\fR \fIDataName\fR" 4
+.IX Item "Collect DataName"
+Specifies which data to retrieve from the device. \fIDataName\fR must be the same
+string as the \fIName\fR argument passed to a \fBData\fR block. You can specify this
+option multiple times to collect more than one value from a slave. At least one
+\&\fBCollect\fR option is mandatory.
+.RE
+.RS 4
+.RE
+.RE
+.RS 4
+.RE
 .ie n .SS "Plugin ""mysql"""
 .el .SS "Plugin \f(CWmysql\fP"
 .IX Subsection "Plugin mysql"
@@ -1599,7 +1819,7 @@ or \s-1SQL\s0 threads are not running.
 .ie n .SS "Plugin ""netapp"""
 .el .SS "Plugin \f(CWnetapp\fP"
 .IX Subsection "Plugin netapp"
-The netapp plugin can collect various performance and capacity informations
+The netapp plugin can collect various performance and capacity information
 from a NetApp filer using the NetApp \s-1API\s0.
 .PP
 Please note that NetApp has a wide line of products and a lot of different
@@ -2087,7 +2307,7 @@ Here are some examples to help you understand the above text more easily:
 .Ve
 .IP "\fBIgnoreSelected\fR" 4
 .IX Item "IgnoreSelected"
-The behaviour is the same as with all other similar plugins: If nothing is
+The behavior is the same as with all other similar plugins: If nothing is
 selected at all, everything is collected. If some things are selected using the
 options described above, only these statistics are collected. If you set
 \&\fBIgnoreSelected\fR to \fBtrue\fR, this behavior is inverted, i.\ e. the
@@ -2097,7 +2317,7 @@ specified statistics will not be collected.
 .IX Subsection "Plugin network"
 The Network plugin sends data to a remote instance of collectd, receives data
 from a remote instance, or both at the same time. Data which has been received
-from the network is usually not transmitted again, but this can be actived, see
+from the network is usually not transmitted again, but this can be activated, see
 the \fBForward\fR option below.
 .PP
 The default IPv6 multicast group is \f(CW\*(C`ff18::efc0:4a42\*(C'\fR. The default IPv4
@@ -2153,6 +2373,14 @@ Sets a password (shared secret) for this socket. All security levels except
 .Sp
 This feature is only available if the \fInetwork\fR plugin was linked with
 \&\fIlibgcrypt\fR.
+.IP "\fBInterface\fR \fIInterface name\fR" 4
+.IX Item "Interface Interface name"
+Set the outgoing interface for \s-1IP\s0 packets. This applies at least
+to IPv6 packets and if possible to IPv4. If this option is not applicable,
+undefined or a non-existent interface name is specified, the default
+behaviour is to let the kernel choose the appropriate interface. Be warned
+that the manual selection of an interface for unicast traffic is only
+necessary in rare cases.
 .RE
 .RS 4
 .RE
@@ -2200,6 +2428,13 @@ example file could look like this:
 Each time a packet is received, the modification time of the file is checked
 using \fIstat\fR\|(2). If the file has been changed, the contents is re-read. While
 the file is being read, it is locked using \fIfcntl\fR\|(2).
+.IP "\fBInterface\fR \fIInterface name\fR" 4
+.IX Item "Interface Interface name"
+Set the incoming interface for \s-1IP\s0 packets explicitly. This applies at least
+to IPv6 packets and if possible to IPv4. If this option is not applicable,
+undefined or a non-existent interface name is specified, the default
+behaviour is, to let the kernel choose the appropriate interface. Thus incoming
+traffic gets only accepted, if it arrives on the given interface.
 .RE
 .RS 4
 .RE
@@ -2351,7 +2586,7 @@ Hostname of the host running \fBntpd\fR. Defaults to \fBlocalhost\fR.
 UDP-Port to connect to. Defaults to \fB123\fR.
 .IP "\fBReverseLookups\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "ReverseLookups true|false"
-Sets wether or not to perform reverse lookups on peers. Since the name or
+Sets whether or not to perform reverse lookups on peers. Since the name or
 IP-address may be used in a filename it is recommended to disable reverse
 lookups. The default is to do reverse lookups to preserve backwards
 compatibility, though.
@@ -2486,11 +2721,27 @@ Available options:
 .IP "\fBStatusFile\fR \fIFile\fR" 4
 .IX Item "StatusFile File"
 Specifies the location of the status file.
-.IP "\fBCompression\fR \fBtrue\fR|\fBfalse\fR" 4
-.IX Item "Compression true|false"
+.IP "\fBImprovedNamingSchema\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ImprovedNamingSchema true|false"
+When enabled, the filename of the status file will be used as plugin instance
+and the client's \*(L"common name\*(R" will be used as type instance. This is required
+when reading multiple status files. Enabling this option is recommended, but to
+maintain backwards compatibility this option is disabled by default.
+.IP "\fBCollectCompression\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectCompression true|false"
 Sets whether or not statistics about the compression used by OpenVPN should be
 collected. This information is only available in \fIsingle\fR mode. Enabled by
 default.
+.IP "\fBCollectIndividualUsers\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectIndividualUsers true|false"
+Sets whether or not traffic information is collected for each connected client
+individually. If set to false, currently no traffic data is collected at all
+because aggregating this data in a save manner is tricky. Defaults to \fBtrue\fR.
+.IP "\fBCollectUserCount\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectUserCount true|false"
+When enabled, the number of currently connected clients or users is collected.
+This is expecially interesting when \fBCollectIndividualUsers\fR is disabled, but
+can be configured independently from that option. Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""oracle"""
 .el .SS "Plugin \f(CWoracle\fP"
 .IX Subsection "Plugin oracle"
@@ -2663,6 +2914,7 @@ The \fBPostgreSQL Documentation\fR manual can be found at
 \&    </Database>
 \&
 \&    <Database bar>
+\&      Interval 300
 \&      Service "service_name"
 \&      Query backend # predefined
 \&      Query rt36_tickets
@@ -2717,7 +2969,8 @@ The name of the database of the current connection.
 The username used to connect to the database.
 .IP "\fIinterval\fR" 4
 .IX Item "interval"
-The interval collectd is using (as specified by the \fBInterval\fR option).
+The interval with which this database is queried (as specified by the database
+specific or global \fBInterval\fR options).
 .RE
 .RS 4
 .Sp
@@ -2842,6 +3095,10 @@ default values as documented in the section \*(L"\s-1CONNECTING\s0 \s-1TO\s0 A \
 \&\fIpsql\fR\|(1) manpage. However, be aware that those defaults may be influenced by
 the user collectd is run as and special environment variables. See the manpage
 for details.
+.IP "\fBInterval\fR \fIseconds\fR" 4
+.IX Item "Interval seconds"
+Specify the interval with which the database should be queried. The default is
+to use the global \fBInterval\fR setting.
 .IP "\fBHost\fR \fIhostname\fR" 4
 .IX Item "Host hostname"
 Specify the hostname or \s-1IP\s0 of the PostgreSQL server to connect to. If the
@@ -3099,6 +3356,8 @@ multiple routers:
 \&      User "collectd"
 \&      Password "secr3t"
 \&      CollectInterface true
+\&      CollectCPULoad true
+\&      CollectMemory true
 \&    </Router>
 \&    <Router>
 \&      Host "router1.example.com"
@@ -3106,6 +3365,8 @@ multiple routers:
 \&      Password "5ecret"
 \&      CollectInterface true
 \&      CollectRegistrationTable true
+\&      CollectDF true
+\&      CollectDisk true
 \&    </Router>
 \&  </Plugin>
 .Ve
@@ -3135,6 +3396,25 @@ present on the device. Defaults to \fBfalse\fR.
 .IX Item "CollectRegistrationTable true|false"
 When set to \fBtrue\fR, information about wireless \s-1LAN\s0 connections will be
 collected. Defaults to \fBfalse\fR.
+.IP "\fBCollectCPULoad\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectCPULoad true|false"
+When set to \fBtrue\fR, information about the \s-1CPU\s0 usage will be collected. The
+number is a dimensionless value where zero indicates no \s-1CPU\s0 usage at all.
+Defaults to \fBfalse\fR.
+.IP "\fBCollectMemory\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectMemory true|false"
+When enabled, the amount of used and free memory will be collected. How used
+memory is calculated is unknown, for example whether or not caches are counted
+as used space.
+Defaults to \fBfalse\fR.
+.IP "\fBCollectDF\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectDF true|false"
+When enabled, the amount of used and free disk space will be collected.
+Defaults to \fBfalse\fR.
+.IP "\fBCollectDisk\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectDisk true|false"
+When enabled, the number of sectors written and bad blocks will be collected.
+Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""rrdcached"""
 .el .SS "Plugin \f(CWrrdcached\fP"
 .IX Subsection "Plugin rrdcached"
@@ -3426,6 +3706,7 @@ user using (extended) regular expressions, as described in \fIregex\fR\|(7).
 \&      </Match>
 \&      <Match>
 \&        Regex "\e\e<R=local_user\e\e>"
+\&        ExcludeRegex "\e\e<R=local_user\e\e>.*mail_spool defer"
 \&        DSType "CounterInc"
 \&        Type "counter"
 \&        Instance "local_user"
@@ -3458,6 +3739,14 @@ want to match literal parentheses you need to do the following:
 .Sp
 .Vb 1
 \&  Regex "SPAM \e\e(Score: (\-?[0\-9]+\e\e.[0\-9]+)\e\e)"
+.Ve
+.IP "\fBExcludeRegex\fR \fIregex\fR" 4
+.IX Item "ExcludeRegex regex"
+Sets an optional regular expression to use for excluding lines from the match.
+An example which excludes all connections from localhost from the match:
+.Sp
+.Vb 1
+\&  ExcludeRegex "127\e\e.0\e\e.0\e\e.1"
 .Ve
 .IP "\fBDSType\fR \fIType\fR" 4
 .IX Item "DSType Type"
@@ -3738,6 +4027,11 @@ is understood by the \fIExec\fR and \fIUnixSock\fR plugins. When set to \fB\s-1J
 create output in the \fIJavaScript Object Notation\fR (\s-1JSON\s0).
 .Sp
 Defaults to \fBCommand\fR.
+.IP "\fBStoreRates\fR \fBtrue|false\fR" 4
+.IX Item "StoreRates true|false"
+If set to \fBtrue\fR, convert counter values to rates. If set to \fBfalse\fR (the
+default) counter values are stored as is, i.\ e. as an increasing integer
+number.
 .SH "THRESHOLD CONFIGURATION"
 .IX Header "THRESHOLD CONFIGURATION"
 Starting with version \f(CW4.3.0\fR collectd has support for \fBmonitoring\fR. By that
@@ -3757,10 +4051,12 @@ as a moving average or similar \- at least not now.
 .PP
 Also, all values that match a threshold are considered to be relevant or
 \&\*(L"interesting\*(R". As a consequence collectd will issue a notification if they are
-not received for twice the last timeout of the values. If, for example, some
-hosts sends it's \s-1CPU\s0 statistics to the server every 60 seconds, a notification
-will be dispatched after about 120 seconds. It may take a little longer because
-the timeout is checked only once each \fBInterval\fR on the server.
+not received for \fBTimeout\fR iterations. The \fBTimeout\fR configuration option is
+explained in section \*(L"\s-1GLOBAL\s0 \s-1OPTIONS\s0\*(R". If, for example, \fBTimeout\fR is set to
+\&\*(L"2\*(R" (the default) and some hosts sends it's \s-1CPU\s0 statistics to the server every
+60 seconds, a notification will be dispatched after about 120 seconds. It may
+take a little longer because the timeout is checked only once each \fBInterval\fR
+on the server.
 .PP
 When a value comes within range again or is received after it was missing, an
 \&\*(L"OKAY-notification\*(R" is dispatched.
@@ -4218,6 +4514,11 @@ Available options:
 Match values where the given regular expressions match the various fields of
 the identifier of a value. If multiple regular expressions are given, \fBall\fR
 regexen must match for a value to match.
+.IP "\fBInvert\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "Invert false|true"
+When set to \fBtrue\fR, the result of the match is inverted, i.e. all value lists
+where all regular expressions apply are not matched, all other value lists are
+matched. Defaults to \fBfalse\fR.
 .RE
 .RS 4
 .Sp

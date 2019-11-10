@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PYTHON 5"
-.TH COLLECTD-PYTHON 5 "2010-01-14" "4.9.1" "collectd"
+.TH COLLECTD-PYTHON 5 "2010-05-01" "4.10.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -157,8 +157,7 @@ for collectd in Python. This is a lot more efficient than executing a
 Python-script every time you want to read a value with the \f(CW\*(C`exec plugin\*(C'\fR (see
 \&\fIcollectd\-exec\fR\|(5)) and provides a lot more functionality, too.
 .PP
-Currently only \fIPython 2\fR is supported and at least \fIversion 2.3\fR is
-required.
+At least python \fIversion 2.3\fR is required.
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"
 .IP "\fBLoadPlugin\fR \fIPlugin\fR" 4
@@ -166,8 +165,8 @@ required.
 Loads the Python plugin \fIPlugin\fR. Unlike most other LoadPlugin lines, this one
 should be a block containing the line \*(L"Globals true\*(R". This will cause collectd
 to export the name of all objects in the python interpreter for all plugins to
-see. If you don't do this or your platform does not support it, the embeded
-interpreter will start anywa but you won't be able to load certain python
+see. If you don't do this or your platform does not support it, the embedded
+interpreter will start anyway but you won't be able to load certain python
 modules, e.g. \*(L"time\*(R".
 .IP "\fBEncoding\fR \fIName\fR" 4
 .IX Item "Encoding Name"
@@ -221,6 +220,15 @@ to display help texts. You can override this behavior with the \fB\s-1PAGER\s0\f
 environment variable, e.g. \fIexport PAGER=less\fR before starting collectd.
 Depending on your version of python this might or might not result in an
 \&\fBOSError\fR exception which can be ignored.
+.Sp
+If you really need to spawn new processes from python you can register an init
+callback and reset the action for \s-1SIGCHLD\s0 to the default behavior. Please note
+that this \fIwill\fR break the exec plugin. Do not even load the exec plugin if
+you intend to do this!
+.Sp
+There is an example script located in \fBcontrib/python/getsigchld.py\fR  to do
+this. If you import this from \fIcollectd.conf\fR \s-1SIGCHLD\s0 will be handled
+normally and spawning processes from python will work as intended.
 .RE
 .RS 4
 .RE
@@ -232,6 +240,28 @@ passed to the registered configuration callback. See below for details about
 the \fBConfig\fR class and how to register callbacks.
 .Sp
 The \fIname\fR identifies the callback.
+.SH "STRINGS"
+.IX Header "STRINGS"
+There are a lot of places where strings are send from collectd to python and
+from python to collectd. How exactly this works depends on wheather byte or
+unicode strings or python2 or python3 are used.
+.PP
+Python2 has \fIstr\fR, which is just bytes, and \fIunicode\fR. Python3 has \fIstr\fR,
+which is a unicode object, and \fIbytes\fR.
+.PP
+When passing strings from python to collectd all of these object are supported
+in all places, however \fIstr\fR should be used if possible. These strings must
+not contain a \s-1NUL\s0 byte. Ignoring this will result in a \fITypeError\fR exception.
+If a byte string was used it will be used as is by collectd. If a unicode
+object was used it will be encoded using the default encoding (see above). If
+this is not possible python will raise a \fIUnicodeEncodeError\fR exception.
+.PP
+Wenn passing strings from collectd to python the behavior depends on the
+python version used. Python2 will always receive a \fIstr\fR object. Python3 will
+usually receive a \fIstr\fR object as well, however the original string will be
+decoded to unicode using the default encoding. If this fails because the
+string is not a valid sequence for this encoding a \fIbytes\fR object will be
+returned instead.
 .SH "WRITING YOUR OWN PLUGINS"
 .IX Header "WRITING YOUR OWN PLUGINS"
 Writing your own plugins is quite simple. collectd manages plugins by means of
@@ -308,9 +338,33 @@ collectd you're done.
 .IX Header "CLASSES"
 The following complex types are used to pass values between the Python plugin
 and collectd:
+.SS "Signed"
+.IX Subsection "Signed"
+The Signed class is just a long. It has all its methods and behaves exactly
+like any other long object. It is used to indicate if an integer was or should
+be stored as a signed or unsigned integer object.
+.PP
+.Vb 1
+\& class Signed(long)
+.Ve
+.PP
+This is a long by another name. Use it in meta data dicts
+to choose the way it is stored in the meta data.
+.SS "Unsigned"
+.IX Subsection "Unsigned"
+The Unsigned class is just a long. It has all its methods and behaves exactly
+like any other long object. It is used to indicate if an integer was or should
+be stored as a signed or unsigned integer object.
+.PP
+.Vb 1
+\& class Unsigned(long)
+.Ve
+.PP
+This is a long by another name. Use it in meta data dicts
+to choose the way it is stored in the meta data.
 .SS "Config"
 .IX Subsection "Config"
-The Config class is an object which keeps the informations provided in the
+The Config class is an object which keeps the information provided in the
 configuration file. The sequence of children keeps one entry for each
 configuration option. Each such entry is another Config instance, which
 may nest further if nested blocks are used.
@@ -444,6 +498,8 @@ information on this read the \fItypes.db\fR\|(5) manual page.
 If the sequence does not have the correct size upon dispatch a \fIRuntimeError\fR
 exception will be raised. If the content of the sequence is not a number, a
 \&\fITypeError\fR exception will be raised.
+.IP "meta These are the meta data for this Value object. It has to be a dictionary of numbers, strings or bools. All keys must be strings. \fIint\fR and <long> objects will be dispatched as signed integers unless they are between 2**63 and 2**64\-1, which will result in a unsigned integer. You can force one of these storage classes by using the classes \fBcollectd.Signed\fR and \fBcollectd.Unsigned\fR. A meta object received by a write callback will always contain \fBSigned\fR or \fBUnsigned\fR objects." 4
+.IX Item "meta These are the meta data for this Value object. It has to be a dictionary of numbers, strings or bools. All keys must be strings. int and <long> objects will be dispatched as signed integers unless they are between 2**63 and 2**64-1, which will result in a unsigned integer. You can force one of these storage classes by using the classes collectd.Signed and collectd.Unsigned. A meta object received by a write callback will always contain Signed or Unsigned objects."
 .SS "Notification"
 .IX Subsection "Notification"
 A notification is an object defining the severity and message of the status
@@ -650,7 +706,7 @@ dispatched by the python plugin after upgrades.
 .IX Header "KNOWN BUGS"
 .IP "\(bu" 4
 This plugin is not compatible with python3. Trying to compile it with python3
-will fail because of the ways string, unicode and bytearray bahavior was
+will fail because of the ways string, unicode and bytearray behavior was
 changed.
 .IP "\(bu" 4
 Not all aspects of the collectd \s-1API\s0 are accessible from python. This includes

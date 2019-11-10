@@ -59,6 +59,7 @@ struct read_func_s
 #define rf_callback rf_super.cf_callback
 #define rf_udata rf_super.cf_udata
 	callback_func_t rf_super;
+	char rf_group[DATA_MAX_NAME_LEN];
 	char rf_name[DATA_MAX_NAME_LEN];
 	int rf_type;
 	struct timespec rf_interval;
@@ -323,6 +324,13 @@ static int plugin_load_file (char *file, uint32_t flags)
 	return (0);
 }
 
+static _Bool timeout_reached(struct timespec timeout)
+{
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	return (now.tv_sec >= timeout.tv_sec && now.tv_usec >= (timeout.tv_nsec / 1000));
+}
+
 static void *plugin_read_thread (void __attribute__((unused)) *args)
 {
 	while (read_loop != 0)
@@ -331,6 +339,7 @@ static void *plugin_read_thread (void __attribute__((unused)) *args)
 		struct timeval now;
 		int status;
 		int rf_type;
+		int rc;
 
 		/* Get the read function that needs to be read next. */
 		rf = c_heap_get_root (read_heap);
@@ -366,8 +375,16 @@ static void *plugin_read_thread (void __attribute__((unused)) *args)
 		/* sleep until this entry is due,
 		 * using pthread_cond_timedwait */
 		pthread_mutex_lock (&read_lock);
-		pthread_cond_timedwait (&read_cond, &read_lock,
+		/* In pthread_cond_timedwait, spurious wakeups are possible
+		 * (and really happen, at least on NetBSD with > 1 CPU), thus
+		 * we need to re-evaluate the condition every time
+		 * pthread_cond_timedwait returns. */
+		rc = 0;
+		while (!timeout_reached(rf->rf_next_read) && rc == 0) {
+			rc = pthread_cond_timedwait (&read_cond, &read_lock,
 				&rf->rf_next_read);
+		}
+
 		/* Must hold `real_lock' when accessing `rf->rf_type'. */
 		rf_type = rf->rf_type;
 		pthread_mutex_unlock (&read_lock);
@@ -756,6 +773,7 @@ int plugin_register_read (const char *name,
 	rf->rf_callback = (void *) callback;
 	rf->rf_udata.data = NULL;
 	rf->rf_udata.free_func = NULL;
+	rf->rf_group[0] = '\0';
 	sstrncpy (rf->rf_name, name, sizeof (rf->rf_name));
 	rf->rf_type = RF_SIMPLE;
 	rf->rf_interval.tv_sec = 0;
@@ -765,7 +783,7 @@ int plugin_register_read (const char *name,
 	return (plugin_insert_read (rf));
 } /* int plugin_register_read */
 
-int plugin_register_complex_read (const char *name,
+int plugin_register_complex_read (const char *group, const char *name,
 		plugin_read_cb callback,
 		const struct timespec *interval,
 		user_data_t *user_data)
@@ -781,6 +799,10 @@ int plugin_register_complex_read (const char *name,
 
 	memset (rf, 0, sizeof (read_func_t));
 	rf->rf_callback = (void *) callback;
+	if (group != NULL)
+		sstrncpy (rf->rf_group, group, sizeof (rf->rf_group));
+	else
+		rf->rf_group[0] = '\0';
 	sstrncpy (rf->rf_name, name, sizeof (rf->rf_name));
 	rf->rf_type = RF_COMPLEX;
 	if (interval != NULL)
@@ -931,6 +953,67 @@ int plugin_unregister_read (const char *name) /* {{{ */
 
 	return (0);
 } /* }}} int plugin_unregister_read */
+
+static int compare_read_func_group (llentry_t *e, void *ud) /* {{{ */
+{
+	read_func_t *rf    = e->value;
+	char        *group = ud;
+
+	return strcmp (rf->rf_group, (const char *)group);
+} /* }}} int compare_read_func_group */
+
+int plugin_unregister_read_group (const char *group) /* {{{ */
+{
+	llentry_t *le;
+	read_func_t *rf;
+
+	int found = 0;
+
+	if (group == NULL)
+		return (-ENOENT);
+
+	pthread_mutex_lock (&read_lock);
+
+	if (read_list == NULL)
+	{
+		pthread_mutex_unlock (&read_lock);
+		return (-ENOENT);
+	}
+
+	while (42)
+	{
+		le = llist_search_custom (read_list,
+				compare_read_func_group, (void *)group);
+
+		if (le == NULL)
+			break;
+
+		++found;
+
+		llist_remove (read_list, le);
+
+		rf = le->value;
+		assert (rf != NULL);
+		rf->rf_type = RF_REMOVE;
+
+		llentry_destroy (le);
+
+		DEBUG ("plugin_unregister_read_group: "
+				"Marked `%s' (group `%s') for removal.",
+				rf->rf_name, group);
+	}
+
+	pthread_mutex_unlock (&read_lock);
+
+	if (found == 0)
+	{
+		WARNING ("plugin_unregister_read_group: No such "
+				"group of read function: %s", group);
+		return (-ENOENT);
+	}
+
+	return (0);
+} /* }}} int plugin_unregister_read_group */
 
 int plugin_unregister_write (const char *name)
 {
@@ -1464,14 +1547,6 @@ void plugin_log (int level, const char *format, ...)
 	va_list ap;
 	llentry_t *le;
 
-	if (list_log == NULL)
-	{
-		va_start (ap, format);
-		vfprintf (stderr, format, ap);
-		va_end (ap);
-		return;
-	}
-
 #if !COLLECT_DEBUG
 	if (level >= LOG_DEBUG)
 		return;
@@ -1481,6 +1556,12 @@ void plugin_log (int level, const char *format, ...)
 	vsnprintf (msg, sizeof (msg), format, ap);
 	msg[sizeof (msg) - 1] = '\0';
 	va_end (ap);
+
+	if (list_log == NULL)
+	{
+		fprintf (stderr, "%s\n", msg);
+		return;
+	}
 
 	le = llist_head (list_log);
 	while (le != NULL)

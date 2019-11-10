@@ -1490,7 +1490,7 @@ static void cna_handle_volume_snap_usage(const host_config_t *host, /* {{{ */
 	{
 		ERROR ("netapp plugin: cna_handle_volume_snap_usage: "
 				"na_elem_child (\"snapshots\") failed "
-				"for host %s.", hostname);
+				"for host %s.", host->name);
 		na_elem_free(data);
 		return;
 	}
@@ -1525,7 +1525,7 @@ static int cna_handle_volume_usage_data (const host_config_t *host, /* {{{ */
 	{
 		ERROR ("netapp plugin: cna_handle_volume_usage_data: "
 				"na_elem_child (\"volumes\") failed "
-				"for host %s.", hostname);
+				"for host %s.", host->name);
 		return (-1);
 	}
 
@@ -2559,7 +2559,7 @@ static int cna_config (oconfig_item_t *ci) { /* {{{ */
 			ud.data = host;
 			ud.free_func = (void (*) (void *)) free_host_config;
 
-			plugin_register_complex_read (cb_name,
+			plugin_register_complex_read (/* group = */ NULL, cb_name,
 					/* callback  = */ cna_read, 
 					/* interval  = */ (host->interval > 0) ? &interval : NULL,
 					/* user data = */ &ud);
