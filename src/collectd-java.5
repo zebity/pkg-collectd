@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-JAVA 5"
-.TH COLLECTD-JAVA 5 "2016-07-26" "5.5.2" "collectd"
+.TH COLLECTD-JAVA 5 "2016-09-11" "5.6.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -678,6 +678,10 @@ sets the type instance instead. \fI(optional)\fR
 .IX Item "InstanceFrom prefix"
 Works like the option of the same name directly beneath the \fIMBean\fR block, but
 sets the type instance instead. \fI(optional)\fR
+.IP "\fBPluginName\fR \fIname\fR" 4
+.IX Item "PluginName name"
+When set, overrides the default setting for the \fIplugin\fR field
+(\f(CW\*(C`GenericJMX\*(C'\fR).
 .IP "\fBTable\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "Table true|false"
 Set this to true if the returned attribute is a \fIcomposite type\fR. If set to

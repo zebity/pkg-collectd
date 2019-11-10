@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2016-07-26" "5.5.2" "collectd"
+.TH COLLECTD.CONF 5 "2016-09-11" "5.6.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -175,7 +175,7 @@ i.e. a \f(CW\*(C`<Plugin\ ...>\*(C'\fR block.
 The syntax of this config file is similar to the config file of the famous
 \&\fIApache\fR webserver. Each line contains either an option (a key and a list of
 one or more values) or a section-start or \-end. Empty lines and everything
-after a non-quoted hash-symbol (\f(CW\*(C`#\*(C'\fR) is ignored. \fIKeys\fR are unquoted
+after a non-quoted hash-symbol (\f(CW\*(C`#\*(C'\fR) are ignored. \fIKeys\fR are unquoted
 strings, consisting only of alphanumeric characters and the underscore (\f(CW\*(C`_\*(C'\fR)
 character. Keys are handled case insensitive by \fIcollectd\fR itself and all
 plugins included with it. \fIValues\fR can either be an \fIunquoted string\fR, a
@@ -204,7 +204,7 @@ during configuration. Also, unless \fBAutoLoadPlugin\fR is enabled, the
 .IX Header "GLOBAL OPTIONS"
 .IP "\fBBaseDir\fR \fIDirectory\fR" 4
 .IX Item "BaseDir Directory"
-Sets the base directory. This is the directory beneath all RRD-files are
+Sets the base directory. This is the directory beneath which all RRD-files are
 created. Possibly more subdirectories are created. This is also the working
 directory for the daemon.
 .IP "\fBLoadPlugin\fR \fIPlugin\fR" 4
@@ -216,7 +216,7 @@ Loads the plugin \fIPlugin\fR. This is required to load plugins, unless the
 Only the first \fBLoadPlugin\fR statement or block for a given plugin name has any
 effect. This is useful when you want to split up the configuration into smaller
 files and want each file to be \*(L"self contained\*(R", i.e. it contains a \fBPlugin\fR
-block \fIand\fR then appropriate \fBLoadPlugin\fR statement. The downside is that if
+block \fIand\fR the appropriate \fBLoadPlugin\fR statement. The downside is that if
 you have multiple conflicting \fBLoadPlugin\fR blocks, e.g. when they specify
 different intervals, only one of them (the first one encountered) will take
 effect and all others will be silently ignored.
@@ -261,8 +261,15 @@ the average user from ever having to deal with this low level linking stuff.
 .IP "\fBInterval\fR \fISeconds\fR" 4
 .IX Item "Interval Seconds"
 Sets a plugin-specific interval for collecting metrics. This overrides the
-global \fBInterval\fR setting. If a plugin provides own support for specifying an
-interval, that setting will take precedence.
+global \fBInterval\fR setting. If a plugin provides its own support for specifying
+an interval, that setting will take precedence.
+.IP "\fBFlushInterval\fR \fISeconds\fR" 4
+.IX Item "FlushInterval Seconds"
+Specifies the interval, in seconds, to call the flush callback if it's
+defined in this plugin. By default, this is disabled.
+.IP "\fBFlushTimeout\fR \fISeconds\fR" 4
+.IX Item "FlushTimeout Seconds"
+Specifies the value of the timeout argument of the flush callback.
 .RE
 .RS 4
 .RE
@@ -337,7 +344,7 @@ matching \f(CW\*(C`*.conf\*(C'\fR in any subdirectory of \f(CW\*(C`/etc/collectd
 .RE
 .RS 4
 .Sp
-If more than one files are included by a single \fBInclude\fR option, the files
+If more than one file is included by a single \fBInclude\fR option, the files
 will be included in lexicographical order (as defined by the \f(CW\*(C`strcmp\*(C'\fR
 function). Thus, you can e.\ g. use numbered prefixes to specify the
 order in which the files are loaded.
@@ -374,7 +381,7 @@ lead to more coarse statistics.
 magic! (Assuming you're using the \fIRRDtool\fR or \fIRRDCacheD\fR plugin.)
 .IP "\fBMaxReadInterval\fR \fISeconds\fR" 4
 .IX Item "MaxReadInterval Seconds"
-Read plugin doubles interval between queries after each failed attempt
+A read plugin doubles the interval between queries after each failed attempt
 to get data.
 .Sp
 This options limits the maximum value of the interval. The default value is
@@ -633,7 +640,9 @@ are disabled by default.
 The \fI\s-1AMQP\s0 plugin\fR can be used to communicate with other instances of
 \&\fIcollectd\fR or third party applications using an \s-1AMQP\s0 message broker. Values
 are sent to or received from the broker, which handles routing, queueing and
-possibly filtering or messages.
+possibly filtering out messages.
+.PP
+\&\fBSynopsis:\fR
 .PP
 .Vb 10
 \& <Plugin "amqp">
@@ -900,11 +909,22 @@ that IPv6 support has been disabled unless someone can confirm or decline that
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB3551\fR.
-.IP "\fBReportSeconds\fR \fBtrue|false\fR" 4
+.IP "\fBReportSeconds\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "ReportSeconds true|false"
 If set to \fBtrue\fR, the time reported in the \f(CW\*(C`timeleft\*(C'\fR metric will be
 converted to seconds. This is the recommended setting. If set to \fBfalse\fR, the
 default for backwards compatibility, the time will be reported in minutes.
+.IP "\fBPersistentConnection\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "PersistentConnection true|false"
+The plugin is designed to keep the connection to \fIapcupsd\fR open between reads.
+If plugin poll interval is greater than 15 seconds (hardcoded socket close
+timeout in \fIapcupsd\fR \s-1NIS\s0), then this option is \fBfalse\fR by default.
+.Sp
+You can instruct the plugin to close the connection after each read by setting
+this option to \fBfalse\fR or force keeping the connection by setting it to \fBtrue\fR.
+.Sp
+If \fIapcupsd\fR appears to close the connection due to inactivity quite quickly,
+the plugin will try to detect this problem and switch to an open-read-close mode.
 .ie n .SS "Plugin ""aquaero"""
 .el .SS "Plugin \f(CWaquaero\fP"
 .IX Subsection "Plugin aquaero"
@@ -1352,6 +1372,25 @@ Invert the selection: If set to true, all cgroups \fIexcept\fR the ones that
 match any one of the criteria are collected. By default only selected
 cgroups are collected if a selection is made. If no selection is configured
 at all, \fBall\fR cgroups are selected.
+.ie n .SS "Plugin ""chrony"""
+.el .SS "Plugin \f(CWchrony\fP"
+.IX Subsection "Plugin chrony"
+The \f(CW\*(C`chrony\*(C'\fR plugin collects ntp data from a \fBchronyd\fR server, such as clock
+skew and per-peer stratum.
+.PP
+For talking to \fBchronyd\fR, it mimics what the \fBchronyc\fR control program does
+on the wire.
+.PP
+Available configuration options for the \f(CW\*(C`chrony\*(C'\fR plugin:
+.IP "\fBHost\fR \fIHostname\fR" 4
+.IX Item "Host Hostname"
+Hostname of the host running \fBchronyd\fR. Defaults to \fBlocalhost\fR.
+.IP "\fBPort\fR \fIPort\fR" 4
+.IX Item "Port Port"
+UDP-Port to connect to. Defaults to \fB323\fR.
+.IP "\fBTimeout\fR \fITimeout\fR" 4
+.IX Item "Timeout Timeout"
+Connection timeout in seconds. Defaults to \fB2\fR.
 .ie n .SS "Plugin ""conntrack"""
 .el .SS "Plugin \f(CWconntrack\fP"
 .IX Subsection "Plugin conntrack"
@@ -1394,6 +1433,10 @@ This option is only considered when both, \fBReportByCpu\fR and \fBReportByState
 are set to \fBtrue\fR. In this case, by default, metrics will be reported as
 Jiffies. By setting this option to \fBtrue\fR, you can request percentage values
 in the un-aggregated (per-CPU, per-state) mode as well.
+.IP "\fBReportNumCpu\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "ReportNumCpu false|true"
+When set to \fBtrue\fR, reports the number of available CPUs.
+Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""cpufreq"""
 .el .SS "Plugin \f(CWcpufreq\fP"
 .IX Subsection "Plugin cpufreq"
@@ -1402,6 +1445,16 @@ This plugin doesn't have any options. It reads
 installed) to get the current \s-1CPU\s0 frequency. If this file does not exist make
 sure \fBcpufreqd\fR (<http://cpufreqd.sourceforge.net/>) or a similar tool is
 installed and an \*(L"cpu governor\*(R" (that's a kernel module) is loaded.
+.ie n .SS "Plugin ""cpusleep"""
+.el .SS "Plugin \f(CWcpusleep\fP"
+.IX Subsection "Plugin cpusleep"
+This plugin doesn't have any options. It reads \s-1CLOCK_BOOTTIME\s0 and
+\&\s-1CLOCK_MONOTONIC\s0 and reports the difference between these clocks. Since
+\&\s-1BOOTTIME\s0 clock increments while device is suspended and \s-1MONOTONIC\s0
+clock does not, the derivative of the difference between these clocks
+gives the relative amount of time the device has spent in suspend
+state. The recorded value is in milliseconds of sleep per seconds of
+wall clock.
 .ie n .SS "Plugin ""csv"""
 .el .SS "Plugin \f(CWcsv\fP"
 .IX Subsection "Plugin csv"
@@ -1417,6 +1470,70 @@ much sense when collectd is running in foreground\- or non-daemon-mode.
 If set to \fBtrue\fR, convert counter values to rates. If set to \fBfalse\fR (the
 default) counter values are stored as is, i.\ e. as an increasing integer
 number.
+.SS "cURL Statistics"
+.IX Subsection "cURL Statistics"
+All cURL-based plugins support collection of generic, request-based
+statistics. These are disabled by default and can be enabled selectively for
+each page or \s-1URL\s0 queried from the curl, curl_json, or curl_xml plugins. See
+the documentation of those plugins for specific information. This section
+describes the available metrics that can be configured for each plugin. All
+options are disabled by default.
+.PP
+See <http://curl.haxx.se/libcurl/c/curl_easy_getinfo.html> for more details.
+.IP "\fBTotalTime\fR \fBtrue|false\fR" 4
+.IX Item "TotalTime true|false"
+Total time of the transfer, including name resolving, \s-1TCP\s0 connect, etc.
+.IP "\fBNamelookupTime\fR \fBtrue|false\fR" 4
+.IX Item "NamelookupTime true|false"
+Time it took from the start until name resolving was completed.
+.IP "\fBConnectTime\fR \fBtrue|false\fR" 4
+.IX Item "ConnectTime true|false"
+Time it took from the start until the connect to the remote host (or proxy)
+was completed.
+.IP "\fBAppconnectTime\fR \fBtrue|false\fR" 4
+.IX Item "AppconnectTime true|false"
+Time it took from the start until the \s-1SSL/SSH\s0 connect/handshake to the remote
+host was completed.
+.IP "\fBPretransferTime\fR \fBtrue|false\fR" 4
+.IX Item "PretransferTime true|false"
+Time it took from the start until just before the transfer begins.
+.IP "\fBStarttransferTime\fR \fBtrue|false\fR" 4
+.IX Item "StarttransferTime true|false"
+Time it took from the start until the first byte was received.
+.IP "\fBRedirectTime\fR \fBtrue|false\fR" 4
+.IX Item "RedirectTime true|false"
+Time it took for all redirection steps include name lookup, connect,
+pre-transfer and transfer before final transaction was started.
+.IP "\fBRedirectCount\fR \fBtrue|false\fR" 4
+.IX Item "RedirectCount true|false"
+The total number of redirections that were actually followed.
+.IP "\fBSizeUpload\fR \fBtrue|false\fR" 4
+.IX Item "SizeUpload true|false"
+The total amount of bytes that were uploaded.
+.IP "\fBSizeDownload\fR \fBtrue|false\fR" 4
+.IX Item "SizeDownload true|false"
+The total amount of bytes that were downloaded.
+.IP "\fBSpeedDownload\fR \fBtrue|false\fR" 4
+.IX Item "SpeedDownload true|false"
+The average download speed that curl measured for the complete download.
+.IP "\fBSpeedUpload\fR \fBtrue|false\fR" 4
+.IX Item "SpeedUpload true|false"
+The average upload speed that curl measured for the complete upload.
+.IP "\fBHeaderSize\fR \fBtrue|false\fR" 4
+.IX Item "HeaderSize true|false"
+The total size of all the headers received.
+.IP "\fBRequestSize\fR \fBtrue|false\fR" 4
+.IX Item "RequestSize true|false"
+The total size of the issued requests.
+.IP "\fBContentLengthDownload\fR \fBtrue|false\fR" 4
+.IX Item "ContentLengthDownload true|false"
+The content-length of the download.
+.IP "\fBContentLengthUpload\fR \fBtrue|false\fR" 4
+.IX Item "ContentLengthUpload true|false"
+The specified size of the upload.
+.IP "\fBNumConnects\fR \fBtrue|false\fR" 4
+.IX Item "NumConnects true|false"
+The number of new connections that were created to achieve the transfer.
 .ie n .SS "Plugin ""curl"""
 .el .SS "Plugin \f(CWcurl\fP"
 .IX Subsection "Plugin curl"
@@ -1507,10 +1624,19 @@ blocks (see below) are optional. Disabled by default.
 Beware that requests will get aborted if they take too long to complete. Adjust
 \&\fBTimeout\fR accordingly if you expect \fBMeasureResponseTime\fR to report such slow
 requests.
+.Sp
+This option is similar to enabling the \fBTotalTime\fR statistic but it's
+measured by collectd instead of cURL.
 .IP "\fBMeasureResponseCode\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "MeasureResponseCode true|false"
 Measure response code for the request. If this setting is enabled, \fBMatch\fR
 blocks (see below) are optional. Disabled by default.
+.IP "\fB<Statistics>\fR" 4
+.IX Item "<Statistics>"
+One \fBStatistics\fR block can be used to specify cURL statistics to be collected
+for each request to the remote web site. See the section \*(L"cURL Statistics\*(R"
+above for details. If this setting is enabled, \fBMatch\fR blocks (see below) are
+optional.
 .IP "\fB<Match>\fR" 4
 .IX Item "<Match>"
 One or more \fBMatch\fR blocks that define how to match information in the data
@@ -1591,6 +1717,10 @@ array. If a path component of a \fBKey\fR is a \fI*\fR\ wildcard, the
 values for all map keys or array indices will be collectd.
 .PP
 The following options are valid within \fB\s-1URL\s0\fR blocks:
+.IP "\fBHost\fR \fIName\fR" 4
+.IX Item "Host Name"
+Use \fIName\fR as the host name when submitting values. Defaults to the global
+host name setting.
 .IP "\fBInstance\fR \fIInstance\fR" 4
 .IX Item "Instance Instance"
 Sets the plugin instance to \fIInstance\fR.
@@ -1620,6 +1750,11 @@ Sets the interval (in seconds) in which the values will be collected from this
 .PD
 These options behave exactly equivalent to the appropriate options of the
 \&\fIcURL\fR plugin. Please see there for a detailed description.
+.IP "\fB<Statistics>\fR" 4
+.IX Item "<Statistics>"
+One \fBStatistics\fR block can be used to specify cURL statistics to be collected
+for each request to the remote \s-1URL.\s0 See the section \*(L"cURL Statistics\*(R" above
+for details.
 .PP
 The following options are valid within \fBKey\fR blocks:
 .IP "\fBType\fR \fIType\fR" 4
@@ -1714,6 +1849,11 @@ Examples:
 .PD
 These options behave exactly equivalent to the appropriate options of the
 \&\fIcURL plugin\fR. Please see there for a detailed description.
+.IP "\fB<Statistics>\fR" 4
+.IX Item "<Statistics>"
+One \fBStatistics\fR block can be used to specify cURL statistics to be collected
+for each request to the remote \s-1URL.\s0 See the section \*(L"cURL Statistics\*(R" above
+for details.
 .IP "<\fBXPath\fR \fIXPath-expression\fR>" 4
 .IX Item "<XPath XPath-expression>"
 Within each \fB\s-1URL\s0\fR block, there must be one or more \fBXPath\fR blocks. Each
@@ -1781,6 +1921,7 @@ than those of other plugins. It usually looks something like this:
 \&    </Query>
 \&    <Database "product_information">
 \&      Driver "mysql"
+\&      Interval 120
 \&      DriverOption "host" "localhost"
 \&      DriverOption "username" "collectd"
 \&      DriverOption "password" "aZo6daiw"
@@ -1957,6 +2098,10 @@ documentation\ \- we stick as close to the terminology used there.
 Each database needs a \*(L"name\*(R" as string argument in the starting tag of the
 block. This name will be used as \*(L"PluginInstance\*(R" in the values submitted to
 the daemon. Other than that, that name is not used.
+.IP "\fBInterval\fR \fIInterval\fR" 4
+.IX Item "Interval Interval"
+Sets the interval (in seconds) in which the values will be collected from this
+database. By default the global \fBInterval\fR setting will be used.
 .IP "\fBDriver\fR \fIDriver\fR" 4
 .IX Item "Driver Driver"
 Specifies the driver to use to connect to the database. In many cases those
@@ -2162,7 +2307,7 @@ an appropriate \fBMap\fR option exists, the given \fIType\fR and, optionally,
 \&\fITypeInstance\fR will be used.
 .IP "\fBMappedOnly\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "MappedOnly true|false"
-When set to \fBtrue\fR, only metrics that can be mapped to to a \fItype\fR will be
+When set to \fBtrue\fR, only metrics that can be mapped to a \fItype\fR will be
 collected, all other metrics will be ignored. Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""exec"""
 .el .SS "Plugin \f(CWexec\fP"
@@ -2351,6 +2496,127 @@ source, this is optional. Otherwise the option is required.
 .RE
 .RS 4
 .RE
+.ie n .SS "Plugin ""gps"""
+.el .SS "Plugin \f(CWgps\fP"
+.IX Subsection "Plugin gps"
+The \f(CW\*(C`gps plugin\*(C'\fR connects to gpsd on the host machine.
+The host, port, timeout and pause are configurable.
+.PP
+This is useful if you run an \s-1NTP\s0 server using a \s-1GPS\s0 for source and you want to
+monitor it.
+.PP
+Mind your \s-1GPS\s0 must send $\-\-GSA for having the data reported!
+.PP
+The following elements are collected:
+.IP "\fBsatellites\fR" 4
+.IX Item "satellites"
+Number of satellites used for fix (type instance \*(L"used\*(R") and in view (type
+instance \*(L"visible\*(R"). 0 means no \s-1GPS\s0 satellites are visible.
+.IP "\fBdilution_of_precision\fR" 4
+.IX Item "dilution_of_precision"
+Vertical and horizontal dilution (type instance \*(L"horizontal\*(R" or \*(L"vertical\*(R").
+It should be between 0 and 3.
+Look at the documentation of your \s-1GPS\s0 to know more.
+.PP
+Synopsis:
+.PP
+.Vb 10
+\& LoadPlugin gps
+\& <Plugin "gps">
+\&   # Connect to localhost on gpsd regular port:
+\&   Host "127.0.0.1"
+\&   Port "2947"
+\&   # 15 ms timeout
+\&   Timeout 0.015
+\&   # PauseConnect of 5 sec. between connection attempts.
+\&   PauseConnect 5
+\& </Plugin>
+.Ve
+.PP
+Available configuration options:
+.IP "\fBHost\fR \fIHost\fR" 4
+.IX Item "Host Host"
+The host on which gpsd daemon runs. Defaults to \fBlocalhost\fR.
+.IP "\fBPort\fR \fIPort\fR" 4
+.IX Item "Port Port"
+Port to connect to gpsd on the host machine. Defaults to \fB2947\fR.
+.IP "\fBTimeout\fR \fISeconds\fR" 4
+.IX Item "Timeout Seconds"
+Timeout in seconds (default 0.015 sec).
+.Sp
+The \s-1GPS\s0 data stream is fetch by the plugin form the daemon.
+It waits for data to be available, if none arrives it times out
+and loop for another reading.
+Mind to put a low value gpsd expects value in the micro-seconds area
+(recommended is 500 us) since the waiting function is blocking.
+Value must be between 500 us and 5 sec., if outside that range the
+default value is applied.
+.Sp
+This only applies from gpsd release\-2.95.
+.IP "\fBPauseConnect\fR \fISeconds\fR" 4
+.IX Item "PauseConnect Seconds"
+Pause to apply between attempts of connection to gpsd in seconds (default 5 sec).
+.ie n .SS "Plugin ""grpc"""
+.el .SS "Plugin \f(CWgrpc\fP"
+.IX Subsection "Plugin grpc"
+The \fIgrpc\fR plugin provides an \s-1RPC\s0 interface to submit values to or query
+values from collectd based on the open source gRPC framework. It exposes an
+end-point for dispatching values to the daemon.
+.PP
+The \fBgRPC\fR homepage can be found at <https://grpc.io/>.
+.IP "\fBServer\fR \fIHost\fR \fIPort\fR" 4
+.IX Item "Server Host Port"
+The \fBServer\fR statement sets the address of a server to which to send metrics
+via the \f(CW\*(C`DispatchValues\*(C'\fR function.
+.Sp
+The argument \fIHost\fR may be a hostname, an IPv4 address, or an IPv6 address.
+.Sp
+Optionally, \fBServer\fR may be specified as a configuration block which supports
+the following options:
+.RS 4
+.IP "\fBEnableSSL\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "EnableSSL false|true"
+Whether to require \s-1SSL\s0 for outgoing connections. Default: false.
+.IP "\fBSSLCACertificateFile\fR \fIFilename\fR" 4
+.IX Item "SSLCACertificateFile Filename"
+.PD 0
+.IP "\fBSSLCertificateFile\fR \fIFilename\fR" 4
+.IX Item "SSLCertificateFile Filename"
+.IP "\fBSSLCertificateKeyFile\fR \fIFilename\fR" 4
+.IX Item "SSLCertificateKeyFile Filename"
+.PD
+Filenames specifying \s-1SSL\s0 certificate and key material to be used with \s-1SSL\s0
+connections.
+.RE
+.RS 4
+.RE
+.IP "\fBListen\fR \fIHost\fR \fIPort\fR" 4
+.IX Item "Listen Host Port"
+The \fBListen\fR statement sets the network address to bind to. When multiple
+statements are specified, the daemon will bind to all of them. If none are
+specified, it defaults to \fB0.0.0.0:50051\fR.
+.Sp
+The argument \fIHost\fR may be a hostname, an IPv4 address, or an IPv6 address.
+.Sp
+Optionally, \fBListen\fR may be specified as a configuration block which
+supports the following options:
+.RS 4
+.IP "\fBEnableSSL\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "EnableSSL true|false"
+Whether to enable \s-1SSL\s0 for incoming connections. Default: false.
+.IP "\fBSSLCACertificateFile\fR \fIFilename\fR" 4
+.IX Item "SSLCACertificateFile Filename"
+.PD 0
+.IP "\fBSSLCertificateFile\fR \fIFilename\fR" 4
+.IX Item "SSLCertificateFile Filename"
+.IP "\fBSSLCertificateKeyFile\fR \fIFilename\fR" 4
+.IX Item "SSLCertificateKeyFile Filename"
+.PD
+Filenames specifying \s-1SSL\s0 certificate and key material to be used with \s-1SSL\s0
+connections.
+.RE
+.RS 4
+.RE
 .ie n .SS "Plugin ""hddtemp"""
 .el .SS "Plugin \f(CWhddtemp\fP"
 .IX Subsection "Plugin hddtemp"
@@ -2403,6 +2669,28 @@ Example:
 This will ignore the loopback interface, all interfaces with names starting
 with \fIveth\fR and all interfaces with names starting with \fItun\fR followed by
 at least one digit.
+.IP "\fBReportInactive\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "ReportInactive true|false"
+When set to \fIfalse\fR, only interfaces with non-zero traffic will be
+reported. Note that the check is done by looking into whether a
+package was sent at any time from boot and the corresponding counter
+is non-zero. So, if the interface has been sending data in the past
+since boot, but not during the reported time-interval, it will still
+be reported.
+.Sp
+The default value is \fItrue\fR and results in collection of the data
+from all interfaces that are selected by \fBInterface\fR and
+\&\fBIgnoreSelected\fR options.
+.IP "\fBUniqueName\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "UniqueName true|false"
+Interface name is not unique on Solaris (\s-1KSTAT\s0), interface name is unique
+only within a module/instance. Following tuple is considered unique:
+   (ks_module, ks_instance, ks_name)
+If this option is set to true, interface name contains above three fields
+separated by an underscore. For more info on \s-1KSTAT,\s0 visit
+<http://docs.oracle.com/cd/E23824_01/html/821\-1468/kstat\-3kstat.html#REFMAN3Ekstat\-3kstat>
+.Sp
+This option is only available on Solaris.
 .ie n .SS "Plugin ""ipmi"""
 .el .SS "Plugin \f(CWipmi\fP"
 .IX Subsection "Plugin ipmi"
@@ -2598,6 +2886,11 @@ running on is reported as \fIhostname\fR and the logical hostname of the machine
 is reported in the \fIplugin instance\fR. Otherwise, the logical hostname will be
 used (just like other plugins) and the \fIplugin instance\fR will be empty.
 Defaults to false.
+.ie n .SS "Plugin ""lua"""
+.el .SS "Plugin \f(CWlua\fP"
+.IX Subsection "Plugin lua"
+This plugin embeds a Lua interpreter into collectd and provides an interface
+to collectd's plugin system. See \fIcollectd\-lua\fR\|(5) for its documentation.
 .ie n .SS "Plugin ""mbmon"""
 .el .SS "Plugin \f(CWmbmon\fP"
 .IX Subsection "Plugin mbmon"
@@ -3002,6 +3295,126 @@ option multiple times to collect more than one value from a slave. At least one
 .RE
 .RS 4
 .RE
+.ie n .SS "Plugin ""mqtt"""
+.el .SS "Plugin \f(CWmqtt\fP"
+.IX Subsection "Plugin mqtt"
+The \fI\s-1MQTT\s0 plugin\fR can send metrics to \s-1MQTT \s0(\fBPublish\fR blocks) and receive
+values from \s-1MQTT \s0(\fBSubscribe\fR blocks).
+.PP
+\&\fBSynopsis:\fR
+.PP
+.Vb 10
+\& <Plugin mqtt>
+\&   <Publish "name">
+\&     Host "mqtt.example.com"
+\&     Prefix "collectd"
+\&   </Publish>
+\&   <Subscribe "name">
+\&     Host "mqtt.example.com"
+\&     Topic "collectd/#"
+\&   </Subscribe>
+\& </Plugin>
+.Ve
+.PP
+The plugin's configuration is in \fBPublish\fR and/or \fBSubscribe\fR blocks,
+configuring the sending and receiving direction respectively. The plugin will
+register a write callback named \f(CW\*(C`mqtt/\f(CIname\f(CW\*(C'\fR where \fIname\fR is the string
+argument given to the \fBPublish\fR block. Both types of blocks share many but not
+all of the following options. If an option is valid in only one of the blocks,
+it will be mentioned explicitly.
+.PP
+\&\fBOptions:\fR
+.IP "\fBHost\fR \fIHostname\fR" 4
+.IX Item "Host Hostname"
+Hostname of the \s-1MQTT\s0 broker to connect to.
+.IP "\fBPort\fR \fIService\fR" 4
+.IX Item "Port Service"
+Port number or service name of the \s-1MQTT\s0 broker to connect to.
+.IP "\fBUser\fR \fIUserName\fR" 4
+.IX Item "User UserName"
+Username used when authenticating to the \s-1MQTT\s0 broker.
+.IP "\fBPassword\fR \fIPassword\fR" 4
+.IX Item "Password Password"
+Password used when authenticating to the \s-1MQTT\s0 broker.
+.IP "\fBClientId\fR \fIClientId\fR" 4
+.IX Item "ClientId ClientId"
+\&\s-1MQTT\s0 client \s-1ID\s0 to use. Defaults to the hostname used by \fIcollectd\fR.
+.IP "\fBQoS\fR [\fB0\fR\-\fB2\fR]" 4
+.IX Item "QoS [0-2]"
+Sets the \fIQuality of Service\fR, with the values \f(CW0\fR, \f(CW1\fR and \f(CW2\fR meaning:
+.RS 4
+.IP "\fB0\fR" 4
+.IX Item "0"
+At most once
+.IP "\fB1\fR" 4
+.IX Item "1"
+At least once
+.IP "\fB2\fR" 4
+.IX Item "2"
+Exactly once
+.RE
+.RS 4
+.Sp
+In \fBPublish\fR blocks, this option determines the QoS flag set on outgoing
+messages and defaults to \fB0\fR. In \fBSubscribe\fR blocks, determines the maximum
+QoS setting the client is going to accept and defaults to \fB2\fR. If the QoS flag
+on a message is larger than the maximum accepted QoS of a subscriber, the
+message's QoS will be downgraded.
+.RE
+.IP "\fBPrefix\fR \fIPrefix\fR (Publish only)" 4
+.IX Item "Prefix Prefix (Publish only)"
+This plugin will use one topic per \fIvalue list\fR which will looks like a path.
+\&\fIPrefix\fR is used as the first path element and defaults to \fBcollectd\fR.
+.Sp
+An example topic name would be:
+.Sp
+.Vb 1
+\& collectd/cpu\-0/cpu\-user
+.Ve
+.IP "\fBRetain\fR \fBfalse\fR|\fBtrue\fR (Publish only)" 4
+.IX Item "Retain false|true (Publish only)"
+Controls whether the \s-1MQTT\s0 broker will retain (keep a copy of) the last message
+sent to each topic and deliver it to new subscribers. Defaults to \fBfalse\fR.
+.IP "\fBStoreRates\fR \fBtrue\fR|\fBfalse\fR (Publish only)" 4
+.IX Item "StoreRates true|false (Publish only)"
+Controls whether \f(CW\*(C`DERIVE\*(C'\fR and \f(CW\*(C`COUNTER\*(C'\fR metrics are converted to a \fIrate\fR
+before sending. Defaults to \fBtrue\fR.
+.IP "\fBCleanSession\fR \fBtrue\fR|\fBfalse\fR (Subscribe only)" 4
+.IX Item "CleanSession true|false (Subscribe only)"
+Controls whether the \s-1MQTT \s0\*(L"cleans\*(R" the session up after the subscriber
+disconnects or if it maintains the subscriber's subscriptions and all messages
+that arrive while the subscriber is disconnected. Defaults to \fBtrue\fR.
+.IP "\fBTopic\fR \fITopicName\fR (Subscribe only)" 4
+.IX Item "Topic TopicName (Subscribe only)"
+Configures the topic(s) to subscribe to. You can use the single level \f(CW\*(C`+\*(C'\fR and
+multi level \f(CW\*(C`#\*(C'\fR wildcards. Defaults to \fBcollectd/#\fR, i.e. all topics beneath
+the \fBcollectd\fR branch.
+.IP "\fBCACert\fR \fIfile\fR" 4
+.IX Item "CACert file"
+Path to the PEM-encoded \s-1CA\s0 certificate file. Setting this option enables \s-1TLS\s0
+communication with the \s-1MQTT\s0 broker, and as such, \fBPort\fR should be the TLS-enabled
+port of the \s-1MQTT\s0 broker.
+A valid \s-1TLS\s0 configuration requires \fBCACert\fR, \fBCertificateFile\fR and \fBCertificateKeyFile\fR.
+.IP "\fBCertificateFile\fR \fIfile\fR" 4
+.IX Item "CertificateFile file"
+Path to the PEM-encoded certificate file to use as client certificate when
+connecting to the \s-1MQTT\s0 broker.
+A valid \s-1TLS\s0 configuration requires \fBCACert\fR, \fBCertificateFile\fR and \fBCertificateKeyFile\fR.
+.IP "\fBCertificateKeyFile\fR \fIfile\fR" 4
+.IX Item "CertificateKeyFile file"
+Path to the unencrypted PEM-encoded key file corresponding to \fBCertificateFile\fR.
+A valid \s-1TLS\s0 configuration requires \fBCACert\fR, \fBCertificateFile\fR and \fBCertificateKeyFile\fR.
+.IP "\fBTLSProtocol\fR \fIprotocol\fR" 4
+.IX Item "TLSProtocol protocol"
+If configured, this specifies the string protocol version (e.g. \f(CW\*(C`tlsv1\*(C'\fR,
+\&\f(CW\*(C`tlsv1.2\*(C'\fR) to use for the \s-1TLS\s0 connection to the broker. If not set a default
+version is used which depends on the version of OpenSSL the Mosquitto library
+was linked against.
+.IP "\fBCipherSuite\fR \fIciphersuite\fR" 4
+.IX Item "CipherSuite ciphersuite"
+A string describing the ciphers available for use. See \fIciphers\fR\|(1) and the
+\&\f(CW\*(C`openssl ciphers\*(C'\fR utility for more information. If unset, the default ciphers
+will be used.
 .ie n .SS "Plugin ""mysql"""
 .el .SS "Plugin \f(CWmysql\fP"
 .IX Subsection "Plugin mysql"
@@ -3028,7 +3441,7 @@ of the nodes are collected by evaluating the \f(CW\*(C`Position\*(C'\fR return v
 .PP
 Synopsis:
 .PP
-.Vb 9
+.Vb 10
 \&  <Plugin mysql>
 \&    <Database foo>
 \&      Host "hostname"
@@ -3037,6 +3450,11 @@ Synopsis:
 \&      Port "3306"
 \&      MasterStats true
 \&      ConnectTimeout 10
+\&      SSLKey "/path/to/key.pem"
+\&      SSLCert "/path/to/cert.pem"
+\&      SSLCA "/path/to/ca.pem"
+\&      SSLCAPath "/path/to/cas/"
+\&      SSLCipher "DHE\-RSA\-AES256\-SHA"
 \&    </Database>
 \&
 \&    <Database bar>
@@ -3046,13 +3464,21 @@ Synopsis:
 \&      SlaveStats true
 \&      SlaveNotifications true
 \&    </Database>
+\&
+\&   <Database galera>
+\&      Alias "galera"
+\&      Host "localhost"
+\&      Socket "/var/run/mysql/mysqld.sock"
+\&      WsrepStats true
+\&   </Database>
 \&  </Plugin>
 .Ve
 .PP
 A \fBDatabase\fR block defines one connection to a MySQL database. It accepts a
 single argument which specifies the name of the database. None of the other
 options are required. MySQL will use default values as documented in the
-section \*(L"\fImysql_real_connect()\fR\*(R" in the \fBMySQL reference manual\fR.
+\&\*(L"\fImysql_real_connect()\fR\*(R" and \*(L"\fImysql_ssl_set()\fR\*(R" sections in the
+\&\fBMySQL reference manual\fR.
 .IP "\fBAlias\fR \fIAlias\fR" 4
 .IX Item "Alias Alias"
 Alias to use as sender instead of hostname when reporting. This may be useful
@@ -3108,9 +3534,31 @@ privileges. See the \fBUser\fR documentation above. Defaults to \fBfalse\fR.
 .IX Item "SlaveNotifications true|false"
 If enabled, the plugin sends a notification if the replication slave I/O and /
 or \s-1SQL\s0 threads are not running. Defaults to \fBfalse\fR.
+.IP "\fBWsrepStats\fR \fItrue|false\fR" 4
+.IX Item "WsrepStats true|false"
+.Vb 3
+\& Enable the collection of wsrep plugin statistics, used in Master\-Master
+\& replication setups like in MySQL Galera/Percona XtraDB Cluster.
+\& User needs only privileges to execute \*(AqSHOW GLOBAL STATUS\*(Aq
+.Ve
 .IP "\fBConnectTimeout\fR \fISeconds\fR" 4
 .IX Item "ConnectTimeout Seconds"
 Sets the connect timeout for the MySQL client.
+.IP "\fBSSLKey\fR \fIPath\fR" 4
+.IX Item "SSLKey Path"
+If provided, the X509 key in \s-1PEM\s0 format.
+.IP "\fBSSLCert\fR \fIPath\fR" 4
+.IX Item "SSLCert Path"
+If provided, the X509 cert in \s-1PEM\s0 format.
+.IP "\fB\s-1SSLCA\s0\fR \fIPath\fR" 4
+.IX Item "SSLCA Path"
+If provided, the \s-1CA\s0 file in \s-1PEM\s0 format (check OpenSSL docs).
+.IP "\fBSSLCAPath\fR \fIPath\fR" 4
+.IX Item "SSLCAPath Path"
+If provided, the \s-1CA\s0 directory (check OpenSSL docs).
+.IP "\fBSSLCipher\fR \fIString\fR" 4
+.IX Item "SSLCipher String"
+If provided, the \s-1SSL\s0 cipher to use.
 .ie n .SS "Plugin ""netapp"""
 .el .SS "Plugin \f(CWnetapp\fP"
 .IX Subsection "Plugin netapp"
@@ -3963,6 +4411,16 @@ i.\ e. \f(CW%s\fR. The first will be replaced with the severity, the second
 with the hostname.
 .Sp
 Default: \f(CW\*(C`Collectd notify: %s@%s\*(C'\fR
+.ie n .SS "Plugin ""notify_nagios"""
+.el .SS "Plugin \f(CWnotify_nagios\fP"
+.IX Subsection "Plugin notify_nagios"
+The \fInotify_nagios\fR plugin writes notifications to Nagios' \fIcommand file\fR as
+a \fIpassive service check result\fR.
+.PP
+Available configuration options:
+.IP "\fBCommandFile\fR \fIPath\fR" 4
+.IX Item "CommandFile Path"
+Sets the \fIcommand file\fR to write to. Defaults to \fI/usr/local/nagios/var/rw/nagios.cmd\fR.
 .ie n .SS "Plugin ""ntpd"""
 .el .SS "Plugin \f(CWntpd\fP"
 .IX Subsection "Plugin ntpd"
@@ -4172,6 +4630,14 @@ The following options are accepted within each \fBInstance\fR block:
 .IX Item "URL ldap://host/binddn"
 Sets the \s-1URL\s0 to use to connect to the \fIOpenLDAP\fR server. This option is
 \&\fImandatory\fR.
+.IP "\fBBindDN\fR \fIBindDN\fR" 4
+.IX Item "BindDN BindDN"
+Name in the form of an \s-1LDAP\s0 distinguished name intended to be used for
+authentication. Defaults to empty string to establish an anonymous authorization.
+.IP "\fBPassword\fR \fIPassword\fR" 4
+.IX Item "Password Password"
+Password for simple bind authentication. If this option is not set,
+unauthenticated bind operation is used.
 .IP "\fBStartTLS\fR \fBtrue|false\fR" 4
 .IX Item "StartTLS true|false"
 Defines whether \s-1TLS\s0 must be used when connecting to the \fIOpenLDAP\fR server.
@@ -4190,8 +4656,9 @@ depends on the distribution you use and can be changed with the usual ldap
 client configuration mechanisms. See \fIldap.conf\fR\|(5) for the details.
 .IP "\fBTimeout\fR \fISeconds\fR" 4
 .IX Item "Timeout Seconds"
-Sets the timeout value for ldap operations. Defaults to \fB\-1\fR which results in
-an infinite timeout.
+Sets the timeout value for ldap operations, in seconds. By default, the
+configured \fBInterval\fR is used to set the timeout. Use \fB\-1\fR to disable
+(infinite timeout).
 .IP "\fBVersion\fR \fIVersion\fR" 4
 .IX Item "Version Version"
 An integer which sets the \s-1LDAP\s0 protocol version number to use when connecting
@@ -4410,6 +4877,12 @@ Default: \fB0.9\fR
 .IP "\fB\s-1TTL\s0\fR \fI0\-255\fR" 4
 .IX Item "TTL 0-255"
 Sets the Time-To-Live of generated \s-1ICMP\s0 packets.
+.IP "\fBSize\fR \fIsize\fR" 4
+.IX Item "Size size"
+Sets the size of the data payload in \s-1ICMP\s0 packet to specified \fIsize\fR (it
+will be filled with regular \s-1ASCII\s0 pattern). If not set, default 56 byte
+long string is used so that the packet size of an ICMPv4 packet is exactly
+64 bytes, similar to the behaviour of normal \fIping\fR\|(1) command.
 .IP "\fBSourceAddress\fR \fIhost\fR" 4
 .IX Item "SourceAddress host"
 Sets the source address to use. \fIhost\fR may either be a numerical network
@@ -4515,13 +4988,12 @@ The \fBQuery\fR block defines one database query which may later be used by a
 database definition. It accepts a single mandatory argument which specifies
 the name of the query. The names of all queries have to be unique (see the
 \&\fBMinVersion\fR and \fBMaxVersion\fR options below for an exception to this
-rule). The following configuration options are available to define the query:
+rule).
 .PP
-In each \fBQuery\fR block, there is one or more \fBResult\fR blocks. \fBResult\fR
-blocks define how to handle the values returned from the query. They define
-which column holds which value and how to dispatch that value to the daemon.
-Multiple \fBResult\fR blocks may be used to extract multiple values from a single
-query.
+In each \fBQuery\fR block, there is one or more \fBResult\fR blocks. Multiple
+\&\fBResult\fR blocks may be used to extract multiple values from a single query.
+.PP
+The following configuration options are available to define the query:
 .IP "\fBStatement\fR \fIsql query statement\fR" 4
 .IX Item "Statement sql query statement"
 Specify the \fIsql query statement\fR which the plugin should execute. The string
@@ -4535,8 +5007,8 @@ allowed. Note, however, that only a single command may be used. Semicolons are
 allowed as long as a single non-empty command has been specified only.
 .Sp
 The returned lines will be handled separately one after another.
-.IP "\fBParam\fR \fIhostname\fR|\fIdatabase\fR|\fIusername\fR|\fIinterval\fR" 4
-.IX Item "Param hostname|database|username|interval"
+.IP "\fBParam\fR \fIhostname\fR|\fIdatabase\fR|\fIinstance\fR|\fIusername\fR|\fIinterval\fR" 4
+.IX Item "Param hostname|database|instance|username|interval"
 Specify the parameters which should be passed to the \s-1SQL\s0 query. The parameters
 are referred to in the \s-1SQL\s0 query as \fB\f(CB$1\fB\fR, \fB\f(CB$2\fB\fR, etc. in the same order as
 they appear in the configuration file. The value of the parameter is
@@ -4566,6 +5038,30 @@ specific or global \fBInterval\fR options).
 Please note that parameters are only supported by PostgreSQL's protocol
 version 3 and above which was introduced in version 7.4 of PostgreSQL.
 .RE
+.IP "\fBPluginInstanceFrom\fR \fIcolumn\fR" 4
+.IX Item "PluginInstanceFrom column"
+Specify how to create the \*(L"PluginInstance\*(R" for reporting this query results.
+Only one column is supported. You may concatenate fields and string values in
+the query statement to get the required results.
+.IP "\fBMinVersion\fR \fIversion\fR" 4
+.IX Item "MinVersion version"
+.PD 0
+.IP "\fBMaxVersion\fR \fIversion\fR" 4
+.IX Item "MaxVersion version"
+.PD
+Specify the minimum or maximum version of PostgreSQL that this query should be
+used with. Some statistics might only be available with certain versions of
+PostgreSQL. This allows you to specify multiple queries with the same name but
+which apply to different versions, thus allowing you to use the same
+configuration in a heterogeneous environment.
+.Sp
+The \fIversion\fR has to be specified as the concatenation of the major, minor
+and patch-level versions, each represented as two-decimal-digit numbers. For
+example, version 8.2.3 will become 80203.
+.PP
+The \fBResult\fR block defines how to handle the values returned from the query.
+It defines which column holds which value and how to dispatch that value to
+the daemon.
 .IP "\fBType\fR \fItype\fR" 4
 .IX Item "Type type"
 The \fItype\fR name to be used when dispatching the values. The type describes
@@ -4573,7 +5069,7 @@ how to handle the data and where to store it. See \fItypes.db\fR\|(5) for more
 details on types and their configuration. The number and type of values (as
 selected by the \fBValuesFrom\fR option) has to match the type of the given name.
 .Sp
-This option is required inside a \fBResult\fR block.
+This option is mandatory.
 .IP "\fBInstancePrefix\fR \fIprefix\fR" 4
 .IX Item "InstancePrefix prefix"
 .PD 0
@@ -4608,21 +5104,6 @@ by the plugin as well.
 This option is required inside a \fBResult\fR block and may be specified multiple
 times. If multiple \fBValuesFrom\fR options are specified, the columns are read
 in the given order.
-.IP "\fBMinVersion\fR \fIversion\fR" 4
-.IX Item "MinVersion version"
-.PD 0
-.IP "\fBMaxVersion\fR \fIversion\fR" 4
-.IX Item "MaxVersion version"
-.PD
-Specify the minimum or maximum version of PostgreSQL that this query should be
-used with. Some statistics might only be available with certain versions of
-PostgreSQL. This allows you to specify multiple queries with the same name but
-which apply to different versions, thus allowing you to use the same
-configuration in a heterogeneous environment.
-.Sp
-The \fIversion\fR has to be specified as the concatenation of the major, minor
-and patch-level versions, each represented as two-decimal-digit numbers. For
-example, version 8.2.3 will become 80203.
 .PP
 The following predefined queries are available (the definitions can be found
 in the \fIpostgresql_default.conf\fR file which, by default, is available at
@@ -4767,6 +5248,8 @@ Specify the plugin instance name that should be used instead of the database
 name (which is the default, if this option has not been specified). This
 allows to query multiple databases of the same name on the same host (e.g.
 when running multiple database server versions in parallel).
+The plugin instance name can also be set from the query result using
+the \fBPluginInstanceFrom\fR option in \fBQuery\fR block.
 .IP "\fBHost\fR \fIhostname\fR" 4
 .IX Item "Host hostname"
 Specify the hostname or \s-1IP\s0 of the PostgreSQL server to connect to. If the
@@ -5008,6 +5491,9 @@ details). The statistics of all matching processes are summed up and
 dispatched to the daemon using the specified \fIname\fR as an identifier. This
 allows to \*(L"group\*(R" several processes together. \fIname\fR must not contain
 slashes.
+.IP "\fBCollectContextSwitch\fR \fIBoolean\fR" 4
+.IX Item "CollectContextSwitch Boolean"
+Collect context switch of the process.
 .ie n .SS "Plugin ""protocols"""
 .el .SS "Plugin \f(CWprotocols\fP"
 .IX Subsection "Plugin protocols"
@@ -5414,6 +5900,11 @@ in. Sometimes, however, it's easier/preferred to collect all sensors \fIexcept\f
 few ones. This option enables you to do that: By setting \fBIgnoreSelected\fR to
 \&\fItrue\fR the effect of \fBSensor\fR is inverted: All selected sensors are ignored
 and all other sensors are collected.
+.IP "\fBUseLabels\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "UseLabels true|false"
+Configures how sensor readings are reported. When set to \fItrue\fR, sensor
+readings are reported using their descriptive label (e.g. \*(L"VCore\*(R"). When set to
+\&\fIfalse\fR (the default) the sensor name is used (\*(L"in0\*(R").
 .ie n .SS "Plugin ""sigrok"""
 .el .SS "Plugin \f(CWsigrok\fP"
 .IX Subsection "Plugin sigrok"
@@ -5504,6 +5995,20 @@ statements, are ignored or if all other disks are ignored. The behavior
 collected. If at least one \fBDisk\fR option is given and no \fBIgnoreSelected\fR or
 set to \fBfalse\fR, \fBonly\fR matching disks will be collected. If \fBIgnoreSelected\fR
 is set to \fBtrue\fR, all disks are collected \fBexcept\fR the ones matched.
+.IP "\fBIgnoreSleepMode\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "IgnoreSleepMode true|false"
+Normally, the \f(CW\*(C`smart\*(C'\fR plugin will ignore disks that are reported to be asleep.
+This option disables the sleep mode check and allows the plugin to collect data
+from these disks anyway. This is useful in cases where libatasmart mistakenly
+reports disks as asleep because it has not been updated to incorporate support
+for newer idle states in the \s-1ATA\s0 spec.
+.IP "\fBUseSerial\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "UseSerial true|false"
+A disk's kernel name (e.g., sda) can change from one boot to the next. If this
+option is enabled, the \f(CW\*(C`smart\*(C'\fR plugin will use the disk's serial number (e.g.,
+\&\s-1HGST_HUH728080ALE600_2EJ8VH8X\s0) instead of the kernel name as the key for
+storing data. This ensures that the data for a given disk will be kept together
+even if the kernel name changes.
 .ie n .SS "Plugin ""snmp"""
 .el .SS "Plugin \f(CWsnmp\fP"
 .IX Subsection "Plugin snmp"
@@ -5545,6 +6050,11 @@ If set to \fBFalse\fR, the default, metrics are dispatched unchanged, i.e. the
 rate of counters and size of sets will be zero, timers report \f(CW\*(C`NaN\*(C'\fR and gauges
 are unchanged. If set to \fBTrue\fR, the such metrics are not dispatched and
 removed from the internal cache.
+.IP "\fBCounterSum\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "CounterSum false|true"
+When enabled, creates a \f(CW\*(C`count\*(C'\fR metric which reports the change since the last
+read. This option primarily exists for compatibility with the \fIstatsd\fR
+implementation by Etsy.
 .IP "\fBTimerPercentile\fR \fIPercent\fR" 4
 .IX Item "TimerPercentile Percent"
 Calculate and dispatch the configured percentile, i.e. compute the latency, so
@@ -6000,7 +6510,7 @@ port in numeric form.
 .IP "\fBAllPortsSummary\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "AllPortsSummary true|false"
 If this option is set to \fItrue\fR a summary of statistics from all connections
-are collectd. This option defaults to \fIfalse\fR.
+are collected. This option defaults to \fIfalse\fR.
 .ie n .SS "Plugin ""thermal"""
 .el .SS "Plugin \f(CWthermal\fP"
 .IX Subsection "Plugin thermal"
@@ -6075,12 +6585,12 @@ fails or if you want to disable this feature.
 .IP "\fBDigitalTemperatureSensor\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "DigitalTemperatureSensor true|false"
 Boolean enabling the collection of the temperature of each core.
-This option should only be used if the automated detectionfails or 
+This option should only be used if the automated detectionfails or
 if you want to disable this feature.
 .IP "\fBDigitalTemperatureSensor\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "DigitalTemperatureSensor true|false"
 Boolean enabling the collection of the temperature of each package.
-This option should only be used if the automated detectionfails or 
+This option should only be used if the automated detectionfails or
 if you want to disable this feature.
 .IP "\fBTCCActivationTemp\fR \fITemperature\fR" 4
 .IX Item "TCCActivationTemp Temperature"
@@ -6369,17 +6879,17 @@ setting \fBname\fR.
 .Sp
 \&\fBaddress\fR means use the interface's mac address. This is useful since the
 interface path might change between reboots of a guest or across migrations.
-.IP "\fBPluginInstanceFormat\fR \fBname|uuid\fR" 4
-.IX Item "PluginInstanceFormat name|uuid"
+.IP "\fBPluginInstanceFormat\fR \fBname|uuid|none\fR" 4
+.IX Item "PluginInstanceFormat name|uuid|none"
 When the virt plugin logs data, it sets the plugin_instance of the collected
-data according to this setting. The default is to use the guest name as provided
-by the hypervisor, which is equal to setting \fBname\fR.
+data according to this setting. The default is to not set the plugin_instance.
 .Sp
+\&\fBname\fR means use the guest's name as provided by the hypervisor.
 \&\fBuuid\fR means use the guest's \s-1UUID.\s0
 .Sp
-You can also specify combinations of these fields. For example \fBname uuid\fR
-means to concatenate the guest name and \s-1UUID \s0(with a literal colon character
-between, thus \fI\*(L"foo:1234\-1234\-1234\-1234\*(R"\fR).
+You can also specify combinations of the \fBname\fR and \fBuuid\fR fields.
+For example \fBname uuid\fR means to concatenate the guest name and \s-1UUID
+\&\s0(with a literal colon character between, thus \fI\*(L"foo:1234\-1234\-1234\-1234\*(R"\fR).
 .ie n .SS "Plugin ""vmem"""
 .el .SS "Plugin \f(CWvmem\fP"
 .IX Subsection "Plugin vmem"
@@ -6443,6 +6953,13 @@ Service name or port number to connect to. Defaults to \f(CW2003\fR.
 .IP "\fBProtocol\fR \fIString\fR" 4
 .IX Item "Protocol String"
 Protocol to use when connecting to \fIGraphite\fR. Defaults to \f(CW\*(C`tcp\*(C'\fR.
+.IP "\fBReconnectInterval\fR \fISeconds\fR" 4
+.IX Item "ReconnectInterval Seconds"
+When set to non-zero, forces the connection to the Graphite backend to be
+closed and re-opend periodically. This behavior is desirable in environments
+where the connection to the Graphite backend is done through load balancers,
+for example. When set to zero, the default, the connetion is kept open for as
+long as possible.
 .IP "\fBLogSendErrors\fR \fBfalse\fR|\fBtrue\fR" 4
 .IX Item "LogSendErrors false|true"
 If set to \fBtrue\fR (the default), logs errors when sending data to \fIGraphite\fR.
@@ -6637,18 +7154,32 @@ authentication.
 .IP "\fBClientKeyPass\fR \fIPassword\fR" 4
 .IX Item "ClientKeyPass Password"
 Password required to load the private key in \fBClientKey\fR.
+.IP "\fBHeader\fR \fIHeader\fR" 4
+.IX Item "Header Header"
+A \s-1HTTP\s0 header to add to the request.  Multiple headers are added if this option is specified more than once.  Example:
+.Sp
+.Vb 1
+\&  Header "X\-Custom\-Header: custom_value"
+.Ve
 .IP "\fBSSLVersion\fR \fBSSLv2\fR|\fBSSLv3\fR|\fBTLSv1\fR|\fBTLSv1_0\fR|\fBTLSv1_1\fR|\fBTLSv1_2\fR" 4
 .IX Item "SSLVersion SSLv2|SSLv3|TLSv1|TLSv1_0|TLSv1_1|TLSv1_2"
 Define which \s-1SSL\s0 protocol version must be used. By default \f(CW\*(C`libcurl\*(C'\fR will
 attempt to figure out the remote \s-1SSL\s0 protocol version. See
 \&\fIcurl_easy_setopt\fR\|(3) for more details.
-.IP "\fBFormat\fR \fBCommand\fR|\fB\s-1JSON\s0\fR" 4
-.IX Item "Format Command|JSON"
+.IP "\fBFormat\fR \fBCommand\fR|\fB\s-1JSON\s0\fR|\fB\s-1KAIROSDB\s0\fR" 4
+.IX Item "Format Command|JSON|KAIROSDB"
 Format of the output to generate. If set to \fBCommand\fR, will create output that
 is understood by the \fIExec\fR and \fIUnixSock\fR plugins. When set to \fB\s-1JSON\s0\fR, will
-create output in the \fIJavaScript Object Notation\fR (\s-1JSON\s0).
+create output in the \fIJavaScript Object Notation\fR (\s-1JSON\s0). When set to \s-1KAIROSDB
+,\s0 will create output in the KairosDB format.
 .Sp
 Defaults to \fBCommand\fR.
+.IP "\fBMetrics\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "Metrics true|false"
+Controls whether \fImetrics\fR are POSTed to this location. Defaults to \fBtrue\fR.
+.IP "\fBNotifications\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "Notifications false|true"
+Controls whether \fInotifications\fR are POSTed to this location. Defaults to \fBfalse\fR.
 .IP "\fBStoreRates\fR \fBtrue|false\fR" 4
 .IX Item "StoreRates true|false"
 If set to \fBtrue\fR, convert counter values to rates. If set to \fBfalse\fR (the
@@ -6673,6 +7204,9 @@ Sets the maximum time in milliseconds given for \s-1HTTP POST\s0 operations to
 complete. When this limit is reached, the \s-1POST\s0 operation will be aborted, and
 all the data in the current send buffer will probably be lost. Defaults to 0,
 which means the connection never times out.
+.IP "\fBLogHttpError\fR \fBfalse\fR|\fBtrue\fR" 4
+.IX Item "LogHttpError false|true"
+Enables printing of \s-1HTTP\s0 error code to log. Turned off by default.
 .Sp
 The \f(CW\*(C`write_http\*(C'\fR plugin regularly submits the collected values to the \s-1HTTP\s0
 server. How frequently this happens depends on how much data you are collecting
@@ -6780,12 +7314,16 @@ The \fIwrite_redis plugin\fR submits values to \fIRedis\fR, a data structure ser
 .PP
 Synopsis:
 .PP
-.Vb 7
+.Vb 11
 \&  <Plugin "write_redis">
 \&    <Node "example">
 \&        Host "localhost"
 \&        Port "6379"
 \&        Timeout 1000
+\&        Prefix "collectd/"
+\&        Database 1
+\&        MaxSetSize \-1
+\&        StoreRates true
 \&    </Node>
 \&  </Plugin>
 .Ve
@@ -6793,8 +7331,10 @@ Synopsis:
 Values are submitted to \fISorted Sets\fR, using the metric name as the key, and
 the timestamp as the score. Retrieving a date range can then be done using the
 \&\f(CW\*(C`ZRANGEBYSCORE\*(C'\fR \fIRedis\fR command. Additionally, all the identifiers of these
-\&\fISorted Sets\fR are kept in a \fISet\fR called \f(CW\*(C`collectd/values\*(C'\fR and can be
-retrieved using the \f(CW\*(C`SMEMBERS\*(C'\fR \fIRedis\fR command. See
+\&\fISorted Sets\fR are kept in a \fISet\fR called \f(CW\*(C`collectd/values\*(C'\fR (or
+\&\f(CW\*(C`${prefix}/values\*(C'\fR if the \fBPrefix\fR option was specified) and can be retrieved
+using the \f(CW\*(C`SMEMBERS\*(C'\fR \fIRedis\fR command. You can specify the database to use
+with the \fBDatabase\fR parameter (default is \f(CW0\fR). See
 <http://redis.io/commands#sorted_set> and <http://redis.io/commands#set> for
 details.
 .PP
@@ -6822,6 +7362,24 @@ that numerical port numbers must be given as a string, too.
 .IP "\fBTimeout\fR \fIMilliseconds\fR" 4
 .IX Item "Timeout Milliseconds"
 The \fBTimeout\fR option sets the socket connection timeout, in milliseconds.
+.IP "\fBPrefix\fR \fIPrefix\fR" 4
+.IX Item "Prefix Prefix"
+Prefix used when constructing the name of the \fISorted Sets\fR and the \fISet\fR
+containing all metrics. Defaults to \f(CW\*(C`collectd/\*(C'\fR, so metrics will have names
+like \f(CW\*(C`collectd/cpu\-0/cpu\-user\*(C'\fR. When setting this to something different, it
+is recommended but not required to include a trailing slash in \fIPrefix\fR.
+.IP "\fBDatabase\fR \fIIndex\fR" 4
+.IX Item "Database Index"
+This index selects the redis database to use for writing operations. Defaults
+to \f(CW0\fR.
+.IP "\fBMaxSetSize\fR \fIItems\fR" 4
+.IX Item "MaxSetSize Items"
+The \fBMaxSetSize\fR option limits the number of items that the \fISorted Sets\fR can
+hold. Negative values for \fIItems\fR sets no limit, which is the default behavior.
+.IP "\fBStoreRates\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "StoreRates true|false"
+If set to \fBtrue\fR (the default), convert counter values to rates. If set to
+\&\fBfalse\fR counter values are stored as is, i.e. as an increasing integer number.
 .ie n .SS "Plugin ""write_riemann"""
 .el .SS "Plugin \f(CWwrite_riemann\fP"
 .IX Subsection "Plugin write_riemann"
@@ -6860,10 +7418,22 @@ Hostname or address to connect to. Defaults to \f(CW\*(C`localhost\*(C'\fR.
 .IP "\fBPort\fR \fIService\fR" 4
 .IX Item "Port Service"
 Service name or port number to connect to. Defaults to \f(CW5555\fR.
-.IP "\fBProtocol\fR \fB\s-1UDP\s0\fR|\fB\s-1TCP\s0\fR" 4
-.IX Item "Protocol UDP|TCP"
+.IP "\fBProtocol\fR \fB\s-1UDP\s0\fR|\fB\s-1TCP\s0\fR|\fB\s-1TLS\s0\fR" 4
+.IX Item "Protocol UDP|TCP|TLS"
 Specify the protocol to use when communicating with \fIRiemann\fR. Defaults to
 \&\fB\s-1TCP\s0\fR.
+.IP "\fBTLSCertFile\fR \fIPath\fR" 4
+.IX Item "TLSCertFile Path"
+When using the \fB\s-1TLS\s0\fR protocol, path to a \s-1PEM\s0 certificate to present
+to remote host.
+.IP "\fBTLSCAFile\fR \fIPath\fR" 4
+.IX Item "TLSCAFile Path"
+When using the \fB\s-1TLS\s0\fR protocol, path to a \s-1PEM CA\s0 certificate to
+use to validate the remote hosts's identity.
+.IP "\fBTLSKeyFile\fR \fIPath\fR" 4
+.IX Item "TLSKeyFile Path"
+When using the \fB\s-1TLS\s0\fR protocol, path to a \s-1PEM\s0 private key associated
+with the certificate defined by \fBTLSCertFile\fR.
 .IP "\fBBatch\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "Batch true|false"
 If set to \fBtrue\fR and \fBProtocol\fR is set to \fB\s-1TCP\s0\fR,
@@ -6881,6 +7451,10 @@ Defaults to true
 .IP "\fBBatchMaxSize\fR \fIsize\fR" 4
 .IX Item "BatchMaxSize size"
 Maximum payload size for a riemann packet. Defaults to 8192
+.IP "\fBBatchFlushTimeout\fR \fIseconds\fR" 4
+.IX Item "BatchFlushTimeout seconds"
+Maximum amount of seconds to wait in between to batch flushes.
+No timeout by default.
 .IP "\fBStoreRates\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "StoreRates true|false"
 If set to \fBtrue\fR (the default), convert counter values to rates. If set to
@@ -7022,6 +7596,14 @@ Add the given string as an additional tag to the metric being sent to
 .IX Item "Attribute String String"
 Consider the two given strings to be the key and value of an additional
 attribute for each metric being sent out to \fISensu\fR.
+.ie n .SS "Plugin ""xencpu"""
+.el .SS "Plugin \f(CWxencpu\fP"
+.IX Subsection "Plugin xencpu"
+This plugin collects metrics of hardware \s-1CPU\s0 load for machine running Xen
+hypervisor. Load is calculated from 'idle time' value, provided by Xen.
+Result is reported using the \f(CW\*(C`percent\*(C'\fR type, for each \s-1CPU \s0(core).
+.PP
+This plugin doesn't have any options (yet).
 .ie n .SS "Plugin ""zookeeper"""
 .el .SS "Plugin \f(CWzookeeper\fP"
 .IX Subsection "Plugin zookeeper"
@@ -7891,6 +8473,8 @@ Available options:
 .IX Item "PluginInstance String"
 .IP "\fBTypeInstance\fR \fIString\fR" 4
 .IX Item "TypeInstance String"
+.IP "\fBMetaData\fR \fIString\fR \fIString\fR" 4
+.IX Item "MetaData String String"
 .PD
 Set the appropriate field to the given string. The strings for plugin instance
 and type instance may be empty, the strings for host and plugin may not be

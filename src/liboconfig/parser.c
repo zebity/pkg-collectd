@@ -100,8 +100,8 @@ extern char           *c_file;
 
 /* In a future release of Bison, this section will be replaced
    by #include "y.tab.h".  */
-#ifndef YY_YY_Y_TAB_H_INCLUDED
-# define YY_YY_Y_TAB_H_INCLUDED
+#ifndef YY_YY_PARSER_H_INCLUDED
+# define YY_YY_PARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -163,7 +163,7 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_Y_TAB_H_INCLUDED  */
+#endif /* !YY_YY_PARSER_H_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
@@ -467,7 +467,7 @@ static const yytype_uint8 yyrline[] =
 {
        0,    82,    82,    83,    87,    88,    89,    90,    94,   101,
      110,   114,   124,   130,   140,   147,   160,   176,   177,   178,
-     182,   192,   209,   217
+     182,   192,   209,   216
 };
 #endif
 
@@ -1448,27 +1448,25 @@ yyreduce:
   case 22:
 #line 210 "parser.y" /* yacc.c:1646  */
     {
-	 ci_root = malloc (sizeof (oconfig_item_t));
-	 memset (ci_root, '\0', sizeof (oconfig_item_t));
+	 ci_root = calloc (1, sizeof (*ci_root));
 	 ci_root->children = (yyvsp[0].sl).statement;
 	 ci_root->children_num = (yyvsp[0].sl).statement_num;
 	}
-#line 1457 "parser.c" /* yacc.c:1646  */
+#line 1456 "parser.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 217 "parser.y" /* yacc.c:1646  */
+#line 216 "parser.y" /* yacc.c:1646  */
     {
-	 ci_root = malloc (sizeof (oconfig_item_t));
-	 memset (ci_root, '\0', sizeof (oconfig_item_t));
+	 ci_root = calloc (1, sizeof (*ci_root));
 	 ci_root->children = NULL;
 	 ci_root->children_num = 0;
 	}
-#line 1468 "parser.c" /* yacc.c:1646  */
+#line 1466 "parser.c" /* yacc.c:1646  */
     break;
 
 
-#line 1472 "parser.c" /* yacc.c:1646  */
+#line 1470 "parser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1696,11 +1694,11 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 225 "parser.y" /* yacc.c:1906  */
+#line 223 "parser.y" /* yacc.c:1906  */
 
 static int yyerror (const char *s)
 {
-	char *text;
+	const char *text;
 
 	if (*yytext == '\n')
 		text = "<newline>";
@@ -1716,7 +1714,6 @@ static char *unquote (const char *orig)
 {
 	char *ret = strdup (orig);
 	int len;
-	int i;
 
 	if (ret == NULL)
 		return (NULL);
@@ -1730,7 +1727,7 @@ static char *unquote (const char *orig)
 	memmove (ret, ret + 1, len);
 	ret[len] = '\0';
 
-	for (i = 0; i < len; i++)
+	for (int i = 0; i < len; i++)
 	{
 		if (ret[i] == '\\')
 		{
