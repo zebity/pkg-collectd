@@ -208,7 +208,7 @@ build-stamp:
 	./configure $(confflags) CPPFLAGS="$(CPPFLAGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		JAVAC="$(JAVAC)" JAR="$(JAR)" JAVA_CPPFLAGS="$(JAVA_CPPFLAGS)" \
 		JAVA_LDFLAGS="$(JAVA_LDFLAGS)" \
-		|| ( echo "configure exit status: $$?" ; cat config.log )
+		|| ( status=$$?; cat config.log; exit $$status )
 
 	$(MAKE)
 	dh_auto_test
