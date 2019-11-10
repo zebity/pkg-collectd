@@ -39,11 +39,11 @@
 
 #define LCC_VERSION_MAJOR 5
 #define LCC_VERSION_MINOR 8
-#define LCC_VERSION_PATCH 0
+#define LCC_VERSION_PATCH 1
 
 #define LCC_VERSION_EXTRA ""
 
-#define LCC_VERSION_STRING "5.8.0"
+#define LCC_VERSION_STRING "5.8.1"
 
 #define LCC_VERSION_ENCODE(major, minor, patch) \
 	((major) * 10000 + (minor) * 100 + (patch))
