@@ -1,3 +1,17 @@
+collectd (5.9.2-1~1.gbp4f34b9) UNRELEASED; urgency=medium
+
+  ** SNAPSHOT build @4f34b97aa3504d516caa42473fec5ea6bd1d844a **
+
+  * [e2bc528] Stay with the common debian/version tag.
+  * [989ce6e] Collect and review changes from @zebity
+    https://github.com/zebity/pkg-debian
+  * [6119616] Configure gitlab-ci
+  * [4f34b97] Update upstream source from tag 'upstream/5.9.2'
+    Update to upstream version '5.9.2'
+    with Debian dir af7c66a8817dcb447a93e60e87aff32a05a0b4c3
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 10 Nov 2019 20:50:57 +0100
+
 collectd (5.8.1-1.3) unstable; urgency=medium
 
   * Non-maintainer upload.
