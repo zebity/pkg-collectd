@@ -259,8 +259,6 @@ PERL_BINDINGS_OPTIONS = @PERL_BINDINGS_OPTIONS@
 PERL_CFLAGS = @PERL_CFLAGS@
 PERL_LDFLAGS = @PERL_LDFLAGS@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -333,6 +331,20 @@ EXTRA_DIST = perl/Makefile.PL \
 	     perl/lib/Collectd/Unixsock.pm \
 	     perl/lib/Collectd/Plugins/Monitorus.pm \
 	     perl/lib/Collectd/Plugins/OpenVZ.pm
+
+CLEANFILES = \
+	buildperl/Collectd.pm \
+	buildperl/Collectd/Plugins/OpenVZ.pm \
+	buildperl/Collectd/Unixsock.pm \
+	buildperl/Makefile.PL \
+	.perl-directory-stamp
+
+DISTCLEANFILES = \
+	buildperl/Collectd.pm \
+	buildperl/Collectd/Plugins/OpenVZ.pm \
+	buildperl/Collectd/Unixsock.pm \
+	buildperl/Makefile.PL \
+	.perl-directory-stamp
 
 all: all-recursive
 
@@ -589,10 +601,12 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -661,7 +675,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-local
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) ctags-recursive \
 	install-am install-strip tags-recursive
@@ -678,31 +692,44 @@ uninstall-am:
 	install-strip installcheck installcheck-am installdirs \
 	installdirs-am maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
-	ps ps-am tags tags-recursive uninstall uninstall-am
+	ps ps-am tags tags-recursive uninstall uninstall-am \
+	uninstall-local
 
 
 all-local: @PERL_BINDINGS@
 
 install-exec-local:
-	[ ! -f perl/Makefile ] || ( cd perl && $(MAKE) install )
+	[ ! -f buildperl/Makefile ] || ( cd buildperl && $(MAKE) install )
+
+# Perl 'make uninstall' does not work as well as wanted.
+# So we do the work here.
+uninstall-local:
+	rm -f $(DESTDIR)$(mandir)/man3/Collectd::Unixsock.3pm
+	rm -f $(DESTDIR)$(datarootdir)/perl5/Collectd.pm
+	rm -f $(DESTDIR)$(datarootdir)/perl5/Collectd/Plugins/OpenVZ.pm
+	rm -f $(DESTDIR)$(datarootdir)/perl5/Collectd/Unixsock.pm
+	rm -f $(DESTDIR)$(prefix)/lib64/perl5/perllocal.pod
+	rm -f $(DESTDIR)$(prefix)/lib64/perl5/auto/Collectd/.packlist
 
 clean-local:
-	[ ! -f perl/Makefile ] || ( cd perl && $(MAKE) realclean )
+	rm -rf buildperl
 
-perl: perl/Makefile
-	cd perl && $(MAKE)
+perl: buildperl/Makefile
+	cd buildperl && $(MAKE)
 
-perl/Makefile: .perl-directory-stamp perl/Makefile.PL \
+buildperl/Makefile: .perl-directory-stamp buildperl/Makefile.PL \
 	$(top_builddir)/config.status
-	cd perl && @PERL@ Makefile.PL PREFIX=$(prefix) @PERL_BINDINGS_OPTIONS@
+	cd buildperl && @PERL@ Makefile.PL INSTALL_BASE=$(prefix) @PERL_BINDINGS_OPTIONS@
+
+buildperl/Makefile.PL: .perl-directory-stamp $(top_builddir)/config.status
 
 .perl-directory-stamp:
-	if test ! -d perl; then \
-	  mkdir -p perl/Collectd/Plugins; \
-	  cp $(srcdir)/perl/Collectd.pm perl/; \
-	  cp $(srcdir)/perl/Makefile.PL perl/; \
-	  cp $(srcdir)/perl/Collectd/Unixsock.pm perl/Collectd/; \
-	  cp $(srcdir)/perl/Collectd/Plugins/OpenVZ.pm perl/Collectd/Plugins/; \
+	if test ! -d buildperl; then \
+	  mkdir -p buildperl/Collectd/Plugins; \
+	  cp $(srcdir)/perl/lib/Collectd.pm buildperl/; \
+	  cp $(srcdir)/perl/Makefile.PL buildperl/; \
+	  cp $(srcdir)/perl/lib/Collectd/Unixsock.pm buildperl/Collectd/; \
+	  cp $(srcdir)/perl/lib/Collectd/Plugins/OpenVZ.pm buildperl/Collectd/Plugins/; \
 	fi
 	touch $@
 

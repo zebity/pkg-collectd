@@ -517,6 +517,9 @@
 /* Define to 1 if you have the <netinet/ip6.h> header file. */
 #undef HAVE_NETINET_IP6_H
 
+/* Define to 1 if you have the <netinet/ip_compat.h> header file. */
+#undef HAVE_NETINET_IP_COMPAT_H
+
 /* Define to 1 if you have the <netinet/ip.h> header file. */
 #undef HAVE_NETINET_IP_H
 
@@ -543,6 +546,9 @@
 
 /* Define to 1 if you have the <net/ip_vs.h> header file. */
 #undef HAVE_NET_IP_VS_H
+
+/* Define to 1 if you have the <net/pfvar.h> header file. */
+#undef HAVE_NET_PFVAR_H
 
 /* Define to 1 if you have the <net/ppp_defs.h> header file. */
 #undef HAVE_NET_PPP_DEFS_H
@@ -591,6 +597,9 @@
 
 /* Define if Perl's struct mgvtbl has member svt_local. */
 #undef HAVE_PERL_STRUCT_MGVTBL_SVT_LOCAL
+
+/* Define to 1 if the aggregation plugin is enabled. */
+#undef HAVE_PLUGIN_AGGREGATION
 
 /* Define to 1 if the amqp plugin is enabled. */
 #undef HAVE_PLUGIN_AMQP
@@ -789,6 +798,9 @@
 
 /* Define to 1 if the perl plugin is enabled. */
 #undef HAVE_PLUGIN_PERL
+
+/* Define to 1 if the pf plugin is enabled. */
+#undef HAVE_PLUGIN_PF
 
 /* Define to 1 if the pinba plugin is enabled. */
 #undef HAVE_PLUGIN_PINBA
@@ -1382,6 +1394,12 @@
 
 /* Define to 1 if your version of the 'perfstat' library supports donation */
 #undef PERFSTAT_SUPPORTS_DONATION
+
+/* Define to 1 if function 'rtnl_dump_filter' expects five arguments. */
+#undef RTNL_DUMP_FILTER_FIVE_ARGS
+
+/* Define to 1 if function 'rtnl_dump_filter' expects three arguments. */
+#undef RTNL_DUMP_FILTER_THREE_ARGS
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

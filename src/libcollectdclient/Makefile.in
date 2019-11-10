@@ -36,17 +36,19 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@BUILD_WITH_LIBGCRYPT_TRUE@am__append_1 = $(GCRYPT_CPPFLAGS)
+@BUILD_WITH_LIBGCRYPT_TRUE@am__append_2 = $(GCRYPT_LDFLAGS)
+@BUILD_WITH_LIBGCRYPT_TRUE@am__append_3 = $(GCRYPT_LIBS)
 subdir = src/libcollectdclient
 DIST_COMMON = $(pkginclude_HEADERS) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(srcdir)/lcc_features.h.in \
-	$(srcdir)/libcollectdclient.pc.in
+	$(srcdir)/Makefile.in $(srcdir)/libcollectdclient.pc.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/src/config.h
-CONFIG_CLEAN_FILES = lcc_features.h libcollectdclient.pc
+CONFIG_CLEAN_FILES = libcollectdclient.pc
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -72,8 +74,12 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgconfigdir)" \
 	"$(DESTDIR)$(pkgincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libcollectdclient_la_LIBADD =
-am_libcollectdclient_la_OBJECTS = client.lo
+am__DEPENDENCIES_1 =
+@BUILD_WITH_LIBGCRYPT_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+libcollectdclient_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_libcollectdclient_la_OBJECTS = libcollectdclient_la-client.lo \
+	libcollectdclient_la-network.lo \
+	libcollectdclient_la-network_buffer.lo
 libcollectdclient_la_OBJECTS = $(am_libcollectdclient_la_OBJECTS)
 libcollectdclient_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -269,8 +275,6 @@ PERL_BINDINGS_OPTIONS = @PERL_BINDINGS_OPTIONS@
 PERL_CFLAGS = @PERL_CFLAGS@
 PERL_LDFLAGS = @PERL_LDFLAGS@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -339,12 +343,14 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 @COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
-pkginclude_HEADERS = client.h lcc_features.h
+pkginclude_HEADERS = collectd/client.h collectd/network.h collectd/network_buffer.h collectd/lcc_features.h
 lib_LTLIBRARIES = libcollectdclient.la
 nodist_pkgconfig_DATA = libcollectdclient.pc
-BUILT_SOURCES = lcc_features.h
-libcollectdclient_la_SOURCES = client.c
-libcollectdclient_la_LDFLAGS = -version-info 0:0:0
+BUILT_SOURCES = collectd/lcc_features.h
+libcollectdclient_la_SOURCES = client.c network.c network_buffer.c
+libcollectdclient_la_CPPFLAGS = $(AM_CPPFLAGS) $(am__append_1)
+libcollectdclient_la_LDFLAGS = -version-info 1:0:0 $(am__append_2)
+libcollectdclient_la_LIBADD = $(am__append_3)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -380,8 +386,6 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-lcc_features.h: $(top_builddir)/config.status $(srcdir)/lcc_features.h.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 libcollectdclient.pc: $(top_builddir)/config.status $(srcdir)/libcollectdclient.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
@@ -432,6 +436,15 @@ distclean-compile:
 
 .c.lo:
 	$(LTCOMPILE) -c -o $@ $<
+
+libcollectdclient_la-client.lo: client.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcollectdclient_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcollectdclient_la-client.lo `test -f 'client.c' || echo '$(srcdir)/'`client.c
+
+libcollectdclient_la-network.lo: network.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcollectdclient_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcollectdclient_la-network.lo `test -f 'network.c' || echo '$(srcdir)/'`network.c
+
+libcollectdclient_la-network_buffer.lo: network_buffer.c
+	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcollectdclient_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcollectdclient_la-network_buffer.lo `test -f 'network_buffer.c' || echo '$(srcdir)/'`network_buffer.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
