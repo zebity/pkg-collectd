@@ -152,9 +152,6 @@
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
-/* Define to 1 if you have the `getfsent' function. */
-#undef HAVE_GETFSENT
-
 /* Define to 1 if you have the `getfsstat' function. */
 #undef HAVE_GETFSSTAT
 
@@ -169,15 +166,6 @@
 
 /* Define to 1 if you have the `getmntent' function. */
 #undef HAVE_GETMNTENT
-
-/* Define if there is a function named getmntent for reading the list of
-   mounted filesystems, and that function takes a single argument. (4.3BSD,
-   SunOS, HP-UX, Dynix, Irix, Linux) */
-#undef HAVE_GETMNTENT1
-
-/* Define if there is a function named getmntent for reading the list of
-   mounted filesystems, and that function takes two arguments. (SVR4) */
-#undef HAVE_GETMNTENT2
 
 /* Define to 1 if you have the `getnameinfo' function. */
 #undef HAVE_GETNAMEINFO
@@ -194,8 +182,8 @@
 /* Define to 1 if you have the `getutxent' function. */
 #undef HAVE_GETUTXENT
 
-/* Define to 1 if you have the `getvfsent' function. */
-#undef HAVE_GETVFSENT
+/* Define to 1 if you have the `getvfsstat' function. */
+#undef HAVE_GETVFSSTAT
 
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
@@ -374,6 +362,9 @@
 
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
+
+/* Define if the function getmntent exists and takes one argument. */
+#undef HAVE_ONE_GETMNTENT
 
 /* Define to 1 if you have the `openlog' function. */
 #undef HAVE_OPENLOG
@@ -578,6 +569,9 @@
 /* Define to 1 if you have the `thread_info' function. */
 #undef HAVE_THREAD_INFO
 
+/* Define if the function getmntent exists and takes two arguments. */
+#undef HAVE_TWO_GETMNTENT
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -632,7 +626,7 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to `int' if <sys/types.h> doesn't define. */
