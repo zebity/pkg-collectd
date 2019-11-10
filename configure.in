@@ -2,6 +2,25 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(collectd, m4_esyscmd(./version-gen.sh))
 AC_CONFIG_SRCDIR(src/collectd.c)
 AC_CONFIG_HEADERS(src/config.h)
+
+m4_ifdef([LT_PACKAGE_VERSION],
+	# libtool >= 2.2
+	[
+	 LT_CONFIG_LTDL_DIR([libltdl])
+	 LT_INIT([dlopen])
+	 LTDL_INIT([convenience])
+	]
+,
+	# libtool <= 1.5
+	[
+	 AC_LIBLTDL_CONVENIENCE
+	 AC_SUBST(LTDLINCL)
+	 AC_SUBST(LIBLTDL)
+	 AC_LIBTOOL_DLOPEN
+	 AC_CONFIG_SUBDIRS(libltdl)
+	]
+)
+
 AM_INIT_AUTOMAKE(dist-bzip2)
 AC_LANG(C)
 
@@ -20,17 +39,11 @@ AC_PROG_MAKE_SET
 AM_PROG_CC_C_O
 AM_CONDITIONAL(COMPILER_IS_GCC, test "x$GCC" = "xyes")
 
-dnl configure libtool
 AC_DISABLE_STATIC
-AC_LIBLTDL_CONVENIENCE
-AC_SUBST(LTDLINCL)
-AC_SUBST(LIBLTDL)
-AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
 AC_PROG_LEX
 AC_PROG_YACC
 PKG_PROG_PKG_CONFIG
-AC_CONFIG_SUBDIRS(libltdl)
 
 AC_MSG_CHECKING([for kernel type ($host_os)])
 case $host_os in
@@ -80,8 +93,9 @@ AC_SUBST(pkgconfigdir)
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_DIRENT
+AC_HEADER_STDBOOL
 
-AC_CHECK_HEADERS(stdio.h stdint.h stdbool.h errno.h math.h stdarg.h syslog.h fcntl.h signal.h assert.h sys/types.h sys/socket.h sys/select.h poll.h netdb.h arpa/inet.h sys/resource.h sys/param.h kstat.h regex.h sys/ioctl.h endian.h sys/isa_defs.h)
+AC_CHECK_HEADERS(stdio.h stdint.h errno.h math.h stdarg.h syslog.h fcntl.h signal.h assert.h sys/types.h sys/socket.h sys/select.h poll.h netdb.h arpa/inet.h sys/resource.h sys/param.h kstat.h regex.h sys/ioctl.h endian.h sys/isa_defs.h)
 
 # For ping library
 AC_CHECK_HEADERS(netinet/in_systm.h, [], [],
@@ -250,8 +264,10 @@ AC_CHECK_HEADERS(IOKit/ps/IOPowerSources.h, [], [],
 
 # For the swap module
 have_sys_swap_h="yes"
-AC_CHECK_HEADERS(sys/swap.h, [], [have_sys_swap_h="no"],
+AC_CHECK_HEADERS(sys/swap.h vm/anon.h, [], [have_sys_swap_h="no"],
 [
+#undef _FILE_OFFSET_BITS
+#undef _LARGEFILE64_SOURCE
 #if HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -262,7 +278,14 @@ AC_CHECK_HEADERS(sys/swap.h, [], [have_sys_swap_h="no"],
 
 if test "x$have_sys_swap_h$ac_system" = "xnoSolaris"
 then
-	AC_MSG_NOTICE([Solaris detected and sys/swap.h not found: Try building a 64bit binary.])
+	hint_64=""
+	if test "x$GCC" = "xyes"
+	then
+		hint_64="CFLAGS='-m64'"
+	else
+		hint_64="CFLAGS='-xarch=v9'"
+	fi
+	AC_MSG_NOTICE([Solaris detected and sys/swap.h not usable. Try building a 64-bit binary ($hint_64 ./configure).])
 fi
 
 # For load module
@@ -799,7 +822,6 @@ if test "x$have_getmntent" = "xc"; then
 		[c_cv_have_one_getmntent],
 		AC_COMPILE_IFELSE(
 			AC_LANG_PROGRAM([[AC_INCLUDES_DEFAULT
-#include <mntent.h>
 #include "$srcdir/src/utils_mount.h"]],
 				[[
 				 FILE *fh;
@@ -816,7 +838,6 @@ if test "x$have_getmntent" = "xc"; then
 		[c_cv_have_two_getmntent],
 		AC_COMPILE_IFELSE(
 			AC_LANG_PROGRAM([[AC_INCLUDES_DEFAULT
-#include <sys/mnttab.h>
 #include "$srcdir/src/utils_mount.h"]],
 				[[
 				 FILE *fh;
@@ -874,6 +895,37 @@ AC_CHECK_MEMBERS([struct net_device_stats.rx_bytes, struct net_device_stats.tx_p
 	#include <sys/socket.h>
 	#include <linux/if.h>
 	#include <linux/netdevice.h>
+	])
+
+AC_CHECK_MEMBERS([struct kinfo_proc.ki_pid, struct kinfo_proc.ki_rssize, struct kinfo_proc.ki_rusage],
+	[
+		AC_DEFINE(HAVE_STRUCT_KINFO_PROC_FREEBSD, 1,
+			[Define if struct kinfo_proc exists in the FreeBSD variant.])
+		have_struct_kinfo_proc_freebsd="yes"
+	],
+	[
+		have_struct_kinfo_proc_freebsd="no"
+	],
+	[
+#include <kvm.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/user.h>
+	])
+
+AC_CHECK_MEMBERS([struct kinfo_proc.kp_proc, struct kinfo_proc.kp_eproc],
+	[
+		AC_DEFINE(HAVE_STRUCT_KINFO_PROC_OPENBSD, 1,
+			[Define if struct kinfo_proc exists in the OpenBSD variant.])
+		have_struct_kinfo_proc_openbsd="yes"
+	],
+	[
+		have_struct_kinfo_proc_openbsd="no"
+	],
+	[
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <kvm.h>
 	])
 
 AC_CHECK_MEMBERS([struct udphdr.uh_dport, struct udphdr.uh_sport], [], [],
@@ -1321,6 +1373,11 @@ then
 		AC_CHECK_LIB(mysqlclient, mysql_init,
 		 [with_libmysql="yes"],
 		 [with_libmysql="no (symbol 'mysql_init' not found)"],
+		 [$with_mysql_libs])
+
+		AC_CHECK_LIB(mysqlclient, mysql_get_server_version,
+		 [with_libmysql="yes"],
+		 [with_libmysql="no (symbol 'mysql_get_server_version' not found)"],
 		 [$with_mysql_libs])
 	fi
 fi
@@ -1802,8 +1859,9 @@ if test "x$with_libperl" = "xyes" \
 then
   SAVE_CFLAGS=$CFLAGS
   SAVE_LDFLAGS=$LDFLAGS
-  PERL_CFLAGS=`$perl_interpreter -MExtUtils::Embed -e ccopts`
-  PERL_LDFLAGS=`$perl_interpreter -MExtUtils::Embed -e ldopts`
+dnl ARCHFLAGS="" -> disable multi -arch on OSX (see Config_heavy.pl:fetch_string)
+  PERL_CFLAGS=`ARCHFLAGS="" $perl_interpreter -MExtUtils::Embed -e ccopts`
+  PERL_LDFLAGS=`ARCHFLAGS="" $perl_interpreter -MExtUtils::Embed -e ldopts`
   CFLAGS="$CFLAGS $PERL_CFLAGS"
   LDFLAGS="$LDFLAGS $PERL_LDFLAGS"
 
@@ -2961,13 +3019,39 @@ then
 	plugin_tcpconns="yes"
 fi
 
-if test "x$have_statfs" = "xyes"
+# Df plugin: Check if we know how to determine mount points first.
+#if test "x$have_listmntent" = "xyes"; then
+#	plugin_df="yes"
+#fi
+if test "x$have_getvfsstat" = "xyes" || test "x$have_getfsstat" = "xyes"
 then
 	plugin_df="yes"
 fi
-if test "x$have_statvfs" = "xyes"
+if test "x$c_cv_have_two_getmntent" = "xyes" || test "x$have_getmntent" = "xgen" || test "x$have_getmntent" = "xsun"
 then
 	plugin_df="yes"
+fi
+#if test "x$have_getmntent" = "xseq"
+#then
+#	plugin_df="yes"
+#fi
+if test "x$c_cv_have_one_getmntent" = "xyes"
+then
+	plugin_df="yes"
+fi
+
+# Df plugin: Check if we have either `statfs' or `statvfs' second.
+if test "x$plugin_df" = "xyes"
+then
+	plugin_df="no"
+	if test "x$have_statfs" = "xyes"
+	then
+		plugin_df="yes"
+	fi
+	if test "x$have_statvfs" = "xyes"
+	then
+		plugin_df="yes"
+	fi
 fi
 
 if test "x$have_getifaddrs" = "xyes"
@@ -3006,7 +3090,7 @@ then
 	plugin_processes="yes"
 fi
 
-if test "x$with_kvm_getprocs" = "xyes"
+if test "x$with_kvm_getprocs" = "xyes" && test "x$have_struct_kinfo_proc_freebsd" = "xyes"
 then
 	plugin_processes="yes"
 fi
@@ -3190,6 +3274,11 @@ then
 	with_libperl="yes (version `$perl_interpreter -MConfig -e 'print $Config{version};'`)"
 else
 	enable_perl="no (needs libperl)"
+fi
+
+if test "x$enable_perl" = "xno" && test "x$c_cv_have_perl_ithreads" = "xno"
+then
+	enable_perl="no (libperl doesn't support ithreads)"
 fi
 
 if test "x$with_perl_bindings" = "xyes" \

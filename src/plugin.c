@@ -376,6 +376,7 @@ int plugin_load (const char *type)
 		else if (!S_ISREG (statbuf.st_mode))
 		{
 			/* don't follow symlinks */
+			WARNING ("stat %s: not a regular file", filename);
 			continue;
 		}
 
@@ -959,6 +960,9 @@ int plugin_dispatch_values (value_list_t *vl)
 
 	/* Update the value cache */
 	uc_update (ds, vl);
+
+	/* Initiate threshold checking */
+	ut_check_threshold (ds, vl);
 
 	if (post_cache_chain != NULL)
 	{

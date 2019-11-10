@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2009-03-18" "4.6.2" "collectd"
+.TH COLLECTD.CONF 5 "2009-06-02" "4.6.3" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -1741,7 +1741,7 @@ The \fBPostgreSQL Documentation\fR manual can be found at
 The \fBQuery\fR block defines one database query which may later be used by a
 database definition. It accepts a single mandatory argument which specifies
 the name of the query. The names of all queries have to be unique (see the
-\&\fBMinPGVersion\fR and \fBMaxPGVersion\fR options below for an exception to this
+\&\fBMinVersion\fR and \fBMaxVersion\fR options below for an exception to this
 rule). The following configuration options are available to define the query:
 .PP
 In each \fBQuery\fR block, there is one or more \fBResult\fR blocks. \fBResult\fR
@@ -1850,11 +1850,11 @@ version 5 of collectd. It is equivalent to the following \fBResult\fR block:
 The order of the \fBColumn\fR options defines which columns of the query result
 should be used. The first option specifies the data found in the first column,
 the second option that of the second column, and so on.
-.IP "\fBMinPGVersion\fR \fIversion\fR" 4
-.IX Item "MinPGVersion version"
+.IP "\fBMinVersion\fR \fIversion\fR" 4
+.IX Item "MinVersion version"
 .PD 0
-.IP "\fBMaxPGVersion\fR \fIversion\fR" 4
-.IX Item "MaxPGVersion version"
+.IP "\fBMaxVersion\fR \fIversion\fR" 4
+.IX Item "MaxVersion version"
 .PD
 Specify the minimum or maximum version of PostgreSQL that this query should be
 used with. Some statistics might only be available with certain versions of
@@ -1865,6 +1865,14 @@ configuration in a heterogeneous environment.
 The \fIversion\fR has to be specified as the concatenation of the major, minor
 and patch-level versions, each represented as two-decimal-digit numbers. For
 example, version 8.2.3 will become 80203.
+.IP "\fBMinPGVersion\fR \fIversion\fR" 4
+.IX Item "MinPGVersion version"
+.PD 0
+.IP "\fBMaxPGVersion\fR \fIversion\fR" 4
+.IX Item "MaxPGVersion version"
+.PD
+These are deprecated synonyms for \fBMinVersion\fR and \fBMaxVersion\fR
+respectively. They will be removed in version 5 of collectd.
 .PP
 The following predefined queries are available (the definitions can be found
 in the \fIpostgresql_default.conf\fR file which, by default, is available at
@@ -2381,34 +2389,6 @@ their configuration can be found in \fItypes.db\fR\|(5).
 .IP "\fBInstance\fR \fITypeInstance\fR" 4
 .IX Item "Instance TypeInstance"
 This optional setting sets the type instance to use.
-.ie n .SS "Plugin ""teamspeak2"""
-.el .SS "Plugin \f(CWteamspeak2\fP"
-.IX Subsection "Plugin teamspeak2"
-The \f(CW\*(C`teamspeak2 plugin\*(C'\fR connects to the query port of a teamspeak2 server and
-polls interesting global and virtual server data. The plugin can query only one
-physical server but unlimited virtual servers. You can use the following
-options to configure it:
-.IP "\fBHost\fR \fIhostname/ip\fR" 4
-.IX Item "Host hostname/ip"
-The hostname or ip which identifies the physical server.
-Default: 127.0.0.1
-.IP "\fBPort\fR \fIport\fR" 4
-.IX Item "Port port"
-The query port of the physical server. This needs to be a string.
-Default: \*(L"51234\*(R"
-.IP "\fBServer\fR \fIport\fR" 4
-.IX Item "Server port"
-This option has to be added once for every virtual server the plugin should
-query. If you want to query the virtual server on port 8767 this is what the
-option would look like:
-.Sp
-.Vb 1
-\&  Server "8767"
-.Ve
-.Sp
-This option, although numeric, needs to be a string, i.\ e. you \fBmust\fR
-use quotes around it! If no such statement is given only global information
-will be collected.
 .ie n .SS "Plugin ""tcpconns"""
 .el .SS "Plugin \f(CWtcpconns\fP"
 .IX Subsection "Plugin tcpconns"
@@ -2440,6 +2420,34 @@ connections a local service has opened to remote services, e.\ g. how many
 connections a mail server or news server has to other mail or news servers, or
 how many connections a web proxy holds to web servers. You have to give the
 port in numeric form.
+.ie n .SS "Plugin ""teamspeak2"""
+.el .SS "Plugin \f(CWteamspeak2\fP"
+.IX Subsection "Plugin teamspeak2"
+The \f(CW\*(C`teamspeak2 plugin\*(C'\fR connects to the query port of a teamspeak2 server and
+polls interesting global and virtual server data. The plugin can query only one
+physical server but unlimited virtual servers. You can use the following
+options to configure it:
+.IP "\fBHost\fR \fIhostname/ip\fR" 4
+.IX Item "Host hostname/ip"
+The hostname or ip which identifies the physical server.
+Default: 127.0.0.1
+.IP "\fBPort\fR \fIport\fR" 4
+.IX Item "Port port"
+The query port of the physical server. This needs to be a string.
+Default: \*(L"51234\*(R"
+.IP "\fBServer\fR \fIport\fR" 4
+.IX Item "Server port"
+This option has to be added once for every virtual server the plugin should
+query. If you want to query the virtual server on port 8767 this is what the
+option would look like:
+.Sp
+.Vb 1
+\&  Server "8767"
+.Ve
+.Sp
+This option, although numeric, needs to be a string, i.\ e. you \fBmust\fR
+use quotes around it! If no such statement is given only global information
+will be collected.
 .ie n .SS "Plugin ""thermal"""
 .el .SS "Plugin \f(CWthermal\fP"
 .IX Subsection "Plugin thermal"

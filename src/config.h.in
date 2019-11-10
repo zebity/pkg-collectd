@@ -711,7 +711,7 @@
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
 
-/* Define to 1 if you have the <stdbool.h> header file. */
+/* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -773,6 +773,27 @@
 
 /* Define to 1 if `ifi_opackets' is member of `struct if_data'. */
 #undef HAVE_STRUCT_IF_DATA_IFI_OPACKETS
+
+/* Define if struct kinfo_proc exists in the FreeBSD variant. */
+#undef HAVE_STRUCT_KINFO_PROC_FREEBSD
+
+/* Define to 1 if `ki_pid' is member of `struct kinfo_proc'. */
+#undef HAVE_STRUCT_KINFO_PROC_KI_PID
+
+/* Define to 1 if `ki_rssize' is member of `struct kinfo_proc'. */
+#undef HAVE_STRUCT_KINFO_PROC_KI_RSSIZE
+
+/* Define to 1 if `ki_rusage' is member of `struct kinfo_proc'. */
+#undef HAVE_STRUCT_KINFO_PROC_KI_RUSAGE
+
+/* Define to 1 if `kp_eproc' is member of `struct kinfo_proc'. */
+#undef HAVE_STRUCT_KINFO_PROC_KP_EPROC
+
+/* Define to 1 if `kp_proc' is member of `struct kinfo_proc'. */
+#undef HAVE_STRUCT_KINFO_PROC_KP_PROC
+
+/* Define if struct kinfo_proc exists in the OpenBSD variant. */
+#undef HAVE_STRUCT_KINFO_PROC_OPENBSD
 
 /* Define if struct net_device_stats exists and is usable. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS
@@ -938,11 +959,17 @@
 /* Define to 1 if you have the <utmp.h> header file. */
 #undef HAVE_UTMP_H
 
+/* Define to 1 if you have the <vm/anon.h> header file. */
+#undef HAVE_VM_ANON_H
+
 /* Define to 1 if you have the <wordexp.h> header file. */
 #undef HAVE_WORDEXP_H
 
 /* Define to 1 if you have the <xfs/xqm.h> header file. */
 #undef HAVE_XFS_XQM_H
+
+/* Define to 1 if the system has the type `_Bool'. */
+#undef HAVE__BOOL
 
 /* True if program is to be compiled for a Linux kernel */
 #undef KERNEL_LINUX

@@ -282,6 +282,9 @@ static void *rrd_queue_thread (void __attribute__((unused)) *data)
 		int    status;
 		int    i;
 
+		values = NULL;
+		values_num = 0;
+
                 pthread_mutex_lock (&queue_lock);
                 /* Wait for values to arrive */
                 while (true)
@@ -596,7 +599,7 @@ static int rrd_cache_flush_identifier (int timeout, const char *identifier)
   status = c_avl_get (cache, key, (void *) &rc);
   if (status != 0)
   {
-    WARNING ("rrdtool plugin: rrd_cache_flush_identifier: "
+    INFO ("rrdtool plugin: rrd_cache_flush_identifier: "
         "c_avl_get (%s) failed. Does that file really exist?",
         key);
     return (status);
@@ -1004,7 +1007,12 @@ static int rrd_shutdown (void)
 
 static int rrd_init (void)
 {
+	static int init_once = 0;
 	int status;
+
+	if (init_once != 0)
+		return (0);
+	init_once = 1;
 
 	if (rrdcreate_config.stepsize < 0)
 		rrdcreate_config.stepsize = 0;
