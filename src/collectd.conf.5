@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2013-08-18" "5.4.0" "collectd"
+.TH COLLECTD.CONF 5 "2014-01-26" "5.4.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -5523,7 +5523,7 @@ Synopsis:
 \&   <Node "example">
 \&     Host "localhost"
 \&     Port "2003"
-\&     Protocol "udp"
+\&     Protocol "tcp"
 \&     LogSendErrors true
 \&     Prefix "collectd"
 \&   </Node>
@@ -5783,7 +5783,7 @@ Here is a configuration example to get you started. Read below for more
 information.
 .PP
 .Vb 9
-\& <Threshold>
+\& <Plugin threshold>
 \&   <Type "foo">
 \&     WarningMin    0.00
 \&     WarningMax 1000.00
@@ -5814,7 +5814,7 @@ information.
 \&       </Type>
 \&     </Plugin>
 \&   </Host>
-\& </Threshold>
+\& </Plugin>
 .Ve
 .PP
 There are basically two types of configuration statements: The \f(CW\*(C`Host\*(C'\fR,

@@ -1,4 +1,4 @@
-/* src/config.h.in.  Generated from configure.in by autoheader.  */
+/* src/config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* wether or not to enable feature daemon mode */
 #undef COLLECT_DAEMON
@@ -26,6 +26,15 @@
 
 /* Define to 1 if `library_errno' is a member of `amqp_rpc_reply_t'. */
 #undef HAVE_AMQP_RPC_REPLY_T_LIBRARY_ERRNO
+
+/* Define to 1 if you have the <amqp_socket.h> header file. */
+#undef HAVE_AMQP_SOCKET_H
+
+/* Define if librabbitmq provides the new TCP socket interface. */
+#undef HAVE_AMQP_TCP_SOCKET
+
+/* Define to 1 if you have the <amqp_tcp_socket.h> header file. */
+#undef HAVE_AMQP_TCP_SOCKET_H
 
 /* Define to 1 if you have the `argz_add' function. */
 #undef HAVE_ARGZ_ADD
@@ -90,6 +99,10 @@
 
 /* Define to 1 if you have the <dbi/dbi.h> header file. */
 #undef HAVE_DBI_DBI_H
+
+/* Define to 1 if you have the declaration of `amqp_socket_close', and to 0 if
+   you don't. */
+#undef HAVE_DECL_AMQP_SOCKET_CLOSE
 
 /* Define to 1 if you have the declaration of `cygwin_conv_path', and to 0 if
    you don't. */
