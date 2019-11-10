@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(collectd, 4.0.3)
+AC_INIT(collectd, 4.0.7)
 AC_CONFIG_SRCDIR(src/collectd.c)
 AC_CONFIG_HEADERS(src/config.h)
 AM_INIT_AUTOMAKE(dist-bzip2)
@@ -189,7 +189,16 @@ AC_CHECK_HEADERS(netinet/udp.h, [], [],
 ])
 
 # For cpu modules
-AC_CHECK_HEADERS(sys/sysctl.h sys/dkstat.h)
+AC_CHECK_HEADERS(sys/sysctl.h, [], [],
+[
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+])
+AC_CHECK_HEADERS(sys/dkstat.h)
 AC_CHECK_HEADERS(mach/mach_init.h)
 AC_CHECK_HEADERS(mach/host_priv.h)
 AC_CHECK_HEADERS(mach/mach_error.h)
@@ -240,7 +249,15 @@ AC_CHECK_HEADERS(sys/loadavg.h)
 AC_CHECK_HEADERS(linux/config.h)
 
 # For the swap module
-AC_CHECK_HEADERS(sys/swap.h)
+AC_CHECK_HEADERS(sys/swap.h, [], [],
+[
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+])
 
 # For users module
 AC_CHECK_HEADERS(utmp.h)
@@ -283,7 +300,16 @@ AC_CHECK_HEADERS(linux/netdevice.h, [], [],
 AC_CHECK_HEADERS(curl/curl.h)
 
 # For quota module
-AC_CHECK_HEADERS(pwd.h sys/ucred.h)
+AC_CHECK_HEADERS(pwd.h)
+AC_CHECK_HEADERS(sys/ucred.h, [], [],
+[
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+])
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(limits.h)
 AC_CHECK_HEADERS(sys/quota.h)
@@ -299,7 +325,15 @@ AC_CHECK_HEADERS(sys/fstyp.h)
 AC_CHECK_HEADERS(sys/fs_types.h)
 AC_CHECK_HEADERS(sys/mntent.h)
 AC_CHECK_HEADERS(sys/mnttab.h)
-AC_CHECK_HEADERS(sys/mount.h)
+AC_CHECK_HEADERS(sys/mount.h, [], [],
+[
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+])
 AC_CHECK_HEADERS(sys/statfs.h)
 AC_CHECK_HEADERS(sys/statvfs.h)
 AC_CHECK_HEADERS(sys/vfs.h)
@@ -325,14 +359,25 @@ AC_CHECK_HEADERS(stdarg.h)
 AC_CHECK_HEADERS(regex.h)
 
 # For the dns plugin
-AC_CHECK_HEADERS(arpa/nameser.h arpa/nameser_compat.h)
+AC_CHECK_HEADERS(arpa/nameser.h)
+AC_CHECK_HEADERS(arpa/nameser_compat.h, [], [],
+[
+#if HAVE_ARPA_NAMESER_H
+# include <arpa/nameser.h>
+#endif
+])
 
 AC_CHECK_HEADERS(net/if_arp.h, [], [],
 [#if HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
 ])
-AC_CHECK_HEADERS(net/if_ppp.h)
+AC_CHECK_HEADERS(net/ppp_defs.h)
+AC_CHECK_HEADERS(net/if_ppp.h, [], [],
+[#if HAVE_NET_PPP_DEFS_H
+# include <net/ppp_defs.h>
+#endif
+])
 AC_CHECK_HEADERS(netinet/if_ether.h, [], [],
 [#if HAVE_STDINT_H
 # include <stdint.h>
@@ -379,6 +424,9 @@ AC_CHECK_FUNCS(strchr memcpy strstr strcmp strncmp strncpy strlen)
 AC_CHECK_FUNCS(strncasecmp strcasecmp)
 AC_CHECK_FUNCS(openlog syslog closelog)
 
+AC_CHECK_FUNCS(getpwnam_r)
+AC_CHECK_FUNCS(getgrnam_r)
+
 socket_needs_socket="no"
 AC_CHECK_FUNCS(socket, [], AC_CHECK_LIB(socket, socket, [socket_needs_socket="yes"], AC_MSG_ERROR(cannot find socket)))
 AM_CONDITIONAL(BUILD_WITH_LIBSOCKET, test "x$socket_needs_socket" = "xyes")
@@ -404,10 +452,6 @@ AC_CHECK_FUNCS(thread_info)
 
 # For users module
 AC_CHECK_FUNCS(getutent getutxent)
-
-# For quota module
-AC_CHECK_FUNCS(quotactl)
-AC_CHECK_FUNCS(getgrgid getpwuid)
 
 # For interface module
 AC_CHECK_FUNCS(getifaddrs)
@@ -792,28 +836,46 @@ AM_CONDITIONAL(BUILD_WITH_LIBDEVINFO, test "x$with_devinfo" = "xyes")
 
 ### BEGIN of check for libcurl ###
 with_curl_config="curl-config"
-with_curl_prefix=0
+with_curl_cflags=""
 with_curl_libs=""
 AC_ARG_WITH(libcurl, [AS_HELP_STRING([--with-libcurl@<:@=PREFIX@:>@], [Path to libcurl.])],
 [
-	if test "x$withval" != "xno" -a "x$withval" != "xyes"
-	then
-		if test -x "$withval/bin/curl-config"
-		then
-			with_curl_config="$withval/bin/curl-config"
-			with_curl_prefix=1
-		fi
-	fi
 	if test "x$withval" = "xno"
 	then
 		with_libcurl="no"
-	else
+	else if test "x$withval" = "xyes"
+	then
 		with_libcurl="yes"
-	fi
+	else
+		if test -x "$withval"
+		then
+			with_curl_config="$withval"
+		else if test -x "$withval/bin/curl-config"
+		then
+			with_curl_config="$withval/bin/curl-config"
+		fi; fi
+	fi; fi
 ],
 [
 	with_libcurl="yes"
 ])
+if test "x$with_libcurl" = "xyes"
+then
+	with_curl_cflags=`$with_curl_config --cflags 2>/dev/null`
+	curl_config_status=$?
+
+	if test $curl_config_status -ne 0
+	then
+		with_libcurl="no"
+	else
+		SAVE_CFLAGS=$CFLAGS
+		CFLAGS="$CFLAGS $with_curl_cflags"
+
+		AC_CHECK_HEADERS(curl/curl.h, [], [with_libcurl="no (curl/curl.h not found)"], [])
+
+		CFLAGS="$SAVE_CFLAGS"
+	fi
+fi
 if test "x$with_libcurl" = "xyes"
 then
 	with_curl_libs=`$with_curl_config --libs 2>/dev/null`
@@ -824,38 +886,23 @@ then
 		with_libcurl="no"
 	else
 		AC_CHECK_LIB(curl, curl_easy_init,
-		[
-			BUILD_WITH_LIBCURL_LIBS="$with_curl_libs"
-			AC_SUBST(BUILD_WITH_LIBCURL_LIBS)
-		],
-		[
-			with_libcurl="no"
-		],
-		[$with_curl_libs])
+		 [
+		  # We need to do this to have `HAVE_LIBCURL' defined but
+		  # `-lcurl' NOT added to the default LDFLAGS.
+			AC_DEFINE(HAVE_LIBCURL, 1,
+				  [Define to 1 if you have the curl library.])
+		 ],
+		 [with_libcurl="no (symbol 'curl_easy_init' not found)"],
+		 [$with_curl_libs])
 	fi
 fi
-if test "x$with_libcurl" = "xyes" -a $with_curl_prefix -ne 0
-then
-	with_curl_prefix=`$with_curl_config --libs 2>/dev/null`
-	curl_config_status=$?
-
-	if test $curl_config_status -ne 0
-	then
-		with_libcurl="no"
-	else
-		if test -d "$with_curl_prefix/include"
-		then
-			CPPFLAGS="$CPPFLAGS -I$with_curl_prefix/include"
-		fi
-	fi
-fi
-
-with_libcurl_numeric=0
 if test "x$with_libcurl" = "xyes"
 then
-	with_libcurl_numeric=1
+	BUILD_WITH_LIBCURL_CFLAGS="$with_curl_cflags"
+	BUILD_WITH_LIBCURL_LIBS="$with_curl_libs"
+	AC_SUBST(BUILD_WITH_LIBCURL_CFLAGS)
+	AC_SUBST(BUILD_WITH_LIBCURL_LIBS)
 fi
-AC_DEFINE_UNQUOTED(HAVE_LIBCURL, [$with_libcurl_numeric], [Define to 1 if you have the 'curl' library (-lcurl).])
 AM_CONDITIONAL(BUILD_WITH_LIBCURL, test "x$with_libcurl" = "xyes")
 ### END of check for libcurl ###
 
@@ -965,40 +1012,74 @@ AC_DEFINE_UNQUOTED(COLLECT_LM_SENSORS, [$collect_lm_sensors],
 	[Wether or not to use sensors library])
 AM_CONDITIONAL(BUILD_WITH_LM_SENSORS, test "x$with_lm_sensors" = "xyes")
 
+with_mysql_config="mysql_config"
+with_mysql_cflags=""
+with_mysql_libs=""
 AC_ARG_WITH(libmysql, [AS_HELP_STRING([--with-libmysql@<:@=PREFIX@:>@], [Path to libmysql.])],
 [
-	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+	if test "x$withval" = "xno"
 	then
-		LDFLAGS="$LDFLAGS -L$withval/lib"
-		CPPFLAGS="$CPPFLAGS -I$withval/include"
+		with_libmysql="no"
+	else if test "x$withval" = "xyes"
+	then
 		with_libmysql="yes"
-	fi
+	else
+		if test -x "$withval";
+		then
+			with_mysql_config="$withval"
+		else if test -x "$withval/bin/mysql_config"
+		then
+			with_mysql_config="$withval/bin/mysql_config"
+		fi; fi
+	fi; fi
 ],
 [
 	with_libmysql="yes"
 ])
 if test "x$with_libmysql" = "xyes"
 then
-	AC_CHECK_LIB(mysqlclient, mysql_init,
-	[
-		AC_DEFINE(HAVE_LIBMYSQLCLIENT, 1, [Define to 1 if you have the mysqlclient library (-lmysqlclient).])
-	], [with_libmysql="no (libmysql not found)"])
+	with_mysql_cflags=`$with_mysql_config --cflags 2>/dev/null`
+	mysql_config_status=$?
+
+	if test $mysql_config_status -ne 0
+	then
+		with_libmysql="no"
+	else
+		SAVE_CFLAGS=$CFLAGS
+		CFLAGS="$CFLAGS $with_mysql_cflags"
+
+		AC_CHECK_HEADERS(mysql/mysql.h, [], [with_libmysql="no (mysql/mysql.h not found)"], [])
+
+		CFLAGS="$SAVE_CFLAGS"
+	fi
 fi
 if test "x$with_libmysql" = "xyes"
 then
-	AC_CHECK_HEADERS(mysql/mysql.h,
-	[
-		AC_DEFINE(HAVE_MYSQL_MYSQL_H, 1, [Define to 1 if you have the <mysql/mysql.h> header file.])
-	], [with_libmysql="no (mysql/mysql.h not found)"])
+	with_mysql_libs=`$with_mysql_config --libs 2>/dev/null`
+	mysql_config_status=$?
+
+	if test $mysql_config_status -ne 0
+	then
+		with_libmysql="no"
+	else
+		AC_CHECK_LIB(mysqlclient, mysql_init,
+		 [
+		  # We need to do this to have `HAVE_LIBMYSQLCLIENT' defined
+		  # but `-lmysqlclient' NOT added to the default LDFLAGS.
+			AC_DEFINE(HAVE_LIBMYSQLCLIENT, 1,
+				  [Define to 1 if you have the mysqlclient library.])
+		 ],
+		 [with_libmysql="no (libmysql not found)"],
+		 [$with_mysql_libs])
+	fi
 fi
 if test "x$with_libmysql" = "xyes"
 then
-	collect_libmysql=1
-else
-	collect_libmysql=0
+	BUILD_WITH_LIBMYSQL_CFLAGS="$with_mysql_cflags"
+	BUILD_WITH_LIBMYSQL_LIBS="$with_mysql_libs"
+	AC_SUBST(BUILD_WITH_LIBMYSQL_CFLAGS)
+	AC_SUBST(BUILD_WITH_LIBMYSQL_LIBS)
 fi
-AC_DEFINE_UNQUOTED(COLLECT_LIBMYSQL, [$collect_libmysql],
-	[Wether or not to use mysql library])
 AM_CONDITIONAL(BUILD_WITH_LIBMYSQL, test "x$with_libmysql" = "xyes")
 
 with_own_liboconfig="no"
@@ -1233,6 +1314,7 @@ else
 fi
 AM_CONDITIONAL(BUILD_WITH_LIBIPTC, test "x$with_libiptc" = "xyes")
 
+# TODO: Use `libupsclient-config' here.
 AC_ARG_WITH(libupsclient, [AS_HELP_STRING([--with-libupsclient@<:@=PREFIX@:>@], [Path to libupsclient.])],
 [
 	if test "x$withval" != "xno" && test "x$withval" != "xyes"
@@ -1258,6 +1340,13 @@ then
 	[
 		AC_DEFINE(HAVE_UPSCLIENT_H, 1, [Define to 1 if you have the <upsclient.h> header file.])
 	], [with_libupsclient="no (upsclient.h not found)"])
+fi
+if test "x$with_libupsclient" = "xyes"
+then
+	AC_CHECK_TYPES([UPSCONN_t, UPSCONN], [], [], 
+[#include <stdlib.h>
+#include <stdio.h>
+#include <upsclient.h>])
 fi
 AM_CONDITIONAL(BUILD_WITH_LIBUPSCLIENT, test "x$with_libupsclient" = "xyes")
 

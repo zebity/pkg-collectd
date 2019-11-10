@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD 1"
-.TH COLLECTD 1 "2007-06-18" "4.0.3" "collectd"
+.TH COLLECTD 1 "2007-08-26" "4.0.7" "collectd"
 .SH "NAME"
 collectd \- System statistics collection daemon
 .SH "SYNOPSIS"
@@ -164,7 +164,7 @@ config\-option.
 .IX Item "-f"
 Don't fork to the background. \fIcollectd\fR will also \fBnot\fR close standard file
 descriptors, detach from the session nor write a pid file. This is mainly
-thought for 'supervisioning' init replacements such as \fIrunit\fR.
+thought for 'supervising' init replacements such as \fIrunit\fR.
 .IP "\fB\-h\fR" 4
 .IX Item "-h"
 Output usage information and exit.
@@ -177,7 +177,7 @@ package it's a good bet to search somewhere near \fI/usr/share/doc/collectd\fR.
 .PP
 There are two big groups of plugins, \fBinput\fR and \fBoutput\fR plugins:
 .IP "\(bu" 4
-Input plugins are queried periodically. They somehow aquire the current value
+Input plugins are queried periodically. They somehow acquire the current value
 of whatever they where designed to work with and submit these values back to
 the daemon, i. e. they \*(L"dispatch\*(R" the values. As an example, the \f(CW\*(C`cpu plugin\*(C'\fR
 reads the current cpu-counters of time spent in the various modes (user,
@@ -191,7 +191,7 @@ Of course not all plugins fit neatly into one of the two above categories. The
 \&\f(CW\*(C`network plugin\*(C'\fR, for example, is able to send (i.\ e. \*(L"write\*(R") \fBand\fR
 receive (i.\ e. \*(L"dispatch\*(R") values. Also, it opens a socket upon
 initialization and dispatches the values when it receives them and isn't
-triggered at the same time the input plugins are being read. You can think if
+triggered at the same time the input plugins are being read. You can think of
 the network receive part as working asynchronous if it helps.
 .PP
 In addition to the above, there are \*(L"logging plugins\*(R". Right now those are the

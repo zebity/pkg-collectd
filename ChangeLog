@@ -1,3 +1,36 @@
+2007-08-26, Version 4.0.7
+	* documentation: Some typos have been fixed and some information has
+	  been improved.
+	* build system: Many fixes for detecting libraries in unusual places,
+	  such as on RedHat systems. The affected libraries are `libcurl',
+	  `libmysql', and `libupsclient'.
+	* network plugin: Allow the `Port' option to be specified as a number
+	  (i. e. without quotes).
+	* nut plugin: A fix allows linking the nut plugin against
+	  libupsclient, version >= 2.2.0.
+	* processes plugin: Fix a potential segmentation fault.
+
+2007-07-30, Version 4.0.6
+	* sensors plugin: Fix the ignorelist functionality: Only the `type
+	  instance' was used to match against the list, but the documentation
+	  told otherwise. This release fixes the code, so it complies with the
+	  documentation.
+	* syslog plugin: Call `openlog' right when the plugin is loaded, so
+	  configuration messages will end up in the logging facility.
+	* conrtib/fedora: The contributed specfile for Fedora has been
+	  updated.
+
+2007-07-05, Version 4.0.5
+	* Portability: More fixes for OpenBSD have been included.
+
+2007-06-24, Version 4.0.4
+	* cpu plugin: Fixed the Solaris code.
+	* dns plugin: Fixed a build issue for OpenBSD.
+	* interface plugin: Fixed the Solaris code.
+	* load plugin: Fixed the alternative `/proc' Linux code.
+	* memory plugin: Fixed the Solaris code.
+	* oconfig: Don't require `-lfl' anymore.
+
 2007-06-19, Version 4.0.3
 	* cpu plugin: Fix the Darwin / Mac OS X code.
 	* ping plugin: Use the return value of `getpid', not its address.

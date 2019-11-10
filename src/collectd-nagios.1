@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-NAGIOS 1"
-.TH COLLECTD-NAGIOS 1 "2007-06-18" "4.0.3" "collectd"
+.TH COLLECTD-NAGIOS 1 "2007-08-26" "4.0.7" "collectd"
 .SH "NAME"
 collectd\-nagios \- Nagios plugin for querying collectd
 .SH "SYNOPSIS"
@@ -138,7 +138,7 @@ collectd-nagios \fB\-s\fR \fIsocket\fR \fB\-n\fR \fIvalue_spec\fR \fB\-H\fR \fIh
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This small program is the glue between collectd and nagios. collectd collects
-various performance statistics which is provides via the \f(CW\*(C`unixsock plugin\*(C'\fR,
+various performance statistics which it provides via the \f(CW\*(C`unixsock plugin\*(C'\fR,
 see \fIcollectd\-unixsock\fR\|(5). This program is called by Nagios, connects to the
 \&\s-1UNIX\s0 socket and reads the values from collectd. It then returns \fB\s-1OKAY\s0\fR,
 \&\fB\s-1WARNING\s0\fR or \fB\s-1CRITICAL\s0\fR depending on the values and the ranges provided by
@@ -167,7 +167,7 @@ handled according to the consolidation function given with the \fB\-g\fR option.
 .IP "\fB\-g\fR \fBnone\fR\fI|\fR\fBaverage\fR\fI|\fR\fBsum\fR" 4
 .IX Item "-g none|average|sum"
 When multiple data sources are selected from a value spec they can be handled
-differently dependin on this option. The values of the following meaning:
+differently depending on this option. The values of the following meaning:
 .RS 4
 .IP "\fBnone\fR" 4
 .IX Item "none"
@@ -202,7 +202,7 @@ As usual for Nagios plugins this program writes a short, one line status
 message to \s-1STDOUT\s0 and signals success or failure with it's return value. It
 exists with a return value of \fB0\fR for success or \fB1\fR or \fB2\fR for warning and
 critical, respectively. If the values is not available or some other error
-occured it returnes \fB3\fR for \*(L"unknown\*(R". 
+occurred it returns \fB3\fR for \*(L"unknown\*(R". 
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),

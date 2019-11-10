@@ -1,7 +1,7 @@
 Summary:	Statistics collection daemon for filling RRD files.
 Name:           collectd
-Version:	3.11.2
-Release:	0.fc0
+Version:	4.0.6
+Release:	0.fc7
 Source:		http://collectd.org/files/%{name}-%{version}.tar.gz
 License:	GPL
 Group:		System Environment/Daemons
@@ -21,16 +21,16 @@ fine grained since the files are updated every 10 seconds.
 %package apache
 Summary:	apache-plugin for collectd.
 Group:		System Environment/Daemons
-Requires:	collectd = %{version}, libcurl3
+Requires:	collectd = %{version}, curl
 %description apache
 This plugin collectd data provided by Apache's `mod_status'.
 
-#%package email
-#Summary:	email-plugin for collectd.
-#Group:		System Environment/Daemons
-#Requires:	collectd = %{version}, spamassassin
-#%description email
-#This plugin collectd data provided by spamassassin.
+%package email
+Summary:	email-plugin for collectd.
+Group:		System Environment/Daemons
+Requires:	collectd = %{version}, spamassassin
+%description email
+This plugin collectd data provided by spamassassin.
 
 %package mysql
 Summary:	mysql-module for collectd.
@@ -64,8 +64,6 @@ cp src/collectd.conf $RPM_BUILD_ROOT/etc/collectd.conf
 cp contrib/fedora/init.d-collectd $RPM_BUILD_ROOT/etc/rc.d/init.d/collectd
 cp contrib/collection.cgi $RPM_BUILD_ROOT/var/www/cgi-bin
 mkdir -p $RPM_BUILD_ROOT/var/lib/collectd
-rm -f $RPM_BUILD_ROOT%{_libdir}/%{name}/*.a
-rm -f $RPM_BUILD_ROOT%{_libdir}/%{name}/*.la
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -74,61 +72,167 @@ rm -rf $RPM_BUILD_ROOT
 /sbin/chkconfig --add collectd
 /sbin/chkconfig collectd on
 
-#%postun
-#/sbin/chkconfig collectd off
-#/sbin/chkconfig --del collectd
+%preun
+if [ "$1" = 0 ]; then
+   /sbin/chkconfig collectd off
+   /etc/init.d/collectd stop
+   /sbin/chkconfig --del collectd
+fi
+exit 0
+
+%postun
+if [ "$1" -ge 1 ]; then
+    /etc/init.d/collectd restart
+fi
+exit 0
 
 %files
 %defattr(-,root,root)
 %doc AUTHORS COPYING ChangeLog INSTALL NEWS README
-%config /etc/collectd.conf
+%attr(0644,root,root) %config(noreplace) /etc/collectd.conf
 %attr(0755,root,root) /etc/rc.d/init.d/collectd
 %attr(0755,root,root) /var/www/cgi-bin/collection.cgi
 %attr(0755,root,root) %{_sbindir}/collectd
-%attr(0444,root,root) %{_mandir}/man1/*
-%attr(0444,root,root) %{_mandir}/man5/*
-%attr(0444,root,root) %{_libdir}/%{name}/apcups.so*
-%attr(0444,root,root) %{_libdir}/%{name}/apple_sensors.so*
-%attr(0444,root,root) %{_libdir}/%{name}/battery.so*
-%attr(0444,root,root) %{_libdir}/%{name}/cpu.so*
-%attr(0444,root,root) %{_libdir}/%{name}/cpufreq.so*
-%attr(0444,root,root) %{_libdir}/%{name}/df.so*
-%attr(0444,root,root) %{_libdir}/%{name}/disk.so*
-%attr(0444,root,root) %{_libdir}/%{name}/dns.so
-%attr(0444,root,root) %{_libdir}/%{name}/email.so
-%attr(0444,root,root) %{_libdir}/%{name}/hddtemp.so*
-%attr(0444,root,root) %{_libdir}/%{name}/irq.so*
-%attr(0444,root,root) %{_libdir}/%{name}/load.so*
-%attr(0444,root,root) %{_libdir}/%{name}/mbmon.so
-%attr(0444,root,root) %{_libdir}/%{name}/memory.so*
-%attr(0444,root,root) %{_libdir}/%{name}/multimeter.so*
-%attr(0444,root,root) %{_libdir}/%{name}/nfs.so*
-%attr(0444,root,root) %{_libdir}/%{name}/ntpd.so*
-%attr(0444,root,root) %{_libdir}/%{name}/ping.so*
-%attr(0444,root,root) %{_libdir}/%{name}/processes.so*
-%attr(0444,root,root) %{_libdir}/%{name}/serial.so*
-%attr(0444,root,root) %{_libdir}/%{name}/swap.so*
-%attr(0444,root,root) %{_libdir}/%{name}/tape.so*
-%attr(0444,root,root) %{_libdir}/%{name}/traffic.so*
-%attr(0444,root,root) %{_libdir}/%{name}/users.so*
-%attr(0444,root,root) %{_libdir}/%{name}/vserver.so*
-%attr(0444,root,root) %{_libdir}/%{name}/wireless.so*
+%attr(0755,root,root) %{_bindir}/collectd-nagios
+%attr(0644,root,root) %{_mandir}/man1/*
+%attr(0644,root,root) %{_mandir}/man5/*
+
+%attr(0644,root,root) %{_libdir}/%{name}/apcups.so*
+%attr(0644,root,root) %{_libdir}/%{name}/apcups.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/apple_sensors.so*
+%attr(0644,root,root) %{_libdir}/%{name}/apple_sensors.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/battery.so*
+%attr(0644,root,root) %{_libdir}/%{name}/battery.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/cpufreq.so*
+%attr(0644,root,root) %{_libdir}/%{name}/cpufreq.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/cpu.so*
+%attr(0644,root,root) %{_libdir}/%{name}/cpu.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/csv.so*
+%attr(0644,root,root) %{_libdir}/%{name}/csv.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/df.so*
+%attr(0644,root,root) %{_libdir}/%{name}/df.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/disk.so*
+%attr(0644,root,root) %{_libdir}/%{name}/disk.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/dns.so*
+%attr(0644,root,root) %{_libdir}/%{name}/dns.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/entropy.so*
+%attr(0644,root,root) %{_libdir}/%{name}/entropy.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/exec.so*
+%attr(0644,root,root) %{_libdir}/%{name}/exec.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/hddtemp.so*
+%attr(0644,root,root) %{_libdir}/%{name}/hddtemp.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/interface.so*
+%attr(0644,root,root) %{_libdir}/%{name}/interface.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/iptables.so*
+%attr(0644,root,root) %{_libdir}/%{name}/iptables.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/irq.so*
+%attr(0644,root,root) %{_libdir}/%{name}/irq.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/load.so*
+%attr(0644,root,root) %{_libdir}/%{name}/load.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/logfile.so*
+%attr(0644,root,root) %{_libdir}/%{name}/logfile.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/mbmon.so
+%attr(0644,root,root) %{_libdir}/%{name}/mbmon.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/memory.so*
+%attr(0644,root,root) %{_libdir}/%{name}/memory.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/multimeter.so*
+%attr(0644,root,root) %{_libdir}/%{name}/multimeter.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/network.so*
+%attr(0644,root,root) %{_libdir}/%{name}/network.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/nfs.so*
+%attr(0644,root,root) %{_libdir}/%{name}/nfs.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/ntpd.so*
+%attr(0644,root,root) %{_libdir}/%{name}/ntpd.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/nut.so*
+%attr(0644,root,root) %{_libdir}/%{name}/nut.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/perl.so*
+%attr(0644,root,root) %{_libdir}/%{name}/perl.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/ping.so*
+%attr(0644,root,root) %{_libdir}/%{name}/ping.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/processes.so*
+%attr(0644,root,root) %{_libdir}/%{name}/processes.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/rrdtool.so*
+%attr(0644,root,root) %{_libdir}/%{name}/rrdtool.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/serial.so*
+%attr(0644,root,root) %{_libdir}/%{name}/serial.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/swap.so*
+%attr(0644,root,root) %{_libdir}/%{name}/swap.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/syslog.so*
+%attr(0644,root,root) %{_libdir}/%{name}/syslog.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/tape.so*
+%attr(0644,root,root) %{_libdir}/%{name}/tape.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/unixsock.so*
+%attr(0644,root,root) %{_libdir}/%{name}/unixsock.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/users.so*
+%attr(0644,root,root) %{_libdir}/%{name}/users.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/vserver.so*
+%attr(0644,root,root) %{_libdir}/%{name}/vserver.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/wireless.so*
+%attr(0644,root,root) %{_libdir}/%{name}/wireless.la
+
+%attr(0644,root,root) %{_libdir}/%{name}/types.db
 
 %dir /var/lib/collectd
 
 %files apache
-%attr(0444,root,root) %{_libdir}/%{name}/apache.so*
+%attr(0644,root,root) %{_libdir}/%{name}/apache.so*
+%attr(0644,root,root) %{_libdir}/%{name}/apache.la
 
-#%files email
-#%attr(0444,root,root) %{_libdir}/%{name}/email.so
+%files email
+%attr(0644,root,root) %{_libdir}/%{name}/email.so*
+%attr(0644,root,root) %{_libdir}/%{name}/email.la
 
 %files mysql
-%attr(0444,root,root) %{_libdir}/%{name}/mysql.so*
+%attr(0644,root,root) %{_libdir}/%{name}/mysql.so*
+%attr(0644,root,root) %{_libdir}/%{name}/mysql.la
 
 %files sensors
-%attr(0444,root,root) %{_libdir}/%{name}/sensors.so*
+%attr(0644,root,root) %{_libdir}/%{name}/sensors.so*
+%attr(0644,root,root) %{_libdir}/%{name}/sensors.la
 
 %changelog
+* Mon Aug 06 2007 Kjell Randa <Kjell.Randa@broadpark.no> 4.0.6
+- New upstream version
+
+* Wed Jul 25 2007 Kjell Randa <Kjell.Randa@broadpark.no> 4.0.5
+- New major releas
+- Changes to support 4.0.5 
+
 * Wed Jan 11 2007 Iain Lea <iain@bricbrac.de> 3.11.0-0
 - fixed spec file to build correctly on fedora core
 - added improved init.d script to work with chkconfig

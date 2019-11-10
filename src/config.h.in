@@ -63,9 +63,6 @@
 /* Wether or not to use the IOKit library */
 #undef COLLECT_LIBIOKIT
 
-/* Wether or not to use mysql library */
-#undef COLLECT_LIBMYSQL
-
 /* Wether or not to use the pcap library */
 #undef COLLECT_LIBPCAP
 
@@ -197,8 +194,8 @@
 /* Define to 1 if you have the `getfsstat' function. */
 #undef HAVE_GETFSSTAT
 
-/* Define to 1 if you have the `getgrgid' function. */
-#undef HAVE_GETGRGID
+/* Define to 1 if you have the `getgrnam_r' function. */
+#undef HAVE_GETGRNAM_R
 
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
@@ -212,8 +209,8 @@
 /* Define to 1 if you have the `getnameinfo' function. */
 #undef HAVE_GETNAMEINFO
 
-/* Define to 1 if you have the `getpwuid' function. */
-#undef HAVE_GETPWUID
+/* Define to 1 if you have the `getpwnam_r' function. */
+#undef HAVE_GETPWNAM_R
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
@@ -273,7 +270,7 @@
 /* Define to 1 if you have the <kvm.h> header file. */
 #undef HAVE_KVM_H
 
-/* Define to 1 if you have the 'curl' library (-lcurl). */
+/* Define to 1 if you have the curl library. */
 #undef HAVE_LIBCURL
 
 /* Define to 1 if you have the <libgen.h> header file. */
@@ -294,7 +291,7 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the mysqlclient library (-lmysqlclient). */
+/* Define to 1 if you have the mysqlclient library. */
 #undef HAVE_LIBMYSQLCLIENT
 
 /* Define to 1 if you have the pcap library (-lpcap). */
@@ -456,6 +453,9 @@
 /* Define to 1 if you have the <net/if_ppp.h> header file. */
 #undef HAVE_NET_IF_PPP_H
 
+/* Define to 1 if you have the <net/ppp_defs.h> header file. */
+#undef HAVE_NET_PPP_DEFS_H
+
 /* Define if the function getmntent exists and takes one argument. */
 #undef HAVE_ONE_GETMNTENT
 
@@ -476,9 +476,6 @@
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
-
-/* Define to 1 if you have the `quotactl' function. */
-#undef HAVE_QUOTACTL
 
 /* Define to 1 if you have the `regcomp' function. */
 #undef HAVE_REGCOMP
@@ -712,6 +709,12 @@
 
 /* Define to 1 if you have the <upsclient.h> header file. */
 #undef HAVE_UPSCLIENT_H
+
+/* Define to 1 if the system has the type `UPSCONN'. */
+#undef HAVE_UPSCONN
+
+/* Define to 1 if the system has the type `UPSCONN_t'. */
+#undef HAVE_UPSCONN_T
 
 /* Define to 1 if you have the <utmpx.h> header file. */
 #undef HAVE_UTMPX_H

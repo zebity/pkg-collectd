@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-UNIXSOCK 5"
-.TH COLLECTD-UNIXSOCK 5 "2007-06-19" "4.0.2" "collectd"
+.TH COLLECTD-UNIXSOCK 5 "2007-08-26" "4.0.7" "collectd"
 .SH "NAME"
 collectd\-unixsock \- Documentation of collectd's \f(CW\*(C`unixsock plugin\*(C'\fR
 .SH "SYNOPSIS"
@@ -163,12 +163,12 @@ The following commands are implemented:
 .IP "\fB\s-1GETVAL\s0\fR \fIIdentifier\fR" 4
 .IX Item "GETVAL Identifier"
 If the value identified by \fIIdentifier\fR (see below) is found the complete
-value-list is returned. The response is a space seperated list of
+value-list is returned. The response is a space separated list of
 name\-value\-pairs:
 .Sp
 \&\fInum\fR \fIname\fR\fB=\fR\fIvalue\fR[ \fIname\fR\fB=\fR\fIvalue\fR[ ...]]
 .Sp
-If \fInum\fR is less then zero, an error occured. Otherwise it contains the
+If \fInum\fR is less then zero, an error occurred. Otherwise it contains the
 number of values that follow. Each value is of the form \fIname\fR\fB=\fR\fIvalue\fR.
 Counter-values are converted to a rate, e.\ g. bytes per second.
 Undefined values are returned as \fBNaN\fR.
@@ -180,7 +180,7 @@ Example:
 .IX Item "PUTVAL Identifier Valuelist"
 Submits a value (identified by \fIIdentifier\fR, see below) to the daemon which
 will dispatch it to all it's write\-plugins. The \fIValuelist\fR is a
-colon-seperated list of the time and the values, each either an integer if the
+colon-separated list of the time and the values, each either an integer if the
 data-source is a counter, of a double if the data-source if of type \*(L"gauge\*(R".
 You can submit an undefined gauge-value by using \fBU\fR. When submitting \fBU\fR to
 a counter the behavior is undefined. The time is given as epoch (i.\ e.
@@ -191,7 +191,7 @@ Example:
   <\- | 0 Success
 .Sh "Identifiers"
 .IX Subsection "Identifiers"
-Value or value-lists are identified in a uniform fassion:
+Value or value-lists are identified in a uniform fashion:
 .PP
 \&\fIHostname\fR/\fIPlugin\fR/\fIType\fR
 .PP

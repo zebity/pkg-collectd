@@ -84,10 +84,13 @@ if BUILD_MODULE_APACHE
 pkglib_LTLIBRARIES += apache.la
 apache_la_SOURCES = apache.c
 apache_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBCURL
-apache_la_LDFLAGS += $(BUILD_WITH_LIBCURL_LIBS)
-endif
+apache_la_CFLAGS =
+apache_la_LIBADD =
 collectd_LDADD += "-dlopen" apache.la
+if BUILD_WITH_LIBCURL
+apache_la_CFLAGS += $(BUILD_WITH_LIBCURL_CFLAGS)
+apache_la_LIBADD += $(BUILD_WITH_LIBCURL_LIBS)
+endif
 collectd_DEPENDENCIES += apache.la
 endif
 
@@ -352,10 +355,13 @@ if BUILD_MODULE_MYSQL
 pkglib_LTLIBRARIES += mysql.la
 mysql_la_SOURCES = mysql.c
 mysql_la_LDFLAGS = -module -avoid-version
-if BUILD_WITH_LIBMYSQL
-mysql_la_LDFLAGS += -lmysqlclient
-endif
+mysql_la_CFLAGS =
+mysql_la_LIBADD =
 collectd_LDADD += "-dlopen" mysql.la
+if BUILD_WITH_LIBMYSQL
+mysql_la_CFLAGS += $(BUILD_WITH_LIBMYSQL_CFLAGS)
+mysql_la_LIBADD += $(BUILD_WITH_LIBMYSQL_LIBS)
+endif
 collectd_DEPENDENCIES += mysql.la
 endif
 
