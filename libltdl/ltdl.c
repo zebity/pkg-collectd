@@ -1,5 +1,5 @@
 /* ltdl.c -- system independent dlopen wrapper
-   Copyright (C) 1998, 1999, 2000, 2004, 2005  Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000 Free Software Foundation, Inc.
    Originally by Thomas Tanner <tanner@ffii.org>
    This file is part of GNU Libtool.
 
@@ -20,8 +20,8 @@ Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-02110-1301  USA
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+02111-1307  USA
 
 */
 
@@ -385,13 +385,11 @@ memcpy (dest, src, size)
      const lt_ptr src;
      size_t size;
 {
-  const char *	s = src;
-  char *	d = dest;
-  size_t	i = 0;
+  size_t i = 0;
 
   for (i = 0; i < size; ++i)
     {
-      d[i] = s[i];
+      dest[i] = src[i];
     }
 
   return dest;
@@ -411,21 +409,17 @@ memmove (dest, src, size)
      const lt_ptr src;
      size_t size;
 {
-  const char *	s = src;
-  char *	d = dest;
-  size_t	i;
+  size_t i;
 
-  if (d < s)
+  if (dest < src)
     for (i = 0; i < size; ++i)
       {
-	d[i] = s[i];
+	dest[i] = src[i];
       }
-  else if (d > s && size > 0)
-    for (i = size -1; ; --i)
+  else if (dest > src)
+    for (i = size -1; i >= 0; --i)
       {
-	d[i] = s[i];
-	if (i == 0)
-	  break;
+	dest[i] = src[i];
       }
 
   return dest;
@@ -457,9 +451,7 @@ opendir (path)
   DIR *entry;
 
   assert(path != (char *) NULL);
-  /* allow space for: path + '\\' '\\' '*' '.' '*' + '\0' */
-  (void) strncpy (file_specification, path, LT_FILENAME_MAX-6);
-  file_specification[LT_FILENAME_MAX-6] = LT_EOS_CHAR;
+  (void) strncpy(file_specification,path,LT_FILENAME_MAX-1);
   (void) strcat(file_specification,"\\");
   entry = LT_DLMALLOC (DIR,sizeof(DIR));
   if (entry != (DIR *) 0)
@@ -500,7 +492,6 @@ static struct dirent *readdir(entry)
   entry->firsttime = FALSE;
   (void) strncpy(entry->file_info.d_name,entry->Win32FindData.cFileName,
     LT_FILENAME_MAX-1);
-  entry->file_info.d_name[LT_FILENAME_MAX - 1] = LT_EOS_CHAR;
   entry->file_info.d_namlen = strlen(entry->file_info.d_name);
   return(&entry->file_info);
 }
@@ -625,7 +616,7 @@ argz_create_sep (str, delim, pargz, pargz_len)
   assert (pargz);
   assert (pargz_len);
 
-  /* Make a copy of STR, but replacing each occurrence of
+  /* Make a copy of STR, but replacing each occurence of
      DELIM with '\0'.  */
   argz_len = 1+ LT_STRLEN (str);
   if (argz_len)
@@ -1337,27 +1328,15 @@ sys_wll_open (loader_data, filename)
   if (!searchname)
     return 0;
 
+#if __CYGWIN__
   {
-    /* Silence dialog from LoadLibrary on some failures.
-       No way to get the error mode, but to set it,
-       so set it twice to preserve any previous flags. */
-    UINT errormode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(errormode | SEM_FAILCRITICALERRORS);
-
-#if defined(__CYGWIN__)
-    {
-      char wpath[MAX_PATH];
-      cygwin_conv_to_full_win32_path (searchname, wpath);
-      module = LoadLibrary (wpath);
-    }
-#else
-    module = LoadLibrary (searchname);
-#endif
-
-    /* Restore the error mode. */
-    SetErrorMode(errormode);
+    char wpath[MAX_PATH];
+    cygwin_conv_to_full_win32_path(searchname, wpath);
+    module = LoadLibrary(wpath);
   }
-
+#else
+  module = LoadLibrary (searchname);
+#endif
   LT_DLFREE (searchname);
 
   /* libltdl expects this function to fail if it is unable
@@ -2542,8 +2521,8 @@ find_module (handle, dir, libdir, dlname, old_name, installed)
 
       /* maybe it was moved to another directory */
       {
-	  if (dir && (tryall_dlopen_module (handle,
-				    (const char *) 0, dir, dlname) == 0))
+	  if (tryall_dlopen_module (handle,
+				    (const char *) 0, dir, dlname) == 0)
 	    return 0;
       }
     }
@@ -2870,6 +2849,12 @@ load_deplibs (handle, deplibs)
 	}
     }
 
+  /* restore the old search path */
+  LT_DLFREE (user_search_path);
+  user_search_path = save_search_path;
+
+  LT_DLMUTEX_UNLOCK ();
+
   if (!depcount)
     {
       errors = 0;
@@ -2956,13 +2941,6 @@ load_deplibs (handle, deplibs)
 
  cleanup:
   LT_DLFREE (names);
-  /* restore the old search path */
-  if (user_search_path) {
-    LT_DLFREE (user_search_path);
-    user_search_path = save_search_path;
-  }
-  LT_DLMUTEX_UNLOCK ();
-
 #endif
 
   return errors;
@@ -3001,9 +2979,6 @@ trim (dest, str)
   char *tmp;
 
   LT_DLFREE (*dest);
-
-  if (!end)
-    return 1;
 
   if (len > 3 && str[0] == '\'')
     {
@@ -3542,14 +3517,7 @@ lt_argz_insert (pargz, pargz_len, before, entry)
 {
   error_t error;
 
-  /* Prior to Sep 8, 2005, newlib had a bug where argz_insert(pargz,
-     pargz_len, NULL, entry) failed with EINVAL.  */
-  if (before)
-    error = argz_insert (pargz, pargz_len, before, entry);
-  else
-    error = argz_append (pargz, pargz_len, entry, 1 + LT_STRLEN (entry));
-
-  if (error)
+  if ((error = argz_insert (pargz, pargz_len, before, entry)))
     {
       switch (error)
 	{
