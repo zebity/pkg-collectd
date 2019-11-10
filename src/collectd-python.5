@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-PYTHON 5"
-.TH COLLECTD-PYTHON 5 "2017-06-06" "5.7.2" "collectd"
+.TH COLLECTD-PYTHON 5 "2017-11-18" "5.8.0" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -189,8 +189,10 @@ use multiple \fBModulePath\fR lines to add more than one directory.
 If a Python script throws an exception it will be logged by collectd with the
 name of the exception and the message. If you set this option to true it will
 also log the full stacktrace just like the default output of an interactive
-Python interpreter. This should probably be set to false most of the time but
-is very useful for development and debugging of new modules.
+Python interpreter. This does not apply to the CollectError exception, which
+will never log a stacktrace.
+This should probably be set to false most of the time but is very useful for
+development and debugging of new modules.
 .IP "\fBInteractive\fR \fIbool\fR" 4
 .IX Item "Interactive bool"
 This option will cause the module to launch an interactive Python interpreter
@@ -343,6 +345,19 @@ collectd you're done.
 .IX Header "CLASSES"
 The following complex types are used to pass values between the Python plugin
 and collectd:
+.SS "CollectdError"
+.IX Subsection "CollectdError"
+This is an exception. If any Python script raises this exception it will
+still be treated like an error by collectd but it will be logged as a
+warning instead of an error and it will never generate a stacktrace.
+.PP
+.Vb 1
+\& class CollectdError(Exception)
+.Ve
+.PP
+Basic exception for collectd Python scripts.
+Throwing this exception will not cause a stacktrace to be logged, even if
+LogTraces is enabled in the config.
 .SS "Signed"
 .IX Subsection "Signed"
 The Signed class is just a long. It has all its methods and behaves exactly
@@ -537,8 +552,8 @@ Method resolution order:
 .PD
 .PP
 Methods defined here:
-.IP "\fBdispatch\fR([type][, values][, plugin_instance][, type_instance][, plugin][, host][, time][, interval]) \-> None.  Dispatch a value list." 4
-.IX Item "dispatch([type][, values][, plugin_instance][, type_instance][, plugin][, host][, time][, interval]) -> None. Dispatch a value list."
+.IP "\fBdispatch\fR([type][, message][, plugin_instance][, type_instance][, plugin][, host][, time][, severity][, meta]) \-> None.  Dispatch a notification." 4
+.IX Item "dispatch([type][, message][, plugin_instance][, type_instance][, plugin][, host][, time][, severity][, meta]) -> None. Dispatch a notification."
 Dispatch this instance to the collectd process. The object has members for each
 of the possible arguments for this method. For a detailed explanation of these
 parameters see the member of the same same.
@@ -556,6 +571,15 @@ generated.
 .IX Item "severity"
 The severity of this notification. Assign or compare to \fI\s-1NOTIF_FAILURE\s0\fR,
 \&\fI\s-1NOTIF_WARNING\s0\fR or \fI\s-1NOTIF_OKAY\s0\fR.
+.IP "meta" 4
+.IX Item "meta"
+These are the meta data for the Notification object.
+It has to be a dictionary of numbers, strings or bools. All keys must be
+strings. \fIint\fR and \fIlong\fR objects will be dispatched as signed integers unless
+they are between 2**63 and 2**64\-1, which will result in a unsigned integer.
+One of these storage classes can be forced by using the classes
+\&\fBcollectd.Signed\fR and \fBcollectd.Unsigned\fR. A meta object received by a
+notification callback will always contain \fBSigned\fR or \fBUnsigned\fR objects.
 .SH "FUNCTIONS"
 .IX Header "FUNCTIONS"
 The following functions provide the C\-interface to Python-modules.
@@ -732,7 +756,7 @@ dispatched by the python plugin after upgrades.
 .IX Header "KNOWN BUGS"
 .IP "\(bu" 4
 Not all aspects of the collectd \s-1API\s0 are accessible from Python. This includes
-but is not limited to filters and data sets.
+but is not limited to filters.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),

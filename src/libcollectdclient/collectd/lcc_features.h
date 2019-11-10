@@ -38,12 +38,12 @@
 #define LCC_API_VERSION 0
 
 #define LCC_VERSION_MAJOR 5
-#define LCC_VERSION_MINOR 7
-#define LCC_VERSION_PATCH 2
+#define LCC_VERSION_MINOR 8
+#define LCC_VERSION_PATCH 0
 
 #define LCC_VERSION_EXTRA ""
 
-#define LCC_VERSION_STRING "5.7.2"
+#define LCC_VERSION_STRING "5.8.0"
 
 #define LCC_VERSION_ENCODE(major, minor, patch) \
 	((major) * 10000 + (minor) * 100 + (patch))
@@ -62,6 +62,3 @@ const char *lcc_version_extra (void);
 LCC_END_DECLS
 
 #endif /* ! LIBCOLLECTD_LCC_FEATURES_H */
-
-/* vim: set sw=4 ts=4 tw=78 noexpandtab : */
-
