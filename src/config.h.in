@@ -93,6 +93,9 @@
 /* Define to 1 if you have the <bsd/nlist.h> header file. */
 #undef HAVE_BSD_NLIST_H
 
+/* Define to 1 if you have cap_get_bound() (-lcap). */
+#undef HAVE_CAPABILITY
+
 /* Define if the clock_gettime(2) function is available. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -578,6 +581,9 @@
 /* Define to 1 if you have the <MicAccessApi.h> header file. */
 #undef HAVE_MICACCESSAPI_H
 
+/* Define to 1 if you have the <microhttpd.h> header file. */
+#undef HAVE_MICROHTTPD_H
+
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
 
@@ -779,6 +785,9 @@
 /* Define to 1 if the dns plugin is enabled. */
 #undef HAVE_PLUGIN_DNS
 
+/* Define to 1 if the dpdkstat plugin is enabled. */
+#undef HAVE_PLUGIN_DPDKSTAT
+
 /* Define to 1 if the drbd plugin is enabled. */
 #undef HAVE_PLUGIN_DRBD
 
@@ -814,6 +823,12 @@
 
 /* Define to 1 if the hddtemp plugin is enabled. */
 #undef HAVE_PLUGIN_HDDTEMP
+
+/* Define to 1 if the hugepages plugin is enabled. */
+#undef HAVE_PLUGIN_HUGEPAGES
+
+/* Define to 1 if the intel_rdt plugin is enabled. */
+#undef HAVE_PLUGIN_INTEL_RDT
 
 /* Define to 1 if the interface plugin is enabled. */
 #undef HAVE_PLUGIN_INTERFACE
@@ -1103,6 +1118,9 @@
 /* Define to 1 if the write_mongodb plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_MONGODB
 
+/* Define to 1 if the write_prometheus plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_PROMETHEUS
+
 /* Define to 1 if the write_redis plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_REDIS
 
@@ -1133,6 +1151,9 @@
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
 
+/* Define to 1 if you have the <pqos.h> header file. */
+#undef HAVE_PQOS_H
+
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
 
@@ -1147,6 +1168,15 @@
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
+
+/* Define to 1 if you have the <pthread_np.h> header file. */
+#undef HAVE_PTHREAD_NP_H
+
+/* pthread_setname_np() is available. */
+#undef HAVE_PTHREAD_SETNAME_NP
+
+/* pthread_set_name_np() is available. */
+#undef HAVE_PTHREAD_SET_NAME_NP
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
@@ -1177,6 +1207,9 @@
 
 /* Define to 1 if you have the <rrd.h> header file. */
 #undef HAVE_RRD_H
+
+/* Define to 1 if you have the <rte_config.h> header file. */
+#undef HAVE_RTE_CONFIG_H
 
 /* Define if struct rtnl_link_stats64 exists and is usable. */
 #undef HAVE_RTNL_LINK_STATS64

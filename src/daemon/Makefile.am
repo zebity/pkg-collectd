@@ -11,6 +11,9 @@ AM_CPPFLAGS += -DPKGDATADIR='"${pkgdatadir}"'
 
 # Link to these libraries..
 COMMON_LIBS = $(PTHREAD_LIBS)
+if BUILD_WITH_CAPABILITY
+COMMON_LIBS += -lcap
+endif
 if BUILD_WITH_LIBRT
 COMMON_LIBS += -lrt
 endif
@@ -58,10 +61,7 @@ collectd_SOURCES = collectd.c collectd.h \
 		   utils_ignorelist.c utils_ignorelist.h \
 		   utils_llist.c utils_llist.h \
 		   utils_random.c utils_random.h \
-		   utils_tail_match.c utils_tail_match.h \
-		   utils_match.c utils_match.h \
 		   utils_subst.c utils_subst.h \
-		   utils_tail.c utils_tail.h \
 		   utils_time.c utils_time.h \
 		   types_list.c types_list.h \
 		   utils_threshold.c utils_threshold.h
