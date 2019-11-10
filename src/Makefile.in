@@ -295,13 +295,16 @@ bin_PROGRAMS = collectd-nagios$(EXEEXT) collectdctl$(EXEEXT) \
 @BUILD_PLUGIN_XMMS_TRUE@am__append_209 = xmms.la
 @BUILD_PLUGIN_ZFS_ARC_TRUE@am__append_210 = zfs_arc.la
 @BUILD_PLUGIN_ZOOKEEPER_TRUE@am__append_211 = zookeeper.la
-@HAVE_PROTOC_C_TRUE@am__append_212 = pinba.pb-c.c pinba.pb-c.h \
-@HAVE_PROTOC_C_TRUE@	riemann.pb-c.c riemann.pb-c.h
-@HAVE_PROTOC_C_TRUE@am__append_213 = pinba.pb-c.c pinba.pb-c.h \
-@HAVE_PROTOC_C_TRUE@	riemann.pb-c.c riemann.pb-c.h
+@BUILD_PLUGIN_PINBA_TRUE@am__append_212 = pinba.pb-c.c pinba.pb-c.h
+@BUILD_PLUGIN_PINBA_TRUE@am__append_213 = pinba.pb-c.c pinba.pb-c.h
+@BUILD_PLUGIN_WRITE_RIEMANN_TRUE@am__append_214 = riemann.pb-c.c riemann.pb-c.h
+@BUILD_PLUGIN_WRITE_RIEMANN_TRUE@am__append_215 = riemann.pb-c.c riemann.pb-c.h
 check_PROGRAMS = test_utils_mount$(EXEEXT) \
-	test_utils_vl_lookup$(EXEEXT)
-TESTS = test_utils_mount$(EXEEXT) test_utils_vl_lookup$(EXEEXT)
+	test_utils_vl_lookup$(EXEEXT) $(am__EXEEXT_1)
+TESTS = test_utils_mount$(EXEEXT) test_utils_vl_lookup$(EXEEXT) \
+	$(am__EXEEXT_1)
+@BUILD_PLUGIN_CEPH_TRUE@am__append_216 = test_plugin_ceph
+@BUILD_PLUGIN_CEPH_TRUE@am__append_217 = test_plugin_ceph
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/config.h.in $(srcdir)/collectd.conf.in \
@@ -366,11 +369,12 @@ aggregation_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 am__DEPENDENCIES_1 =
 @BUILD_PLUGIN_AMQP_TRUE@amqp_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__amqp_la_SOURCES_DIST = amqp.c utils_cmd_putval.c \
-	utils_cmd_putval.h utils_format_graphite.c \
-	utils_format_graphite.h utils_format_json.c \
-	utils_format_json.h
+	utils_cmd_putval.h utils_parse_option.c utils_parse_option.h \
+	utils_format_graphite.c utils_format_graphite.h \
+	utils_format_json.c utils_format_json.h
 @BUILD_PLUGIN_AMQP_TRUE@am_amqp_la_OBJECTS = amqp_la-amqp.lo \
 @BUILD_PLUGIN_AMQP_TRUE@	amqp_la-utils_cmd_putval.lo \
+@BUILD_PLUGIN_AMQP_TRUE@	amqp_la-utils_parse_option.lo \
 @BUILD_PLUGIN_AMQP_TRUE@	amqp_la-utils_format_graphite.lo \
 @BUILD_PLUGIN_AMQP_TRUE@	amqp_la-utils_format_json.lo
 amqp_la_OBJECTS = $(am_amqp_la_OBJECTS)
@@ -463,10 +467,8 @@ ceph_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(ceph_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_CEPH_TRUE@am_ceph_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_CGROUPS_TRUE@cgroups_la_DEPENDENCIES = libmount.la
-am__cgroups_la_SOURCES_DIST = cgroups.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_CGROUPS_TRUE@am_cgroups_la_OBJECTS = cgroups.lo \
-@BUILD_PLUGIN_CGROUPS_TRUE@	utils_ignorelist.lo
+am__cgroups_la_SOURCES_DIST = cgroups.c
+@BUILD_PLUGIN_CGROUPS_TRUE@am_cgroups_la_OBJECTS = cgroups.lo
 cgroups_la_OBJECTS = $(am_cgroups_la_OBJECTS)
 cgroups_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -564,8 +566,8 @@ dbi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(dbi_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_DBI_TRUE@am_dbi_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_DF_TRUE@df_la_DEPENDENCIES = libmount.la
-am__df_la_SOURCES_DIST = df.c utils_ignorelist.c utils_ignorelist.h
-@BUILD_PLUGIN_DF_TRUE@am_df_la_OBJECTS = df.lo utils_ignorelist.lo
+am__df_la_SOURCES_DIST = df.c
+@BUILD_PLUGIN_DF_TRUE@am_df_la_OBJECTS = df.lo
 df_la_OBJECTS = $(am_df_la_OBJECTS)
 df_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -577,10 +579,8 @@ df_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @BUILD_PLUGIN_DISK_TRUE@	$(am__DEPENDENCIES_6) \
 @BUILD_PLUGIN_DISK_TRUE@	$(am__DEPENDENCIES_1) \
 @BUILD_PLUGIN_DISK_TRUE@	$(am__DEPENDENCIES_1)
-am__disk_la_SOURCES_DIST = disk.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_DISK_TRUE@am_disk_la_OBJECTS = disk_la-disk.lo \
-@BUILD_PLUGIN_DISK_TRUE@	disk_la-utils_ignorelist.lo
+am__disk_la_SOURCES_DIST = disk.c
+@BUILD_PLUGIN_DISK_TRUE@am_disk_la_OBJECTS = disk_la-disk.lo
 disk_la_OBJECTS = $(am_disk_la_OBJECTS)
 disk_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(disk_la_CFLAGS) \
@@ -688,11 +688,9 @@ hddtemp_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @BUILD_PLUGIN_INTERFACE_TRUE@	$(am__DEPENDENCIES_1) \
 @BUILD_PLUGIN_INTERFACE_TRUE@	$(am__DEPENDENCIES_1) \
 @BUILD_PLUGIN_INTERFACE_TRUE@	$(am__DEPENDENCIES_1)
-am__interface_la_SOURCES_DIST = interface.c utils_ignorelist.c \
-	utils_ignorelist.h
+am__interface_la_SOURCES_DIST = interface.c
 @BUILD_PLUGIN_INTERFACE_TRUE@am_interface_la_OBJECTS =  \
-@BUILD_PLUGIN_INTERFACE_TRUE@	interface_la-interface.lo \
-@BUILD_PLUGIN_INTERFACE_TRUE@	interface_la-utils_ignorelist.lo
+@BUILD_PLUGIN_INTERFACE_TRUE@	interface_la-interface.lo
 interface_la_OBJECTS = $(am_interface_la_OBJECTS)
 interface_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(interface_la_CFLAGS) \
@@ -708,10 +706,8 @@ ipc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(ipc_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_IPC_TRUE@am_ipc_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_IPMI_TRUE@ipmi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__ipmi_la_SOURCES_DIST = ipmi.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_IPMI_TRUE@am_ipmi_la_OBJECTS = ipmi_la-ipmi.lo \
-@BUILD_PLUGIN_IPMI_TRUE@	ipmi_la-utils_ignorelist.lo
+am__ipmi_la_SOURCES_DIST = ipmi.c
+@BUILD_PLUGIN_IPMI_TRUE@am_ipmi_la_OBJECTS = ipmi_la-ipmi.lo
 ipmi_la_OBJECTS = $(am_ipmi_la_OBJECTS)
 ipmi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(ipmi_la_CFLAGS) \
@@ -736,8 +732,8 @@ ipvs_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(ipvs_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_IPVS_TRUE@am_ipvs_la_rpath = -rpath $(pkglibdir)
 irq_la_LIBADD =
-am__irq_la_SOURCES_DIST = irq.c utils_ignorelist.c utils_ignorelist.h
-@BUILD_PLUGIN_IRQ_TRUE@am_irq_la_OBJECTS = irq.lo utils_ignorelist.lo
+am__irq_la_SOURCES_DIST = irq.c
+@BUILD_PLUGIN_IRQ_TRUE@am_irq_la_OBJECTS = irq.lo
 irq_la_OBJECTS = $(am_irq_la_OBJECTS)
 irq_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -803,10 +799,8 @@ lvm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(lvm_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_LVM_TRUE@am_lvm_la_rpath = -rpath $(pkglibdir)
 madwifi_la_LIBADD =
-am__madwifi_la_SOURCES_DIST = madwifi.c madwifi.h utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_MADWIFI_TRUE@am_madwifi_la_OBJECTS = madwifi.lo \
-@BUILD_PLUGIN_MADWIFI_TRUE@	utils_ignorelist.lo
+am__madwifi_la_SOURCES_DIST = madwifi.c madwifi.h
+@BUILD_PLUGIN_MADWIFI_TRUE@am_madwifi_la_OBJECTS = madwifi.lo
 madwifi_la_OBJECTS = $(am_madwifi_la_OBJECTS)
 madwifi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -877,8 +871,8 @@ mbmon_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(mbmon_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_MBMON_TRUE@am_mbmon_la_rpath = -rpath $(pkglibdir)
 md_la_LIBADD =
-am__md_la_SOURCES_DIST = md.c utils_ignorelist.c utils_ignorelist.h
-@BUILD_PLUGIN_MD_TRUE@am_md_la_OBJECTS = md.lo utils_ignorelist.lo
+am__md_la_SOURCES_DIST = md.c
+@BUILD_PLUGIN_MD_TRUE@am_md_la_OBJECTS = md.lo
 md_la_OBJECTS = $(am_md_la_OBJECTS)
 md_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -919,9 +913,8 @@ memory_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(memory_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_MEMORY_TRUE@am_memory_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_MIC_TRUE@mic_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__mic_la_SOURCES_DIST = mic.c utils_ignorelist.c utils_ignorelist.h
-@BUILD_PLUGIN_MIC_TRUE@am_mic_la_OBJECTS = mic_la-mic.lo \
-@BUILD_PLUGIN_MIC_TRUE@	mic_la-utils_ignorelist.lo
+am__mic_la_SOURCES_DIST = mic.c
+@BUILD_PLUGIN_MIC_TRUE@am_mic_la_OBJECTS = mic_la-mic.lo
 mic_la_OBJECTS = $(am_mic_la_OBJECTS)
 mic_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mic_la_CFLAGS) $(CFLAGS) \
@@ -958,10 +951,8 @@ mysql_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @BUILD_PLUGIN_MYSQL_TRUE@am_mysql_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_NETAPP_TRUE@netapp_la_DEPENDENCIES =  \
 @BUILD_PLUGIN_NETAPP_TRUE@	$(am__DEPENDENCIES_1)
-am__netapp_la_SOURCES_DIST = netapp.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_NETAPP_TRUE@am_netapp_la_OBJECTS = netapp_la-netapp.lo \
-@BUILD_PLUGIN_NETAPP_TRUE@	netapp_la-utils_ignorelist.lo
+am__netapp_la_SOURCES_DIST = netapp.c
+@BUILD_PLUGIN_NETAPP_TRUE@am_netapp_la_OBJECTS = netapp_la-netapp.lo
 netapp_la_OBJECTS = $(am_netapp_la_OBJECTS)
 netapp_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -1066,11 +1057,9 @@ olsrd_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @BUILD_PLUGIN_OLSRD_TRUE@am_olsrd_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_DEPENDENCIES =  \
 @BUILD_PLUGIN_ONEWIRE_TRUE@	$(am__DEPENDENCIES_1)
-am__onewire_la_SOURCES_DIST = onewire.c utils_ignorelist.c \
-	utils_ignorelist.h
+am__onewire_la_SOURCES_DIST = onewire.c
 @BUILD_PLUGIN_ONEWIRE_TRUE@am_onewire_la_OBJECTS =  \
-@BUILD_PLUGIN_ONEWIRE_TRUE@	onewire_la-onewire.lo \
-@BUILD_PLUGIN_ONEWIRE_TRUE@	onewire_la-utils_ignorelist.lo
+@BUILD_PLUGIN_ONEWIRE_TRUE@	onewire_la-onewire.lo
 onewire_la_OBJECTS = $(am_onewire_la_OBJECTS)
 onewire_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(onewire_la_CFLAGS) \
@@ -1169,10 +1158,8 @@ processes_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @BUILD_PLUGIN_PROCESSES_TRUE@am_processes_la_rpath = -rpath \
 @BUILD_PLUGIN_PROCESSES_TRUE@	$(pkglibdir)
 protocols_la_LIBADD =
-am__protocols_la_SOURCES_DIST = protocols.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_PROTOCOLS_TRUE@am_protocols_la_OBJECTS = protocols.lo \
-@BUILD_PLUGIN_PROTOCOLS_TRUE@	utils_ignorelist.lo
+am__protocols_la_SOURCES_DIST = protocols.c
+@BUILD_PLUGIN_PROTOCOLS_TRUE@am_protocols_la_OBJECTS = protocols.lo
 protocols_la_OBJECTS = $(am_protocols_la_OBJECTS)
 protocols_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -1233,11 +1220,9 @@ rrdtool_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(rrdtool_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_RRDTOOL_TRUE@am_rrdtool_la_rpath = -rpath $(pkglibdir)
 sensors_la_DEPENDENCIES =
-am__sensors_la_SOURCES_DIST = sensors.c utils_ignorelist.c \
-	utils_ignorelist.h
+am__sensors_la_SOURCES_DIST = sensors.c
 @BUILD_PLUGIN_SENSORS_TRUE@am_sensors_la_OBJECTS =  \
-@BUILD_PLUGIN_SENSORS_TRUE@	sensors_la-sensors.lo \
-@BUILD_PLUGIN_SENSORS_TRUE@	sensors_la-utils_ignorelist.lo
+@BUILD_PLUGIN_SENSORS_TRUE@	sensors_la-sensors.lo
 sensors_la_OBJECTS = $(am_sensors_la_OBJECTS)
 sensors_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(sensors_la_CFLAGS) \
@@ -1260,10 +1245,8 @@ sigrok_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(sigrok_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_SIGROK_TRUE@am_sigrok_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@smart_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__smart_la_SOURCES_DIST = smart.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@am_smart_la_OBJECTS = smart_la-smart.lo \
-@BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@	smart_la-utils_ignorelist.lo
+am__smart_la_SOURCES_DIST = smart.c
+@BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@am_smart_la_OBJECTS = smart_la-smart.lo
 smart_la_OBJECTS = $(am_smart_la_OBJECTS)
 smart_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(smart_la_CFLAGS) \
@@ -1425,10 +1408,8 @@ ted_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(ted_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_TED_TRUE@am_ted_la_rpath = -rpath $(pkglibdir)
 thermal_la_LIBADD =
-am__thermal_la_SOURCES_DIST = thermal.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_THERMAL_TRUE@am_thermal_la_OBJECTS = thermal.lo \
-@BUILD_PLUGIN_THERMAL_TRUE@	utils_ignorelist.lo
+am__thermal_la_SOURCES_DIST = thermal.c
+@BUILD_PLUGIN_THERMAL_TRUE@am_thermal_la_OBJECTS = thermal.lo
 thermal_la_OBJECTS = $(am_thermal_la_OBJECTS)
 thermal_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -1525,10 +1506,8 @@ varnish_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @BUILD_PLUGIN_VARNISH_TRUE@am_varnish_la_rpath = -rpath $(pkglibdir)
 @BUILD_PLUGIN_VIRT_TRUE@virt_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @BUILD_PLUGIN_VIRT_TRUE@	$(am__DEPENDENCIES_1)
-am__virt_la_SOURCES_DIST = virt.c utils_ignorelist.c \
-	utils_ignorelist.h
-@BUILD_PLUGIN_VIRT_TRUE@am_virt_la_OBJECTS = virt_la-virt.lo \
-@BUILD_PLUGIN_VIRT_TRUE@	virt_la-utils_ignorelist.lo
+am__virt_la_SOURCES_DIST = virt.c
+@BUILD_PLUGIN_VIRT_TRUE@am_virt_la_OBJECTS = virt_la-virt.lo
 virt_la_OBJECTS = $(am_virt_la_OBJECTS)
 virt_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(virt_la_CFLAGS) \
@@ -1701,6 +1680,7 @@ zookeeper_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(zookeeper_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_PLUGIN_ZOOKEEPER_TRUE@am_zookeeper_la_rpath = -rpath \
 @BUILD_PLUGIN_ZOOKEEPER_TRUE@	$(pkglibdir)
+@BUILD_PLUGIN_CEPH_TRUE@am__EXEEXT_1 = test_plugin_ceph$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS) $(sbin_PROGRAMS)
 am_collectd_nagios_OBJECTS =  \
 	collectd_nagios-collectd-nagios.$(OBJEXT)
@@ -1712,6 +1692,18 @@ collectdctl_OBJECTS = $(am_collectdctl_OBJECTS)
 am_collectdmon_OBJECTS = collectdmon-collectdmon.$(OBJEXT)
 collectdmon_OBJECTS = $(am_collectdmon_OBJECTS)
 collectdmon_LDADD = $(LDADD)
+am__test_plugin_ceph_SOURCES_DIST = ceph_test.c
+@BUILD_PLUGIN_CEPH_TRUE@am_test_plugin_ceph_OBJECTS =  \
+@BUILD_PLUGIN_CEPH_TRUE@	test_plugin_ceph-ceph_test.$(OBJEXT)
+test_plugin_ceph_OBJECTS = $(am_test_plugin_ceph_OBJECTS)
+@BUILD_PLUGIN_CEPH_TRUE@test_plugin_ceph_DEPENDENCIES =  \
+@BUILD_PLUGIN_CEPH_TRUE@	daemon/libcommon.la \
+@BUILD_PLUGIN_CEPH_TRUE@	daemon/libplugin_mock.la \
+@BUILD_PLUGIN_CEPH_TRUE@	$(am__DEPENDENCIES_1)
+test_plugin_ceph_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(test_plugin_ceph_LDFLAGS) $(LDFLAGS) \
+	-o $@
 am_test_utils_mount_OBJECTS = utils_mount_test.$(OBJEXT)
 test_utils_mount_OBJECTS = $(am_test_utils_mount_OBJECTS)
 test_utils_mount_DEPENDENCIES = libmount.la daemon/libplugin_mock.la
@@ -1814,8 +1806,8 @@ SOURCES = $(aggregation_la_SOURCES) $(amqp_la_SOURCES) \
 	$(xmms_la_SOURCES) $(zfs_arc_la_SOURCES) \
 	$(zookeeper_la_SOURCES) $(collectd_nagios_SOURCES) \
 	$(collectd_tg_SOURCES) $(collectdctl_SOURCES) \
-	$(collectdmon_SOURCES) $(test_utils_mount_SOURCES) \
-	$(test_utils_vl_lookup_SOURCES)
+	$(collectdmon_SOURCES) $(test_plugin_ceph_SOURCES) \
+	$(test_utils_mount_SOURCES) $(test_utils_vl_lookup_SOURCES)
 DIST_SOURCES = $(am__aggregation_la_SOURCES_DIST) \
 	$(am__amqp_la_SOURCES_DIST) $(am__apache_la_SOURCES_DIST) \
 	$(am__apcups_la_SOURCES_DIST) \
@@ -1908,8 +1900,8 @@ DIST_SOURCES = $(am__aggregation_la_SOURCES_DIST) \
 	$(am__zfs_arc_la_SOURCES_DIST) \
 	$(am__zookeeper_la_SOURCES_DIST) $(collectd_nagios_SOURCES) \
 	$(collectd_tg_SOURCES) $(collectdctl_SOURCES) \
-	$(collectdmon_SOURCES) $(test_utils_mount_SOURCES) \
-	$(test_utils_vl_lookup_SOURCES)
+	$(collectdmon_SOURCES) $(am__test_plugin_ceph_SOURCES_DIST) \
+	$(test_utils_mount_SOURCES) $(test_utils_vl_lookup_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -2506,8 +2498,8 @@ pkglib_LTLIBRARIES = $(am__append_11) $(am__append_12) \
 	$(am__append_203) $(am__append_204) $(am__append_205) \
 	$(am__append_206) $(am__append_207) $(am__append_208) \
 	$(am__append_209) $(am__append_210) $(am__append_211)
-BUILT_SOURCES = $(dist_man_MANS) $(am__append_213)
-CLEANFILES = $(am__append_212)
+BUILT_SOURCES = $(dist_man_MANS) $(am__append_213) $(am__append_215)
+CLEANFILES = $(am__append_212) $(am__append_214)
 @BUILD_PLUGIN_AGGREGATION_TRUE@aggregation_la_SOURCES = aggregation.c \
 @BUILD_PLUGIN_AGGREGATION_TRUE@                         utils_vl_lookup.c utils_vl_lookup.h
 
@@ -2515,6 +2507,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_AGGREGATION_TRUE@aggregation_la_LIBADD = -lm
 @BUILD_PLUGIN_AMQP_TRUE@amqp_la_SOURCES = amqp.c \
 @BUILD_PLUGIN_AMQP_TRUE@		  utils_cmd_putval.c utils_cmd_putval.h \
+@BUILD_PLUGIN_AMQP_TRUE@  	          utils_parse_option.c utils_parse_option.h \
 @BUILD_PLUGIN_AMQP_TRUE@		  utils_format_graphite.c utils_format_graphite.h \
 @BUILD_PLUGIN_AMQP_TRUE@		  utils_format_json.c utils_format_json.h
 
@@ -2561,9 +2554,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_CEPH_TRUE@ceph_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBYAJL_LDFLAGS)
 @BUILD_PLUGIN_CEPH_TRUE@ceph_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBYAJL_CPPFLAGS)
 @BUILD_PLUGIN_CEPH_TRUE@ceph_la_LIBADD = $(BUILD_WITH_LIBYAJL_LIBS)
-@BUILD_PLUGIN_CGROUPS_TRUE@cgroups_la_SOURCES = cgroups.c \
-@BUILD_PLUGIN_CGROUPS_TRUE@		     utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_CGROUPS_TRUE@cgroups_la_SOURCES = cgroups.c
 @BUILD_PLUGIN_CGROUPS_TRUE@cgroups_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_CGROUPS_TRUE@cgroups_la_LIBADD = libmount.la
 @BUILD_PLUGIN_CONNTRACK_TRUE@conntrack_la_SOURCES = conntrack.c
@@ -2606,14 +2597,10 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_DBI_TRUE@dbi_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBDBI_CPPFLAGS)
 @BUILD_PLUGIN_DBI_TRUE@dbi_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBDBI_LDFLAGS)
 @BUILD_PLUGIN_DBI_TRUE@dbi_la_LIBADD = $(BUILD_WITH_LIBDBI_LIBS)
-@BUILD_PLUGIN_DF_TRUE@df_la_SOURCES = df.c \
-@BUILD_PLUGIN_DF_TRUE@		utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_DF_TRUE@df_la_SOURCES = df.c
 @BUILD_PLUGIN_DF_TRUE@df_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_DF_TRUE@df_la_LIBADD = libmount.la
-@BUILD_PLUGIN_DISK_TRUE@disk_la_SOURCES = disk.c \
-@BUILD_PLUGIN_DISK_TRUE@		  utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_DISK_TRUE@disk_la_SOURCES = disk.c
 @BUILD_PLUGIN_DISK_TRUE@disk_la_CFLAGS = $(AM_CFLAGS) $(am__append_51)
 @BUILD_PLUGIN_DISK_TRUE@disk_la_LDFLAGS = $(PLUGIN_LDFLAGS) \
 @BUILD_PLUGIN_DISK_TRUE@	$(am__append_50)
@@ -2651,9 +2638,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_SOURCES = hddtemp.c
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_LIBADD = $(am__append_65)
-@BUILD_PLUGIN_INTERFACE_TRUE@interface_la_SOURCES = interface.c \
-@BUILD_PLUGIN_INTERFACE_TRUE@		       utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_INTERFACE_TRUE@interface_la_SOURCES = interface.c
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_CFLAGS = $(AM_CFLAGS) \
 @BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_67)
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_LDFLAGS = $(PLUGIN_LDFLAGS)
@@ -2667,18 +2652,14 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBIPTC_CPPFLAGS)
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_LIBADD = $(BUILD_WITH_LIBIPTC_LDFLAGS)
-@BUILD_PLUGIN_IPMI_TRUE@ipmi_la_SOURCES = ipmi.c \
-@BUILD_PLUGIN_IPMI_TRUE@		  utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_IPMI_TRUE@ipmi_la_SOURCES = ipmi.c
 @BUILD_PLUGIN_IPMI_TRUE@ipmi_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_OPENIPMI_CFLAGS)
 @BUILD_PLUGIN_IPMI_TRUE@ipmi_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_IPMI_TRUE@ipmi_la_LIBADD = $(BUILD_WITH_OPENIPMI_LIBS)
 @BUILD_PLUGIN_IPVS_TRUE@ipvs_la_SOURCES = ipvs.c
 @BUILD_PLUGIN_IPVS_TRUE@@IP_VS_H_NEEDS_KERNEL_CFLAGS_TRUE@ipvs_la_CFLAGS = $(AM_CFLAGS) $(KERNEL_CFLAGS)
 @BUILD_PLUGIN_IPVS_TRUE@ipvs_la_LDFLAGS = $(PLUGIN_LDFLAGS)
-@BUILD_PLUGIN_IRQ_TRUE@irq_la_SOURCES = irq.c \
-@BUILD_PLUGIN_IRQ_TRUE@		 utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_IRQ_TRUE@irq_la_SOURCES = irq.c
 @BUILD_PLUGIN_IRQ_TRUE@irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_JAVA_TRUE@java_la_SOURCES = java.c
 @BUILD_PLUGIN_JAVA_TRUE@java_la_CPPFLAGS = $(AM_CPPFLAGS) $(JAVA_CPPFLAGS)
@@ -2703,9 +2684,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_LVM_TRUE@lvm_la_SOURCES = lvm.c
 @BUILD_PLUGIN_LVM_TRUE@lvm_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_LVM_TRUE@lvm_la_LIBADD = $(BUILD_WITH_LIBLVM2APP_LIBS)
-@BUILD_PLUGIN_MADWIFI_TRUE@madwifi_la_SOURCES = madwifi.c madwifi.h \
-@BUILD_PLUGIN_MADWIFI_TRUE@		     utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_MADWIFI_TRUE@madwifi_la_SOURCES = madwifi.c madwifi.h
 @BUILD_PLUGIN_MADWIFI_TRUE@madwifi_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@match_empty_counter_la_SOURCES = match_empty_counter.c
 @BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@match_empty_counter_la_LDFLAGS = $(PLUGIN_LDFLAGS)
@@ -2720,9 +2699,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_MBMON_TRUE@mbmon_la_SOURCES = mbmon.c
 @BUILD_PLUGIN_MBMON_TRUE@mbmon_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_MBMON_TRUE@mbmon_la_LIBADD = $(am__append_93)
-@BUILD_PLUGIN_MD_TRUE@md_la_SOURCES = md.c \
-@BUILD_PLUGIN_MD_TRUE@		utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_MD_TRUE@md_la_SOURCES = md.c
 @BUILD_PLUGIN_MD_TRUE@md_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_MEMCACHEC_TRUE@memcachec_la_SOURCES = memcachec.c
 @BUILD_PLUGIN_MEMCACHEC_TRUE@memcachec_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBMEMCACHED_LDFLAGS)
@@ -2738,9 +2715,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_LIBADD = $(am__append_99) \
 @BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_100) $(am__append_102) \
 @BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_103)
-@BUILD_PLUGIN_MIC_TRUE@mic_la_SOURCES = mic.c \
-@BUILD_PLUGIN_MIC_TRUE@		 utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_MIC_TRUE@mic_la_SOURCES = mic.c
 @BUILD_PLUGIN_MIC_TRUE@mic_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_MIC_LIBPATH)
 @BUILD_PLUGIN_MIC_TRUE@mic_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_MIC_CPPFLAGS)
 @BUILD_PLUGIN_MIC_TRUE@mic_la_LIBADD = $(BUILD_WITH_MIC_LDADD)
@@ -2755,9 +2730,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_CFLAGS = $(AM_CFLAGS) \
 @BUILD_PLUGIN_MYSQL_TRUE@	$(am__append_108)
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_LIBADD = $(am__append_109)
-@BUILD_PLUGIN_NETAPP_TRUE@netapp_la_SOURCES = netapp.c \
-@BUILD_PLUGIN_NETAPP_TRUE@		    utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_NETAPP_TRUE@netapp_la_SOURCES = netapp.c
 @BUILD_PLUGIN_NETAPP_TRUE@netapp_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBNETAPP_CPPFLAGS)
 @BUILD_PLUGIN_NETAPP_TRUE@netapp_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(LIBNETAPP_LDFLAGS)
 @BUILD_PLUGIN_NETAPP_TRUE@netapp_la_LIBADD = $(LIBNETAPP_LIBS)
@@ -2802,9 +2775,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_OLSRD_TRUE@olsrd_la_SOURCES = olsrd.c
 @BUILD_PLUGIN_OLSRD_TRUE@olsrd_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_OLSRD_TRUE@olsrd_la_LIBADD = $(am__append_129)
-@BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_SOURCES = onewire.c \
-@BUILD_PLUGIN_ONEWIRE_TRUE@		     utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_SOURCES = onewire.c
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_CFLAGS = $(AM_CFLAGS)
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBOWCAPI_CPPFLAGS)
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_LIBADD = $(BUILD_WITH_LIBOWCAPI_LIBS)
@@ -2864,9 +2835,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_PROCESSES_TRUE@processes_la_SOURCES = processes.c
 @BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LIBADD = $(am__append_144)
-@BUILD_PLUGIN_PROTOCOLS_TRUE@protocols_la_SOURCES = protocols.c \
-@BUILD_PLUGIN_PROTOCOLS_TRUE@		       utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_PROTOCOLS_TRUE@protocols_la_SOURCES = protocols.c
 @BUILD_PLUGIN_PROTOCOLS_TRUE@protocols_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_REDIS_TRUE@redis_la_SOURCES = redis.c
 @BUILD_PLUGIN_REDIS_TRUE@redis_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBHIREDIS_LDFLAGS)
@@ -2884,9 +2853,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBRRD_CFLAGS)
 @BUILD_PLUGIN_RRDTOOL_TRUE@rrdtool_la_LIBADD = $(BUILD_WITH_LIBRRD_LDFLAGS)
-@BUILD_PLUGIN_SENSORS_TRUE@sensors_la_SOURCES = sensors.c \
-@BUILD_PLUGIN_SENSORS_TRUE@		     utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_SENSORS_TRUE@sensors_la_SOURCES = sensors.c
 @BUILD_PLUGIN_SENSORS_TRUE@sensors_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBSENSORS_CFLAGS)
 @BUILD_PLUGIN_SENSORS_TRUE@sensors_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBSENSORS_LDFLAGS)
 @BUILD_PLUGIN_SENSORS_TRUE@sensors_la_LIBADD = -lsensors
@@ -2896,9 +2863,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_SIGROK_TRUE@sigrok_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBSIGROK_CFLAGS)
 @BUILD_PLUGIN_SIGROK_TRUE@sigrok_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBSIGROK_LDFLAGS)
 @BUILD_PLUGIN_SIGROK_TRUE@sigrok_la_LIBADD = -lsigrok
-@BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@smart_la_SOURCES = smart.c \
-@BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@		   utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@smart_la_SOURCES = smart.c
 @BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@smart_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBATASMART_CPPFLAGS)
 @BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@smart_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBATASMART_LDFLAGS)
 @BUILD_PLUGIN_SMART_TRUE@@BUILD_WITH_LIBUDEV_TRUE@smart_la_LIBADD = $(BUILD_WITH_LIBATASMART_LIBS) -ludev
@@ -2912,7 +2877,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_STATSD_TRUE@                    utils_latency.h utils_latency.c
 
 @BUILD_PLUGIN_STATSD_TRUE@statsd_la_LDFLAGS = $(PLUGIN_LDFLAGS)
-@BUILD_PLUGIN_STATSD_TRUE@statsd_la_LIBADD = -lpthread
+@BUILD_PLUGIN_STATSD_TRUE@statsd_la_LIBADD = -lpthread -lm
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_SOURCES = swap.c
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_CFLAGS = $(AM_CFLAGS) \
 @BUILD_PLUGIN_SWAP_TRUE@	$(am__append_163)
@@ -2948,9 +2913,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_TEAMSPEAK2_TRUE@teamspeak2_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_TED_TRUE@ted_la_SOURCES = ted.c
 @BUILD_PLUGIN_TED_TRUE@ted_la_LDFLAGS = $(PLUGIN_LDFLAGS)
-@BUILD_PLUGIN_THERMAL_TRUE@thermal_la_SOURCES = thermal.c \
-@BUILD_PLUGIN_THERMAL_TRUE@		     utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_THERMAL_TRUE@thermal_la_SOURCES = thermal.c
 @BUILD_PLUGIN_THERMAL_TRUE@thermal_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_THRESHOLD_TRUE@threshold_la_SOURCES = threshold.c
 @BUILD_PLUGIN_THRESHOLD_TRUE@threshold_la_LDFLAGS = $(PLUGIN_LDFLAGS)
@@ -2990,9 +2953,7 @@ CLEANFILES = $(am__append_212)
 @BUILD_PLUGIN_VARNISH_TRUE@varnish_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 @BUILD_PLUGIN_VARNISH_TRUE@varnish_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBVARNISH_CFLAGS)
 @BUILD_PLUGIN_VARNISH_TRUE@varnish_la_LIBADD = $(BUILD_WITH_LIBVARNISH_LIBS)
-@BUILD_PLUGIN_VIRT_TRUE@virt_la_SOURCES = virt.c \
-@BUILD_PLUGIN_VIRT_TRUE@		  utils_ignorelist.c utils_ignorelist.h
-
+@BUILD_PLUGIN_VIRT_TRUE@virt_la_SOURCES = virt.c
 @BUILD_PLUGIN_VIRT_TRUE@virt_la_CFLAGS = $(AM_CFLAGS) \
 @BUILD_PLUGIN_VIRT_TRUE@		$(BUILD_WITH_LIBVIRT_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
 
@@ -3087,10 +3048,18 @@ EXTRA_DIST = types.db collectd.conf.pod collectd-email.pod \
 	collectd-python.pod collectd.pod collectd-snmp.pod \
 	collectd-tg.pod collectd-threshold.pod collectd-unixsock.pod \
 	postgresql_default.conf types.db.pod pinba.proto riemann.proto
+AM_V_PROTOC_C = $(am__v_PROTOC_C_@AM_V@)
+am__v_PROTOC_C_ = $(am__v_PROTOC_C_@AM_DEFAULT_V@)
+am__v_PROTOC_C_0 = @echo "  PROTOC-C    " $@;
+am__v_PROTOC_C_1 = 
 test_utils_mount_SOURCES = utils_mount_test.c testing.h
 test_utils_mount_LDADD = libmount.la daemon/libplugin_mock.la
 test_utils_vl_lookup_SOURCES = utils_vl_lookup_test.c testing.h
 test_utils_vl_lookup_LDADD = liblookup.la daemon/libplugin_mock.la
+@BUILD_PLUGIN_CEPH_TRUE@test_plugin_ceph_SOURCES = ceph_test.c
+@BUILD_PLUGIN_CEPH_TRUE@test_plugin_ceph_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBYAJL_CPPFLAGS)
+@BUILD_PLUGIN_CEPH_TRUE@test_plugin_ceph_LDFLAGS = $(PLUGIN_LDFLAGS) $(BUILD_WITH_LIBYAJL_LDFLAGS)
+@BUILD_PLUGIN_CEPH_TRUE@test_plugin_ceph_LDADD = daemon/libcommon.la daemon/libplugin_mock.la $(BUILD_WITH_LIBYAJL_LIBS)
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -3721,6 +3690,10 @@ collectdmon$(EXEEXT): $(collectdmon_OBJECTS) $(collectdmon_DEPENDENCIES) $(EXTRA
 	@rm -f collectdmon$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(collectdmon_OBJECTS) $(collectdmon_LDADD) $(LIBS)
 
+test_plugin_ceph$(EXEEXT): $(test_plugin_ceph_OBJECTS) $(test_plugin_ceph_DEPENDENCIES) $(EXTRA_test_plugin_ceph_DEPENDENCIES) 
+	@rm -f test_plugin_ceph$(EXEEXT)
+	$(AM_V_CCLD)$(test_plugin_ceph_LINK) $(test_plugin_ceph_OBJECTS) $(test_plugin_ceph_LDADD) $(LIBS)
+
 test_utils_mount$(EXEEXT): $(test_utils_mount_OBJECTS) $(test_utils_mount_DEPENDENCIES) $(EXTRA_test_utils_mount_DEPENDENCIES) 
 	@rm -f test_utils_mount$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_utils_mount_OBJECTS) $(test_utils_mount_LDADD) $(LIBS)
@@ -3740,6 +3713,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amqp_la-utils_cmd_putval.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amqp_la-utils_format_graphite.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amqp_la-utils_format_json.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amqp_la-utils_parse_option.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apache_la-apache.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apcups.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apple_sensors.Plo@am__quote@
@@ -3766,7 +3740,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbi_la-utils_db_query.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/disk_la-disk.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/disk_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/drbd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/email.Plo@am__quote@
@@ -3779,10 +3752,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmond_la-gmond.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hddtemp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interface_la-interface.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interface_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipc_la-ipc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipmi_la-ipmi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipmi_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iptables_la-iptables.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipvs_la-ipvs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irq.Plo@am__quote@
@@ -3804,12 +3775,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memcached.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory_la-memory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mic_la-mic.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mic_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/modbus_la-modbus.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multimeter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mysql_la-mysql.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netapp_la-netapp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netapp_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netlink_la-netlink.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network_la-network.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network_la-utils_fbhash.Plo@am__quote@
@@ -3822,7 +3791,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nut_la-nut.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/olsrd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/onewire_la-onewire.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/onewire_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openldap_la-openldap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openvpn_la-openvpn.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oracle_la-oracle.Plo@am__quote@
@@ -3848,11 +3816,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rrdtool_la-rrdtool.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rrdtool_la-utils_rrdcreate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sensors_la-sensors.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sensors_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/serial.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sigrok_la-sigrok.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/smart_la-smart.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/smart_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snmp_la-snmp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/statsd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/swap_la-swap.Plo@am__quote@
@@ -3869,6 +3835,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpconns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/teamspeak2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ted.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_plugin_ceph-ceph_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thermal.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threshold.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tokyotyrant_la-tokyotyrant.Plo@am__quote@
@@ -3885,7 +3852,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_dns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_format_graphite.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_format_json.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_latency.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_mount.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_mount_test.Po@am__quote@
@@ -3894,7 +3860,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_vl_lookup_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uuid_la-uuid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/varnish_la-varnish.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virt_la-utils_ignorelist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virt_la-virt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vmem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vserver.Plo@am__quote@
@@ -3955,6 +3920,13 @@ amqp_la-utils_cmd_putval.lo: utils_cmd_putval.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_cmd_putval.c' object='amqp_la-utils_cmd_putval.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(amqp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o amqp_la-utils_cmd_putval.lo `test -f 'utils_cmd_putval.c' || echo '$(srcdir)/'`utils_cmd_putval.c
+
+amqp_la-utils_parse_option.lo: utils_parse_option.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(amqp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT amqp_la-utils_parse_option.lo -MD -MP -MF $(DEPDIR)/amqp_la-utils_parse_option.Tpo -c -o amqp_la-utils_parse_option.lo `test -f 'utils_parse_option.c' || echo '$(srcdir)/'`utils_parse_option.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/amqp_la-utils_parse_option.Tpo $(DEPDIR)/amqp_la-utils_parse_option.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_parse_option.c' object='amqp_la-utils_parse_option.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(amqp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o amqp_la-utils_parse_option.lo `test -f 'utils_parse_option.c' || echo '$(srcdir)/'`utils_parse_option.c
 
 amqp_la-utils_format_graphite.lo: utils_format_graphite.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(amqp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT amqp_la-utils_format_graphite.lo -MD -MP -MF $(DEPDIR)/amqp_la-utils_format_graphite.Tpo -c -o amqp_la-utils_format_graphite.lo `test -f 'utils_format_graphite.c' || echo '$(srcdir)/'`utils_format_graphite.c
@@ -4054,13 +4026,6 @@ disk_la-disk.lo: disk.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(disk_la_CFLAGS) $(CFLAGS) -c -o disk_la-disk.lo `test -f 'disk.c' || echo '$(srcdir)/'`disk.c
 
-disk_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(disk_la_CFLAGS) $(CFLAGS) -MT disk_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/disk_la-utils_ignorelist.Tpo -c -o disk_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/disk_la-utils_ignorelist.Tpo $(DEPDIR)/disk_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='disk_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(disk_la_CFLAGS) $(CFLAGS) -c -o disk_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-
 gmond_la-gmond.lo: gmond.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gmond_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gmond_la-gmond.lo -MD -MP -MF $(DEPDIR)/gmond_la-gmond.Tpo -c -o gmond_la-gmond.lo `test -f 'gmond.c' || echo '$(srcdir)/'`gmond.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gmond_la-gmond.Tpo $(DEPDIR)/gmond_la-gmond.Plo
@@ -4075,13 +4040,6 @@ interface_la-interface.lo: interface.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(interface_la_CFLAGS) $(CFLAGS) -c -o interface_la-interface.lo `test -f 'interface.c' || echo '$(srcdir)/'`interface.c
 
-interface_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(interface_la_CFLAGS) $(CFLAGS) -MT interface_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/interface_la-utils_ignorelist.Tpo -c -o interface_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/interface_la-utils_ignorelist.Tpo $(DEPDIR)/interface_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='interface_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(interface_la_CFLAGS) $(CFLAGS) -c -o interface_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-
 ipc_la-ipc.lo: ipc.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ipc_la_CFLAGS) $(CFLAGS) -MT ipc_la-ipc.lo -MD -MP -MF $(DEPDIR)/ipc_la-ipc.Tpo -c -o ipc_la-ipc.lo `test -f 'ipc.c' || echo '$(srcdir)/'`ipc.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ipc_la-ipc.Tpo $(DEPDIR)/ipc_la-ipc.Plo
@@ -4095,13 +4053,6 @@ ipmi_la-ipmi.lo: ipmi.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ipmi.c' object='ipmi_la-ipmi.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ipmi_la_CFLAGS) $(CFLAGS) -c -o ipmi_la-ipmi.lo `test -f 'ipmi.c' || echo '$(srcdir)/'`ipmi.c
-
-ipmi_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ipmi_la_CFLAGS) $(CFLAGS) -MT ipmi_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/ipmi_la-utils_ignorelist.Tpo -c -o ipmi_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ipmi_la-utils_ignorelist.Tpo $(DEPDIR)/ipmi_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='ipmi_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ipmi_la_CFLAGS) $(CFLAGS) -c -o ipmi_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
 
 iptables_la-iptables.lo: iptables.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(iptables_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT iptables_la-iptables.lo -MD -MP -MF $(DEPDIR)/iptables_la-iptables.Tpo -c -o iptables_la-iptables.lo `test -f 'iptables.c' || echo '$(srcdir)/'`iptables.c
@@ -4159,13 +4110,6 @@ mic_la-mic.lo: mic.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mic_la_CFLAGS) $(CFLAGS) -c -o mic_la-mic.lo `test -f 'mic.c' || echo '$(srcdir)/'`mic.c
 
-mic_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mic_la_CFLAGS) $(CFLAGS) -MT mic_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/mic_la-utils_ignorelist.Tpo -c -o mic_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mic_la-utils_ignorelist.Tpo $(DEPDIR)/mic_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='mic_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mic_la_CFLAGS) $(CFLAGS) -c -o mic_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-
 modbus_la-modbus.lo: modbus.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(modbus_la_CFLAGS) $(CFLAGS) -MT modbus_la-modbus.lo -MD -MP -MF $(DEPDIR)/modbus_la-modbus.Tpo -c -o modbus_la-modbus.lo `test -f 'modbus.c' || echo '$(srcdir)/'`modbus.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/modbus_la-modbus.Tpo $(DEPDIR)/modbus_la-modbus.Plo
@@ -4186,13 +4130,6 @@ netapp_la-netapp.lo: netapp.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='netapp.c' object='netapp_la-netapp.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netapp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netapp_la-netapp.lo `test -f 'netapp.c' || echo '$(srcdir)/'`netapp.c
-
-netapp_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netapp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT netapp_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/netapp_la-utils_ignorelist.Tpo -c -o netapp_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/netapp_la-utils_ignorelist.Tpo $(DEPDIR)/netapp_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='netapp_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netapp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netapp_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
 
 netlink_la-netlink.lo: netlink.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(netlink_la_CFLAGS) $(CFLAGS) -MT netlink_la-netlink.lo -MD -MP -MF $(DEPDIR)/netlink_la-netlink.Tpo -c -o netlink_la-netlink.lo `test -f 'netlink.c' || echo '$(srcdir)/'`netlink.c
@@ -4242,13 +4179,6 @@ onewire_la-onewire.lo: onewire.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='onewire.c' object='onewire_la-onewire.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(onewire_la_CPPFLAGS) $(CPPFLAGS) $(onewire_la_CFLAGS) $(CFLAGS) -c -o onewire_la-onewire.lo `test -f 'onewire.c' || echo '$(srcdir)/'`onewire.c
-
-onewire_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(onewire_la_CPPFLAGS) $(CPPFLAGS) $(onewire_la_CFLAGS) $(CFLAGS) -MT onewire_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/onewire_la-utils_ignorelist.Tpo -c -o onewire_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/onewire_la-utils_ignorelist.Tpo $(DEPDIR)/onewire_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='onewire_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(onewire_la_CPPFLAGS) $(CPPFLAGS) $(onewire_la_CFLAGS) $(CFLAGS) -c -o onewire_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
 
 openldap_la-openldap.lo: openldap.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(openldap_la_CFLAGS) $(CFLAGS) -MT openldap_la-openldap.lo -MD -MP -MF $(DEPDIR)/openldap_la-openldap.Tpo -c -o openldap_la-openldap.lo `test -f 'openldap.c' || echo '$(srcdir)/'`openldap.c
@@ -4376,13 +4306,6 @@ sensors_la-sensors.lo: sensors.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(sensors_la_CFLAGS) $(CFLAGS) -c -o sensors_la-sensors.lo `test -f 'sensors.c' || echo '$(srcdir)/'`sensors.c
 
-sensors_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(sensors_la_CFLAGS) $(CFLAGS) -MT sensors_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/sensors_la-utils_ignorelist.Tpo -c -o sensors_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/sensors_la-utils_ignorelist.Tpo $(DEPDIR)/sensors_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='sensors_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(sensors_la_CFLAGS) $(CFLAGS) -c -o sensors_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-
 sigrok_la-sigrok.lo: sigrok.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(sigrok_la_CFLAGS) $(CFLAGS) -MT sigrok_la-sigrok.lo -MD -MP -MF $(DEPDIR)/sigrok_la-sigrok.Tpo -c -o sigrok_la-sigrok.lo `test -f 'sigrok.c' || echo '$(srcdir)/'`sigrok.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/sigrok_la-sigrok.Tpo $(DEPDIR)/sigrok_la-sigrok.Plo
@@ -4396,13 +4319,6 @@ smart_la-smart.lo: smart.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='smart.c' object='smart_la-smart.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(smart_la_CFLAGS) $(CFLAGS) -c -o smart_la-smart.lo `test -f 'smart.c' || echo '$(srcdir)/'`smart.c
-
-smart_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(smart_la_CFLAGS) $(CFLAGS) -MT smart_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/smart_la-utils_ignorelist.Tpo -c -o smart_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/smart_la-utils_ignorelist.Tpo $(DEPDIR)/smart_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='smart_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(smart_la_CFLAGS) $(CFLAGS) -c -o smart_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
 
 snmp_la-snmp.lo: snmp.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(snmp_la_CFLAGS) $(CFLAGS) -MT snmp_la-snmp.lo -MD -MP -MF $(DEPDIR)/snmp_la-snmp.Tpo -c -o snmp_la-snmp.lo `test -f 'snmp.c' || echo '$(srcdir)/'`snmp.c
@@ -4459,13 +4375,6 @@ virt_la-virt.lo: virt.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='virt.c' object='virt_la-virt.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(virt_la_CFLAGS) $(CFLAGS) -c -o virt_la-virt.lo `test -f 'virt.c' || echo '$(srcdir)/'`virt.c
-
-virt_la-utils_ignorelist.lo: utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(virt_la_CFLAGS) $(CFLAGS) -MT virt_la-utils_ignorelist.lo -MD -MP -MF $(DEPDIR)/virt_la-utils_ignorelist.Tpo -c -o virt_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/virt_la-utils_ignorelist.Tpo $(DEPDIR)/virt_la-utils_ignorelist.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='virt_la-utils_ignorelist.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(virt_la_CFLAGS) $(CFLAGS) -c -o virt_la-utils_ignorelist.lo `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
 
 write_http_la-write_http.lo: write_http.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(write_http_la_CFLAGS) $(CFLAGS) -MT write_http_la-write_http.lo -MD -MP -MF $(DEPDIR)/write_http_la-write_http.Tpo -c -o write_http_la-write_http.lo `test -f 'write_http.c' || echo '$(srcdir)/'`write_http.c
@@ -4599,6 +4508,20 @@ collectdmon-collectdmon.obj: collectdmon.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='collectdmon.c' object='collectdmon-collectdmon.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectdmon_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectdmon-collectdmon.obj `if test -f 'collectdmon.c'; then $(CYGPATH_W) 'collectdmon.c'; else $(CYGPATH_W) '$(srcdir)/collectdmon.c'; fi`
+
+test_plugin_ceph-ceph_test.o: ceph_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_plugin_ceph_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT test_plugin_ceph-ceph_test.o -MD -MP -MF $(DEPDIR)/test_plugin_ceph-ceph_test.Tpo -c -o test_plugin_ceph-ceph_test.o `test -f 'ceph_test.c' || echo '$(srcdir)/'`ceph_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_plugin_ceph-ceph_test.Tpo $(DEPDIR)/test_plugin_ceph-ceph_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ceph_test.c' object='test_plugin_ceph-ceph_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_plugin_ceph_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o test_plugin_ceph-ceph_test.o `test -f 'ceph_test.c' || echo '$(srcdir)/'`ceph_test.c
+
+test_plugin_ceph-ceph_test.obj: ceph_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_plugin_ceph_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT test_plugin_ceph-ceph_test.obj -MD -MP -MF $(DEPDIR)/test_plugin_ceph-ceph_test.Tpo -c -o test_plugin_ceph-ceph_test.obj `if test -f 'ceph_test.c'; then $(CYGPATH_W) 'ceph_test.c'; else $(CYGPATH_W) '$(srcdir)/ceph_test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_plugin_ceph-ceph_test.Tpo $(DEPDIR)/test_plugin_ceph-ceph_test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ceph_test.c' object='test_plugin_ceph-ceph_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_plugin_ceph_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o test_plugin_ceph-ceph_test.obj `if test -f 'ceph_test.c'; then $(CYGPATH_W) 'ceph_test.c'; else $(CYGPATH_W) '$(srcdir)/ceph_test.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -4946,6 +4869,13 @@ test_utils_vl_lookup.log: test_utils_vl_lookup$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_plugin_ceph.log: test_plugin_ceph$(EXEEXT)
+	@p='test_plugin_ceph$(EXEEXT)'; \
+	b='test_plugin_ceph'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -5183,11 +5113,11 @@ uninstall-man: uninstall-man1 uninstall-man5
 		echo "$@ has some POD errors!"; false; \
 	fi
 
-@HAVE_PROTOC_C_TRUE@pinba.pb-c.c pinba.pb-c.h: pinba.proto
-@HAVE_PROTOC_C_TRUE@	protoc-c -I$(srcdir) --c_out . $(srcdir)/pinba.proto
+@BUILD_PLUGIN_PINBA_TRUE@pinba.pb-c.c pinba.pb-c.h: pinba.proto
+@BUILD_PLUGIN_PINBA_TRUE@	$(AM_V_PROTOC_C)protoc-c -I$(srcdir) --c_out . $(srcdir)/pinba.proto
 
-@HAVE_PROTOC_C_TRUE@riemann.pb-c.c riemann.pb-c.h: riemann.proto
-@HAVE_PROTOC_C_TRUE@	protoc-c -I$(srcdir) --c_out . $(srcdir)/riemann.proto
+@BUILD_PLUGIN_WRITE_RIEMANN_TRUE@riemann.pb-c.c riemann.pb-c.h: riemann.proto
+@BUILD_PLUGIN_WRITE_RIEMANN_TRUE@	$(AM_V_PROTOC_C)protoc-c -I$(srcdir) --c_out . $(srcdir)/riemann.proto
 
 install-exec-hook:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)

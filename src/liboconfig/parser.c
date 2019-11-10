@@ -75,11 +75,12 @@ static int yyerror (const char *s);
 /* Lexer variables */
 extern int yylineno;
 extern char *yytext;
+extern int yylex (void);
 
 extern oconfig_item_t *ci_root;
 extern char           *c_file;
 
-#line 83 "parser.c" /* yacc.c:339  */
+#line 84 "parser.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -141,7 +142,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 46 "parser.y" /* yacc.c:355  */
+#line 47 "parser.y" /* yacc.c:355  */
 
 	double  number;
 	int     boolean;
@@ -151,7 +152,7 @@ union YYSTYPE
 	argument_list_t  al;
 	statement_list_t sl;
 
-#line 155 "parser.c" /* yacc.c:355  */
+#line 156 "parser.c" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -166,7 +167,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 170 "parser.c" /* yacc.c:358  */
+#line 171 "parser.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -464,9 +465,9 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    81,    81,    82,    86,    87,    88,    89,    93,   100,
-     109,   113,   123,   129,   139,   146,   159,   175,   176,   177,
-     181,   191,   208,   216
+       0,    82,    82,    83,    87,    88,    89,    90,    94,   101,
+     110,   114,   124,   130,   140,   147,   160,   176,   177,   178,
+     182,   192,   209,   217
 };
 #endif
 
@@ -1259,109 +1260,109 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 81 "parser.y" /* yacc.c:1646  */
+#line 82 "parser.y" /* yacc.c:1646  */
     {(yyval.string) = unquote ((yyvsp[0].string));}
-#line 1265 "parser.c" /* yacc.c:1646  */
+#line 1266 "parser.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 82 "parser.y" /* yacc.c:1646  */
+#line 83 "parser.y" /* yacc.c:1646  */
     {(yyval.string) = strdup ((yyvsp[0].string));}
-#line 1271 "parser.c" /* yacc.c:1646  */
+#line 1272 "parser.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 86 "parser.y" /* yacc.c:1646  */
+#line 87 "parser.y" /* yacc.c:1646  */
     {(yyval.cv).value.number = (yyvsp[0].number); (yyval.cv).type = OCONFIG_TYPE_NUMBER;}
-#line 1277 "parser.c" /* yacc.c:1646  */
+#line 1278 "parser.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 87 "parser.y" /* yacc.c:1646  */
+#line 88 "parser.y" /* yacc.c:1646  */
     {(yyval.cv).value.boolean = 1; (yyval.cv).type = OCONFIG_TYPE_BOOLEAN;}
-#line 1283 "parser.c" /* yacc.c:1646  */
+#line 1284 "parser.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 88 "parser.y" /* yacc.c:1646  */
+#line 89 "parser.y" /* yacc.c:1646  */
     {(yyval.cv).value.boolean = 0; (yyval.cv).type = OCONFIG_TYPE_BOOLEAN;}
-#line 1289 "parser.c" /* yacc.c:1646  */
+#line 1290 "parser.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 89 "parser.y" /* yacc.c:1646  */
+#line 90 "parser.y" /* yacc.c:1646  */
     {(yyval.cv).value.string = (yyvsp[0].string); (yyval.cv).type = OCONFIG_TYPE_STRING;}
-#line 1295 "parser.c" /* yacc.c:1646  */
+#line 1296 "parser.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 94 "parser.y" /* yacc.c:1646  */
+#line 95 "parser.y" /* yacc.c:1646  */
     {
 	 (yyval.al) = (yyvsp[-1].al);
 	 (yyval.al).argument_num++;
 	 (yyval.al).argument = realloc ((yyval.al).argument, (yyval.al).argument_num * sizeof (oconfig_value_t));
 	 (yyval.al).argument[(yyval.al).argument_num-1] = (yyvsp[0].cv);
 	}
-#line 1306 "parser.c" /* yacc.c:1646  */
+#line 1307 "parser.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 101 "parser.y" /* yacc.c:1646  */
+#line 102 "parser.y" /* yacc.c:1646  */
     {
 	 (yyval.al).argument = malloc (sizeof (oconfig_value_t));
 	 (yyval.al).argument[0] = (yyvsp[0].cv);
 	 (yyval.al).argument_num = 1;
 	}
-#line 1316 "parser.c" /* yacc.c:1646  */
+#line 1317 "parser.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 109 "parser.y" /* yacc.c:1646  */
+#line 110 "parser.y" /* yacc.c:1646  */
     {(yyval.string) = strdup ((yyvsp[0].string));}
-#line 1322 "parser.c" /* yacc.c:1646  */
+#line 1323 "parser.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 114 "parser.y" /* yacc.c:1646  */
+#line 115 "parser.y" /* yacc.c:1646  */
     {
 	 memset (&(yyval.ci), '\0', sizeof ((yyval.ci)));
 	 (yyval.ci).key = (yyvsp[-2].string);
 	 (yyval.ci).values = (yyvsp[-1].al).argument;
 	 (yyval.ci).values_num = (yyvsp[-1].al).argument_num;
 	}
-#line 1333 "parser.c" /* yacc.c:1646  */
+#line 1334 "parser.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 124 "parser.y" /* yacc.c:1646  */
+#line 125 "parser.y" /* yacc.c:1646  */
     {
 	 memset (&(yyval.ci), '\0', sizeof ((yyval.ci)));
 	 (yyval.ci).key = (yyvsp[-2].string);
 	}
-#line 1342 "parser.c" /* yacc.c:1646  */
+#line 1343 "parser.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 130 "parser.y" /* yacc.c:1646  */
+#line 131 "parser.y" /* yacc.c:1646  */
     {
 	 memset (&(yyval.ci), '\0', sizeof ((yyval.ci)));
 	 (yyval.ci).key = (yyvsp[-3].string);
 	 (yyval.ci).values = (yyvsp[-2].al).argument;
 	 (yyval.ci).values_num = (yyvsp[-2].al).argument_num;
 	}
-#line 1353 "parser.c" /* yacc.c:1646  */
+#line 1354 "parser.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 140 "parser.y" /* yacc.c:1646  */
+#line 141 "parser.y" /* yacc.c:1646  */
     {
 	 (yyval.string) = (yyvsp[-2].string);
 	}
-#line 1361 "parser.c" /* yacc.c:1646  */
+#line 1362 "parser.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 147 "parser.y" /* yacc.c:1646  */
+#line 148 "parser.y" /* yacc.c:1646  */
     {
 	 if (strcmp ((yyvsp[-2].ci).key, (yyvsp[0].string)) != 0)
 	 {
@@ -1374,11 +1375,11 @@ yyreduce:
 	 (yyval.ci).children = (yyvsp[-1].sl).statement;
 	 (yyval.ci).children_num = (yyvsp[-1].sl).statement_num;
 	}
-#line 1378 "parser.c" /* yacc.c:1646  */
+#line 1379 "parser.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 160 "parser.y" /* yacc.c:1646  */
+#line 161 "parser.y" /* yacc.c:1646  */
     {
 	 if (strcmp ((yyvsp[-1].ci).key, (yyvsp[0].string)) != 0)
 	 {
@@ -1391,29 +1392,29 @@ yyreduce:
 	 (yyval.ci).children = NULL;
 	 (yyval.ci).children_num = 0;
 	}
-#line 1395 "parser.c" /* yacc.c:1646  */
+#line 1396 "parser.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 175 "parser.y" /* yacc.c:1646  */
+#line 176 "parser.y" /* yacc.c:1646  */
     {(yyval.ci) = (yyvsp[0].ci);}
-#line 1401 "parser.c" /* yacc.c:1646  */
+#line 1402 "parser.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 176 "parser.y" /* yacc.c:1646  */
+#line 177 "parser.y" /* yacc.c:1646  */
     {(yyval.ci) = (yyvsp[0].ci);}
-#line 1407 "parser.c" /* yacc.c:1646  */
+#line 1408 "parser.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 177 "parser.y" /* yacc.c:1646  */
+#line 178 "parser.y" /* yacc.c:1646  */
     {(yyval.ci).values_num = 0;}
-#line 1413 "parser.c" /* yacc.c:1646  */
+#line 1414 "parser.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 182 "parser.y" /* yacc.c:1646  */
+#line 183 "parser.y" /* yacc.c:1646  */
     {
 	 (yyval.sl) = (yyvsp[-1].sl);
 	 if (((yyvsp[0].ci).values_num > 0) || ((yyvsp[0].ci).children_num > 0))
@@ -1423,11 +1424,11 @@ yyreduce:
 		 (yyval.sl).statement[(yyval.sl).statement_num-1] = (yyvsp[0].ci);
 	 }
 	}
-#line 1427 "parser.c" /* yacc.c:1646  */
+#line 1428 "parser.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 192 "parser.y" /* yacc.c:1646  */
+#line 193 "parser.y" /* yacc.c:1646  */
     {
 	 if (((yyvsp[0].ci).values_num > 0) || ((yyvsp[0].ci).children_num > 0))
 	 {
@@ -1441,33 +1442,33 @@ yyreduce:
 		(yyval.sl).statement_num = 0;
 	 }
 	}
-#line 1445 "parser.c" /* yacc.c:1646  */
+#line 1446 "parser.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 209 "parser.y" /* yacc.c:1646  */
+#line 210 "parser.y" /* yacc.c:1646  */
     {
 	 ci_root = malloc (sizeof (oconfig_item_t));
 	 memset (ci_root, '\0', sizeof (oconfig_item_t));
 	 ci_root->children = (yyvsp[0].sl).statement;
 	 ci_root->children_num = (yyvsp[0].sl).statement_num;
 	}
-#line 1456 "parser.c" /* yacc.c:1646  */
+#line 1457 "parser.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 216 "parser.y" /* yacc.c:1646  */
+#line 217 "parser.y" /* yacc.c:1646  */
     {
 	 ci_root = malloc (sizeof (oconfig_item_t));
 	 memset (ci_root, '\0', sizeof (oconfig_item_t));
 	 ci_root->children = NULL;
 	 ci_root->children_num = 0;
 	}
-#line 1467 "parser.c" /* yacc.c:1646  */
+#line 1468 "parser.c" /* yacc.c:1646  */
     break;
 
 
-#line 1471 "parser.c" /* yacc.c:1646  */
+#line 1472 "parser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1695,7 +1696,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 224 "parser.y" /* yacc.c:1906  */
+#line 225 "parser.y" /* yacc.c:1906  */
 
 static int yyerror (const char *s)
 {

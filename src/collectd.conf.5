@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2015-05-20" "5.4.2.911.g0c88d3b" "collectd"
+.TH COLLECTD.CONF 5 "2016-01-22" "5.5.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -283,12 +283,27 @@ plugins that don't provide any configuration, e.g. the \fILoad plugin\fR.
 When set to \fBtrue\fR, various statistics about the \fIcollectd\fR daemon will be
 collected, with \*(L"collectd\*(R" as the \fIplugin name\fR. Defaults to \fBfalse\fR.
 .Sp
-The \*(L"write_queue\*(R" \fIplugin instance\fR reports the number of elements currently
-queued and the number of elements dropped off the queue by the
-\&\fBWriteQueueLimitLow\fR/\fBWriteQueueLimitHigh\fR mechanism.
-.Sp
-The \*(L"cache\*(R" \fIplugin instance\fR reports the number of elements in the value list
-cache (the cache you can interact with using \fIcollectd\-unixsock\fR\|(5)).
+The following metrics are reported:
+.RS 4
+.ie n .IP """collectd\-write_queue/queue_length""" 4
+.el .IP "\f(CWcollectd\-write_queue/queue_length\fR" 4
+.IX Item "collectd-write_queue/queue_length"
+The number of metrics currently in the write queue. You can limit the queue
+length with the \fBWriteQueueLimitLow\fR and \fBWriteQueueLimitHigh\fR options.
+.ie n .IP """collectd\-write_queue/derive\-dropped""" 4
+.el .IP "\f(CWcollectd\-write_queue/derive\-dropped\fR" 4
+.IX Item "collectd-write_queue/derive-dropped"
+The number of metrics dropped due to a queue length limitation.
+If this value is non-zero, your system can't handle all incoming metrics and
+protects itself against overload by dropping metrics.
+.ie n .IP """collectd\-cache/cache_size""" 4
+.el .IP "\f(CWcollectd\-cache/cache_size\fR" 4
+.IX Item "collectd-cache/cache_size"
+The number of elements in the metric cache (the cache you can interact with
+using \fIcollectd\-unixsock\fR\|(5)).
+.RE
+.RS 4
+.RE
 .IP "\fBInclude\fR \fIPath\fR [\fIpattern\fR]" 4
 .IX Item "Include Path [pattern]"
 If \fIPath\fR points to a file, includes that file. If \fIPath\fR points to a
@@ -619,7 +634,7 @@ are disabled by default.
 .ie n .SS "Plugin ""amqp"""
 .el .SS "Plugin \f(CWamqp\fP"
 .IX Subsection "Plugin amqp"
-The \fI\s-1AMQMP\s0 plugin\fR can be used to communicate with other instances of
+The \fI\s-1AMQP\s0 plugin\fR can be used to communicate with other instances of
 \&\fIcollectd\fR or third party applications using an \s-1AMQP\s0 message broker. Values
 are sent to or received from the broker, which handles routing, queueing and
 possibly filtering or messages.
@@ -1523,7 +1538,7 @@ setting accordingly to prevent this from blocking other plugins.
 .el .SS "Plugin \f(CWcurl_json\fP"
 .IX Subsection "Plugin curl_json"
 The \fBcurl_json plugin\fR collects values from \s-1JSON\s0 data to be parsed by
-\&\fBlibyajl\fR (<http://www.lloydforge.org/projects/yajl/>) retrieved via
+\&\fBlibyajl\fR (<https://lloyd.github.io/yajl/>) retrieved via
 either \fBlibcurl\fR (<http://curl.haxx.se/>) or read directly from a
 unix socket. The former can be used, for example, to collect values
 from CouchDB documents (which are stored \s-1JSON\s0 notation), and the
@@ -2188,7 +2203,7 @@ expected from them. This is documented in great detail in \fIcollectd\-exec\fR\|
 .el .SS "Plugin \f(CWfhcount\fP"
 .IX Subsection "Plugin fhcount"
 The \f(CW\*(C`fhcount\*(C'\fR plugin provides statistics about used, unused and total number of
-file handles.
+file handles on Linux.
 .PP
 The \fIfhcount plugin\fR provides the following configuration options:
 .IP "\fBValuesAbsolute\fR \fBtrue\fR|\fBfalse\fR" 4
@@ -2374,6 +2389,24 @@ to collect all interfaces \fIexcept\fR a few ones. This option enables you to
 do that: By setting \fBIgnoreSelected\fR to \fItrue\fR the effect of
 \&\fBInterface\fR is inverted: All selected interfaces are ignored and all
 other interfaces are collected.
+.Sp
+It is possible to use regular expressions to match interface names, if the
+name is surrounded by \fI/.../\fR and collectd was compiled with support for
+regexps. This is useful if there's a need to collect (or ignore) data
+for a group of interfaces that are similarly named, without the need to
+explicitly list all of them (especially useful if the list is dynamic).
+Example:
+.Sp
+.Vb 4
+\& Interface "lo"
+\& Interface "/^veth/"
+\& Interface "/^tun[0\-9]+/"
+\& IgnoreSelected "true"
+.Ve
+.Sp
+This will ignore the loopback interface, all interfaces with names starting
+with \fIveth\fR and all interfaces with names starting with \fItun\fR followed by
+at least one digit.
 .ie n .SS "Plugin ""ipmi"""
 .el .SS "Plugin \f(CWipmi\fP"
 .IX Subsection "Plugin ipmi"
@@ -2403,9 +2436,15 @@ a notification is sent.
 .IX Subsection "Plugin iptables"
 .IP "\fBChain\fR \fITable\fR \fIChain\fR [\fIComment|Number\fR [\fIName\fR]]" 4
 .IX Item "Chain Table Chain [Comment|Number [Name]]"
-Select the rules to count. If only \fITable\fR and \fIChain\fR are given, this plugin
-will collect the counters of all rules which have a comment-match. The comment
-is then used as type-instance.
+.PD 0
+.IP "\fBChain6\fR \fITable\fR \fIChain\fR [\fIComment|Number\fR [\fIName\fR]]" 4
+.IX Item "Chain6 Table Chain [Comment|Number [Name]]"
+.PD
+Select the iptables/ip6tables filter rules to count packets and bytes from.
+.Sp
+If only \fITable\fR and \fIChain\fR are given, this plugin will collect the counters
+of all rules which have a comment-match. The comment is then used as
+type-instance.
 .Sp
 If \fIComment\fR or \fINumber\fR is given, only the rule with the matching comment or
 the \fIn\fRth rule will be collected. Again, the comment (or the number) will be
@@ -3931,6 +3970,17 @@ Default: \f(CW\*(C`Collectd notify: %s@%s\*(C'\fR
 .ie n .SS "Plugin ""ntpd"""
 .el .SS "Plugin \f(CWntpd\fP"
 .IX Subsection "Plugin ntpd"
+The \f(CW\*(C`ntpd\*(C'\fR plugin collects per-peer ntpd data such as time offset and time
+dispersion.
+.PP
+For talking to \fBntpd\fR, it mimics what the \fBntpdc\fR control program does on
+wire \- using \fBmode 7\fR specific requests. This mode is deprecated with
+newer \fBntpd\fR releases (4.2.7p230 and later). For the \f(CW\*(C`ntpd\*(C'\fR plugin to work
+correctly with them, the ntp daemon must be explicitly configured to
+enable \fBmode 7\fR (which is disabled by default). Refer to the \fI\fIntp.conf\fI\|(5)\fR
+manual page for details.
+.PP
+Available configuration options for the \f(CW\*(C`ntpd\*(C'\fR plugin:
 .IP "\fBHost\fR \fIHostname\fR" 4
 .IX Item "Host Hostname"
 Hostname of the host running \fBntpd\fR. Defaults to \fBlocalhost\fR.
@@ -6307,6 +6357,10 @@ useful on its own because all guests will appear to have the same name.
 You can also specify combinations of these fields. For example \fBname uuid\fR
 means to concatenate the guest name and \s-1UUID \s0(with a literal colon character
 between, thus \fI\*(L"foo:1234\-1234\-1234\-1234\*(R"\fR).
+.Sp
+At the moment of writing (collectd\-5.5), hostname string is limited to 62
+characters. In case when combination of fields exceeds 62 characters,
+hostname will be truncated without a warning.
 .IP "\fBInterfaceFormat\fR \fBname\fR|\fBaddress\fR" 4
 .IX Item "InterfaceFormat name|address"
 When the virt plugin logs interface data, it sets the name of the collected
@@ -6323,6 +6377,10 @@ data according to this setting. The default is to use the guest name as provided
 by the hypervisor, which is equal to setting \fBname\fR.
 .Sp
 \&\fBuuid\fR means use the guest's \s-1UUID.\s0
+.Sp
+You can also specify combinations of these fields. For example \fBname uuid\fR
+means to concatenate the guest name and \s-1UUID \s0(with a literal colon character
+between, thus \fI\*(L"foo:1234\-1234\-1234\-1234\*(R"\fR).
 .ie n .SS "Plugin ""vmem"""
 .el .SS "Plugin \f(CWvmem\fP"
 .IX Subsection "Plugin vmem"
@@ -6735,7 +6793,7 @@ Synopsis:
 .PP
 Values are submitted to \fISorted Sets\fR, using the metric name as the key, and
 the timestamp as the score. Retrieving a date range can then be done using the
-\&\f(CW\*(C`ZRANGEBYSCORE\*(C'\fR \fIRedis\fR command. Additionnally, all the identifiers of these
+\&\f(CW\*(C`ZRANGEBYSCORE\*(C'\fR \fIRedis\fR command. Additionally, all the identifiers of these
 \&\fISorted Sets\fR are kept in a \fISet\fR called \f(CW\*(C`collectd/values\*(C'\fR and can be
 retrieved using the \f(CW\*(C`SMEMBERS\*(C'\fR \fIRedis\fR command. See
 <http://redis.io/commands#sorted_set> and <http://redis.io/commands#set> for
@@ -6750,9 +6808,9 @@ options are available:
 .IP "\fBNode\fR \fINodename\fR" 4
 .IX Item "Node Nodename"
 The \fBNode\fR block identifies a new \fIRedis\fR node, that is a new \fIRedis\fR
-instance running in an specified host and port. The name for node is a
+instance running on a specified host and port. The node name is a
 canonical identifier which is used as \fIplugin instance\fR. It is limited to
-64\ characters in length.
+51\ characters in length.
 .IP "\fBHost\fR \fIHostname\fR" 4
 .IX Item "Host Hostname"
 The \fBHost\fR option is the hostname or IP-address where the \fIRedis\fR instance is
@@ -6834,7 +6892,7 @@ converted values will have \*(L"rate\*(R" appended to the data source type, e.g.
 \&\f(CW\*(C`ds_type:derive:rate\*(C'\fR.
 .IP "\fBAlwaysAppendDS\fR \fBfalse\fR|\fBtrue\fR" 4
 .IX Item "AlwaysAppendDS false|true"
-If set the \fBtrue\fR, append the name of the \fIData Source\fR (\s-1DS\s0) to the
+If set to \fBtrue\fR, append the name of the \fIData Source\fR (\s-1DS\s0) to the
 \&\*(L"service\*(R", i.e. the field that, together with the \*(L"host\*(R" field, uniquely
 identifies a metric in \fIRiemann\fR. If set to \fBfalse\fR (the default), this is
 only done when there is more than one \s-1DS.\s0

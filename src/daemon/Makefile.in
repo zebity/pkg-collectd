@@ -80,9 +80,6 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @BUILD_FEATURE_DAEMON_TRUE@am__append_1 = -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
-sbin_PROGRAMS = collectd$(EXEEXT)
-
-# Link to these libraries..
 @BUILD_WITH_LIBRT_TRUE@am__append_2 = -lrt
 @BUILD_WITH_LIBPOSIX4_TRUE@am__append_3 = -lposix4
 @BUILD_WITH_LIBSOCKET_TRUE@am__append_4 = -lsocket
@@ -90,15 +87,15 @@ sbin_PROGRAMS = collectd$(EXEEXT)
 @BUILD_WITH_LIBPTHREAD_TRUE@am__append_6 = -lpthread
 @BUILD_WITH_LIBKSTAT_TRUE@am__append_7 = -lkstat
 @BUILD_WITH_LIBDEVINFO_TRUE@am__append_8 = -ldevinfo
-@BUILD_AIX_TRUE@am__append_9 = -Wl,-bexpall,-brtllib
+sbin_PROGRAMS = collectd$(EXEEXT)
 
 # The daemon needs to call sg_init, so we need to link it against libstatgrab,
 # too. -octo
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_10 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_11 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_12 = $(LIBLTDL) $(top_builddir)/src/liboconfig/liboconfig.la
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_13 = $(top_builddir)/src/liboconfig/liboconfig.la
-@BUILD_WITH_OWN_LIBOCONFIG_FALSE@am__append_14 = -loconfig
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_9 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_10 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_11 = $(LIBLTDL) $(top_builddir)/src/liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_12 = $(top_builddir)/src/liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_FALSE@am__append_13 = -loconfig
 check_PROGRAMS = test_common$(EXEEXT) test_utils_avltree$(EXEEXT) \
 	test_utils_heap$(EXEEXT)
 TESTS = test_common$(EXEEXT) test_utils_avltree$(EXEEXT) \
@@ -140,6 +137,7 @@ am_collectd_OBJECTS = collectd-collectd.$(OBJEXT) \
 	collectd-meta_data.$(OBJEXT) collectd-plugin.$(OBJEXT) \
 	collectd-utils_cache.$(OBJEXT) \
 	collectd-utils_complain.$(OBJEXT) \
+	collectd-utils_ignorelist.$(OBJEXT) \
 	collectd-utils_llist.$(OBJEXT) collectd-utils_random.$(OBJEXT) \
 	collectd-utils_tail_match.$(OBJEXT) \
 	collectd-utils_match.$(OBJEXT) collectd-utils_subst.$(OBJEXT) \
@@ -148,9 +146,13 @@ am_collectd_OBJECTS = collectd-collectd.$(OBJEXT) \
 	collectd-utils_threshold.$(OBJEXT)
 collectd_OBJECTS = $(am_collectd_OBJECTS)
 am__DEPENDENCIES_1 =
-@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_2 =  \
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+@BUILD_WITH_LIBSTATGRAB_TRUE@am__DEPENDENCIES_3 =  \
 @BUILD_WITH_LIBSTATGRAB_TRUE@	$(am__DEPENDENCIES_1)
-@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__DEPENDENCIES_3 =  \
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__DEPENDENCIES_4 =  \
 @BUILD_WITH_OWN_LIBOCONFIG_TRUE@	$(am__DEPENDENCIES_1) \
 @BUILD_WITH_OWN_LIBOCONFIG_TRUE@	$(top_builddir)/src/liboconfig/liboconfig.la
 collectd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -158,13 +160,14 @@ collectd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(collectd_LDFLAGS) $(LDFLAGS) -o $@
 am_test_common_OBJECTS = common_test.$(OBJEXT)
 test_common_OBJECTS = $(am_test_common_OBJECTS)
-test_common_DEPENDENCIES = libcommon.la libplugin_mock.la
+test_common_DEPENDENCIES = libcommon.la libplugin_mock.la \
+	$(am__DEPENDENCIES_2)
 am_test_utils_avltree_OBJECTS = utils_avltree_test.$(OBJEXT)
 test_utils_avltree_OBJECTS = $(am_test_utils_avltree_OBJECTS)
-test_utils_avltree_DEPENDENCIES = libavltree.la
+test_utils_avltree_DEPENDENCIES = libavltree.la $(am__DEPENDENCIES_2)
 am_test_utils_heap_OBJECTS = utils_heap_test.$(OBJEXT)
 test_utils_heap_OBJECTS = $(am_test_utils_heap_OBJECTS)
-test_utils_heap_DEPENDENCIES = libheap.la
+test_utils_heap_DEPENDENCIES = libheap.la $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -713,6 +716,11 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -DPREFIX='"${prefix}"' \
 	-DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"' \
 	$(am__append_1) -DPLUGINDIR='"${pkglibdir}"' \
 	-DPKGDATADIR='"${pkgdatadir}"'
+
+# Link to these libraries..
+COMMON_LIBS = $(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_8)
 AUTOMAKE_OPTIONS = subdir-objects
 noinst_LTLIBRARIES = libavltree.la libcommon.la libheap.la libplugin_mock.la
 libavltree_la_SOURCES = utils_avltree.c utils_avltree.h
@@ -726,6 +734,7 @@ collectd_SOURCES = collectd.c collectd.h \
 		   plugin.c plugin.h \
 		   utils_cache.c utils_cache.h \
 		   utils_complain.c utils_complain.h \
+		   utils_ignorelist.c utils_ignorelist.h \
 		   utils_llist.c utils_llist.h \
 		   utils_random.c utils_random.h \
 		   utils_tail_match.c utils_tail_match.h \
@@ -737,20 +746,19 @@ collectd_SOURCES = collectd.c collectd.h \
 		   utils_threshold.c utils_threshold.h
 
 collectd_CPPFLAGS = $(AM_CPPFLAGS) $(LTDLINCL)
-collectd_CFLAGS = $(AM_CFLAGS) $(am__append_10)
-collectd_LDFLAGS = -export-dynamic $(am__append_9)
+collectd_CFLAGS = $(AM_CFLAGS) $(am__append_9)
+collectd_LDFLAGS = -export-dynamic
 collectd_LDADD = libavltree.la libcommon.la libheap.la -lm \
-	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8) $(am__append_11) $(am__append_12) \
-	$(am__append_14)
-collectd_DEPENDENCIES = $(am__append_13)
+	$(COMMON_LIBS) $(am__append_10) $(am__append_11) \
+	$(am__append_13)
+collectd_DEPENDENCIES = libavltree.la libcommon.la libheap.la \
+	$(am__append_12)
 test_common_SOURCES = common_test.c ../testing.h
-test_common_LDADD = libcommon.la libplugin_mock.la
+test_common_LDADD = libcommon.la libplugin_mock.la $(COMMON_LIBS)
 test_utils_avltree_SOURCES = utils_avltree_test.c ../testing.h
-test_utils_avltree_LDADD = libavltree.la
+test_utils_avltree_LDADD = libavltree.la $(COMMON_LIBS)
 test_utils_heap_SOURCES = utils_heap_test.c ../testing.h
-test_utils_heap_LDADD = libheap.la
+test_utils_heap_LDADD = libheap.la $(COMMON_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -897,6 +905,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-types_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_cache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_complain.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_ignorelist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_llist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_random.Po@am__quote@
@@ -1036,6 +1045,20 @@ collectd-utils_complain.obj: utils_complain.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_complain.c' object='collectd-utils_complain.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_complain.obj `if test -f 'utils_complain.c'; then $(CYGPATH_W) 'utils_complain.c'; else $(CYGPATH_W) '$(srcdir)/utils_complain.c'; fi`
+
+collectd-utils_ignorelist.o: utils_ignorelist.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_ignorelist.o -MD -MP -MF $(DEPDIR)/collectd-utils_ignorelist.Tpo -c -o collectd-utils_ignorelist.o `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_ignorelist.Tpo $(DEPDIR)/collectd-utils_ignorelist.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='collectd-utils_ignorelist.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_ignorelist.o `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c
+
+collectd-utils_ignorelist.obj: utils_ignorelist.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_ignorelist.obj -MD -MP -MF $(DEPDIR)/collectd-utils_ignorelist.Tpo -c -o collectd-utils_ignorelist.obj `if test -f 'utils_ignorelist.c'; then $(CYGPATH_W) 'utils_ignorelist.c'; else $(CYGPATH_W) '$(srcdir)/utils_ignorelist.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/collectd-utils_ignorelist.Tpo $(DEPDIR)/collectd-utils_ignorelist.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils_ignorelist.c' object='collectd-utils_ignorelist.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -c -o collectd-utils_ignorelist.obj `if test -f 'utils_ignorelist.c'; then $(CYGPATH_W) 'utils_ignorelist.c'; else $(CYGPATH_W) '$(srcdir)/utils_ignorelist.c'; fi`
 
 collectd-utils_llist.o: utils_llist.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(collectd_CFLAGS) $(CFLAGS) -MT collectd-utils_llist.o -MD -MP -MF $(DEPDIR)/collectd-utils_llist.Tpo -c -o collectd-utils_llist.o `test -f 'utils_llist.c' || echo '$(srcdir)/'`utils_llist.c

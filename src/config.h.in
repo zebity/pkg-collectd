@@ -194,6 +194,9 @@
 /* Define to 1 if you have the `getmntent' function. */
 #undef HAVE_GETMNTENT
 
+/* Define to 1 if you have the `getmntent_r' function. */
+#undef HAVE_GETMNTENT_R
+
 /* Define to 1 if you have the `getnameinfo' function. */
 #undef HAVE_GETNAMEINFO
 
@@ -556,8 +559,8 @@
 /* Define to 1 if you have the <mnttab.h> header file. */
 #undef HAVE_MNTTAB_H
 
-/* Define to 1 if you have the <modbus/modbus.h> header file. */
-#undef HAVE_MODBUS_MODBUS_H
+/* Define to 1 if you have the <modbus.h> header file. */
+#undef HAVE_MODBUS_H
 
 /* Define to 1 if you have the <mongo.h> header file. */
 #undef HAVE_MONGO_H
@@ -660,9 +663,6 @@
 
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
-
-/* Define to 1 if you have the <pcap-bpf.h> header file. */
-#undef HAVE_PCAP_BPF_H
 
 /* Define to 1 if you have the <pcap.h> header file. */
 #undef HAVE_PCAP_H
@@ -1090,6 +1090,9 @@
 /* Define to 1 if you have the procinfo.h */
 #undef HAVE_PROCINFO_H
 
+/* Define to 1 if you have the <protobuf-c/protobuf-c.h> header file. */
+#undef HAVE_PROTOBUF_C_PROTOBUF_C_H
+
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
 
@@ -1242,6 +1245,9 @@
 
 /* Define to 1 if `idiag_states' is a member of `struct inet_diag_req'. */
 #undef HAVE_STRUCT_INET_DIAG_REQ_IDIAG_STATES
+
+/* Define to 1 if the system has the type `struct ip6_ext'. */
+#undef HAVE_STRUCT_IP6_EXT
 
 /* Define to 1 if `imr_ifindex' is a member of `struct ip_mreqn'. */
 #undef HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
@@ -1456,6 +1462,12 @@
 /* Define to 1 if you have the <utmp.h> header file. */
 #undef HAVE_UTMP_H
 
+/* Define to 1 if you have the <vapi/vsc.h> header file. */
+#undef HAVE_VAPI_VSC_H
+
+/* Define to 1 if you have the <varnishapi.h> header file. */
+#undef HAVE_VARNISHAPI_H
+
 /* Varnish 2 API support */
 #undef HAVE_VARNISH_V2
 
@@ -1465,17 +1477,11 @@
 /* Varnish 4 API support */
 #undef HAVE_VARNISH_V4
 
-/* Define to 1 if you have the <varnish/vapi/vsc.h> header file. */
-#undef HAVE_VARNISH_VAPI_VSC_H
-
-/* Define to 1 if you have the <varnish/varnishapi.h> header file. */
-#undef HAVE_VARNISH_VARNISHAPI_H
-
-/* Define to 1 if you have the <varnish/vsc.h> header file. */
-#undef HAVE_VARNISH_VSC_H
-
 /* Define to 1 if you have the <vm/anon.h> header file. */
 #undef HAVE_VM_ANON_H
+
+/* Define to 1 if you have the <vsc.h> header file. */
+#undef HAVE_VSC_H
 
 /* Define to 1 if you have the <wordexp.h> header file. */
 #undef HAVE_WORDEXP_H

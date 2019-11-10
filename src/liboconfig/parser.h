@@ -72,7 +72,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 46 "parser.y" /* yacc.c:1909  */
+#line 47 "parser.y" /* yacc.c:1909  */
 
 	double  number;
 	int     boolean;
