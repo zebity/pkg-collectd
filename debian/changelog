@@ -1,6 +1,4 @@
-collectd (5.9.2-1~1.gbp4f34b9) UNRELEASED; urgency=medium
-
-  ** SNAPSHOT build @4f34b97aa3504d516caa42473fec5ea6bd1d844a **
+collectd (5.9.2-1) unstable; urgency=medium
 
   * [e2bc528] Stay with the common debian/version tag.
   * [989ce6e] Collect and review changes from @zebity
@@ -9,8 +7,17 @@ collectd (5.9.2-1~1.gbp4f34b9) UNRELEASED; urgency=medium
   * [4f34b97] Update upstream source from tag 'upstream/5.9.2'
     Update to upstream version '5.9.2'
     with Debian dir af7c66a8817dcb447a93e60e87aff32a05a0b4c3
+    This fixes build issues with recent libgps-dev.
+    Closes: #926528
+  * [ccc5baf] snapshot changelog
+  * [ad672e1] fake commit for CI
+  * [65f9d1b] Make deps for collectd automatic
+  * [07a98ce] Set CXXFLAGS from dpkg-buildflags
+  * [918a39f] Updating git urls
+  * [41e284a] Use a tracker.d.o team as maintainer.
+    Adding myself as uploader.
 
- -- Bernd Zeimetz <bzed@debian.org>  Sun, 10 Nov 2019 20:56:57 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 10 Nov 2019 22:29:36 +0100
 
 collectd (5.8.1-1.3) unstable; urgency=medium
 
