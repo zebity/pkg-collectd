@@ -10,7 +10,7 @@ collectd (5.9.2-1~1.gbp4f34b9) UNRELEASED; urgency=medium
     Update to upstream version '5.9.2'
     with Debian dir af7c66a8817dcb447a93e60e87aff32a05a0b4c3
 
- -- Bernd Zeimetz <bzed@debian.org>  Sun, 10 Nov 2019 20:50:57 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 10 Nov 2019 20:56:57 +0100
 
 collectd (5.8.1-1.3) unstable; urgency=medium
 
