@@ -9,6 +9,7 @@ m4_ifdef([LT_PACKAGE_VERSION],
 	 LT_CONFIG_LTDL_DIR([libltdl])
 	 LT_INIT([dlopen])
 	 LTDL_INIT([convenience])
+	 AC_DEFINE(LIBTOOL_VERSION, 2, [Define to used libtool version.])
 	]
 ,
 	# libtool <= 1.5
@@ -18,6 +19,7 @@ m4_ifdef([LT_PACKAGE_VERSION],
 	 AC_SUBST(LIBLTDL)
 	 AC_LIBTOOL_DLOPEN
 	 AC_CONFIG_SUBDIRS(libltdl)
+	 AC_DEFINE(LIBTOOL_VERSION, 1, [Define to used libtool version.])
 	]
 )
 
@@ -60,6 +62,10 @@ case $host_os in
 	;;
 	*openbsd*)
 	ac_system="OpenBSD"
+	;;
+	*aix*)
+	AC_DEFINE([KERNEL_AIX], 1, [True if program is to be compiled for a AIX kernel])
+	ac_system="AIX"
 	;;
 	*)
 	ac_system="unknown"
@@ -261,6 +267,22 @@ AC_CHECK_HEADERS(sys/sysctl.h, [], [],
 # include <sys/param.h>
 #endif
 ])
+
+AC_MSG_CHECKING([for sysctl kern.cp_times])
+if test -x /sbin/sysctl
+then
+	/sbin/sysctl kern.cp_times 2>/dev/null
+	if test $? -eq 0
+	then
+		AC_MSG_RESULT([yes])
+		AC_DEFINE(HAVE_SYSCTL_KERN_CP_TIMES, 1,
+		[Define if sysctl supports kern.cp_times])
+	else
+		AC_MSG_RESULT([no])
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
 
 # For hddtemp module
 AC_CHECK_HEADERS(linux/major.h libgen.h)
@@ -611,6 +633,8 @@ static float foo = NAN;
   fi
 fi
 if test "x$nan_type" = "xnone"; then
+  SAVE_LDFLAGS=$LDFLAGS
+  LDFLAGS="$LDFLAGS -lm"
   AC_CACHE_CHECK([whether NAN can be defined by 0/0],
     [c_cv_have_nan_zero],
     AC_RUN_IFELSE(
@@ -637,6 +661,7 @@ static float foo = NAN;
       [c_cv_have_nan_zero="no"]
     )
   )
+  LDFLAGS=$SAVE_LDFLAGS
   if test "x$c_cv_have_nan_zero" = "xyes"
   then
     nan_type="zero"
@@ -1035,6 +1060,38 @@ fi
 
 m4_divert_once([HELP_WITH], [
 collectd additional packages:])
+
+AM_CONDITIONAL([BUILD_AIX],[test "x$x$ac_system" = "xAIX"]) 
+
+if test "x$ac_system" = "xAIX"
+then
+	with_perfstat="yes"
+	with_procinfo="yes"
+else
+	with_perfstat="no (AIX only)"
+	with_procinfo="no (AIX only)"
+fi
+
+if test "x$with_perfstat" = "xyes"
+then
+	AC_CHECK_LIB(perfstat, perfstat_reset, [with_perfstat="yes"], [with_perfstat="no (perfstat not found)"], [])
+#	AC_CHECK_HEADERS(sys/protosw.h libperfstat.h,, [with_perfstat="no (perfstat not found)"])
+fi
+if test "x$with_perfstat" = "xyes"
+then
+	 AC_DEFINE(HAVE_PERFSTAT, 1, [Define to 1 if you have the 'perfstat' library (-lperfstat)])
+fi
+AM_CONDITIONAL(BUILD_WITH_PERFSTAT, test "x$with_perfstat" = "xyes")
+
+# Processes plugin under AIX.
+if test "x$with_procinfo" = "xyes"
+then
+	AC_CHECK_HEADERS(procinfo.h,, [with_procinfo="no (procinfo.h not found)"])
+fi
+if test "x$with_procinfo" = "xyes"
+then
+	 AC_DEFINE(HAVE_PROCINFO_H, 1, [Define to 1 if you have the procinfo.h])
+fi
 
 if test "x$ac_system" = "xSolaris"
 then
@@ -1928,6 +1985,78 @@ fi
 AM_CONDITIONAL(BUILD_WITH_LIBNETLINK, test "x$with_libnetlink" = "xyes")
 # }}}
 
+# --with-libnetapp {{{
+AC_ARG_VAR([LIBNETAPP_CPPFLAGS], [C preprocessor flags required to build with libnetapp])
+AC_ARG_VAR([LIBNETAPP_LDFLAGS],  [Linker flags required to build with libnetapp])
+AC_ARG_VAR([LIBNETAPP_LIBS],     [Other libraries required to link against libnetapp])
+LIBNETAPP_CPPFLAGS="$LIBNETAPP_CPPFLAGS"
+LIBNETAPP_LDFLAGS="$LIBNETAPP_LDFLAGS"
+LIBNETAPP_LIBS="$LIBNETAPP_LIBS"
+AC_ARG_WITH(libnetapp, [AS_HELP_STRING([--with-libnetapp@<:@=PREFIX@:>@], [Path to libnetapp.])],
+[
+ if test -d "$withval"
+ then
+	 LIBNETAPP_CPPFLAGS="$LIBNETAPP_CPPFLAGS -I$withval/include"
+	 LIBNETAPP_LDFLAGS="$LIBNETAPP_LDFLAGS -L$withval/lib"
+	 with_libnetapp="yes"
+ else
+	 with_libnetapp="$withval"
+ fi
+],
+[
+ with_libnetapp="yes"
+])
+
+SAVE_CPPFLAGS="$CPPFLAGS"
+SAVE_LDFLAGS="$LDFLAGS"
+CPPFLAGS="$CPPFLAGS $LIBNETAPP_CPPFLAGS"
+LDFLAGS="$LDFLAGS $LIBNETAPP_LDFLAGS"
+
+if test "x$with_libnetapp" = "xyes"
+then
+	if test "x$LIBNETAPP_CPPFLAGS" != "x"
+	then
+		AC_MSG_NOTICE([netapp CPPFLAGS: $LIBNETAPP_CPPFLAGS])
+	fi
+	AC_CHECK_HEADERS(netapp_api.h,
+		[with_libnetapp="yes"],
+		[with_libnetapp="no (netapp_api.h not found)"])
+fi
+
+if test "x$with_libnetapp" = "xyes"
+then
+	if test "x$LIBNETAPP_LDFLAGS" != "x"
+	then
+		AC_MSG_NOTICE([netapp LDFLAGS: $LIBNETAPP_LDFLAGS])
+	fi
+
+	if test "x$LIBNETAPP_LIBS" = "x"
+	then
+		LIBNETAPP_LIBS="-lpthread -lxml -ladt -lssl -lm -lcrypto -lz"
+	fi
+	AC_MSG_NOTICE([netapp LIBS: $LIBNETAPP_LIBS])
+
+	AC_CHECK_LIB(netapp, na_server_invoke_elem,
+		[with_libnetapp="yes"],
+		[with_libnetapp="no (symbol na_server_invoke_elem not found)"],
+		[$LIBNETAPP_LIBS])
+	LIBNETAPP_LIBS="-lnetapp $LIBNETAPP_LIBS"
+fi
+
+CPPFLAGS="$SAVE_CPPFLAGS"
+LDFLAGS="$SAVE_LDFLAGS"
+
+if test "x$with_libnetapp" = "xyes"
+then
+	AC_DEFINE(HAVE_LIBNETAPP, 1, [Define to 1 if you have the netapp library (-lnetapp).])
+fi
+
+AC_SUBST(LIBNETAPP_CPPFLAGS)
+AC_SUBST(LIBNETAPP_LDFLAGS)
+AC_SUBST(LIBNETAPP_LIBS)
+AM_CONDITIONAL(BUILD_WITH_LIBNETAPP, test "x$with_libnetapp" = "xyes")
+# }}}
+
 # --with-libnetsnmp {{{
 with_snmp_config="net-snmp-config"
 with_snmp_cflags=""
@@ -2563,6 +2692,184 @@ fi
 AC_DEFINE_UNQUOTED(HAVE_LIBPTHREAD, [$collect_pthread],
 	[Wether or not to use pthread (POSIX threads) library])
 AM_CONDITIONAL(BUILD_WITH_LIBPTHREAD, test "x$with_libpthread" = "xyes")
+# }}}
+
+# --with-python {{{
+with_python_prog=""
+with_python_path="$PATH"
+AC_ARG_WITH(python, [AS_HELP_STRING([--with-python@<:@=PREFIX@:>@], [Path to the python interpreter.])],
+[
+ if test "x$withval" = "xyes" || test "x$withval" = "xno"
+ then
+	 with_python="$withval"
+ else if test -x "$withval"
+ then
+	 with_python_prog="$withval"
+	 with_python_path="`dirname \"$withval\"`$PATH_SEPARATOR$with_python_path"
+	 with_python="yes"
+ else if test -d "$withval"
+ then
+	 with_python_path="$withval$PATH_SEPARATOR$with_python_path"
+	 with_python="yes"
+ else
+	 AC_MSG_WARN([Argument not recognized: $withval])
+ fi; fi; fi
+], [with_python="yes"])
+
+SAVE_PATH="$PATH"
+SAVE_CPPFLAGS="$CPPFLAGS"
+SAVE_LDFLAGS="$LDFLAGS"
+SAVE_LIBS="$LIBS"
+
+PATH="$with_python_path"
+
+if test "x$with_python" = "xyes" && test "x$with_python_prog" = "x"
+then
+	AC_MSG_CHECKING([for python])
+	with_python_prog="`which python 2>/dev/null`"
+	if test "x$with_python_prog" = "x"
+	then
+		AC_MSG_RESULT([not found])
+		with_python="no (interpreter not found)"
+	else
+		AC_MSG_RESULT([$with_python_prog])
+	fi
+fi
+
+if test "x$with_python" = "xyes"
+then
+	AC_MSG_CHECKING([for Python CPPFLAGS])
+	python_include_path=`echo "import distutils.sysconfig;print distutils.sysconfig.get_python_inc()" | "$with_python_prog" 2>&1`
+	python_config_status=$?
+
+	if test "$python_config_status" -ne 0 || test "x$python_include_path" = "x"
+	then
+		AC_MSG_RESULT([failed with status $python_config_status (output: $python_include_path)])
+		with_python="no"
+	else
+		AC_MSG_RESULT([$python_include_path])
+	fi
+fi
+
+if test "x$with_python" = "xyes"
+then
+	CPPFLAGS="-I$python_include_path $CPPFLAGS"
+	AC_CHECK_HEADERS(Python.h,
+			 [with_python="yes"],
+			 [with_python="no ('Python.h' not found)"])
+fi
+
+if test "x$with_python" = "xyes"
+then
+	AC_MSG_CHECKING([for Python LDFLAGS])
+	python_library_path=`echo "import distutils.sysconfig;print distutils.sysconfig.get_config_vars(\"LIBDIR\").__getitem__(0)" | "$with_python_prog" 2>&1`
+	python_config_status=$?
+
+	if test "$python_config_status" -ne 0 || test "x$python_library_path" = "x"
+	then
+		AC_MSG_RESULT([failed with status $python_config_status (output: $python_library_path)])
+		with_python="no"
+	else
+		AC_MSG_RESULT([$python_library_path])
+	fi
+fi
+
+if test "x$with_python" = "xyes"
+then
+	AC_MSG_CHECKING([for Python LIBS])
+	python_library_flags=`echo "import distutils.sysconfig;print distutils.sysconfig.get_config_vars(\"BLDLIBRARY\").__getitem__(0)" | "$with_python_prog" 2>&1`
+	python_config_status=$?
+
+	if test "$python_config_status" -ne 0 || test "x$python_library_flags" = "x"
+	then
+		AC_MSG_RESULT([failed with status $python_config_status (output: $python_library_flags)])
+		with_python="no"
+	else
+		AC_MSG_RESULT([$python_library_flags])
+	fi
+fi
+
+if test "x$with_python" = "xyes"
+then
+	LDFLAGS="-L$python_library_path $LDFLAGS"
+	LIBS="$python_library_flags $LIBS"
+
+	AC_CHECK_FUNC(PyObject_CallFunction,
+		      [with_python="yes"],
+		      [with_python="no (Symbol 'PyObject_CallFunction' not found)"])
+fi
+
+PATH="$SAVE_PATH"
+CPPFLAGS="$SAVE_CPPFLAGS"
+LDFLAGS="$SAVE_LDFLAGS"
+LIBS="$SAVE_LIBS"
+
+if test "x$with_python" = "xyes"
+then
+	BUILD_WITH_PYTHON_CPPFLAGS="-I$python_include_path"
+	BUILD_WITH_PYTHON_LDFLAGS="-L$python_library_path"
+	BUILD_WITH_PYTHON_LIBS="$python_library_flags"
+	AC_SUBST(BUILD_WITH_PYTHON_CPPFLAGS)
+	AC_SUBST(BUILD_WITH_PYTHON_LDFLAGS)
+	AC_SUBST(BUILD_WITH_PYTHON_LIBS)
+fi
+# }}} --with-python
+
+# --with-librouteros {{{
+AC_ARG_WITH(librouteros, [AS_HELP_STRING([--with-librouteros@<:@=PREFIX@:>@], [Path to librouteros.])],
+[
+ if test "x$withval" = "xyes"
+ then
+	 with_librouteros="yes"
+ else if test "x$withval" = "xno"
+ then
+	 with_librouteros="no"
+ else
+	 with_librouteros="yes"
+	 LIBROUTEROS_CPPFLAGS="$LIBROUTEROS_CPPFLAGS -I$withval/include"
+	 LIBROUTEROS_LDFLAGS="$LIBROUTEROS_LDFLAGS -L$withval/lib"
+ fi; fi
+],
+[with_librouteros="yes"])
+
+SAVE_CPPFLAGS="$CPPFLAGS"
+SAVE_LDFLAGS="$LDFLAGS"
+
+CPPFLAGS="$CPPFLAGS $LIBROUTEROS_CPPFLAGS"
+LDFLAGS="$LDFLAGS $LIBROUTEROS_LDFLAGS"
+
+if test "x$with_librouteros" = "xyes"
+then
+	if test "x$LIBROUTEROS_CPPFLAGS" != "x"
+	then
+		AC_MSG_NOTICE([librouteros CPPFLAGS: $LIBROUTEROS_CPPFLAGS])
+	fi
+	AC_CHECK_HEADERS(routeros_api.h,
+	[with_librouteros="yes"],
+	[with_librouteros="no ('routeros_api.h' not found)"])
+fi
+if test "x$with_librouteros" = "xyes"
+then
+	if test "x$LIBROUTEROS_LDFLAGS" != "x"
+	then
+		AC_MSG_NOTICE([librouteros LDFLAGS: $LIBROUTEROS_LDFLAGS])
+	fi
+	AC_CHECK_LIB(routeros, ros_interface,
+	[with_librouteros="yes"],
+	[with_librouteros="no (symbol 'ros_interface' not found)"])
+fi
+
+CPPFLAGS="$SAVE_CPPFLAGS"
+LDFLAGS="$SAVE_LDFLAGS"
+
+if test "x$with_librouteros" = "xyes"
+then
+	BUILD_WITH_LIBROUTEROS_CPPFLAGS="$LIBROUTEROS_CPPFLAGS"
+	BUILD_WITH_LIBROUTEROS_LDFLAGS="$LIBROUTEROS_LDFLAGS"
+	AC_SUBST(BUILD_WITH_LIBROUTEROS_CPPFLAGS)
+	AC_SUBST(BUILD_WITH_LIBROUTEROS_LDFLAGS)
+fi
+AM_CONDITIONAL(BUILD_WITH_LIBROUTEROS, test "x$with_librouteros" = "xyes")
 # }}}
 
 # --with-librrd {{{
@@ -3479,6 +3786,7 @@ plugin_ascent="no"
 plugin_battery="no"
 plugin_bind="no"
 plugin_conntrack="no"
+plugin_contextswitch="no"
 plugin_cpu="no"
 plugin_cpufreq="no"
 plugin_curl_json="no"
@@ -3516,6 +3824,7 @@ if test "x$ac_system" = "xLinux"
 then
 	plugin_battery="yes"
 	plugin_conntrack="yes"
+	plugin_contextswitch="yes"
 	plugin_cpu="yes"
 	plugin_cpufreq="yes"
 	plugin_disk="yes"
@@ -3553,6 +3862,22 @@ if test "x$with_libiokit" = "xyes"
 then
 	plugin_battery="yes"
 	plugin_disk="yes"
+fi
+
+# AIX
+if test "x$with_perfstat" = "xyes"
+then
+	plugin_cpu="yes"
+	plugin_disk="yes"
+	plugin_memory="yes"
+	plugin_swap="yes"
+	plugin_interface="yes"
+	plugin_load="yes"
+fi
+
+if test "x$with_procinfo" = "xyes"
+then
+	plugin_processes="yes"
 fi
 
 # Solaris
@@ -3751,6 +4076,7 @@ AC_PLUGIN([ascent],      [$plugin_ascent],     [AscentEmu player statistics])
 AC_PLUGIN([battery],     [$plugin_battery],    [Battery statistics])
 AC_PLUGIN([bind],        [$plugin_bind],       [ISC Bind nameserver statistics])
 AC_PLUGIN([conntrack],   [$plugin_conntrack],  [nf_conntrack statistics])
+AC_PLUGIN([contextswitch], [$plugin_contextswitch], [context switch statistics])
 AC_PLUGIN([cpufreq],     [$plugin_cpufreq],    [CPU frequency statistics])
 AC_PLUGIN([cpu],         [$plugin_cpu],        [CPU usage statistics])
 AC_PLUGIN([csv],         [yes],                [CSV output plugin])
@@ -3778,6 +4104,7 @@ AC_PLUGIN([load],        [$plugin_load],       [System load])
 AC_PLUGIN([logfile],     [yes],                [File logging plugin])
 AC_PLUGIN([madwifi],     [$have_linux_wireless_h], [Madwifi wireless statistics])
 AC_PLUGIN([match_empty_counter], [yes],        [The empty counter match])
+AC_PLUGIN([match_hashed], [yes],               [The hashed match])
 AC_PLUGIN([match_regex], [yes],                [The regex match])
 AC_PLUGIN([match_timediff], [yes],             [The timediff match])
 AC_PLUGIN([match_value], [yes],                [The value match])
@@ -3787,6 +4114,7 @@ AC_PLUGIN([memcached],   [yes],                [memcached statistics])
 AC_PLUGIN([memory],      [$plugin_memory],     [Memory usage])
 AC_PLUGIN([multimeter],  [$plugin_multimeter], [Read multimeter values])
 AC_PLUGIN([mysql],       [$with_libmysql],     [MySQL statistics])
+AC_PLUGIN([netapp],      [$with_libnetapp],    [NetApp plugin])
 AC_PLUGIN([netlink],     [$with_libnetlink],   [Enhanced Linux network statistics])
 AC_PLUGIN([network],     [yes],                [Network communication plugin])
 AC_PLUGIN([nfs],         [$plugin_nfs],        [NFS statistics])
@@ -3805,6 +4133,8 @@ AC_PLUGIN([postgresql],  [$with_libpq],        [PostgreSQL database statistics])
 AC_PLUGIN([powerdns],    [yes],                [PowerDNS statistics])
 AC_PLUGIN([processes],   [$plugin_processes],  [Process statistics])
 AC_PLUGIN([protocols],   [$plugin_protocols],  [Protocol (IP, TCP, ...) statistics])
+AC_PLUGIN([python],      [$with_python],       [Embed a Python interpreter])
+AC_PLUGIN([routeros],    [$with_librouteros],  [RouterOS plugin])
 AC_PLUGIN([rrdcached],   [$librrd_rrdc_update], [RRDTool output plugin])
 AC_PLUGIN([rrdtool],     [$with_librrd],       [RRDTool output plugin])
 AC_PLUGIN([sensors],     [$with_libsensors],   [lm_sensors statistics])
@@ -3817,6 +4147,7 @@ AC_PLUGIN([tail],        [yes],                [Parsing of logfiles])
 AC_PLUGIN([tape],        [$plugin_tape],       [Tape drive statistics])
 AC_PLUGIN([target_notification], [yes],        [The notification target])
 AC_PLUGIN([target_replace], [yes],             [The replace target])
+AC_PLUGIN([target_scale],[yes],                [The scale target])
 AC_PLUGIN([target_set],  [yes],                [The set target])
 AC_PLUGIN([tcpconns],    [$plugin_tcpconns],   [TCP connection statistics])
 AC_PLUGIN([teamspeak2],  [yes],                [TeamSpeak2 server statistics])
@@ -4015,6 +4346,7 @@ Configuration:
     libkvm  . . . . . . . $with_libkvm
     libmemcached  . . . . $with_libmemcached
     libmysql  . . . . . . $with_libmysql
+    libnetapp . . . . . . $with_libnetapp
     libnetlink  . . . . . $with_libnetlink
     libnetsnmp  . . . . . $with_libnetsnmp
     libnotify . . . . . . $with_libnotify
@@ -4022,9 +4354,11 @@ Configuration:
     libopenipmi . . . . . $with_libopenipmipthread
     liboping  . . . . . . $with_liboping
     libpcap . . . . . . . $with_libpcap
+    libperfstat . . . . . $with_perfstat
     libperl . . . . . . . $with_libperl
     libpq . . . . . . . . $with_libpq
     libpthread  . . . . . $with_libpthread
+    librouteros . . . . . $with_librouteros
     librrd  . . . . . . . $with_librrd
     libsensors  . . . . . $with_libsensors
     libstatgrab . . . . . $with_libstatgrab
@@ -4035,6 +4369,7 @@ Configuration:
     libxmms . . . . . . . $with_libxmms
     libyajl . . . . . . . $with_libyajl
     oracle  . . . . . . . $with_oracle
+    python  . . . . . . . $with_python
 
   Features:
     daemon mode . . . . . $enable_daemon
@@ -4051,6 +4386,7 @@ Configuration:
     battery . . . . . . . $enable_battery
     bind  . . . . . . . . $enable_bind
     conntrack . . . . . . $enable_conntrack
+    contextswitch . . . . $enable_contextswitch
     cpu . . . . . . . . . $enable_cpu
     cpufreq . . . . . . . $enable_cpufreq
     csv . . . . . . . . . $enable_csv
@@ -4078,6 +4414,7 @@ Configuration:
     logfile . . . . . . . $enable_logfile
     madwifi . . . . . . . $enable_madwifi
     match_empty_counter . $enable_match_empty_counter
+    match_hashed  . . . . $enable_match_hashed
     match_regex . . . . . $enable_match_regex
     match_timediff  . . . $enable_match_timediff
     match_value . . . . . $enable_match_value
@@ -4087,6 +4424,7 @@ Configuration:
     memory  . . . . . . . $enable_memory
     multimeter  . . . . . $enable_multimeter
     mysql . . . . . . . . $enable_mysql
+    netapp  . . . . . . . $enable_netapp
     netlink . . . . . . . $enable_netlink
     network . . . . . . . $enable_network
     nfs . . . . . . . . . $enable_nfs
@@ -4105,6 +4443,8 @@ Configuration:
     powerdns  . . . . . . $enable_powerdns
     processes . . . . . . $enable_processes
     protocols . . . . . . $enable_protocols
+    python  . . . . . . . $enable_python
+    routeros  . . . . . . $enable_routeros
     rrdcached . . . . . . $enable_rrdcached
     rrdtool . . . . . . . $enable_rrdtool
     sensors . . . . . . . $enable_sensors
@@ -4117,6 +4457,7 @@ Configuration:
     tape  . . . . . . . . $enable_tape
     target_notification . $enable_target_notification
     target_replace  . . . $enable_target_replace
+    target_scale  . . . . $enable_target_scale
     target_set  . . . . . $enable_target_set
     tcpconns  . . . . . . $enable_tcpconns
     teamspeak2  . . . . . $enable_teamspeak2

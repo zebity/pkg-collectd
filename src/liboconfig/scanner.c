@@ -982,12 +982,12 @@ YY_RULE_SETUP
 case 8:
 YY_RULE_SETUP
 #line 72 "scanner.l"
-{yylval.boolean = 1; return (TRUE);}
+{yylval.boolean = 1; return (BTRUE);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 73 "scanner.l"
-{yylval.boolean = 0; return (FALSE);}
+{yylval.boolean = 0; return (BFALSE);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP

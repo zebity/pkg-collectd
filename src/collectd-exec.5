@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-EXEC 5"
-.TH COLLECTD-EXEC 5 "2009-12-18" "4.8.1.35.ga4ddcbc" "collectd"
+.TH COLLECTD-EXEC 5 "2010-01-14" "4.9.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -341,6 +341,16 @@ The time in epoch, i.\ e. as seconds since 1970\-01\-01 00:00:00 \s-1UTC\s0.
 Identification of the performance data this notification is associated with.
 All of these fields are optional because notifications do not \fBneed\fR to be
 associated with a certain value.
+.SH "ENVIRONMENT"
+.IX Header "ENVIRONMENT"
+The following environment variables are set by the plugin before calling
+\&\fIexec\fR:
+.IP "\s-1COLLECTD_INTERVAL\s0" 4
+.IX Item "COLLECTD_INTERVAL"
+Value of the global interval setting.
+.IP "\s-1COLLECTD_HOSTNAME\s0" 4
+.IX Item "COLLECTD_HOSTNAME"
+Hostname used by \fIcollectd\fR to dispatch local values.
 .SH "USING NAGIOS PLUGINS"
 .IX Header "USING NAGIOS PLUGINS"
 Though the interface is far from perfect, there are tons of plugins for Nagios.

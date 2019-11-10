@@ -265,6 +265,17 @@ static int exec_config (oconfig_item_t *ci) /* {{{ */
   return (0);
 } /* int exec_config }}} */
 
+static void set_environment (void) /* {{{ */
+{
+  char buffer[1024];
+
+  ssnprintf (buffer, sizeof (buffer), "%i", interval_g);
+  setenv ("COLLECTD_INTERVAL", buffer, /* overwrite = */ 1);
+
+  ssnprintf (buffer, sizeof (buffer), "%s", hostname_g);
+  setenv ("COLLECTD_HOSTNAME", buffer, /* overwrite = */ 1);
+} /* }}} void set_environment */
+
 static void exec_child (program_list_t *pl) /* {{{ */
 {
   int status;
@@ -476,6 +487,8 @@ static int fork_child (program_list_t *pl, int *fd_in, int *fd_out, int *fd_err)
       dup2 (fd_pipe_err[1], STDERR_FILENO);
       close (fd_pipe_err[1]);
     }
+
+    set_environment ();
 
     /* Unblock all signals */
     reset_signal_mask ();

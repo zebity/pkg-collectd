@@ -40,6 +40,9 @@ Features
     - conntrack
       Number of nf_conntrack entries.
 
+    - contextswitch
+      Number of context switches done by the operating system.
+
     - cpu
       CPU utilization: Time spent in the system, user, nice, idle, and related
       states.
@@ -148,6 +151,10 @@ Features
       MySQL server statistics: Commands issued, handlers triggered, thread
       usage, query cache utilization and traffic/octets sent and received.
 
+    - netapp
+      Plugin to query performance values from a NetApp storage system using the
+      “Manage ONTAP” SDK provided by NetApp.
+
     - netlink
       Very detailed Linux network interface and routing statistics. You can get
       (detailed) information on interfaces, qdiscs, classes, and, if you can
@@ -209,6 +216,15 @@ Features
 
     - protocols
       Counts various aspects of network protocols such as IP, TCP, UDP, etc.
+
+    - python
+      The python plugin implements a Python interpreter into collectd. This
+      makes it possible to write plugins in Python which are executed by
+      collectd without the need to start a heavy interpreter every interval.
+      See collectd-python(5) for details.
+
+    - routeros
+      Query interface and wireless registration statistics from RouterOS.
 
     - rrdcached
       RRDtool caching daemon (RRDcacheD) statistics.
@@ -294,6 +310,10 @@ Features
       you can easily do weird stuff with the plugins we didn't dare think of
       ;) See collectd-perl(5).
 
+    - python
+      It's possible to implement write plugins in Python using the python
+      plugin. See collectd-python(5) for details.
+
     - rrdcached
       Output to round-robin-database (RRD) files using the RRDtool caching
       daemon (RRDcacheD) - see rrdcached(1). That daemon provides a general
@@ -326,6 +346,10 @@ Features
       Log messages are propagated to plugins written in Perl as well.
       See collectd-perl(5).
 
+    - python
+      It's possible to implement log plugins in Python using the python plugin.
+      See collectd-python(5) for details.
+
     - syslog
       Logs to the standard UNIX logging mechanism, syslog.
 
@@ -355,11 +379,18 @@ Features
       Notifications are propagated to plugins written in Perl as well.
       See collectd-perl(5).
 
+    - python
+      It's possible to implement notification plugins in Python using the
+      python plugin. See collectd-python(5) for details.
+
   * Value processing can be controlled using the "filter chain" infrastructure
     and "matches" and "targets". The following plugins are available:
 
     - match_empty_counter
       Match counter values which are currently zero.
+
+    - match_hashed
+      Match values using a hash function of the hostname.
 
     - match_regex
       Match values by their identifier based on regular expressions.
@@ -375,6 +406,9 @@ Features
 
     - target_replace
       Replace parts of an identifier using regular expressions.
+
+    - target_scale
+      Scale (multiply) values by an arbitrary value.
 
     - target_set
       Set (overwrite) entire parts of an identifier.
@@ -507,6 +541,10 @@ Prerequisites
     Unsurprisingly used by the `mysql' plugin.
     <http://dev.mysql.com/>
 
+  * libnatapp (optional)
+    Required for the “netapp” plugin.
+    This library is part of the “Manage ONTAP SDK” published by NetApp.
+
   * libnetlink (optional)
     Used, obviously, for the `netlink' plugin.
     <http://www.linuxfoundation.org/en/Net:Iproute2>
@@ -540,6 +578,14 @@ Prerequisites
   * libpq (optional)
     The PostgreSQL C client library used by the `postgresql' plugin.
     <http://www.postgresql.org/>
+
+  * libpython (optional)
+    Used by the `python' plugin. Currently, only 2.3 ≦ Python < 3 is supported.
+    <http://www.python.org/>
+
+  * librouteros (optional)
+    Used by the `routeros' plugin to connect to a device running `RouterOS'.
+    <http://verplant.org/librouteros/>
 
   * librrd (optional)
     Used by the `rrdtool' and `rrdcached' plugins. The latter requires RRDtool

@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-SNMP 5"
-.TH COLLECTD-SNMP 5 "2009-12-18" "4.8.1.35.ga4ddcbc" "collectd"
+.TH COLLECTD-SNMP 5 "2010-01-14" "4.9.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -295,7 +295,8 @@ traffic.
 The gauge-values returned by the SNMP-agent are multiplied by \fIValue\fR.  This
 is useful when values are transfered as a fixed point real number. For example,
 thermometers may transfer \fB243\fR but actually mean \fB24.3\fR, so you can specify
-a scale value of \fB0.1\fR to correct this. The default value is of course \fB1.0\fR.
+a scale value of \fB0.1\fR to correct this. The default value is, of course,
+\&\fB1.0\fR.
 .Sp
 This value is not applied to counter-values.
 .IP "\fBShift\fR \fIValue\fR" 4
@@ -303,7 +304,7 @@ This value is not applied to counter-values.
 \&\fIValue\fR is added to gauge-values returned by the SNMP-agent after they have
 been multiplied by any \fBScale\fR value. If, for example, a thermometer returns
 degrees Kelvin you could specify a shift of \fB273.15\fR here to store values in
-degrees Celsius. The default value is of course \fB0.0\fR.
+degrees Celsius. The default value is, of course, \fB0.0\fR.
 .Sp
 This value is not applied to counter-values.
 .SS "The Host block"

@@ -68,6 +68,10 @@ endif
 if BUILD_WITH_LIBDEVINFO
 collectd_LDADD += -ldevinfo
 endif
+if BUILD_AIX
+collectd_LDFLAGS += -Wl,-bexpall,-brtllib
+collectd_LDADD += -lm
+endif
 
 # The daemon needs to call sg_init, so we need to link it against libstatgrab,
 # too. -octo
@@ -91,6 +95,10 @@ collectd_nagios_LDADD =
 if BUILD_WITH_LIBSOCKET
 collectd_nagios_LDADD += -lsocket
 endif
+if BUILD_AIX
+collectd_nagios_LDADD += -lm
+endif
+
 collectd_nagios_LDADD += libcollectdclient/libcollectdclient.la
 collectd_nagios_DEPENDENCIES = libcollectdclient/libcollectdclient.la
 
@@ -173,6 +181,14 @@ collectd_LDADD += "-dlopen" conntrack.la
 collectd_DEPENDENCIES += conntrack.la
 endif
 
+if BUILD_PLUGIN_CONTEXTSWITCH
+pkglib_LTLIBRARIES += contextswitch.la
+contextswitch_la_SOURCES = contextswitch.c
+contextswitch_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" contextswitch.la
+collectd_DEPENDENCIES += contextswitch.la
+endif
+
 if BUILD_PLUGIN_CPU
 pkglib_LTLIBRARIES += cpu.la
 cpu_la_SOURCES = cpu.c
@@ -188,6 +204,9 @@ endif
 if BUILD_WITH_LIBSTATGRAB
 cpu_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
 cpu_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+endif
+if BUILD_WITH_PERFSTAT
+cpu_la_LIBADD += -lperfstat
 endif
 collectd_LDADD += "-dlopen" cpu.la
 collectd_DEPENDENCIES += cpu.la
@@ -275,6 +294,9 @@ endif
 if BUILD_WITH_LIBSTATGRAB
 disk_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)  
 disk_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+endif
+if BUILD_WITH_PERFSTAT
+disk_la_LIBADD += -lperfstat
 endif
 collectd_LDADD += "-dlopen" disk.la
 collectd_DEPENDENCIES += disk.la
@@ -366,6 +388,9 @@ if BUILD_WITH_LIBDEVINFO
 interface_la_LIBADD += -ldevinfo
 endif # BUILD_WITH_LIBDEVINFO
 endif # !BUILD_WITH_LIBSTATGRAB
+if BUILD_WITH_PERFSTAT
+interface_la_LIBADD += -lperfstat
+endif
 endif # BUILD_PLUGIN_INTERFACE
 
 if BUILD_PLUGIN_IPTABLES
@@ -444,6 +469,9 @@ if BUILD_WITH_LIBSTATGRAB
 load_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
 load_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 endif # BUILD_WITH_LIBSTATGRAB
+if BUILD_WITH_PERFSTAT
+load_la_LIBADD += -lperfstat
+endif
 endif # BUILD_PLUGIN_LOAD
 
 if BUILD_PLUGIN_LOGFILE
@@ -468,6 +496,14 @@ match_empty_counter_la_SOURCES = match_empty_counter.c
 match_empty_counter_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" match_empty_counter.la
 collectd_DEPENDENCIES += match_empty_counter.la
+endif
+
+if BUILD_PLUGIN_MATCH_HASHED
+pkglib_LTLIBRARIES += match_hashed.la
+match_hashed_la_SOURCES = match_hashed.c
+match_hashed_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" match_hashed.la
+collectd_DEPENDENCIES += match_hashed.la
 endif
 
 if BUILD_PLUGIN_MATCH_REGEX
@@ -546,6 +582,9 @@ if BUILD_WITH_LIBSTATGRAB
 memory_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
 memory_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 endif
+if BUILD_WITH_PERFSTAT
+memory_la_LIBADD += -lperfstat
+endif
 endif
 
 if BUILD_PLUGIN_MULTIMETER
@@ -568,6 +607,16 @@ mysql_la_CFLAGS += $(BUILD_WITH_LIBMYSQL_CFLAGS)
 mysql_la_LIBADD += $(BUILD_WITH_LIBMYSQL_LIBS)
 endif
 collectd_DEPENDENCIES += mysql.la
+endif
+
+if BUILD_PLUGIN_NETAPP
+pkglib_LTLIBRARIES += netapp.la
+netapp_la_SOURCES = netapp.c
+netapp_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBNETAPP_CPPFLAGS)
+netapp_la_LDFLAGS = -module -avoid-version $(LIBNETAPP_LDFLAGS)
+netapp_la_LIBADD = $(LIBNETAPP_LIBS)
+collectd_LDADD += "-dlopen" netapp.la
+collectd_DEPENDENCIES += netapp.la
 endif
 
 if BUILD_PLUGIN_NETLINK
@@ -764,6 +813,16 @@ collectd_LDADD += "-dlopen" powerdns.la
 collectd_DEPENDENCIES += powerdns.la
 endif
 
+if BUILD_PLUGIN_PYTHON
+pkglib_LTLIBRARIES += python.la
+python_la_SOURCES = python.c pyconfig.c pyvalues.c cpython.h
+python_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_PYTHON_CPPFLAGS)
+python_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_PYTHON_LDFLAGS)
+python_la_LIBADD = $(BUILD_WITH_PYTHON_LIBS)
+collectd_LDADD += "-dlopen" python.la
+collectd_DEPENDENCIES += python.la
+endif
+
 if BUILD_PLUGIN_PROCESSES
 pkglib_LTLIBRARIES += processes.la
 processes_la_SOURCES = processes.c
@@ -782,6 +841,16 @@ protocols_la_SOURCES = protocols.c
 protocols_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" protocols.la
 collectd_DEPENDENCIES += protocols.la
+endif
+
+if BUILD_PLUGIN_ROUTEROS
+pkglib_LTLIBRARIES += routeros.la
+routeros_la_SOURCES = routeros.c
+routeros_la_CPPFLAGS = $(BUILD_WITH_LIBROUTEROS_CPPFLAGS)
+routeros_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBROUTEROS_LDFLAGS)
+routeros_la_LIBADD = -lrouteros
+collectd_LDADD += "-dlopen" routeros.la
+collectd_DEPENDENCIES += routeros.la
 endif
 
 if BUILD_PLUGIN_RRDCACHED
@@ -860,6 +929,10 @@ if BUILD_WITH_LIBSTATGRAB
 swap_la_CFLAGS += $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
 swap_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
 endif
+if BUILD_WITH_PERFSTAT
+swap_la_LIBADD += -lperfstat
+endif
+
 endif
 
 if BUILD_PLUGIN_SYSLOG
@@ -909,6 +982,14 @@ target_replace_la_SOURCES = target_replace.c
 target_replace_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" target_replace.la
 collectd_DEPENDENCIES += target_replace.la
+endif
+
+if BUILD_PLUGIN_TARGET_SCALE
+pkglib_LTLIBRARIES += target_scale.la
+target_scale_la_SOURCES = target_scale.c
+target_scale_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" target_scale.la
+collectd_DEPENDENCIES += target_scale.la
 endif
 
 if BUILD_PLUGIN_TARGET_SET
@@ -1088,6 +1169,7 @@ dist_man_MANS = collectd.1 \
 		collectdmon.1 \
 		collectd-nagios.1 \
 		collectd-perl.5 \
+		collectd-python.5 \
 		collectd-snmp.5 \
 		collectd-unixsock.5 \
 		types.db.5
@@ -1103,6 +1185,7 @@ EXTRA_DIST +=   collectd.conf.pod \
 		collectdmon.pod \
 		collectd-nagios.pod \
 		collectd-perl.pod \
+		collectd-python.pod \
 		collectd.pod \
 		collectd-snmp.pod \
 		collectd-unixsock.pod \

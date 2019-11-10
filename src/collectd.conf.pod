@@ -501,12 +501,18 @@ File that holds one or more SSL certificates. If you want to use HTTPS you will
 possibly need this option. What CA certificates come bundled with C<libcurl>
 and are checked by default depends on the distribution you use.
 
+=item B<MeasureResponseTime> B<true>|B<false>
+
+Measure response time for the request. If this setting is enabled, B<Match>
+blocks (see below) are optional. Disabled by default.
+
 =item B<E<lt>MatchE<gt>>
 
 One or more B<Match> blocks that define how to match information in the data
 returned by C<libcurl>. The C<curl> plugin uses the same infrastructure that's
 used by the C<tail> plugin, so please see the documentation of the C<tail>
-plugin below on how matches are defined.
+plugin below on how matches are defined. If the B<MeasureResponseTime> option
+is set to B<true>, B<Match> blocks are optional.
 
 =back
 
@@ -556,9 +562,9 @@ The following example will collect the status values from each database:
 
 In the B<Plugin> block, there may be one or more B<URL> blocks, each defining
 a URL to be fetched via HTTP (using libcurl) and one or more B<Key> blocks.
-The B<Key> string argument must be in a path format, of which is used to collect
-a value from a JSON map object.  If a B<Key> path element is that of a I<*> wildcard,
-the values for all keys will be collectd.
+The B<Key> string argument must be in a path format, which is used to collect a
+value from a JSON map object. If a path element of B<Key> is the
+I<*>E<nbsp>wildcard, the values for all keys will be collectd.
 
 The following options are valid within B<URL> blocks:
 
@@ -663,7 +669,7 @@ The following is a complete list of options:
 Query blocks define I<SQL> statements and how the returned data should be
 interpreted. They are identified by the name that is given in the opening line
 of the block. Thus the name needs to be unique. Other than that, the name is
-not used in collectd. 
+not used in collectd.
 
 In each B<Query> block, there is one or more B<Result> blocks. B<Result> blocks
 define which column holds which value or instance information. You can use
@@ -721,7 +727,7 @@ options to provide multiple queries with the same name but with a slightly
 different syntax. The plugin will use only those queries, where the specified
 minimum and maximum versions fit the version of the database in use.
 
-The database version is determined by C<dbi_conn_get_engine_version>, see the 
+The database version is determined by C<dbi_conn_get_engine_version>, see the
 L<libdbi documentation|http://libdbi.sourceforge.net/docs/programmers-guide/reference-conn.html#DBI-CONN-GET-ENGINE-VERSION>
 for details. Basically, each part of the version is assumed to be in the range
 from B<00> to B<99> and all dots are removed. So version "4.1.2" becomes
@@ -866,18 +872,43 @@ Select partitions based on the mountpoint.
 
 Select partitions based on the filesystem type.
 
-=item B<IgnoreSelected> I<true>|I<false>
+=item B<IgnoreSelected> B<true>|B<false>
 
 Invert the selection: If set to true, all partitions B<except> the ones that
 match any one of the criteria are collected. By default only selected
 partitions are collected if a selection is made. If no selection is configured
 at all, B<all> partitions are selected.
 
-=item B<ReportByDevice> I<true>|I<false>
+=item B<ReportByDevice> B<true>|B<false>
 
 Report using the device name rather than the mountpoint. i.e. with this I<false>,
 (the default), it will report a disk as "root", but with it I<true>, it will be
 "sda1" (or whichever).
+
+=item B<ReportReserved> B<true>|B<false>
+
+When enabled, the blocks reserved for root are reported separately. When
+disabled (the default for backwards compatibility reasons) the reserved space
+will be included in the "free" space.
+
+When disabled, the "df" type will be used to store "free" and "used" space. The
+mount point or disk name (see option B<ReportByDevice>) is used as type
+instance in this case (again: backwards compatibility).
+
+When enabled, the type "df_complex" is used and three files are created. The
+mount point or disk name is used as plugin instance and the type instance is
+set to "free", "reserved" and "used" as appropriate.
+
+Enabling this option is recommended.
+
+=item B<ReportInodes> B<true>|B<false>
+
+Enables or disables reporting of free, reserved and used inodes. Defaults to
+inode collection being disabled.
+
+Enable this option if inodes are a scarce resource for you, usually because
+many small files are stored on the disk. This is a usual scenario for mail
+transfer agents and web caches.
 
 =back
 
@@ -1640,6 +1671,463 @@ or SQL threads are not running.
 
 =back
 
+=head2 Plugin C<netapp>
+
+The netapp plugin can collect various performance and capacity informations
+from a NetApp filer using the NetApp API.
+
+Please note that NetApp has a wide line of products and a lot of different
+software versions for each of these products. This plugin was developed for a
+NetApp FAS3040 running OnTap 7.2.3P8 and tested on FAS2050 7.3.1.1L1,
+FAS3140 7.2.5.1 and FAS3020 7.2.4P9. It I<should> work for most combinations of
+model and software version but it is very hard to test this.
+If you have used this plugin with other models and/or software version, feel
+free to send us a mail to tell us about the results, even if it's just a short
+"It works".
+
+To collect these data collectd will log in to the NetApp via HTTP(S) and HTTP
+basic authentication.
+
+B<Do not use a regular user for this!> Create a special collectd user with just
+the minimum of capabilities needed. The user only needs the "login-http-admin"
+capability as well as a few more depending on which data will be collected.
+Required capabilities are documented below.
+
+=head3 Synopsis
+
+ <Plugin "netapp">
+   <Host "netapp1.example.com">
+    Protocol      "https"
+    Address       "10.0.0.1"
+    Port          443
+    User          "username"
+    Password      "aef4Aebe"
+    Interval      30
+    
+    <WAFL>
+      Interval 30
+      GetNameCache   true
+      GetDirCache    true
+      GetBufferCache true
+      GetInodeCache  true
+    </WAFL>
+    
+    <Disks>
+      Interval 30
+      GetBusy true
+    </Disks>
+    
+    <VolumePerf>
+      Interval 30
+      GetIO      "volume0"
+      IgnoreSelectedIO      false
+      GetOps     "volume0"
+      IgnoreSelectedOps     false
+      GetLatency "volume0"
+      IgnoreSelectedLatency false
+    </VolumePerf>
+    
+    <VolumeUsage>
+      Interval 30
+      GetCapacity "vol0"
+      GetCapacity "vol1"
+      IgnoreSelectedCapacity false
+      GetSnapshot "vol1"
+      GetSnapshot "vol3"
+      IgnoreSelectedSnapshot false
+    </VolumeUsage>
+    
+    <System>
+      Interval 30
+      GetCPULoad     true
+      GetInterfaces  true
+      GetDiskOps     true
+      GetDiskIO      true
+    </System>
+   </Host>
+ </Plugin>
+
+The netapp plugin accepts the following configuration options:
+
+=over 4
+
+=item B<Host> I<Name>
+
+A host block defines one NetApp filer. It will appear in collectd with the name
+you specify here which does not have to be its real name nor its hostname.
+
+=item B<Protocol> B<httpd>|B<http>
+
+The protocol collectd will use to query this host.
+
+Optional
+
+Type: string
+
+Default: https
+
+Valid options: http, https
+
+=item B<Address> I<Address>
+
+The hostname or IP address of the host.
+
+Optional
+
+Type: string
+
+Default: The "host" block's name.
+
+=item B<Port> I<Port>
+
+The TCP port to connect to on the host.
+
+Optional
+
+Type: integer
+
+Default: 80 for protocol "http", 443 for protocol "https"
+
+=item B<User> I<User>
+
+=item B<Password> I<Password>
+
+The username and password to use to login to the NetApp.
+
+Mandatory
+
+Type: string
+
+=item B<Interval> I<Interval>
+
+B<TODO>
+
+=back
+
+The following options decide what kind of data will be collected. You can
+either use them as a block and fine tune various parameters inside this block,
+use them as a single statement to just accept all default values, or omit it to
+not collect any data.
+
+The following options are valid inside all blocks:
+
+=over 4
+
+=item B<Interval> I<Seconds>
+
+Collect the respective statistics every I<Seconds> seconds. Defaults to the
+host specific setting.
+
+=back
+
+=head3 The System block
+
+This will collect various performance data about the whole system.
+
+B<Note:> To get this data the collectd user needs the
+"api-perf-object-get-instances" capability.
+
+=over 4
+
+=item B<Interval> I<Seconds>
+
+Collect disk statistics every I<Seconds> seconds.
+
+=item B<GetCPULoad> B<true>|B<false>
+
+If you set this option to true the current CPU usage will be read. This will be
+the average usage between all CPUs in your NetApp without any information about
+individual CPUs.
+
+B<Note:> These are the same values that the NetApp CLI command "sysstat"
+returns in the "CPU" field.
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: Two value lists of type "cpu", and type instances "idle" and "system".
+
+=item B<GetInterfaces> B<true>|B<false>
+
+If you set this option to true the current traffic of the network interfaces
+will be read. This will be the total traffic over all interfaces of your NetApp
+without any information about individual interfaces.
+
+B<Note:> This is the same values that the NetApp CLI command "sysstat" returns
+in the "Net kB/s" field.
+
+B<Or is it?>
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: One value list of type "if_octects".
+
+=item B<GetDiskIO> B<true>|B<false>
+
+If you set this option to true the current IO throughput will be read. This
+will be the total IO of your NetApp without any information about individual
+disks, volumes or aggregates.
+
+B<Note:> This is the same values that the NetApp CLI command "sysstat" returns
+in the "DiskE<nbsp>kB/s" field.
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: One value list of type "disk_octets".
+
+=item B<GetDiskOps> B<true>|B<false>
+
+If you set this option to true the current number of HTTP, NFS, CIFS, FCP,
+iSCSI, etc. operations will be read. This will be the total number of
+operations on your NetApp without any information about individual volumes or
+aggregates.
+
+B<Note:> These are the same values that the NetApp CLI command "sysstat"
+returns in the "NFS", "CIFS", "HTTP", "FCP" and "iSCSI" fields.
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: A variable number of value lists of type "disk_ops_complex". Each type
+of operation will result in one value list with the name of the operation as
+type instance.
+
+=back
+
+=head3 The WAFL block
+
+This will collect various performance data about the WAFL file system. At the
+moment this just means cache performance.
+
+B<Note:> To get this data the collectd user needs the
+"api-perf-object-get-instances" capability.
+
+B<Note:> The interface to get these values is classified as "Diagnostics" by
+NetApp. This means that it is not guaranteed to be stable even between minor
+releases.
+
+=over 4
+
+=item B<Interval> I<Seconds>
+
+Collect disk statistics every I<Seconds> seconds.
+
+=item B<GetNameCache> B<true>|B<false>
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: One value list of type "cache_ratio" and type instance
+"name_cache_hit".
+
+=item B<GetDirCache> B<true>|B<false>
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: One value list of type "cache_ratio" and type instance "find_dir_hit".
+
+=item B<GetInodeCache> B<true>|B<false>
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: One value list of type "cache_ratio" and type instance
+"inode_cache_hit".
+
+=item B<GetBufferCache> B<true>|B<false>
+
+B<Note:> This is the same value that the NetApp CLI command "sysstat" returns
+in the "Cache hit" field.
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: One value list of type "cache_ratio" and type instance "buf_hash_hit".
+
+=back
+
+=head3 The Disks block
+
+This will collect performance data about the individual disks in the NetApp.
+
+B<Note:> To get this data the collectd user needs the
+"api-perf-object-get-instances" capability.
+
+=over 4
+
+=item B<Interval> I<Seconds>
+
+Collect disk statistics every I<Seconds> seconds.
+
+=item B<GetBusy> B<true>|B<false>
+
+If you set this option to true the busy time of all disks will be calculated
+and the value of the busiest disk in the system will be written.
+
+B<Note:> This is the same values that the NetApp CLI command "sysstat" returns
+in the "Disk util" field. Probably.
+
+Optional
+
+Type: boolean
+
+Default: true
+
+Result: One value list of type "percent" and type instance "disk_busy".
+
+=back
+
+=head3 The VolumePerf block
+
+This will collect various performance data about the individual volumes.
+
+You can select which data to collect about which volume using the following
+options. They follow the standard ignorelist semantic.
+
+B<Note:> To get this data the collectd user needs the
+I<api-perf-object-get-instances> capability.
+
+=over 4
+
+=item B<Interval> I<Seconds>
+
+Collect volume performance data every I<Seconds> seconds.
+
+=item B<GetIO> I<Volume>
+
+=item B<GetOps> I<Volume>
+
+=item B<GetLatency> I<Volume>
+
+Select the given volume for IO, operations or latency statistics collection.
+The argument is the name of the volume without the C</vol/> prefix.
+
+Since the standard ignorelist functionality is used here, you can use a string
+starting and ending with a slash to specify regular expression matching: To
+match the volumes "vol0", "vol2" and "vol7", you can use this regular
+expression:
+
+  GetIO "/^vol[027]$/"
+
+If no regular expression is specified, an exact match is required. Both,
+regular and exact matching are case sensitive.
+
+If no volume was specified at all for either of the three options, that data
+will be collected for all available volumes.
+
+=item B<IgnoreSelectedIO> B<true>|B<false>
+
+=item B<IgnoreSelectedOps> B<true>|B<false>
+
+=item B<IgnoreSelectedLatency> B<true>|B<false>
+
+When set to B<true>, the volumes selected for IO, operations or latency
+statistics collection will be ignored and the data will be collected for all
+other volumes.
+
+When set to B<false>, data will only be collected for the specified volumes and
+all other volumes will be ignored.
+
+If no volumes have been specified with the above B<Get*> options, all volumes
+will be collected regardless of the B<IgnoreSelected*> option.
+
+Defaults to B<false>
+
+=back
+
+=head3 The VolumeUsage block
+
+This will collect capacity data about the individual volumes.
+
+B<Note:> To get this data the collectd user needs the I<api-volume-list-info>
+capability.
+
+=over 4
+
+=item B<Interval> I<Seconds>
+
+Collect volume usage statistics every I<Seconds> seconds.
+
+=item B<GetCapacity> I<VolumeName>
+
+The current capacity of the volume will be collected. This will result in two
+to four value lists, depending on the configuration of the volume. All data
+sources are of type "df_complex" with the name of the volume as
+plugin_instance.
+
+There will be type_instances "used" and "free" for the number of used and
+available bytes on the volume.  If the volume has some space reserved for
+snapshots, a type_instance "snap_reserved" will be available.  If the volume
+has SIS enabled, a type_instance "sis_saved" will be available. This is the
+number of bytes saved by the SIS feature.
+
+B<Note:> The current NetApp API has a bug that results in this value being
+reported as a 32E<nbsp>bit number. This plugin tries to guess the correct
+number which works most of the time.  If you see strange values here, bug
+NetApp support to fix this.
+
+Repeat this option to specify multiple volumes.
+
+=item B<IgnoreSelectedCapacity> B<true>|B<false>
+
+Specify whether to collect only the volumes selected by the B<GetCapacity>
+option or to ignore those volumes. B<IgnoreSelectedCapacity> defaults to
+B<false>. However, if no B<GetCapacity> option is specified at all, all
+capacities will be selected anyway.
+
+=item B<GetSnapshot> I<VolumeName>
+
+Select volumes from which to collect snapshot information.
+
+Usually, the space used for snapshots is included in the space reported as
+"used". If snapshot information is collected as well, the space used for
+snapshots is subtracted from the used space.
+
+To make things even more interesting, it is possible to reserve space to be
+used for snapshots. If the space required for snapshots is less than that
+reserved space, there is "reserved free" and "reserved used" space in addition
+to "free" and "used". If the space required for snapshots exceeds the reserved
+space, that part allocated in the normal space is subtracted from the "used"
+space again.
+
+Repeat this option to specify multiple volumes.
+
+=item B<IgnoreSelectedSnapshot>
+
+Specify whether to collect only the volumes selected by the B<GetSnapshot>
+option or to ignore those volumes. B<IgnoreSelectedSnapshot> defaults to
+B<false>. However, if no B<GetSnapshot> option is specified at all, all
+capacities will be selected anyway.
+
+=back
+
 =head2 Plugin C<netlink>
 
 The C<netlink> plugin uses a netlink socket to query the Linux kernel about
@@ -1863,6 +2351,14 @@ freeing the unused memory again. Since this process is somewhat expensive and
 normally doesn't do much, this value should not be too small. The default is
 1800 seconds, but setting this to 86400 seconds (one day) will not do much harm
 either.
+
+=item B<ReportStats> B<true>|B<false>
+
+The network plugin cannot only receive and send statistics, it can also create
+statistics about itself. Collected data included the number of received and
+sent octets and packets, the length of the receive queue and the number of
+values handled. When set to B<true>, the I<Network plugin> will make these
+statistics available. Defaults to B<false>.
 
 =back
 
@@ -2165,6 +2661,12 @@ Available options:
 
 Specifies the location of the status file.
 
+=item B<Compression> B<true>|B<false>
+
+Sets whether or not statistics about the compression used by OpenVPN should be
+collected. This information is only available in I<single> mode. Enabled by
+default.
+
 =back
 
 =head2 Plugin C<oracle>
@@ -2273,6 +2775,24 @@ Default: B<0.9>
 =item B<TTL> I<0-255>
 
 Sets the Time-To-Live of generated ICMP packets.
+
+=item B<SourceAddress> I<host>
+
+Sets the source address to use. I<host> may either be a numerical network
+address or a network hostname.
+
+=item B<Device> I<name>
+
+Sets the outgoing network device to be used. I<name> has to specify an
+interface name (e.E<nbsp>g. C<eth0>). This might not be supported by all
+operating systems.
+
+=item B<MaxMissed> I<Packets>
+
+Trigger a DNS resolv after the host has not replied to I<Packets> packets. This
+enables the use of dynamic DNS services (like dyndns.org) with the ping plugin.
+
+Default: B<-1> (disabled)
 
 =back
 
@@ -2750,7 +3270,7 @@ C<I<prefix>/var/run/collectd-powerdns>.
 Select more detailed statistics of processes matching this name. The statistics
 collected for these selected processes are size of the resident segment size
 (RSS), user- and system-time used, number of processes and number of threads,
-and minor and major pagefaults.
+io data (where available) and minor and major pagefaults.
 
 =item B<ProcessMatch> I<name> I<regex>
 
@@ -2793,6 +3313,71 @@ If no value is configured at all, all values will be selected.
 
 If set to B<true>, inverts the selection made by B<Value>, i.E<nbsp>e. all
 matching values will be ignored.
+
+=back
+
+=head2 Plugin C<python>
+
+This plugin embeds a Python-interpreter into collectd and provides an interface
+to collectd's plugin system. See L<collectd-python(5)> for its documentation.
+
+=head2 Plugin C<routeros>
+
+The C<routeros> plugin connects to a device running I<RouterOS>, the
+Linux-based operating system for routers by I<MikroTik>. The plugin uses
+I<librouteros> to connect and reads information about the interfaces and
+wireless connections of the device. The configuration supports querying
+multiple routers:
+
+  <Plugin "routeros">
+    <Router>
+      Host "router0.example.com"
+      User "collectd"
+      Password "secr3t"
+      CollectInterface true
+    </Router>
+    <Router>
+      Host "router1.example.com"
+      User "collectd"
+      Password "5ecret"
+      CollectInterface true
+      CollectRegistrationTable true
+    </Router>
+  </Plugin>
+
+As you can see above, the configuration of the I<routeros> plugin consists of
+one or more B<E<lt>RouterE<gt>> blocks. Within each block, the following
+options are understood:
+
+=over 4
+
+=item B<Host> I<Host>
+
+Hostname or IP-address of the router to connect to.
+
+=item B<Port> I<Port>
+
+Port name or port number used when connecting. If left unspecified, the default
+will be chosen by I<librouteros>, currently "8728". This option expects a
+string argument, even when a numeric port number is given.
+
+=item B<User> I<User>
+
+Use the user name I<User> to authenticate. Defaults to "admin".
+
+=item B<Password> I<Password>
+
+Set the password used to authenticate.
+
+=item B<CollectInterface> B<true>|B<false>
+
+When set to B<true>, interface statistics will be collected for all interfaces
+present on the device. Defaults to B<false>.
+
+=item B<CollectRegistrationTable> B<true>|B<false>
+
+When set to B<true>, information about wireless LAN connections will be
+collected. Defaults to B<false>.
 
 =back
 
@@ -3345,7 +3930,7 @@ selection is configured at all, B<all> devices are selected.
 
 =head2 Plugin C<tokyotyrant>
 
-The C<tokyotyrant plugin> connects to a TokyoTyrant server and collects a 
+The C<tokyotyrant plugin> connects to a TokyoTyrant server and collects a
 couple metrics: number of records, and database size on disk.
 
 =over 4
@@ -3913,7 +4498,7 @@ This is the same as writing:
 
 =back
 
-=head2 Built-in targets 
+=head2 Built-in targets
 
 The following targets are built into the core daemon and therefore need no
 plugins to be loaded:
@@ -4154,6 +4739,77 @@ behavior: Counters which hardly ever increase will be zero for long periods of
 time. If the counter is reset for some reason (machine or service restarted,
 usually), the graph will be empty (NAN) for a long time. People may not
 understand why.
+
+=item B<hashed>
+
+Calculates a hash value of the host name and matches values according to that
+hash value. This makes it possible to divide all hosts into groups and match
+only values that are in a specific group. The intended use is in load
+balancing, where you want to handle only part of all data and leave the rest
+for other servers.
+
+The hashing function used tries to distribute the hosts evenly. First, it
+calculates a 32E<nbsp>bit hash value using the characters of the hostname:
+
+  hash_value = 0;
+  for (i = 0; host[i] != 0; i++)
+    hash_value = (hash_value * 251) + host[i];
+
+The constant 251 is a prime number which is supposed to make this hash value
+more random. The code then checks the group for this host according to the
+I<Total> and I<Match> arguments:
+
+  if ((hash_value % Total) == Match)
+    matches;
+  else
+    does not match;
+
+Please note that when you set I<Total> to two (i.E<nbsp>e. you have only two
+groups), then the least significant bit of the hash value will be the XOR of
+all least significant bits in the host name. One consequence is that when you
+have two hosts, "server0.example.com" and "server1.example.com", where the host
+name differs in one digit only and the digits differ by one, those hosts will
+never end up in the same group.
+
+Available options:
+
+=over 4
+
+=item B<Match> I<Match> I<Total>
+
+Divide the data into I<Total> groups and match all hosts in group I<Match> as
+described above. The groups are numbered from zero, i.E<nbsp>e. I<Match> must
+be smaller than I<Total>. I<Total> must be at least one, although only values
+greater than one really do make any sense.
+
+You can repeat this option to match multiple groups, for example:
+
+  Match 3 7
+  Match 5 7
+
+The above config will divide the data into seven groups and match groups three
+and five. One use would be to keep every value on two hosts so that if one
+fails the missing data can later be reconstructed from the second host.
+
+=back
+
+Example:
+
+ # Operate on the pre-cache chain, so that ignored values are not even in the
+ # global cache.
+ <Chain "PreCache">
+   <Rule>
+     <Match "hashed">
+       # Divide all received hosts in seven groups and accept all hosts in
+       # group three.
+       Match 3 7
+     </Match>
+     # If matched: Return and continue.
+     Target "return"
+   </Rule>
+   # If not matched: Return and stop.
+   Target "stop"
+ </Chain>
 
 =back
 

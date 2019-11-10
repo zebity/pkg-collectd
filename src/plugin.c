@@ -151,7 +151,7 @@ static void destroy_read_heap (void) /* {{{ */
 	{
 		callback_func_t *cf;
 
-		cf = c_head_get_root (read_heap);
+		cf = c_heap_get_root (read_heap);
 		if (cf == NULL)
 			break;
 
@@ -173,7 +173,7 @@ static int register_callback (llist_t **list, /* {{{ */
 		*list = llist_create ();
 		if (*list == NULL)
 		{
-			ERROR ("plugin: create_register_callback: "
+			ERROR ("plugin: register_callback: "
 					"llist_create failed.");
 			destroy_callback (cf);
 			return (-1);
@@ -183,7 +183,7 @@ static int register_callback (llist_t **list, /* {{{ */
 	key = strdup (name);
 	if (key == NULL)
 	{
-		ERROR ("plugin: create_register_callback: strdup failed.");
+		ERROR ("plugin: register_callback: strdup failed.");
 		destroy_callback (cf);
 		return (-1);
 	}
@@ -194,7 +194,7 @@ static int register_callback (llist_t **list, /* {{{ */
 		le = llentry_create (key, cf);
 		if (le == NULL)
 		{
-			ERROR ("plugin: create_register_callback: "
+			ERROR ("plugin: register_callback: "
 					"llentry_create failed.");
 			free (key);
 			destroy_callback (cf);
@@ -209,6 +209,10 @@ static int register_callback (llist_t **list, /* {{{ */
 
 		old_cf = le->value;
 		le->value = cf;
+
+		WARNING ("plugin: register_callback: "
+				"a callback named `%s' already exists - "
+				"overwriting the old entry!", name);
 
 		destroy_callback (old_cf);
 		sfree (key);
@@ -270,7 +274,7 @@ static int plugin_unregister (llist_t *list, const char *name) /* {{{ */
  * object, but it will bitch about a shared object not having a
  * ``module_register'' symbol..
  */
-static int plugin_load_file (char *file)
+static int plugin_load_file (char *file, uint32_t flags)
 {
 	lt_dlhandle dlh;
 	void (*reg_handle) (void);
@@ -280,7 +284,24 @@ static int plugin_load_file (char *file)
 	lt_dlinit ();
 	lt_dlerror (); /* clear errors */
 
-	if ((dlh = lt_dlopen (file)) == NULL)
+#if LIBTOOL_VERSION == 2
+	if (flags & PLUGIN_FLAGS_GLOBAL) {
+		lt_dladvise advise;
+		lt_dladvise_init(&advise);
+		lt_dladvise_global(&advise);
+		dlh = lt_dlopenadvise(file, advise);
+		lt_dladvise_destroy(&advise);
+	} else {
+        	dlh = lt_dlopen (file);
+	}
+#else /* if LIBTOOL_VERSION == 1 */
+	if (flags & PLUGIN_FLAGS_GLOBAL)
+		ERROR ("plugin_load_file: The global flag is not supported, "
+				"libtool 2 is required for this.");
+	dlh = lt_dlopen (file);
+#endif
+
+	if (dlh == NULL)
 	{
 		const char *error = lt_dlerror ();
 
@@ -312,7 +333,7 @@ static void *plugin_read_thread (void __attribute__((unused)) *args)
 		int rf_type;
 
 		/* Get the read function that needs to be read next. */
-		rf = c_head_get_root (read_heap);
+		rf = c_heap_get_root (read_heap);
 		if (rf == NULL)
 		{
 			struct timespec abstime;
@@ -535,7 +556,7 @@ void plugin_set_dir (const char *dir)
 }
 
 #define BUFSIZE 512
-int plugin_load (const char *type)
+int plugin_load (const char *type, uint32_t flags)
 {
 	DIR  *dh;
 	const char *dir;
@@ -597,7 +618,7 @@ int plugin_load (const char *type)
 			continue;
 		}
 
-		if (plugin_load_file (filename) == 0)
+		if (plugin_load_file (filename, flags) == 0)
 		{
 			/* success */
 			ret = 0;
@@ -1036,7 +1057,7 @@ int plugin_read_all_once (void)
 	{
 		read_func_t *rf;
 
-		rf = c_head_get_root (read_heap);
+		rf = c_heap_get_root (read_heap);
 		if (rf == NULL)
 			break;
 

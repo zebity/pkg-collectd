@@ -40,8 +40,8 @@
       know about them.  */
    enum yytokentype {
      NUMBER = 258,
-     TRUE = 259,
-     FALSE = 260,
+     BTRUE = 259,
+     BFALSE = 260,
      QUOTED_STRING = 261,
      UNQUOTED_STRING = 262,
      SLASH = 263,
@@ -52,8 +52,8 @@
 #endif
 /* Tokens.  */
 #define NUMBER 258
-#define TRUE 259
-#define FALSE 260
+#define BTRUE 259
+#define BFALSE 260
 #define QUOTED_STRING 261
 #define UNQUOTED_STRING 262
 #define SLASH 263

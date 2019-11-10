@@ -290,6 +290,9 @@
 /* Define to 1 if you have the <libmemcached/memcached.h> header file. */
 #undef HAVE_LIBMEMCACHED_MEMCACHED_H
 
+/* Define to 1 if you have the netapp library (-lnetapp). */
+#undef HAVE_LIBNETAPP
+
 /* Define to 1 if you have the <libnetlink.h> header file. */
 #undef HAVE_LIBNETLINK_H
 
@@ -457,6 +460,9 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
+/* Define to 1 if you have the <netapp_api.h> header file. */
+#undef HAVE_NETAPP_API_H
+
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
@@ -535,6 +541,9 @@
 /* Define to 1 if you have the <pcap.h> header file. */
 #undef HAVE_PCAP_H
 
+/* Define to 1 if you have the 'perfstat' library (-lperfstat) */
+#undef HAVE_PERFSTAT
+
 /* Define if Perl supports ithreads. */
 #undef HAVE_PERL_ITHREADS
 
@@ -561,6 +570,9 @@
 
 /* Define to 1 if the conntrack plugin is enabled. */
 #undef HAVE_PLUGIN_CONNTRACK
+
+/* Define to 1 if the contextswitch plugin is enabled. */
+#undef HAVE_PLUGIN_CONTEXTSWITCH
 
 /* Define to 1 if the cpu plugin is enabled. */
 #undef HAVE_PLUGIN_CPU
@@ -643,6 +655,9 @@
 /* Define to 1 if the match_empty_counter plugin is enabled. */
 #undef HAVE_PLUGIN_MATCH_EMPTY_COUNTER
 
+/* Define to 1 if the match_hashed plugin is enabled. */
+#undef HAVE_PLUGIN_MATCH_HASHED
+
 /* Define to 1 if the match_regex plugin is enabled. */
 #undef HAVE_PLUGIN_MATCH_REGEX
 
@@ -669,6 +684,9 @@
 
 /* Define to 1 if the mysql plugin is enabled. */
 #undef HAVE_PLUGIN_MYSQL
+
+/* Define to 1 if the netapp plugin is enabled. */
+#undef HAVE_PLUGIN_NETAPP
 
 /* Define to 1 if the netlink plugin is enabled. */
 #undef HAVE_PLUGIN_NETLINK
@@ -724,6 +742,12 @@
 /* Define to 1 if the protocols plugin is enabled. */
 #undef HAVE_PLUGIN_PROTOCOLS
 
+/* Define to 1 if the python plugin is enabled. */
+#undef HAVE_PLUGIN_PYTHON
+
+/* Define to 1 if the routeros plugin is enabled. */
+#undef HAVE_PLUGIN_ROUTEROS
+
 /* Define to 1 if the rrdcached plugin is enabled. */
 #undef HAVE_PLUGIN_RRDCACHED
 
@@ -759,6 +783,9 @@
 
 /* Define to 1 if the target_replace plugin is enabled. */
 #undef HAVE_PLUGIN_TARGET_REPLACE
+
+/* Define to 1 if the target_scale plugin is enabled. */
+#undef HAVE_PLUGIN_TARGET_SCALE
 
 /* Define to 1 if the target_set plugin is enabled. */
 #undef HAVE_PLUGIN_TARGET_SET
@@ -817,11 +844,17 @@
 /* Define to 1 if you have the `processor_info' function. */
 #undef HAVE_PROCESSOR_INFO
 
+/* Define to 1 if you have the procinfo.h */
+#undef HAVE_PROCINFO_H
+
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
+
+/* Define to 1 if you have the <Python.h> header file. */
+#undef HAVE_PYTHON_H
 
 /* Define to 1 if you have the `readdir' function. */
 #undef HAVE_READDIR
@@ -840,6 +873,9 @@
 
 /* Define to 1 if you have the `regfree' function. */
 #undef HAVE_REGFREE
+
+/* Define to 1 if you have the <routeros_api.h> header file. */
+#undef HAVE_ROUTEROS_API_H
 
 /* Define to 1 if you have the <rrd.h> header file. */
 #undef HAVE_RRD_H
@@ -1006,6 +1042,9 @@
 /* Define to 1 if you have the `sysctlbyname' function. */
 #undef HAVE_SYSCTLBYNAME
 
+/* Define if sysctl supports kern.cp_times */
+#undef HAVE_SYSCTL_KERN_CP_TIMES
+
 /* Define to 1 if you have the `syslog' function. */
 #undef HAVE_SYSLOG
 
@@ -1152,11 +1191,17 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
 
+/* True if program is to be compiled for a AIX kernel */
+#undef KERNEL_AIX
+
 /* True if program is to be compiled for a Linux kernel */
 #undef KERNEL_LINUX
 
 /* True if program is to be compiled for a Solaris kernel */
 #undef KERNEL_SOLARIS
+
+/* Define to used libtool version. */
+#undef LIBTOOL_VERSION
 
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
 #undef LTDL_DLOPEN_DEPLIBS

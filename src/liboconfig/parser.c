@@ -115,8 +115,8 @@ extern char           *c_file;
       know about them.  */
    enum yytokentype {
      NUMBER = 258,
-     TRUE = 259,
-     FALSE = 260,
+     BTRUE = 259,
+     BFALSE = 260,
      QUOTED_STRING = 261,
      UNQUOTED_STRING = 262,
      SLASH = 263,
@@ -127,8 +127,8 @@ extern char           *c_file;
 #endif
 /* Tokens.  */
 #define NUMBER 258
-#define TRUE 259
-#define FALSE 260
+#define BTRUE 259
+#define BFALSE 260
 #define QUOTED_STRING 261
 #define UNQUOTED_STRING 262
 #define SLASH 263
@@ -469,7 +469,7 @@ static const yytype_uint8 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "NUMBER", "TRUE", "FALSE",
+  "$end", "error", "$undefined", "NUMBER", "BTRUE", "BFALSE",
   "QUOTED_STRING", "UNQUOTED_STRING", "SLASH", "OPENBRAC", "CLOSEBRAC",
   "EOL", "$accept", "string", "argument", "argument_list", "identifier",
   "option", "block_begin", "block_end", "block", "statement",

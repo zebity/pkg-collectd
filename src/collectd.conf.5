@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2009-12-18" "4.8.1.35.ga4ddcbc" "collectd"
+.TH COLLECTD.CONF 5 "2010-01-14" "4.9.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -572,12 +572,17 @@ fails, the connection is aborted. Obviously, only works when connecting to a
 File that holds one or more \s-1SSL\s0 certificates. If you want to use \s-1HTTPS\s0 you will
 possibly need this option. What \s-1CA\s0 certificates come bundled with \f(CW\*(C`libcurl\*(C'\fR
 and are checked by default depends on the distribution you use.
+.IP "\fBMeasureResponseTime\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "MeasureResponseTime true|false"
+Measure response time for the request. If this setting is enabled, \fBMatch\fR
+blocks (see below) are optional. Disabled by default.
 .IP "\fB<Match>\fR" 4
 .IX Item "<Match>"
 One or more \fBMatch\fR blocks that define how to match information in the data
 returned by \f(CW\*(C`libcurl\*(C'\fR. The \f(CW\*(C`curl\*(C'\fR plugin uses the same infrastructure that's
 used by the \f(CW\*(C`tail\*(C'\fR plugin, so please see the documentation of the \f(CW\*(C`tail\*(C'\fR
-plugin below on how matches are defined.
+plugin below on how matches are defined. If the \fBMeasureResponseTime\fR option
+is set to \fBtrue\fR, \fBMatch\fR blocks are optional.
 .ie n .SS "Plugin ""curl_json"""
 .el .SS "Plugin \f(CWcurl_json\fP"
 .IX Subsection "Plugin curl_json"
@@ -629,9 +634,9 @@ The following example will collect the status values from each database:
 .PP
 In the \fBPlugin\fR block, there may be one or more \fB\s-1URL\s0\fR blocks, each defining
 a \s-1URL\s0 to be fetched via \s-1HTTP\s0 (using libcurl) and one or more \fBKey\fR blocks.
-The \fBKey\fR string argument must be in a path format, of which is used to collect
-a value from a \s-1JSON\s0 map object.  If a \fBKey\fR path element is that of a \fI*\fR wildcard,
-the values for all keys will be collectd.
+The \fBKey\fR string argument must be in a path format, which is used to collect a
+value from a \s-1JSON\s0 map object. If a path element of \fBKey\fR is the
+\&\fI*\fR\ wildcard, the values for all keys will be collectd.
 .PP
 The following options are valid within \fB\s-1URL\s0\fR blocks:
 .IP "\fBInstance\fR \fIInstance\fR" 4
@@ -783,7 +788,7 @@ options to provide multiple queries with the same name but with a slightly
 different syntax. The plugin will use only those queries, where the specified
 minimum and maximum versions fit the version of the database in use.
 .Sp
-The database version is determined by \f(CW\*(C`dbi_conn_get_engine_version\*(C'\fR, see the 
+The database version is determined by \f(CW\*(C`dbi_conn_get_engine_version\*(C'\fR, see the
 <libdbi documentation>
 for details. Basically, each part of the version is assumed to be in the range
 from \fB00\fR to \fB99\fR and all dots are removed. So version \*(L"4.1.2\*(R" becomes
@@ -912,17 +917,40 @@ Select partitions based on the mountpoint.
 .IP "\fBFSType\fR \fIFSType\fR" 4
 .IX Item "FSType FSType"
 Select partitions based on the filesystem type.
-.IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
+.IP "\fBIgnoreSelected\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
 Invert the selection: If set to true, all partitions \fBexcept\fR the ones that
 match any one of the criteria are collected. By default only selected
 partitions are collected if a selection is made. If no selection is configured
 at all, \fBall\fR partitions are selected.
-.IP "\fBReportByDevice\fR \fItrue\fR|\fIfalse\fR" 4
+.IP "\fBReportByDevice\fR \fBtrue\fR|\fBfalse\fR" 4
 .IX Item "ReportByDevice true|false"
 Report using the device name rather than the mountpoint. i.e. with this \fIfalse\fR,
 (the default), it will report a disk as \*(L"root\*(R", but with it \fItrue\fR, it will be
 \&\*(L"sda1\*(R" (or whichever).
+.IP "\fBReportReserved\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportReserved true|false"
+When enabled, the blocks reserved for root are reported separately. When
+disabled (the default for backwards compatibility reasons) the reserved space
+will be included in the \*(L"free\*(R" space.
+.Sp
+When disabled, the \*(L"df\*(R" type will be used to store \*(L"free\*(R" and \*(L"used\*(R" space. The
+mount point or disk name (see option \fBReportByDevice\fR) is used as type
+instance in this case (again: backwards compatibility).
+.Sp
+When enabled, the type \*(L"df_complex\*(R" is used and three files are created. The
+mount point or disk name is used as plugin instance and the type instance is
+set to \*(L"free\*(R", \*(L"reserved\*(R" and \*(L"used\*(R" as appropriate.
+.Sp
+Enabling this option is recommended.
+.IP "\fBReportInodes\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportInodes true|false"
+Enables or disables reporting of free, reserved and used inodes. Defaults to
+inode collection being disabled.
+.Sp
+Enable this option if inodes are a scarce resource for you, usually because
+many small files are stored on the disk. This is a usual scenario for mail
+transfer agents and web caches.
 .ie n .SS "Plugin ""disk"""
 .el .SS "Plugin \f(CWdisk\fP"
 .IX Subsection "Plugin disk"
@@ -1568,6 +1596,424 @@ Enable the collection of master / slave statistics in a replication setup.
 .IX Item "SlaveNotifications true|false"
 If enabled, the plugin sends a notification if the replication slave I/O and /
 or \s-1SQL\s0 threads are not running.
+.ie n .SS "Plugin ""netapp"""
+.el .SS "Plugin \f(CWnetapp\fP"
+.IX Subsection "Plugin netapp"
+The netapp plugin can collect various performance and capacity informations
+from a NetApp filer using the NetApp \s-1API\s0.
+.PP
+Please note that NetApp has a wide line of products and a lot of different
+software versions for each of these products. This plugin was developed for a
+NetApp \s-1FAS3040\s0 running OnTap 7.2.3P8 and tested on \s-1FAS2050\s0 7.3.1.1L1,
+\&\s-1FAS3140\s0 7.2.5.1 and \s-1FAS3020\s0 7.2.4P9. It \fIshould\fR work for most combinations of
+model and software version but it is very hard to test this.
+If you have used this plugin with other models and/or software version, feel
+free to send us a mail to tell us about the results, even if it's just a short
+\&\*(L"It works\*(R".
+.PP
+To collect these data collectd will log in to the NetApp via \s-1HTTP\s0(S) and \s-1HTTP\s0
+basic authentication.
+.PP
+\&\fBDo not use a regular user for this!\fR Create a special collectd user with just
+the minimum of capabilities needed. The user only needs the \*(L"login-http-admin\*(R"
+capability as well as a few more depending on which data will be collected.
+Required capabilities are documented below.
+.PP
+\fISynopsis\fR
+.IX Subsection "Synopsis"
+.PP
+.Vb 8
+\& <Plugin "netapp">
+\&   <Host "netapp1.example.com">
+\&    Protocol      "https"
+\&    Address       "10.0.0.1"
+\&    Port          443
+\&    User          "username"
+\&    Password      "aef4Aebe"
+\&    Interval      30
+\&    
+\&    <WAFL>
+\&      Interval 30
+\&      GetNameCache   true
+\&      GetDirCache    true
+\&      GetBufferCache true
+\&      GetInodeCache  true
+\&    </WAFL>
+\&    
+\&    <Disks>
+\&      Interval 30
+\&      GetBusy true
+\&    </Disks>
+\&    
+\&    <VolumePerf>
+\&      Interval 30
+\&      GetIO      "volume0"
+\&      IgnoreSelectedIO      false
+\&      GetOps     "volume0"
+\&      IgnoreSelectedOps     false
+\&      GetLatency "volume0"
+\&      IgnoreSelectedLatency false
+\&    </VolumePerf>
+\&    
+\&    <VolumeUsage>
+\&      Interval 30
+\&      GetCapacity "vol0"
+\&      GetCapacity "vol1"
+\&      IgnoreSelectedCapacity false
+\&      GetSnapshot "vol1"
+\&      GetSnapshot "vol3"
+\&      IgnoreSelectedSnapshot false
+\&    </VolumeUsage>
+\&    
+\&    <System>
+\&      Interval 30
+\&      GetCPULoad     true
+\&      GetInterfaces  true
+\&      GetDiskOps     true
+\&      GetDiskIO      true
+\&    </System>
+\&   </Host>
+\& </Plugin>
+.Ve
+.PP
+The netapp plugin accepts the following configuration options:
+.IP "\fBHost\fR \fIName\fR" 4
+.IX Item "Host Name"
+A host block defines one NetApp filer. It will appear in collectd with the name
+you specify here which does not have to be its real name nor its hostname.
+.IP "\fBProtocol\fR \fBhttpd\fR|\fBhttp\fR" 4
+.IX Item "Protocol httpd|http"
+The protocol collectd will use to query this host.
+.Sp
+Optional
+.Sp
+Type: string
+.Sp
+Default: https
+.Sp
+Valid options: http, https
+.IP "\fBAddress\fR \fIAddress\fR" 4
+.IX Item "Address Address"
+The hostname or \s-1IP\s0 address of the host.
+.Sp
+Optional
+.Sp
+Type: string
+.Sp
+Default: The \*(L"host\*(R" block's name.
+.IP "\fBPort\fR \fIPort\fR" 4
+.IX Item "Port Port"
+The \s-1TCP\s0 port to connect to on the host.
+.Sp
+Optional
+.Sp
+Type: integer
+.Sp
+Default: 80 for protocol \*(L"http\*(R", 443 for protocol \*(L"https\*(R"
+.IP "\fBUser\fR \fIUser\fR" 4
+.IX Item "User User"
+.PD 0
+.IP "\fBPassword\fR \fIPassword\fR" 4
+.IX Item "Password Password"
+.PD
+The username and password to use to login to the NetApp.
+.Sp
+Mandatory
+.Sp
+Type: string
+.IP "\fBInterval\fR \fIInterval\fR" 4
+.IX Item "Interval Interval"
+\&\fB\s-1TODO\s0\fR
+.PP
+The following options decide what kind of data will be collected. You can
+either use them as a block and fine tune various parameters inside this block,
+use them as a single statement to just accept all default values, or omit it to
+not collect any data.
+.PP
+The following options are valid inside all blocks:
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Collect the respective statistics every \fISeconds\fR seconds. Defaults to the
+host specific setting.
+.PP
+\fIThe System block\fR
+.IX Subsection "The System block"
+.PP
+This will collect various performance data about the whole system.
+.PP
+\&\fBNote:\fR To get this data the collectd user needs the
+\&\*(L"api-perf-object-get-instances\*(R" capability.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Collect disk statistics every \fISeconds\fR seconds.
+.IP "\fBGetCPULoad\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetCPULoad true|false"
+If you set this option to true the current \s-1CPU\s0 usage will be read. This will be
+the average usage between all CPUs in your NetApp without any information about
+individual CPUs.
+.Sp
+\&\fBNote:\fR These are the same values that the NetApp \s-1CLI\s0 command \*(L"sysstat\*(R"
+returns in the \*(L"\s-1CPU\s0\*(R" field.
+.Sp
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: Two value lists of type \*(L"cpu\*(R", and type instances \*(L"idle\*(R" and \*(L"system\*(R".
+.IP "\fBGetInterfaces\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetInterfaces true|false"
+If you set this option to true the current traffic of the network interfaces
+will be read. This will be the total traffic over all interfaces of your NetApp
+without any information about individual interfaces.
+.Sp
+\&\fBNote:\fR This is the same values that the NetApp \s-1CLI\s0 command \*(L"sysstat\*(R" returns
+in the \*(L"Net kB/s\*(R" field.
+.Sp
+\&\fBOr is it?\fR
+.Sp
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: One value list of type \*(L"if_octects\*(R".
+.IP "\fBGetDiskIO\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetDiskIO true|false"
+If you set this option to true the current \s-1IO\s0 throughput will be read. This
+will be the total \s-1IO\s0 of your NetApp without any information about individual
+disks, volumes or aggregates.
+.Sp
+\&\fBNote:\fR This is the same values that the NetApp \s-1CLI\s0 command \*(L"sysstat\*(R" returns
+in the \*(L"Disk\ kB/s\*(R" field.
+.Sp
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: One value list of type \*(L"disk_octets\*(R".
+.IP "\fBGetDiskOps\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetDiskOps true|false"
+If you set this option to true the current number of \s-1HTTP\s0, \s-1NFS\s0, \s-1CIFS\s0, \s-1FCP\s0,
+iSCSI, etc. operations will be read. This will be the total number of
+operations on your NetApp without any information about individual volumes or
+aggregates.
+.Sp
+\&\fBNote:\fR These are the same values that the NetApp \s-1CLI\s0 command \*(L"sysstat\*(R"
+returns in the \*(L"\s-1NFS\s0\*(R", \*(L"\s-1CIFS\s0\*(R", \*(L"\s-1HTTP\s0\*(R", \*(L"\s-1FCP\s0\*(R" and \*(L"iSCSI\*(R" fields.
+.Sp
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: A variable number of value lists of type \*(L"disk_ops_complex\*(R". Each type
+of operation will result in one value list with the name of the operation as
+type instance.
+.PP
+\fIThe \s-1WAFL\s0 block\fR
+.IX Subsection "The WAFL block"
+.PP
+This will collect various performance data about the \s-1WAFL\s0 file system. At the
+moment this just means cache performance.
+.PP
+\&\fBNote:\fR To get this data the collectd user needs the
+\&\*(L"api-perf-object-get-instances\*(R" capability.
+.PP
+\&\fBNote:\fR The interface to get these values is classified as \*(L"Diagnostics\*(R" by
+NetApp. This means that it is not guaranteed to be stable even between minor
+releases.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Collect disk statistics every \fISeconds\fR seconds.
+.IP "\fBGetNameCache\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetNameCache true|false"
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: One value list of type \*(L"cache_ratio\*(R" and type instance
+\&\*(L"name_cache_hit\*(R".
+.IP "\fBGetDirCache\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetDirCache true|false"
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: One value list of type \*(L"cache_ratio\*(R" and type instance \*(L"find_dir_hit\*(R".
+.IP "\fBGetInodeCache\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetInodeCache true|false"
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: One value list of type \*(L"cache_ratio\*(R" and type instance
+\&\*(L"inode_cache_hit\*(R".
+.IP "\fBGetBufferCache\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetBufferCache true|false"
+\&\fBNote:\fR This is the same value that the NetApp \s-1CLI\s0 command \*(L"sysstat\*(R" returns
+in the \*(L"Cache hit\*(R" field.
+.Sp
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: One value list of type \*(L"cache_ratio\*(R" and type instance \*(L"buf_hash_hit\*(R".
+.PP
+\fIThe Disks block\fR
+.IX Subsection "The Disks block"
+.PP
+This will collect performance data about the individual disks in the NetApp.
+.PP
+\&\fBNote:\fR To get this data the collectd user needs the
+\&\*(L"api-perf-object-get-instances\*(R" capability.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Collect disk statistics every \fISeconds\fR seconds.
+.IP "\fBGetBusy\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "GetBusy true|false"
+If you set this option to true the busy time of all disks will be calculated
+and the value of the busiest disk in the system will be written.
+.Sp
+\&\fBNote:\fR This is the same values that the NetApp \s-1CLI\s0 command \*(L"sysstat\*(R" returns
+in the \*(L"Disk util\*(R" field. Probably.
+.Sp
+Optional
+.Sp
+Type: boolean
+.Sp
+Default: true
+.Sp
+Result: One value list of type \*(L"percent\*(R" and type instance \*(L"disk_busy\*(R".
+.PP
+\fIThe VolumePerf block\fR
+.IX Subsection "The VolumePerf block"
+.PP
+This will collect various performance data about the individual volumes.
+.PP
+You can select which data to collect about which volume using the following
+options. They follow the standard ignorelist semantic.
+.PP
+\&\fBNote:\fR To get this data the collectd user needs the
+\&\fIapi-perf-object-get-instances\fR capability.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Collect volume performance data every \fISeconds\fR seconds.
+.IP "\fBGetIO\fR \fIVolume\fR" 4
+.IX Item "GetIO Volume"
+.PD 0
+.IP "\fBGetOps\fR \fIVolume\fR" 4
+.IX Item "GetOps Volume"
+.IP "\fBGetLatency\fR \fIVolume\fR" 4
+.IX Item "GetLatency Volume"
+.PD
+Select the given volume for \s-1IO\s0, operations or latency statistics collection.
+The argument is the name of the volume without the \f(CW\*(C`/vol/\*(C'\fR prefix.
+.Sp
+Since the standard ignorelist functionality is used here, you can use a string
+starting and ending with a slash to specify regular expression matching: To
+match the volumes \*(L"vol0\*(R", \*(L"vol2\*(R" and \*(L"vol7\*(R", you can use this regular
+expression:
+.Sp
+.Vb 1
+\&  GetIO "/^vol[027]$/"
+.Ve
+.Sp
+If no regular expression is specified, an exact match is required. Both,
+regular and exact matching are case sensitive.
+.Sp
+If no volume was specified at all for either of the three options, that data
+will be collected for all available volumes.
+.IP "\fBIgnoreSelectedIO\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "IgnoreSelectedIO true|false"
+.PD 0
+.IP "\fBIgnoreSelectedOps\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "IgnoreSelectedOps true|false"
+.IP "\fBIgnoreSelectedLatency\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "IgnoreSelectedLatency true|false"
+.PD
+When set to \fBtrue\fR, the volumes selected for \s-1IO\s0, operations or latency
+statistics collection will be ignored and the data will be collected for all
+other volumes.
+.Sp
+When set to \fBfalse\fR, data will only be collected for the specified volumes and
+all other volumes will be ignored.
+.Sp
+If no volumes have been specified with the above \fBGet*\fR options, all volumes
+will be collected regardless of the \fBIgnoreSelected*\fR option.
+.Sp
+Defaults to \fBfalse\fR
+.PP
+\fIThe VolumeUsage block\fR
+.IX Subsection "The VolumeUsage block"
+.PP
+This will collect capacity data about the individual volumes.
+.PP
+\&\fBNote:\fR To get this data the collectd user needs the \fIapi-volume-list-info\fR
+capability.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Collect volume usage statistics every \fISeconds\fR seconds.
+.IP "\fBGetCapacity\fR \fIVolumeName\fR" 4
+.IX Item "GetCapacity VolumeName"
+The current capacity of the volume will be collected. This will result in two
+to four value lists, depending on the configuration of the volume. All data
+sources are of type \*(L"df_complex\*(R" with the name of the volume as
+plugin_instance.
+.Sp
+There will be type_instances \*(L"used\*(R" and \*(L"free\*(R" for the number of used and
+available bytes on the volume.  If the volume has some space reserved for
+snapshots, a type_instance \*(L"snap_reserved\*(R" will be available.  If the volume
+has \s-1SIS\s0 enabled, a type_instance \*(L"sis_saved\*(R" will be available. This is the
+number of bytes saved by the \s-1SIS\s0 feature.
+.Sp
+\&\fBNote:\fR The current NetApp \s-1API\s0 has a bug that results in this value being
+reported as a 32\ bit number. This plugin tries to guess the correct
+number which works most of the time.  If you see strange values here, bug
+NetApp support to fix this.
+.Sp
+Repeat this option to specify multiple volumes.
+.IP "\fBIgnoreSelectedCapacity\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "IgnoreSelectedCapacity true|false"
+Specify whether to collect only the volumes selected by the \fBGetCapacity\fR
+option or to ignore those volumes. \fBIgnoreSelectedCapacity\fR defaults to
+\&\fBfalse\fR. However, if no \fBGetCapacity\fR option is specified at all, all
+capacities will be selected anyway.
+.IP "\fBGetSnapshot\fR \fIVolumeName\fR" 4
+.IX Item "GetSnapshot VolumeName"
+Select volumes from which to collect snapshot information.
+.Sp
+Usually, the space used for snapshots is included in the space reported as
+\&\*(L"used\*(R". If snapshot information is collected as well, the space used for
+snapshots is subtracted from the used space.
+.Sp
+To make things even more interesting, it is possible to reserve space to be
+used for snapshots. If the space required for snapshots is less than that
+reserved space, there is \*(L"reserved free\*(R" and \*(L"reserved used\*(R" space in addition
+to \*(L"free\*(R" and \*(L"used\*(R". If the space required for snapshots exceeds the reserved
+space, that part allocated in the normal space is subtracted from the \*(L"used\*(R"
+space again.
+.Sp
+Repeat this option to specify multiple volumes.
+.IP "\fBIgnoreSelectedSnapshot\fR" 4
+.IX Item "IgnoreSelectedSnapshot"
+Specify whether to collect only the volumes selected by the \fBGetSnapshot\fR
+option or to ignore those volumes. \fBIgnoreSelectedSnapshot\fR defaults to
+\&\fBfalse\fR. However, if no \fBGetSnapshot\fR option is specified at all, all
+capacities will be selected anyway.
 .ie n .SS "Plugin ""netlink"""
 .el .SS "Plugin \f(CWnetlink\fP"
 .IX Subsection "Plugin netlink"
@@ -1784,6 +2230,13 @@ freeing the unused memory again. Since this process is somewhat expensive and
 normally doesn't do much, this value should not be too small. The default is
 1800 seconds, but setting this to 86400 seconds (one day) will not do much harm
 either.
+.IP "\fBReportStats\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReportStats true|false"
+The network plugin cannot only receive and send statistics, it can also create
+statistics about itself. Collected data included the number of received and
+sent octets and packets, the length of the receive queue and the number of
+values handled. When set to \fBtrue\fR, the \fINetwork plugin\fR will make these
+statistics available. Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""nginx"""
 .el .SS "Plugin \f(CWnginx\fP"
 .IX Subsection "Plugin nginx"
@@ -2033,6 +2486,11 @@ Available options:
 .IP "\fBStatusFile\fR \fIFile\fR" 4
 .IX Item "StatusFile File"
 Specifies the location of the status file.
+.IP "\fBCompression\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "Compression true|false"
+Sets whether or not statistics about the compression used by OpenVPN should be
+collected. This information is only available in \fIsingle\fR mode. Enabled by
+default.
 .ie n .SS "Plugin ""oracle"""
 .el .SS "Plugin \f(CWoracle\fP"
 .IX Subsection "Plugin oracle"
@@ -2130,6 +2588,21 @@ Default: \fB0.9\fR
 .IP "\fB\s-1TTL\s0\fR \fI0\-255\fR" 4
 .IX Item "TTL 0-255"
 Sets the Time-To-Live of generated \s-1ICMP\s0 packets.
+.IP "\fBSourceAddress\fR \fIhost\fR" 4
+.IX Item "SourceAddress host"
+Sets the source address to use. \fIhost\fR may either be a numerical network
+address or a network hostname.
+.IP "\fBDevice\fR \fIname\fR" 4
+.IX Item "Device name"
+Sets the outgoing network device to be used. \fIname\fR has to specify an
+interface name (e.\ g. \f(CW\*(C`eth0\*(C'\fR). This might not be supported by all
+operating systems.
+.IP "\fBMaxMissed\fR \fIPackets\fR" 4
+.IX Item "MaxMissed Packets"
+Trigger a \s-1DNS\s0 resolv after the host has not replied to \fIPackets\fR packets. This
+enables the use of dynamic \s-1DNS\s0 services (like dyndns.org) with the ping plugin.
+.Sp
+Default: \fB\-1\fR (disabled)
 .ie n .SS "Plugin ""postgresql"""
 .el .SS "Plugin \f(CWpostgresql\fP"
 .IX Subsection "Plugin postgresql"
@@ -2567,7 +3040,7 @@ this local name to \fIPath\fR using the \fBLocalSocket\fR option. The default is
 Select more detailed statistics of processes matching this name. The statistics
 collected for these selected processes are size of the resident segment size
 (\s-1RSS\s0), user\- and system-time used, number of processes and number of threads,
-and minor and major pagefaults.
+io data (where available) and minor and major pagefaults.
 .IP "\fBProcessMatch\fR \fIname\fR \fIregex\fR" 4
 .IX Item "ProcessMatch name regex"
 Similar to the \fBProcess\fR option this allows to select more detailed
@@ -2605,6 +3078,63 @@ If no value is configured at all, all values will be selected.
 .IX Item "IgnoreSelected true|false"
 If set to \fBtrue\fR, inverts the selection made by \fBValue\fR, i.\ e. all
 matching values will be ignored.
+.ie n .SS "Plugin ""python"""
+.el .SS "Plugin \f(CWpython\fP"
+.IX Subsection "Plugin python"
+This plugin embeds a Python-interpreter into collectd and provides an interface
+to collectd's plugin system. See \fIcollectd\-python\fR\|(5) for its documentation.
+.ie n .SS "Plugin ""routeros"""
+.el .SS "Plugin \f(CWrouteros\fP"
+.IX Subsection "Plugin routeros"
+The \f(CW\*(C`routeros\*(C'\fR plugin connects to a device running \fIRouterOS\fR, the
+Linux-based operating system for routers by \fIMikroTik\fR. The plugin uses
+\&\fIlibrouteros\fR to connect and reads information about the interfaces and
+wireless connections of the device. The configuration supports querying
+multiple routers:
+.PP
+.Vb 10
+\&  <Plugin "routeros">
+\&    <Router>
+\&      Host "router0.example.com"
+\&      User "collectd"
+\&      Password "secr3t"
+\&      CollectInterface true
+\&    </Router>
+\&    <Router>
+\&      Host "router1.example.com"
+\&      User "collectd"
+\&      Password "5ecret"
+\&      CollectInterface true
+\&      CollectRegistrationTable true
+\&    </Router>
+\&  </Plugin>
+.Ve
+.PP
+As you can see above, the configuration of the \fIrouteros\fR plugin consists of
+one or more \fB<Router>\fR blocks. Within each block, the following
+options are understood:
+.IP "\fBHost\fR \fIHost\fR" 4
+.IX Item "Host Host"
+Hostname or IP-address of the router to connect to.
+.IP "\fBPort\fR \fIPort\fR" 4
+.IX Item "Port Port"
+Port name or port number used when connecting. If left unspecified, the default
+will be chosen by \fIlibrouteros\fR, currently \*(L"8728\*(R". This option expects a
+string argument, even when a numeric port number is given.
+.IP "\fBUser\fR \fIUser\fR" 4
+.IX Item "User User"
+Use the user name \fIUser\fR to authenticate. Defaults to \*(L"admin\*(R".
+.IP "\fBPassword\fR \fIPassword\fR" 4
+.IX Item "Password Password"
+Set the password used to authenticate.
+.IP "\fBCollectInterface\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectInterface true|false"
+When set to \fBtrue\fR, interface statistics will be collected for all interfaces
+present on the device. Defaults to \fBfalse\fR.
+.IP "\fBCollectRegistrationTable\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "CollectRegistrationTable true|false"
+When set to \fBtrue\fR, information about wireless \s-1LAN\s0 connections will be
+collected. Defaults to \fBfalse\fR.
 .ie n .SS "Plugin ""rrdcached"""
 .el .SS "Plugin \f(CWrrdcached\fP"
 .IX Subsection "Plugin rrdcached"
@@ -3079,7 +3609,7 @@ selection is configured at all, \fBall\fR devices are selected.
 .ie n .SS "Plugin ""tokyotyrant"""
 .el .SS "Plugin \f(CWtokyotyrant\fP"
 .IX Subsection "Plugin tokyotyrant"
-The \f(CW\*(C`tokyotyrant plugin\*(C'\fR connects to a TokyoTyrant server and collects a 
+The \f(CW\*(C`tokyotyrant plugin\*(C'\fR connects to a TokyoTyrant server and collects a
 couple metrics: number of records, and database size on disk.
 .IP "\fBHost\fR \fIHostname/IP\fR" 4
 .IX Item "Host Hostname/IP"
@@ -3818,6 +4348,83 @@ behavior: Counters which hardly ever increase will be zero for long periods of
 time. If the counter is reset for some reason (machine or service restarted,
 usually), the graph will be empty (\s-1NAN\s0) for a long time. People may not
 understand why.
+.IP "\fBhashed\fR" 4
+.IX Item "hashed"
+Calculates a hash value of the host name and matches values according to that
+hash value. This makes it possible to divide all hosts into groups and match
+only values that are in a specific group. The intended use is in load
+balancing, where you want to handle only part of all data and leave the rest
+for other servers.
+.Sp
+The hashing function used tries to distribute the hosts evenly. First, it
+calculates a 32\ bit hash value using the characters of the hostname:
+.Sp
+.Vb 3
+\&  hash_value = 0;
+\&  for (i = 0; host[i] != 0; i++)
+\&    hash_value = (hash_value * 251) + host[i];
+.Ve
+.Sp
+The constant 251 is a prime number which is supposed to make this hash value
+more random. The code then checks the group for this host according to the
+\&\fITotal\fR and \fIMatch\fR arguments:
+.Sp
+.Vb 4
+\&  if ((hash_value % Total) == Match)
+\&    matches;
+\&  else
+\&    does not match;
+.Ve
+.Sp
+Please note that when you set \fITotal\fR to two (i.\ e. you have only two
+groups), then the least significant bit of the hash value will be the \s-1XOR\s0 of
+all least significant bits in the host name. One consequence is that when you
+have two hosts, \*(L"server0.example.com\*(R" and \*(L"server1.example.com\*(R", where the host
+name differs in one digit only and the digits differ by one, those hosts will
+never end up in the same group.
+.Sp
+Available options:
+.RS 4
+.IP "\fBMatch\fR \fIMatch\fR \fITotal\fR" 4
+.IX Item "Match Match Total"
+Divide the data into \fITotal\fR groups and match all hosts in group \fIMatch\fR as
+described above. The groups are numbered from zero, i.\ e. \fIMatch\fR must
+be smaller than \fITotal\fR. \fITotal\fR must be at least one, although only values
+greater than one really do make any sense.
+.Sp
+You can repeat this option to match multiple groups, for example:
+.Sp
+.Vb 2
+\&  Match 3 7
+\&  Match 5 7
+.Ve
+.Sp
+The above config will divide the data into seven groups and match groups three
+and five. One use would be to keep every value on two hosts so that if one
+fails the missing data can later be reconstructed from the second host.
+.RE
+.RS 4
+.Sp
+Example:
+.Sp
+.Vb 10
+\& # Operate on the pre\-cache chain, so that ignored values are not even in the
+\& # global cache.
+\& <Chain "PreCache">
+\&   <Rule>
+\&     <Match "hashed">
+\&       # Divide all received hosts in seven groups and accept all hosts in
+\&       # group three.
+\&       Match 3 7
+\&     </Match>
+\&     # If matched: Return and continue.
+\&     Target "return"
+\&   </Rule>
+\&   # If not matched: Return and stop.
+\&   Target "stop"
+\& </Chain>
+.Ve
+.RE
 .SS "Available targets"
 .IX Subsection "Available targets"
 .IP "\fBnotification\fR" 4
