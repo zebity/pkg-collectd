@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-SNMP 5"
-.TH COLLECTD-SNMP 5 "2007-10-27" "4.2.0" "collectd"
+.TH COLLECTD-SNMP 5 "2007-11-08" "4.2.1" "collectd"
 .SH "NAME"
 collectd\-snmp \- Documentation of collectd's \f(CW\*(C`snmp plugin\*(C'\fR
 .SH "SYNOPSIS"
@@ -166,7 +166,7 @@ collectd\-snmp \- Documentation of collectd's \f(CW\*(C`snmp plugin\*(C'\fR
 \&      Version 1
 \&      Community "community_string"
 \&      Collect "std_traffic"
-\&      Inverval 120
+\&      Interval 120
 \&    </Host>
 \&    <Host "some.server.mydomain.org">
 \&      Address "192.168.0.42"
@@ -199,9 +199,8 @@ and ten threads are used.
 Since the aim of the \f(CW\*(C`snmp plugin\*(C'\fR is to provide a generic interface to \s-1SNMP\s0,
 it's configuration is not trivial and may take some time.
 .PP
-Since the \f(CW\*(C`Net\-SNMP\*(C'\fR library is used you can use all the environment
-variables that are interpreted by that package. See \fIsnmpcmd\fR\|(1) for more
-details.
+Since the \f(CW\*(C`Net\-SNMP\*(C'\fR library is used you can use all the environment variables
+that are interpreted by that package. See \fIsnmpcmd\fR\|(1) for more details.
 .PP
 There are two types of blocks that can be contained in the
 \&\f(CW\*(C`<Plugin\ snmp>\*(C'\fR block: \fBData\fR and \fBHost\fR:
@@ -322,7 +321,7 @@ stored by collectd.
 Set the address to connect to.
 .IP "\fBVersion\fR \fB1\fR|\fB2\fR" 4
 .IX Item "Version 1|2"
-Set the \s-1SNMP\s0 version to use. When giving \fB2\fR version 2c is actually used.
+Set the \s-1SNMP\s0 version to use. When giving \fB2\fR version \f(CW\*(C`2c\*(C'\fR is actually used.
 Version 3 is not supported by this plugin.
 .IP "\fBCommunity\fR \fICommunity\fR" 4
 .IX Item "Community Community"
