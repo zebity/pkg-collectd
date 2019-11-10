@@ -16,8 +16,11 @@ CPPFLAGS = $(shell dpkg-buildflags --get CPPFLAGS)
 CPPFLAGS += -I$(CURDIR)/debian/include
 CFLAGS = $(shell dpkg-buildflags --get CFLAGS)
 CFLAGS += -Wall -Wno-error=deprecated-declarations
-# 897724
-CFLAGS += -Wno-error=format-truncation
+
+TEST_GCC_VER_9 := $(shell expr `$(CC) -dumpversion | cut -f1 -d.` \>= 9)
+ifeq ($(TEST_GCC_VER_9),1)
+  CFLAGS += -Wno-error=address-of-packed-member -Wno-stringop-truncation
+endif
 
 # Upstream defaults to ${sysconfdir}/collectd.conf. Setting ${sysconfdir} to
 # /etc/collectd would be wrong though.
@@ -88,9 +91,9 @@ confflags += --disable-xmms
 # Cf. https://github.com/collectd/collectd/issues/1574
 confflags += --disable-sigrok
 
-# disable lvm plugin, liblvm2app is deprecated upstream, #915692
-# Cf. https://github.com/collectd/collectd/issues/2647
-confflags += --disable-lvm
+# temporarily disable mqtt plugin, as #911265, #911266 blocks collectd from
+# migrating to testing.
+confflags += --disable-mqtt
 
 # These plugins are Linux-specific.
 ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
@@ -105,6 +108,7 @@ ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
 		--disable-ipc \
 		--disable-iptables \
 		--disable-ipvs \
+		--disable-lvm \
 		--disable-madwifi \
 		--disable-md \
 		--disable-netlink \
@@ -202,7 +206,7 @@ build-stamp:
 	./configure $(confflags) CPPFLAGS="$(CPPFLAGS)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		JAVAC="$(JAVAC)" JAR="$(JAR)" JAVA_CPPFLAGS="$(JAVA_CPPFLAGS)" \
 		JAVA_LDFLAGS="$(JAVA_LDFLAGS)" \
-		|| ( status=$$?; cat config.log; exit $$status )
+		|| ( echo "configure exit status: $$?" ; cat config.log )
 
 	$(MAKE)
 	dh_auto_test
