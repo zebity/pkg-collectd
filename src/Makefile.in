@@ -63,414 +63,415 @@ bin_PROGRAMS = collectd-nagios$(EXEEXT) collectdctl$(EXEEXT) \
 @BUILD_WITH_LIBSOCKET_TRUE@am__append_18 = -lsocket
 @BUILD_AIX_TRUE@am__append_19 = -lm
 @BUILD_WITH_LIBSOCKET_TRUE@am__append_20 = -lsocket
-@BUILD_AIX_TRUE@am__append_21 = -lm
-@BUILD_PLUGIN_AGGREGATION_TRUE@am__append_22 = aggregation.la
-@BUILD_PLUGIN_AGGREGATION_TRUE@am__append_23 = "-dlopen" aggregation.la
-@BUILD_PLUGIN_AGGREGATION_TRUE@am__append_24 = aggregation.la
-@BUILD_PLUGIN_AMQP_TRUE@am__append_25 = amqp.la
-@BUILD_PLUGIN_AMQP_TRUE@am__append_26 = "-dlopen" amqp.la
-@BUILD_PLUGIN_AMQP_TRUE@am__append_27 = amqp.la
-@BUILD_PLUGIN_APACHE_TRUE@am__append_28 = apache.la
-@BUILD_PLUGIN_APACHE_TRUE@am__append_29 = "-dlopen" apache.la
-@BUILD_PLUGIN_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_30 = $(BUILD_WITH_LIBCURL_CFLAGS)
-@BUILD_PLUGIN_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_31 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_PLUGIN_APACHE_TRUE@am__append_32 = apache.la
-@BUILD_PLUGIN_APCUPS_TRUE@am__append_33 = apcups.la
-@BUILD_PLUGIN_APCUPS_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_34 = -lsocket
-@BUILD_PLUGIN_APCUPS_TRUE@am__append_35 = "-dlopen" apcups.la
-@BUILD_PLUGIN_APCUPS_TRUE@am__append_36 = apcups.la
-@BUILD_PLUGIN_APPLE_SENSORS_TRUE@am__append_37 = apple_sensors.la
-@BUILD_PLUGIN_APPLE_SENSORS_TRUE@am__append_38 = "-dlopen" apple_sensors.la
-@BUILD_PLUGIN_APPLE_SENSORS_TRUE@am__append_39 = apple_sensors.la
-@BUILD_PLUGIN_ASCENT_TRUE@am__append_40 = ascent.la
-@BUILD_PLUGIN_ASCENT_TRUE@am__append_41 = "-dlopen" ascent.la
-@BUILD_PLUGIN_ASCENT_TRUE@am__append_42 = ascent.la
-@BUILD_PLUGIN_BATTERY_TRUE@am__append_43 = battery.la
-@BUILD_PLUGIN_BATTERY_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_44 = -lIOKit
-@BUILD_PLUGIN_BATTERY_TRUE@am__append_45 = "-dlopen" battery.la
-@BUILD_PLUGIN_BATTERY_TRUE@am__append_46 = battery.la
-@BUILD_PLUGIN_BIND_TRUE@am__append_47 = bind.la
-@BUILD_PLUGIN_BIND_TRUE@am__append_48 = "-dlopen" bind.la
-@BUILD_PLUGIN_BIND_TRUE@am__append_49 = bind.la
-@BUILD_PLUGIN_CONNTRACK_TRUE@am__append_50 = conntrack.la
-@BUILD_PLUGIN_CONNTRACK_TRUE@am__append_51 = "-dlopen" conntrack.la
-@BUILD_PLUGIN_CONNTRACK_TRUE@am__append_52 = conntrack.la
-@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@am__append_53 = contextswitch.la
-@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_54 = -lperfstat
-@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@am__append_55 = "-dlopen" contextswitch.la
-@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@am__append_56 = contextswitch.la
-@BUILD_PLUGIN_CPU_TRUE@am__append_57 = cpu.la
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_58 = -lkstat
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_59 = -ldevinfo
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_60 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_61 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_62 = -lperfstat
-@BUILD_PLUGIN_CPU_TRUE@am__append_63 = "-dlopen" cpu.la
-@BUILD_PLUGIN_CPU_TRUE@am__append_64 = cpu.la
-@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_65 = cpufreq.la
-@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_66 = "-dlopen" cpufreq.la
-@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_67 = cpufreq.la
-@BUILD_PLUGIN_CSV_TRUE@am__append_68 = csv.la
-@BUILD_PLUGIN_CSV_TRUE@am__append_69 = "-dlopen" csv.la
-@BUILD_PLUGIN_CSV_TRUE@am__append_70 = csv.la
-@BUILD_PLUGIN_CURL_TRUE@am__append_71 = curl.la
-@BUILD_PLUGIN_CURL_TRUE@am__append_72 = "-dlopen" curl.la
-@BUILD_PLUGIN_CURL_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_73 = $(BUILD_WITH_LIBCURL_CFLAGS)
-@BUILD_PLUGIN_CURL_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_74 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_PLUGIN_CURL_TRUE@am__append_75 = curl.la
-@BUILD_PLUGIN_CURL_JSON_TRUE@am__append_76 = curl_json.la
-@BUILD_PLUGIN_CURL_JSON_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_77 = $(BUILD_WITH_LIBCURL_CFLAGS)
-@BUILD_PLUGIN_CURL_JSON_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_78 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_PLUGIN_CURL_JSON_TRUE@am__append_79 = "-dlopen" curl_json.la
-@BUILD_PLUGIN_CURL_JSON_TRUE@am__append_80 = curl_json.la
-@BUILD_PLUGIN_CURL_XML_TRUE@am__append_81 = curl_xml.la
-@BUILD_PLUGIN_CURL_XML_TRUE@am__append_82 = "-dlopen" curl_xml.la
-@BUILD_PLUGIN_CURL_XML_TRUE@am__append_83 = curl_xml.la
-@BUILD_PLUGIN_DBI_TRUE@am__append_84 = dbi.la
-@BUILD_PLUGIN_DBI_TRUE@am__append_85 = "-dlopen" dbi.la
-@BUILD_PLUGIN_DBI_TRUE@am__append_86 = dbi.la
-@BUILD_PLUGIN_DF_TRUE@am__append_87 = df.la
-@BUILD_PLUGIN_DF_TRUE@am__append_88 = "-dlopen" df.la
-@BUILD_PLUGIN_DF_TRUE@am__append_89 = df.la
-@BUILD_PLUGIN_DISK_TRUE@am__append_90 = disk.la
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_91 = -lkstat
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_92 = -ldevinfo
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_93 = -lIOKit
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_94 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)  
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_95 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_96 = -lperfstat
-@BUILD_PLUGIN_DISK_TRUE@am__append_97 = "-dlopen" disk.la
-@BUILD_PLUGIN_DISK_TRUE@am__append_98 = disk.la
-@BUILD_PLUGIN_DNS_TRUE@am__append_99 = dns.la
-@BUILD_PLUGIN_DNS_TRUE@am__append_100 = "-dlopen" dns.la
-@BUILD_PLUGIN_DNS_TRUE@am__append_101 = dns.la
-@BUILD_PLUGIN_EMAIL_TRUE@am__append_102 = email.la
-@BUILD_PLUGIN_EMAIL_TRUE@am__append_103 = "-dlopen" email.la
-@BUILD_PLUGIN_EMAIL_TRUE@am__append_104 = email.la
-@BUILD_PLUGIN_ENTROPY_TRUE@am__append_105 = entropy.la
-@BUILD_PLUGIN_ENTROPY_TRUE@am__append_106 = "-dlopen" entropy.la
-@BUILD_PLUGIN_ENTROPY_TRUE@am__append_107 = entropy.la
-@BUILD_PLUGIN_EXEC_TRUE@am__append_108 = exec.la
-@BUILD_PLUGIN_EXEC_TRUE@am__append_109 = "-dlopen" exec.la
-@BUILD_PLUGIN_EXEC_TRUE@am__append_110 = exec.la
-@BUILD_PLUGIN_ETHSTAT_TRUE@am__append_111 = ethstat.la
-@BUILD_PLUGIN_ETHSTAT_TRUE@am__append_112 = "-dlopen" ethstat.la
-@BUILD_PLUGIN_ETHSTAT_TRUE@am__append_113 = ethstat.la
-@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_114 = filecount.la
-@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_115 = "-dlopen" filecount.la
-@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_116 = filecount.la
-@BUILD_PLUGIN_GMOND_TRUE@am__append_117 = gmond.la
-@BUILD_PLUGIN_GMOND_TRUE@am__append_118 = "-dlopen" gmond.la
-@BUILD_PLUGIN_GMOND_TRUE@am__append_119 = gmond.la
-@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_120 = hddtemp.la
-@BUILD_PLUGIN_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_121 = -lsocket
-@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_122 = "-dlopen" hddtemp.la
-@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_123 = hddtemp.la
-@BUILD_PLUGIN_INTERFACE_TRUE@am__append_124 = interface.la
-@BUILD_PLUGIN_INTERFACE_TRUE@am__append_125 = "-dlopen" interface.la
-@BUILD_PLUGIN_INTERFACE_TRUE@am__append_126 = interface.la
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_127 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_128 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_129 = -lkstat
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_130 = -ldevinfo
-@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_131 = -lperfstat
-@BUILD_PLUGIN_IPTABLES_TRUE@am__append_132 = iptables.la
-@BUILD_PLUGIN_IPTABLES_TRUE@am__append_133 = "-dlopen" iptables.la
-@BUILD_PLUGIN_IPTABLES_TRUE@am__append_134 = iptables.la
-@BUILD_PLUGIN_IPMI_TRUE@am__append_135 = ipmi.la
-@BUILD_PLUGIN_IPMI_TRUE@am__append_136 = "-dlopen" ipmi.la
-@BUILD_PLUGIN_IPMI_TRUE@am__append_137 = ipmi.la
-@BUILD_PLUGIN_IPVS_TRUE@am__append_138 = ipvs.la
-@BUILD_PLUGIN_IPVS_TRUE@am__append_139 = "-dlopen" ipvs.la
-@BUILD_PLUGIN_IPVS_TRUE@am__append_140 = ipvs.la
-@BUILD_PLUGIN_IRQ_TRUE@am__append_141 = irq.la
-@BUILD_PLUGIN_IRQ_TRUE@am__append_142 = "-dlopen" irq.la
-@BUILD_PLUGIN_IRQ_TRUE@am__append_143 = irq.la
-@BUILD_PLUGIN_JAVA_TRUE@am__append_144 = java.la
-@BUILD_PLUGIN_JAVA_TRUE@am__append_145 = "-dlopen" java.la
-@BUILD_PLUGIN_JAVA_TRUE@am__append_146 = java.la
-@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_147 = libvirt.la
-@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_148 = "-dlopen" libvirt.la
-@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_149 = libvirt.la
-@BUILD_PLUGIN_LOAD_TRUE@am__append_150 = load.la
-@BUILD_PLUGIN_LOAD_TRUE@am__append_151 = "-dlopen" load.la
-@BUILD_PLUGIN_LOAD_TRUE@am__append_152 = load.la
-@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_153 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_154 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_155 = -lperfstat
-@BUILD_PLUGIN_LOGFILE_TRUE@am__append_156 = logfile.la
-@BUILD_PLUGIN_LOGFILE_TRUE@am__append_157 = "-dlopen" logfile.la
-@BUILD_PLUGIN_LOGFILE_TRUE@am__append_158 = logfile.la
-@BUILD_PLUGIN_LPAR_TRUE@am__append_159 = lpar.la
-@BUILD_PLUGIN_LPAR_TRUE@am__append_160 = "-dlopen" lpar.la
-@BUILD_PLUGIN_LPAR_TRUE@am__append_161 = lpar.la
-@BUILD_PLUGIN_MADWIFI_TRUE@am__append_162 = madwifi.la
-@BUILD_PLUGIN_MADWIFI_TRUE@am__append_163 = "-dlopen" madwifi.la
-@BUILD_PLUGIN_MADWIFI_TRUE@am__append_164 = madwifi.la
-@BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@am__append_165 = match_empty_counter.la
-@BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@am__append_166 = "-dlopen" match_empty_counter.la
-@BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@am__append_167 = match_empty_counter.la
-@BUILD_PLUGIN_MATCH_HASHED_TRUE@am__append_168 = match_hashed.la
-@BUILD_PLUGIN_MATCH_HASHED_TRUE@am__append_169 = "-dlopen" match_hashed.la
-@BUILD_PLUGIN_MATCH_HASHED_TRUE@am__append_170 = match_hashed.la
-@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_171 = match_regex.la
-@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_172 = "-dlopen" match_regex.la
-@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_173 = match_regex.la
-@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_174 = match_timediff.la
-@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_175 = "-dlopen" match_timediff.la
-@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_176 = match_timediff.la
-@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_177 = match_value.la
-@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_178 = "-dlopen" match_value.la
-@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_179 = match_value.la
-@BUILD_PLUGIN_MBMON_TRUE@am__append_180 = mbmon.la
-@BUILD_PLUGIN_MBMON_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_181 = -lsocket
-@BUILD_PLUGIN_MBMON_TRUE@am__append_182 = "-dlopen" mbmon.la
-@BUILD_PLUGIN_MBMON_TRUE@am__append_183 = mbmon.la
-@BUILD_PLUGIN_MD_TRUE@am__append_184 = md.la
-@BUILD_PLUGIN_MD_TRUE@am__append_185 = "-dlopen" md.la
-@BUILD_PLUGIN_MD_TRUE@am__append_186 = md.la
-@BUILD_PLUGIN_MEMCACHEC_TRUE@am__append_187 = memcachec.la
-@BUILD_PLUGIN_MEMCACHEC_TRUE@am__append_188 = "-dlopen" memcachec.la
-@BUILD_PLUGIN_MEMCACHEC_TRUE@am__append_189 = memcachec.la
-@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_190 = memcached.la
-@BUILD_PLUGIN_MEMCACHED_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_191 = -lsocket
-@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_192 = "-dlopen" memcached.la
-@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_193 = memcached.la
-@BUILD_PLUGIN_MEMORY_TRUE@am__append_194 = memory.la
-@BUILD_PLUGIN_MEMORY_TRUE@am__append_195 = "-dlopen" memory.la
-@BUILD_PLUGIN_MEMORY_TRUE@am__append_196 = memory.la
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_197 = -lkstat
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_198 = -ldevinfo
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_199 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_200 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_201 = -lperfstat
-@BUILD_PLUGIN_MODBUS_TRUE@am__append_202 = modbus.la
-@BUILD_PLUGIN_MODBUS_TRUE@am__append_203 = "-dlopen" modbus.la
-@BUILD_PLUGIN_MODBUS_TRUE@am__append_204 = modbus.la
-@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_205 = multimeter.la
-@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_206 = "-dlopen" multimeter.la
-@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_207 = multimeter.la
-@BUILD_PLUGIN_MYSQL_TRUE@am__append_208 = mysql.la
-@BUILD_PLUGIN_MYSQL_TRUE@am__append_209 = "-dlopen" mysql.la
-@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_210 = $(BUILD_WITH_LIBMYSQL_CFLAGS)
-@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_211 = $(BUILD_WITH_LIBMYSQL_LIBS)
-@BUILD_PLUGIN_MYSQL_TRUE@am__append_212 = mysql.la
-@BUILD_PLUGIN_NETAPP_TRUE@am__append_213 = netapp.la
-@BUILD_PLUGIN_NETAPP_TRUE@am__append_214 = "-dlopen" netapp.la
-@BUILD_PLUGIN_NETAPP_TRUE@am__append_215 = netapp.la
-@BUILD_PLUGIN_NETLINK_TRUE@am__append_216 = netlink.la
-@BUILD_PLUGIN_NETLINK_TRUE@am__append_217 = "-dlopen" netlink.la
-@BUILD_PLUGIN_NETLINK_TRUE@am__append_218 = netlink.la
-@BUILD_PLUGIN_NETWORK_TRUE@am__append_219 = network.la
-@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_220 = -lsocket
-@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBGCRYPT_TRUE@am__append_221 = $(GCRYPT_CPPFLAGS)
-@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBGCRYPT_TRUE@am__append_222 = $(GCRYPT_LDFLAGS)
-@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBGCRYPT_TRUE@am__append_223 = $(GCRYPT_LIBS)
-@BUILD_PLUGIN_NETWORK_TRUE@am__append_224 = "-dlopen" network.la
-@BUILD_PLUGIN_NETWORK_TRUE@am__append_225 = network.la
-@BUILD_PLUGIN_NFS_TRUE@am__append_226 = nfs.la
-@BUILD_PLUGIN_NFS_TRUE@am__append_227 = "-dlopen" nfs.la
-@BUILD_PLUGIN_NFS_TRUE@am__append_228 = nfs.la
-@BUILD_PLUGIN_FSCACHE_TRUE@am__append_229 = fscache.la
-@BUILD_PLUGIN_FSCACHE_TRUE@am__append_230 = "-dlopen" fscache.la
-@BUILD_PLUGIN_FSCACHE_TRUE@am__append_231 = fscache.la
-@BUILD_PLUGIN_NGINX_TRUE@am__append_232 = nginx.la
-@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_233 = $(BUILD_WITH_LIBCURL_CFLAGS)
-@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_234 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_PLUGIN_NGINX_TRUE@am__append_235 = "-dlopen" nginx.la
-@BUILD_PLUGIN_NGINX_TRUE@am__append_236 = nginx.la
-@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_237 = notify_desktop.la
-@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_238 = "-dlopen" notify_desktop.la
-@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_239 = notify_desktop.la
-@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_240 = notify_email.la
-@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_241 = "-dlopen" notify_email.la
-@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_242 = notify_email.la
-@BUILD_PLUGIN_NTPD_TRUE@am__append_243 = ntpd.la
-@BUILD_PLUGIN_NTPD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_244 = -lsocket
-@BUILD_PLUGIN_NTPD_TRUE@am__append_245 = "-dlopen" ntpd.la
-@BUILD_PLUGIN_NTPD_TRUE@am__append_246 = ntpd.la
-@BUILD_PLUGIN_NUMA_TRUE@am__append_247 = numa.la
-@BUILD_PLUGIN_NUMA_TRUE@am__append_248 = "-dlopen" numa.la
-@BUILD_PLUGIN_NUMA_TRUE@am__append_249 = numa.la
-@BUILD_PLUGIN_NUT_TRUE@am__append_250 = nut.la
-@BUILD_PLUGIN_NUT_TRUE@am__append_251 = "-dlopen" nut.la
-@BUILD_PLUGIN_NUT_TRUE@am__append_252 = nut.la
-@BUILD_PLUGIN_OLSRD_TRUE@am__append_253 = olsrd.la
-@BUILD_PLUGIN_OLSRD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_254 = -lsocket
-@BUILD_PLUGIN_OLSRD_TRUE@am__append_255 = "-dlopen" olsrd.la
-@BUILD_PLUGIN_OLSRD_TRUE@am__append_256 = olsrd.la
-@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_257 = onewire.la
-@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_258 = "-dlopen" onewire.la
-@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_259 = onewire.la
-@BUILD_PLUGIN_OPENVPN_TRUE@am__append_260 = openvpn.la
-@BUILD_PLUGIN_OPENVPN_TRUE@am__append_261 = "-dlopen" openvpn.la
-@BUILD_PLUGIN_OPENVPN_TRUE@am__append_262 = openvpn.la
-@BUILD_PLUGIN_ORACLE_TRUE@am__append_263 = oracle.la
-@BUILD_PLUGIN_ORACLE_TRUE@am__append_264 = "-dlopen" oracle.la
-@BUILD_PLUGIN_ORACLE_TRUE@am__append_265 = oracle.la
-@BUILD_PLUGIN_PERL_TRUE@am__append_266 = perl.la
+@BUILD_WITH_LIBRT_TRUE@am__append_21 = -lrt
+@BUILD_AIX_TRUE@am__append_22 = -lm
+@BUILD_PLUGIN_AGGREGATION_TRUE@am__append_23 = aggregation.la
+@BUILD_PLUGIN_AGGREGATION_TRUE@am__append_24 = "-dlopen" aggregation.la
+@BUILD_PLUGIN_AGGREGATION_TRUE@am__append_25 = aggregation.la
+@BUILD_PLUGIN_AMQP_TRUE@am__append_26 = amqp.la
+@BUILD_PLUGIN_AMQP_TRUE@am__append_27 = "-dlopen" amqp.la
+@BUILD_PLUGIN_AMQP_TRUE@am__append_28 = amqp.la
+@BUILD_PLUGIN_APACHE_TRUE@am__append_29 = apache.la
+@BUILD_PLUGIN_APACHE_TRUE@am__append_30 = "-dlopen" apache.la
+@BUILD_PLUGIN_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_31 = $(BUILD_WITH_LIBCURL_CFLAGS)
+@BUILD_PLUGIN_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_32 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_PLUGIN_APACHE_TRUE@am__append_33 = apache.la
+@BUILD_PLUGIN_APCUPS_TRUE@am__append_34 = apcups.la
+@BUILD_PLUGIN_APCUPS_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_35 = -lsocket
+@BUILD_PLUGIN_APCUPS_TRUE@am__append_36 = "-dlopen" apcups.la
+@BUILD_PLUGIN_APCUPS_TRUE@am__append_37 = apcups.la
+@BUILD_PLUGIN_APPLE_SENSORS_TRUE@am__append_38 = apple_sensors.la
+@BUILD_PLUGIN_APPLE_SENSORS_TRUE@am__append_39 = "-dlopen" apple_sensors.la
+@BUILD_PLUGIN_APPLE_SENSORS_TRUE@am__append_40 = apple_sensors.la
+@BUILD_PLUGIN_ASCENT_TRUE@am__append_41 = ascent.la
+@BUILD_PLUGIN_ASCENT_TRUE@am__append_42 = "-dlopen" ascent.la
+@BUILD_PLUGIN_ASCENT_TRUE@am__append_43 = ascent.la
+@BUILD_PLUGIN_BATTERY_TRUE@am__append_44 = battery.la
+@BUILD_PLUGIN_BATTERY_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_45 = -lIOKit
+@BUILD_PLUGIN_BATTERY_TRUE@am__append_46 = "-dlopen" battery.la
+@BUILD_PLUGIN_BATTERY_TRUE@am__append_47 = battery.la
+@BUILD_PLUGIN_BIND_TRUE@am__append_48 = bind.la
+@BUILD_PLUGIN_BIND_TRUE@am__append_49 = "-dlopen" bind.la
+@BUILD_PLUGIN_BIND_TRUE@am__append_50 = bind.la
+@BUILD_PLUGIN_CONNTRACK_TRUE@am__append_51 = conntrack.la
+@BUILD_PLUGIN_CONNTRACK_TRUE@am__append_52 = "-dlopen" conntrack.la
+@BUILD_PLUGIN_CONNTRACK_TRUE@am__append_53 = conntrack.la
+@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@am__append_54 = contextswitch.la
+@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_55 = -lperfstat
+@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@am__append_56 = "-dlopen" contextswitch.la
+@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@am__append_57 = contextswitch.la
+@BUILD_PLUGIN_CPU_TRUE@am__append_58 = cpu.la
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_59 = -lkstat
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_60 = -ldevinfo
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_61 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_62 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_CPU_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_63 = -lperfstat
+@BUILD_PLUGIN_CPU_TRUE@am__append_64 = "-dlopen" cpu.la
+@BUILD_PLUGIN_CPU_TRUE@am__append_65 = cpu.la
+@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_66 = cpufreq.la
+@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_67 = "-dlopen" cpufreq.la
+@BUILD_PLUGIN_CPUFREQ_TRUE@am__append_68 = cpufreq.la
+@BUILD_PLUGIN_CSV_TRUE@am__append_69 = csv.la
+@BUILD_PLUGIN_CSV_TRUE@am__append_70 = "-dlopen" csv.la
+@BUILD_PLUGIN_CSV_TRUE@am__append_71 = csv.la
+@BUILD_PLUGIN_CURL_TRUE@am__append_72 = curl.la
+@BUILD_PLUGIN_CURL_TRUE@am__append_73 = "-dlopen" curl.la
+@BUILD_PLUGIN_CURL_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_74 = $(BUILD_WITH_LIBCURL_CFLAGS)
+@BUILD_PLUGIN_CURL_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_75 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_PLUGIN_CURL_TRUE@am__append_76 = curl.la
+@BUILD_PLUGIN_CURL_JSON_TRUE@am__append_77 = curl_json.la
+@BUILD_PLUGIN_CURL_JSON_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_78 = $(BUILD_WITH_LIBCURL_CFLAGS)
+@BUILD_PLUGIN_CURL_JSON_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_79 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_PLUGIN_CURL_JSON_TRUE@am__append_80 = "-dlopen" curl_json.la
+@BUILD_PLUGIN_CURL_JSON_TRUE@am__append_81 = curl_json.la
+@BUILD_PLUGIN_CURL_XML_TRUE@am__append_82 = curl_xml.la
+@BUILD_PLUGIN_CURL_XML_TRUE@am__append_83 = "-dlopen" curl_xml.la
+@BUILD_PLUGIN_CURL_XML_TRUE@am__append_84 = curl_xml.la
+@BUILD_PLUGIN_DBI_TRUE@am__append_85 = dbi.la
+@BUILD_PLUGIN_DBI_TRUE@am__append_86 = "-dlopen" dbi.la
+@BUILD_PLUGIN_DBI_TRUE@am__append_87 = dbi.la
+@BUILD_PLUGIN_DF_TRUE@am__append_88 = df.la
+@BUILD_PLUGIN_DF_TRUE@am__append_89 = "-dlopen" df.la
+@BUILD_PLUGIN_DF_TRUE@am__append_90 = df.la
+@BUILD_PLUGIN_DISK_TRUE@am__append_91 = disk.la
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_92 = -lkstat
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_93 = -ldevinfo
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_94 = -lIOKit
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_95 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)  
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_96 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_DISK_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_97 = -lperfstat
+@BUILD_PLUGIN_DISK_TRUE@am__append_98 = "-dlopen" disk.la
+@BUILD_PLUGIN_DISK_TRUE@am__append_99 = disk.la
+@BUILD_PLUGIN_DNS_TRUE@am__append_100 = dns.la
+@BUILD_PLUGIN_DNS_TRUE@am__append_101 = "-dlopen" dns.la
+@BUILD_PLUGIN_DNS_TRUE@am__append_102 = dns.la
+@BUILD_PLUGIN_EMAIL_TRUE@am__append_103 = email.la
+@BUILD_PLUGIN_EMAIL_TRUE@am__append_104 = "-dlopen" email.la
+@BUILD_PLUGIN_EMAIL_TRUE@am__append_105 = email.la
+@BUILD_PLUGIN_ENTROPY_TRUE@am__append_106 = entropy.la
+@BUILD_PLUGIN_ENTROPY_TRUE@am__append_107 = "-dlopen" entropy.la
+@BUILD_PLUGIN_ENTROPY_TRUE@am__append_108 = entropy.la
+@BUILD_PLUGIN_EXEC_TRUE@am__append_109 = exec.la
+@BUILD_PLUGIN_EXEC_TRUE@am__append_110 = "-dlopen" exec.la
+@BUILD_PLUGIN_EXEC_TRUE@am__append_111 = exec.la
+@BUILD_PLUGIN_ETHSTAT_TRUE@am__append_112 = ethstat.la
+@BUILD_PLUGIN_ETHSTAT_TRUE@am__append_113 = "-dlopen" ethstat.la
+@BUILD_PLUGIN_ETHSTAT_TRUE@am__append_114 = ethstat.la
+@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_115 = filecount.la
+@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_116 = "-dlopen" filecount.la
+@BUILD_PLUGIN_FILECOUNT_TRUE@am__append_117 = filecount.la
+@BUILD_PLUGIN_GMOND_TRUE@am__append_118 = gmond.la
+@BUILD_PLUGIN_GMOND_TRUE@am__append_119 = "-dlopen" gmond.la
+@BUILD_PLUGIN_GMOND_TRUE@am__append_120 = gmond.la
+@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_121 = hddtemp.la
+@BUILD_PLUGIN_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_122 = -lsocket
+@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_123 = "-dlopen" hddtemp.la
+@BUILD_PLUGIN_HDDTEMP_TRUE@am__append_124 = hddtemp.la
+@BUILD_PLUGIN_INTERFACE_TRUE@am__append_125 = interface.la
+@BUILD_PLUGIN_INTERFACE_TRUE@am__append_126 = "-dlopen" interface.la
+@BUILD_PLUGIN_INTERFACE_TRUE@am__append_127 = interface.la
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_128 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_129 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_130 = -lkstat
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@@BUILD_WITH_LIBSTATGRAB_FALSE@am__append_131 = -ldevinfo
+@BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_132 = -lperfstat
+@BUILD_PLUGIN_IPTABLES_TRUE@am__append_133 = iptables.la
+@BUILD_PLUGIN_IPTABLES_TRUE@am__append_134 = "-dlopen" iptables.la
+@BUILD_PLUGIN_IPTABLES_TRUE@am__append_135 = iptables.la
+@BUILD_PLUGIN_IPMI_TRUE@am__append_136 = ipmi.la
+@BUILD_PLUGIN_IPMI_TRUE@am__append_137 = "-dlopen" ipmi.la
+@BUILD_PLUGIN_IPMI_TRUE@am__append_138 = ipmi.la
+@BUILD_PLUGIN_IPVS_TRUE@am__append_139 = ipvs.la
+@BUILD_PLUGIN_IPVS_TRUE@am__append_140 = "-dlopen" ipvs.la
+@BUILD_PLUGIN_IPVS_TRUE@am__append_141 = ipvs.la
+@BUILD_PLUGIN_IRQ_TRUE@am__append_142 = irq.la
+@BUILD_PLUGIN_IRQ_TRUE@am__append_143 = "-dlopen" irq.la
+@BUILD_PLUGIN_IRQ_TRUE@am__append_144 = irq.la
+@BUILD_PLUGIN_JAVA_TRUE@am__append_145 = java.la
+@BUILD_PLUGIN_JAVA_TRUE@am__append_146 = "-dlopen" java.la
+@BUILD_PLUGIN_JAVA_TRUE@am__append_147 = java.la
+@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_148 = libvirt.la
+@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_149 = "-dlopen" libvirt.la
+@BUILD_PLUGIN_LIBVIRT_TRUE@am__append_150 = libvirt.la
+@BUILD_PLUGIN_LOAD_TRUE@am__append_151 = load.la
+@BUILD_PLUGIN_LOAD_TRUE@am__append_152 = "-dlopen" load.la
+@BUILD_PLUGIN_LOAD_TRUE@am__append_153 = load.la
+@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_154 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_155 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_LOAD_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_156 = -lperfstat
+@BUILD_PLUGIN_LOGFILE_TRUE@am__append_157 = logfile.la
+@BUILD_PLUGIN_LOGFILE_TRUE@am__append_158 = "-dlopen" logfile.la
+@BUILD_PLUGIN_LOGFILE_TRUE@am__append_159 = logfile.la
+@BUILD_PLUGIN_LPAR_TRUE@am__append_160 = lpar.la
+@BUILD_PLUGIN_LPAR_TRUE@am__append_161 = "-dlopen" lpar.la
+@BUILD_PLUGIN_LPAR_TRUE@am__append_162 = lpar.la
+@BUILD_PLUGIN_MADWIFI_TRUE@am__append_163 = madwifi.la
+@BUILD_PLUGIN_MADWIFI_TRUE@am__append_164 = "-dlopen" madwifi.la
+@BUILD_PLUGIN_MADWIFI_TRUE@am__append_165 = madwifi.la
+@BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@am__append_166 = match_empty_counter.la
+@BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@am__append_167 = "-dlopen" match_empty_counter.la
+@BUILD_PLUGIN_MATCH_EMPTY_COUNTER_TRUE@am__append_168 = match_empty_counter.la
+@BUILD_PLUGIN_MATCH_HASHED_TRUE@am__append_169 = match_hashed.la
+@BUILD_PLUGIN_MATCH_HASHED_TRUE@am__append_170 = "-dlopen" match_hashed.la
+@BUILD_PLUGIN_MATCH_HASHED_TRUE@am__append_171 = match_hashed.la
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_172 = match_regex.la
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_173 = "-dlopen" match_regex.la
+@BUILD_PLUGIN_MATCH_REGEX_TRUE@am__append_174 = match_regex.la
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_175 = match_timediff.la
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_176 = "-dlopen" match_timediff.la
+@BUILD_PLUGIN_MATCH_TIMEDIFF_TRUE@am__append_177 = match_timediff.la
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_178 = match_value.la
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_179 = "-dlopen" match_value.la
+@BUILD_PLUGIN_MATCH_VALUE_TRUE@am__append_180 = match_value.la
+@BUILD_PLUGIN_MBMON_TRUE@am__append_181 = mbmon.la
+@BUILD_PLUGIN_MBMON_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_182 = -lsocket
+@BUILD_PLUGIN_MBMON_TRUE@am__append_183 = "-dlopen" mbmon.la
+@BUILD_PLUGIN_MBMON_TRUE@am__append_184 = mbmon.la
+@BUILD_PLUGIN_MD_TRUE@am__append_185 = md.la
+@BUILD_PLUGIN_MD_TRUE@am__append_186 = "-dlopen" md.la
+@BUILD_PLUGIN_MD_TRUE@am__append_187 = md.la
+@BUILD_PLUGIN_MEMCACHEC_TRUE@am__append_188 = memcachec.la
+@BUILD_PLUGIN_MEMCACHEC_TRUE@am__append_189 = "-dlopen" memcachec.la
+@BUILD_PLUGIN_MEMCACHEC_TRUE@am__append_190 = memcachec.la
+@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_191 = memcached.la
+@BUILD_PLUGIN_MEMCACHED_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_192 = -lsocket
+@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_193 = "-dlopen" memcached.la
+@BUILD_PLUGIN_MEMCACHED_TRUE@am__append_194 = memcached.la
+@BUILD_PLUGIN_MEMORY_TRUE@am__append_195 = memory.la
+@BUILD_PLUGIN_MEMORY_TRUE@am__append_196 = "-dlopen" memory.la
+@BUILD_PLUGIN_MEMORY_TRUE@am__append_197 = memory.la
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_198 = -lkstat
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_199 = -ldevinfo
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_200 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_201 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_MEMORY_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_202 = -lperfstat
+@BUILD_PLUGIN_MODBUS_TRUE@am__append_203 = modbus.la
+@BUILD_PLUGIN_MODBUS_TRUE@am__append_204 = "-dlopen" modbus.la
+@BUILD_PLUGIN_MODBUS_TRUE@am__append_205 = modbus.la
+@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_206 = multimeter.la
+@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_207 = "-dlopen" multimeter.la
+@BUILD_PLUGIN_MULTIMETER_TRUE@am__append_208 = multimeter.la
+@BUILD_PLUGIN_MYSQL_TRUE@am__append_209 = mysql.la
+@BUILD_PLUGIN_MYSQL_TRUE@am__append_210 = "-dlopen" mysql.la
+@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_211 = $(BUILD_WITH_LIBMYSQL_CFLAGS)
+@BUILD_PLUGIN_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_212 = $(BUILD_WITH_LIBMYSQL_LIBS)
+@BUILD_PLUGIN_MYSQL_TRUE@am__append_213 = mysql.la
+@BUILD_PLUGIN_NETAPP_TRUE@am__append_214 = netapp.la
+@BUILD_PLUGIN_NETAPP_TRUE@am__append_215 = "-dlopen" netapp.la
+@BUILD_PLUGIN_NETAPP_TRUE@am__append_216 = netapp.la
+@BUILD_PLUGIN_NETLINK_TRUE@am__append_217 = netlink.la
+@BUILD_PLUGIN_NETLINK_TRUE@am__append_218 = "-dlopen" netlink.la
+@BUILD_PLUGIN_NETLINK_TRUE@am__append_219 = netlink.la
+@BUILD_PLUGIN_NETWORK_TRUE@am__append_220 = network.la
+@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_221 = -lsocket
+@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBGCRYPT_TRUE@am__append_222 = $(GCRYPT_CPPFLAGS)
+@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBGCRYPT_TRUE@am__append_223 = $(GCRYPT_LDFLAGS)
+@BUILD_PLUGIN_NETWORK_TRUE@@BUILD_WITH_LIBGCRYPT_TRUE@am__append_224 = $(GCRYPT_LIBS)
+@BUILD_PLUGIN_NETWORK_TRUE@am__append_225 = "-dlopen" network.la
+@BUILD_PLUGIN_NETWORK_TRUE@am__append_226 = network.la
+@BUILD_PLUGIN_NFS_TRUE@am__append_227 = nfs.la
+@BUILD_PLUGIN_NFS_TRUE@am__append_228 = "-dlopen" nfs.la
+@BUILD_PLUGIN_NFS_TRUE@am__append_229 = nfs.la
+@BUILD_PLUGIN_FSCACHE_TRUE@am__append_230 = fscache.la
+@BUILD_PLUGIN_FSCACHE_TRUE@am__append_231 = "-dlopen" fscache.la
+@BUILD_PLUGIN_FSCACHE_TRUE@am__append_232 = fscache.la
+@BUILD_PLUGIN_NGINX_TRUE@am__append_233 = nginx.la
+@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_234 = $(BUILD_WITH_LIBCURL_CFLAGS)
+@BUILD_PLUGIN_NGINX_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_235 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_PLUGIN_NGINX_TRUE@am__append_236 = "-dlopen" nginx.la
+@BUILD_PLUGIN_NGINX_TRUE@am__append_237 = nginx.la
+@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_238 = notify_desktop.la
+@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_239 = "-dlopen" notify_desktop.la
+@BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@am__append_240 = notify_desktop.la
+@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_241 = notify_email.la
+@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_242 = "-dlopen" notify_email.la
+@BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@am__append_243 = notify_email.la
+@BUILD_PLUGIN_NTPD_TRUE@am__append_244 = ntpd.la
+@BUILD_PLUGIN_NTPD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_245 = -lsocket
+@BUILD_PLUGIN_NTPD_TRUE@am__append_246 = "-dlopen" ntpd.la
+@BUILD_PLUGIN_NTPD_TRUE@am__append_247 = ntpd.la
+@BUILD_PLUGIN_NUMA_TRUE@am__append_248 = numa.la
+@BUILD_PLUGIN_NUMA_TRUE@am__append_249 = "-dlopen" numa.la
+@BUILD_PLUGIN_NUMA_TRUE@am__append_250 = numa.la
+@BUILD_PLUGIN_NUT_TRUE@am__append_251 = nut.la
+@BUILD_PLUGIN_NUT_TRUE@am__append_252 = "-dlopen" nut.la
+@BUILD_PLUGIN_NUT_TRUE@am__append_253 = nut.la
+@BUILD_PLUGIN_OLSRD_TRUE@am__append_254 = olsrd.la
+@BUILD_PLUGIN_OLSRD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_255 = -lsocket
+@BUILD_PLUGIN_OLSRD_TRUE@am__append_256 = "-dlopen" olsrd.la
+@BUILD_PLUGIN_OLSRD_TRUE@am__append_257 = olsrd.la
+@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_258 = onewire.la
+@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_259 = "-dlopen" onewire.la
+@BUILD_PLUGIN_ONEWIRE_TRUE@am__append_260 = onewire.la
+@BUILD_PLUGIN_OPENVPN_TRUE@am__append_261 = openvpn.la
+@BUILD_PLUGIN_OPENVPN_TRUE@am__append_262 = "-dlopen" openvpn.la
+@BUILD_PLUGIN_OPENVPN_TRUE@am__append_263 = openvpn.la
+@BUILD_PLUGIN_ORACLE_TRUE@am__append_264 = oracle.la
+@BUILD_PLUGIN_ORACLE_TRUE@am__append_265 = "-dlopen" oracle.la
+@BUILD_PLUGIN_ORACLE_TRUE@am__append_266 = oracle.la
+@BUILD_PLUGIN_PERL_TRUE@am__append_267 = perl.la
 # Work-around for issues #41 and #42 - Perl 5.10 incorrectly introduced
 # __attribute__nonnull__(3) for Perl_load_module().
-@BUILD_PLUGIN_PERL_TRUE@@HAVE_BROKEN_PERL_LOAD_MODULE_TRUE@am__append_267 = -Wno-nonnull
-@BUILD_PLUGIN_PERL_TRUE@am__append_268 = "-dlopen" perl.la
-@BUILD_PLUGIN_PERL_TRUE@am__append_269 = perl.la
-@BUILD_PLUGIN_PF_TRUE@am__append_270 = pf.la
-@BUILD_PLUGIN_PF_TRUE@am__append_271 = "-dlopen" pf.la
-@BUILD_PLUGIN_PF_TRUE@am__append_272 = pf.la
-@BUILD_PLUGIN_PINBA_TRUE@am__append_273 = pinba.pb-c.c pinba.pb-c.h
+@BUILD_PLUGIN_PERL_TRUE@@HAVE_BROKEN_PERL_LOAD_MODULE_TRUE@am__append_268 = -Wno-nonnull
+@BUILD_PLUGIN_PERL_TRUE@am__append_269 = "-dlopen" perl.la
+@BUILD_PLUGIN_PERL_TRUE@am__append_270 = perl.la
+@BUILD_PLUGIN_PF_TRUE@am__append_271 = pf.la
+@BUILD_PLUGIN_PF_TRUE@am__append_272 = "-dlopen" pf.la
+@BUILD_PLUGIN_PF_TRUE@am__append_273 = pf.la
 @BUILD_PLUGIN_PINBA_TRUE@am__append_274 = pinba.pb-c.c pinba.pb-c.h
-@BUILD_PLUGIN_PINBA_TRUE@am__append_275 = pinba.la
-@BUILD_PLUGIN_PINBA_TRUE@am__append_276 = "-dlopen" pinba.la
-@BUILD_PLUGIN_PINBA_TRUE@am__append_277 = pinba.la
-@BUILD_PLUGIN_PING_TRUE@am__append_278 = ping.la
-@BUILD_PLUGIN_PING_TRUE@am__append_279 = "-dlopen" ping.la
-@BUILD_PLUGIN_PING_TRUE@am__append_280 = ping.la
-@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_281 = postgresql.la
-@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_282 = "-dlopen" postgresql.la
-@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_283 = postgresql.la
-@BUILD_PLUGIN_POWERDNS_TRUE@am__append_284 = powerdns.la
-@BUILD_PLUGIN_POWERDNS_TRUE@am__append_285 = "-dlopen" powerdns.la
-@BUILD_PLUGIN_POWERDNS_TRUE@am__append_286 = powerdns.la
-@BUILD_PLUGIN_PYTHON_TRUE@am__append_287 = python.la
-@BUILD_PLUGIN_PYTHON_TRUE@@COMPILER_IS_GCC_TRUE@am__append_288 = -fno-strict-aliasing -Wno-strict-aliasing
-@BUILD_PLUGIN_PYTHON_TRUE@am__append_289 = "-dlopen" python.la
-@BUILD_PLUGIN_PYTHON_TRUE@am__append_290 = python.la
-@BUILD_PLUGIN_PROCESSES_TRUE@am__append_291 = processes.la
-@BUILD_PLUGIN_PROCESSES_TRUE@am__append_292 = "-dlopen" processes.la
-@BUILD_PLUGIN_PROCESSES_TRUE@am__append_293 = processes.la
-@BUILD_PLUGIN_PROCESSES_TRUE@@BUILD_WITH_LIBKVM_GETPROCS_TRUE@am__append_294 = -lkvm
-@BUILD_PLUGIN_PROTOCOLS_TRUE@am__append_295 = protocols.la
-@BUILD_PLUGIN_PROTOCOLS_TRUE@am__append_296 = "-dlopen" protocols.la
-@BUILD_PLUGIN_PROTOCOLS_TRUE@am__append_297 = protocols.la
-@BUILD_PLUGIN_REDIS_TRUE@am__append_298 = redis.la
-@BUILD_PLUGIN_REDIS_TRUE@am__append_299 = "-dlopen" redis.la
-@BUILD_PLUGIN_REDIS_TRUE@am__append_300 = redis.la
-@BUILD_PLUGIN_ROUTEROS_TRUE@am__append_301 = routeros.la
-@BUILD_PLUGIN_ROUTEROS_TRUE@am__append_302 = "-dlopen" routeros.la
-@BUILD_PLUGIN_ROUTEROS_TRUE@am__append_303 = routeros.la
-@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_304 = rrdcached.la
-@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_305 = "-dlopen" rrdcached.la
-@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_306 = rrdcached.la
-@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_307 = rrdtool.la
-@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_308 = "-dlopen" rrdtool.la
-@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_309 = rrdtool.la
-@BUILD_PLUGIN_SENSORS_TRUE@am__append_310 = sensors.la
-@BUILD_PLUGIN_SENSORS_TRUE@am__append_311 = "-dlopen" sensors.la
-@BUILD_PLUGIN_SENSORS_TRUE@am__append_312 = sensors.la
-@BUILD_PLUGIN_SERIAL_TRUE@am__append_313 = serial.la
-@BUILD_PLUGIN_SERIAL_TRUE@am__append_314 = "-dlopen" serial.la
-@BUILD_PLUGIN_SERIAL_TRUE@am__append_315 = serial.la
-@BUILD_PLUGIN_SNMP_TRUE@am__append_316 = snmp.la
-@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_317 = $(BUILD_WITH_LIBSNMP_CFLAGS)
-@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_318 = $(BUILD_WITH_LIBSNMP_LIBS)
-@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_319 = -lpthread
-@BUILD_PLUGIN_SNMP_TRUE@am__append_320 = "-dlopen" snmp.la
-@BUILD_PLUGIN_SNMP_TRUE@am__append_321 = snmp.la
-@BUILD_PLUGIN_SWAP_TRUE@am__append_322 = swap.la
-@BUILD_PLUGIN_SWAP_TRUE@am__append_323 = "-dlopen" swap.la
-@BUILD_PLUGIN_SWAP_TRUE@am__append_324 = swap.la
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_325 = -lkstat
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_326 = -ldevinfo
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKVM_GETSWAPINFO_TRUE@am__append_327 = -lkvm
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_328 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_329 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_330 = -lperfstat
-@BUILD_PLUGIN_SYSLOG_TRUE@am__append_331 = syslog.la
-@BUILD_PLUGIN_SYSLOG_TRUE@am__append_332 = "-dlopen" syslog.la
-@BUILD_PLUGIN_SYSLOG_TRUE@am__append_333 = syslog.la
-@BUILD_PLUGIN_TABLE_TRUE@am__append_334 = table.la
-@BUILD_PLUGIN_TABLE_TRUE@am__append_335 = "-dlopen" table.la
-@BUILD_PLUGIN_TABLE_TRUE@am__append_336 = table.la
-@BUILD_PLUGIN_TAIL_TRUE@am__append_337 = tail.la
-@BUILD_PLUGIN_TAIL_TRUE@am__append_338 = "-dlopen" tail.la
-@BUILD_PLUGIN_TAIL_TRUE@am__append_339 = tail.la
-@BUILD_PLUGIN_TAPE_TRUE@am__append_340 = tape.la
-@BUILD_PLUGIN_TAPE_TRUE@am__append_341 = "-dlopen" tape.la
-@BUILD_PLUGIN_TAPE_TRUE@am__append_342 = tape.la
-@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_343 = target_notification.la
-@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_344 = "-dlopen" target_notification.la
-@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_345 = target_notification.la
-@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_346 = target_replace.la
-@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_347 = "-dlopen" target_replace.la
-@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_348 = target_replace.la
-@BUILD_PLUGIN_TARGET_SCALE_TRUE@am__append_349 = target_scale.la
-@BUILD_PLUGIN_TARGET_SCALE_TRUE@am__append_350 = "-dlopen" target_scale.la
-@BUILD_PLUGIN_TARGET_SCALE_TRUE@am__append_351 = target_scale.la
-@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_352 = target_set.la
-@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_353 = "-dlopen" target_set.la
-@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_354 = target_set.la
-@BUILD_PLUGIN_TARGET_V5UPGRADE_TRUE@am__append_355 = target_v5upgrade.la
-@BUILD_PLUGIN_TARGET_V5UPGRADE_TRUE@am__append_356 = "-dlopen" target_v5upgrade.la
-@BUILD_PLUGIN_TARGET_V5UPGRADE_TRUE@am__append_357 = target_v5upgrade.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_358 = tcpconns.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_359 = "-dlopen" tcpconns.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_360 = tcpconns.la
-@BUILD_PLUGIN_TCPCONNS_TRUE@@BUILD_WITH_LIBKVM_NLIST_TRUE@am__append_361 = -lkvm
-@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_362 = teamspeak2.la
-@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_363 = "-dlopen" teamspeak2.la
-@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_364 = teamspeak2.la
-@BUILD_PLUGIN_TED_TRUE@am__append_365 = ted.la
-@BUILD_PLUGIN_TED_TRUE@am__append_366 = "-dlopen" ted.la
-@BUILD_PLUGIN_TED_TRUE@am__append_367 = ted.la
-@BUILD_PLUGIN_THERMAL_TRUE@am__append_368 = thermal.la
-@BUILD_PLUGIN_THERMAL_TRUE@am__append_369 = "-dlopen" thermal.la
-@BUILD_PLUGIN_THERMAL_TRUE@am__append_370 = thermal.la
-@BUILD_PLUGIN_THRESHOLD_TRUE@am__append_371 = threshold.la
-@BUILD_PLUGIN_THRESHOLD_TRUE@am__append_372 = "-dlopen" threshold.la
-@BUILD_PLUGIN_THRESHOLD_TRUE@am__append_373 = threshold.la
-@BUILD_PLUGIN_TOKYOTYRANT_TRUE@am__append_374 = tokyotyrant.la
-@BUILD_PLUGIN_TOKYOTYRANT_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_375 = -lsocket
-@BUILD_PLUGIN_TOKYOTYRANT_TRUE@am__append_376 = "-dlopen" tokyotyrant.la
-@BUILD_PLUGIN_TOKYOTYRANT_TRUE@am__append_377 = tokyotyrant.la
-@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_378 = unixsock.la
-@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_379 = "-dlopen" unixsock.la
-@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_380 = unixsock.la
-@BUILD_PLUGIN_UPTIME_TRUE@am__append_381 = uptime.la
-@BUILD_PLUGIN_UPTIME_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_382 = -lkstat
-@BUILD_PLUGIN_UPTIME_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_383 = -lperfstat
-@BUILD_PLUGIN_UPTIME_TRUE@am__append_384 = "-dlopen" uptime.la
-@BUILD_PLUGIN_UPTIME_TRUE@am__append_385 = uptime.la
-@BUILD_PLUGIN_USERS_TRUE@am__append_386 = users.la
-@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_387 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
-@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_388 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
-@BUILD_PLUGIN_USERS_TRUE@am__append_389 = "-dlopen" users.la
-@BUILD_PLUGIN_USERS_TRUE@am__append_390 = users.la
-@BUILD_PLUGIN_UUID_TRUE@am__append_391 = uuid.la
-@BUILD_PLUGIN_UUID_TRUE@am__append_392 = "-dlopen" uuid.la
-@BUILD_PLUGIN_UUID_TRUE@am__append_393 = uuid.la
-@BUILD_PLUGIN_VARNISH_TRUE@am__append_394 = varnish.la
-@BUILD_PLUGIN_VARNISH_TRUE@am__append_395 = "-dlopen" varnish.la
-@BUILD_PLUGIN_VARNISH_TRUE@am__append_396 = varnish.la
-@BUILD_PLUGIN_VMEM_TRUE@am__append_397 = vmem.la
-@BUILD_PLUGIN_VMEM_TRUE@am__append_398 = "-dlopen" vmem.la
-@BUILD_PLUGIN_VMEM_TRUE@am__append_399 = vmem.la
-@BUILD_PLUGIN_VSERVER_TRUE@am__append_400 = vserver.la
-@BUILD_PLUGIN_VSERVER_TRUE@am__append_401 = "-dlopen" vserver.la
-@BUILD_PLUGIN_VSERVER_TRUE@am__append_402 = vserver.la
-@BUILD_PLUGIN_WIRELESS_TRUE@am__append_403 = wireless.la
-@BUILD_PLUGIN_WIRELESS_TRUE@am__append_404 = "-dlopen" wireless.la
-@BUILD_PLUGIN_WIRELESS_TRUE@am__append_405 = wireless.la
-@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@am__append_406 = write_graphite.la
-@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@am__append_407 = "-dlopen" write_graphite.la
-@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@am__append_408 = write_graphite.la
-@BUILD_PLUGIN_WRITE_HTTP_TRUE@am__append_409 = write_http.la
-@BUILD_PLUGIN_WRITE_HTTP_TRUE@am__append_410 = "-dlopen" write_http.la
-@BUILD_PLUGIN_WRITE_HTTP_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_411 = $(BUILD_WITH_LIBCURL_CFLAGS)
-@BUILD_PLUGIN_WRITE_HTTP_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_412 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_PLUGIN_WRITE_HTTP_TRUE@am__append_413 = write_http.la
-@BUILD_PLUGIN_WRITE_MONGODB_TRUE@am__append_414 = write_mongodb.la
-@BUILD_PLUGIN_WRITE_MONGODB_TRUE@am__append_415 = "-dlopen" write_mongodb.la
-@BUILD_PLUGIN_WRITE_MONGODB_TRUE@am__append_416 = write_mongodb.la
-@BUILD_PLUGIN_WRITE_REDIS_TRUE@am__append_417 = write_redis.la
-@BUILD_PLUGIN_WRITE_REDIS_TRUE@am__append_418 = "-dlopen" write_redis.la
-@BUILD_PLUGIN_WRITE_REDIS_TRUE@am__append_419 = write_redis.la
-@BUILD_PLUGIN_XMMS_TRUE@am__append_420 = xmms.la
-@BUILD_PLUGIN_XMMS_TRUE@am__append_421 = "-dlopen" xmms.la
-@BUILD_PLUGIN_XMMS_TRUE@am__append_422 = xmms.la
-@BUILD_PLUGIN_ZFS_ARC_TRUE@am__append_423 = zfs_arc.la
-@BUILD_PLUGIN_ZFS_ARC_TRUE@am__append_424 = "-dlopen" zfs_arc.la
-@BUILD_PLUGIN_ZFS_ARC_TRUE@am__append_425 = zfs_arc.la
-@BUILD_FEATURE_DEBUG_TRUE@am__append_426 = utils_vl_lookup_test
+@BUILD_PLUGIN_PINBA_TRUE@am__append_275 = pinba.pb-c.c pinba.pb-c.h
+@BUILD_PLUGIN_PINBA_TRUE@am__append_276 = pinba.la
+@BUILD_PLUGIN_PINBA_TRUE@am__append_277 = "-dlopen" pinba.la
+@BUILD_PLUGIN_PINBA_TRUE@am__append_278 = pinba.la
+@BUILD_PLUGIN_PING_TRUE@am__append_279 = ping.la
+@BUILD_PLUGIN_PING_TRUE@am__append_280 = "-dlopen" ping.la
+@BUILD_PLUGIN_PING_TRUE@am__append_281 = ping.la
+@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_282 = postgresql.la
+@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_283 = "-dlopen" postgresql.la
+@BUILD_PLUGIN_POSTGRESQL_TRUE@am__append_284 = postgresql.la
+@BUILD_PLUGIN_POWERDNS_TRUE@am__append_285 = powerdns.la
+@BUILD_PLUGIN_POWERDNS_TRUE@am__append_286 = "-dlopen" powerdns.la
+@BUILD_PLUGIN_POWERDNS_TRUE@am__append_287 = powerdns.la
+@BUILD_PLUGIN_PYTHON_TRUE@am__append_288 = python.la
+@BUILD_PLUGIN_PYTHON_TRUE@@COMPILER_IS_GCC_TRUE@am__append_289 = -fno-strict-aliasing -Wno-strict-aliasing
+@BUILD_PLUGIN_PYTHON_TRUE@am__append_290 = "-dlopen" python.la
+@BUILD_PLUGIN_PYTHON_TRUE@am__append_291 = python.la
+@BUILD_PLUGIN_PROCESSES_TRUE@am__append_292 = processes.la
+@BUILD_PLUGIN_PROCESSES_TRUE@am__append_293 = "-dlopen" processes.la
+@BUILD_PLUGIN_PROCESSES_TRUE@am__append_294 = processes.la
+@BUILD_PLUGIN_PROCESSES_TRUE@@BUILD_WITH_LIBKVM_GETPROCS_TRUE@am__append_295 = -lkvm
+@BUILD_PLUGIN_PROTOCOLS_TRUE@am__append_296 = protocols.la
+@BUILD_PLUGIN_PROTOCOLS_TRUE@am__append_297 = "-dlopen" protocols.la
+@BUILD_PLUGIN_PROTOCOLS_TRUE@am__append_298 = protocols.la
+@BUILD_PLUGIN_REDIS_TRUE@am__append_299 = redis.la
+@BUILD_PLUGIN_REDIS_TRUE@am__append_300 = "-dlopen" redis.la
+@BUILD_PLUGIN_REDIS_TRUE@am__append_301 = redis.la
+@BUILD_PLUGIN_ROUTEROS_TRUE@am__append_302 = routeros.la
+@BUILD_PLUGIN_ROUTEROS_TRUE@am__append_303 = "-dlopen" routeros.la
+@BUILD_PLUGIN_ROUTEROS_TRUE@am__append_304 = routeros.la
+@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_305 = rrdcached.la
+@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_306 = "-dlopen" rrdcached.la
+@BUILD_PLUGIN_RRDCACHED_TRUE@am__append_307 = rrdcached.la
+@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_308 = rrdtool.la
+@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_309 = "-dlopen" rrdtool.la
+@BUILD_PLUGIN_RRDTOOL_TRUE@am__append_310 = rrdtool.la
+@BUILD_PLUGIN_SENSORS_TRUE@am__append_311 = sensors.la
+@BUILD_PLUGIN_SENSORS_TRUE@am__append_312 = "-dlopen" sensors.la
+@BUILD_PLUGIN_SENSORS_TRUE@am__append_313 = sensors.la
+@BUILD_PLUGIN_SERIAL_TRUE@am__append_314 = serial.la
+@BUILD_PLUGIN_SERIAL_TRUE@am__append_315 = "-dlopen" serial.la
+@BUILD_PLUGIN_SERIAL_TRUE@am__append_316 = serial.la
+@BUILD_PLUGIN_SNMP_TRUE@am__append_317 = snmp.la
+@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_318 = $(BUILD_WITH_LIBSNMP_CFLAGS)
+@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBNETSNMP_TRUE@am__append_319 = $(BUILD_WITH_LIBSNMP_LIBS)
+@BUILD_PLUGIN_SNMP_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_320 = -lpthread
+@BUILD_PLUGIN_SNMP_TRUE@am__append_321 = "-dlopen" snmp.la
+@BUILD_PLUGIN_SNMP_TRUE@am__append_322 = snmp.la
+@BUILD_PLUGIN_SWAP_TRUE@am__append_323 = swap.la
+@BUILD_PLUGIN_SWAP_TRUE@am__append_324 = "-dlopen" swap.la
+@BUILD_PLUGIN_SWAP_TRUE@am__append_325 = swap.la
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_326 = -lkstat
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_327 = -ldevinfo
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBKVM_GETSWAPINFO_TRUE@am__append_328 = -lkvm
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_329 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_330 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_SWAP_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_331 = -lperfstat
+@BUILD_PLUGIN_SYSLOG_TRUE@am__append_332 = syslog.la
+@BUILD_PLUGIN_SYSLOG_TRUE@am__append_333 = "-dlopen" syslog.la
+@BUILD_PLUGIN_SYSLOG_TRUE@am__append_334 = syslog.la
+@BUILD_PLUGIN_TABLE_TRUE@am__append_335 = table.la
+@BUILD_PLUGIN_TABLE_TRUE@am__append_336 = "-dlopen" table.la
+@BUILD_PLUGIN_TABLE_TRUE@am__append_337 = table.la
+@BUILD_PLUGIN_TAIL_TRUE@am__append_338 = tail.la
+@BUILD_PLUGIN_TAIL_TRUE@am__append_339 = "-dlopen" tail.la
+@BUILD_PLUGIN_TAIL_TRUE@am__append_340 = tail.la
+@BUILD_PLUGIN_TAPE_TRUE@am__append_341 = tape.la
+@BUILD_PLUGIN_TAPE_TRUE@am__append_342 = "-dlopen" tape.la
+@BUILD_PLUGIN_TAPE_TRUE@am__append_343 = tape.la
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_344 = target_notification.la
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_345 = "-dlopen" target_notification.la
+@BUILD_PLUGIN_TARGET_NOTIFICATION_TRUE@am__append_346 = target_notification.la
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_347 = target_replace.la
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_348 = "-dlopen" target_replace.la
+@BUILD_PLUGIN_TARGET_REPLACE_TRUE@am__append_349 = target_replace.la
+@BUILD_PLUGIN_TARGET_SCALE_TRUE@am__append_350 = target_scale.la
+@BUILD_PLUGIN_TARGET_SCALE_TRUE@am__append_351 = "-dlopen" target_scale.la
+@BUILD_PLUGIN_TARGET_SCALE_TRUE@am__append_352 = target_scale.la
+@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_353 = target_set.la
+@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_354 = "-dlopen" target_set.la
+@BUILD_PLUGIN_TARGET_SET_TRUE@am__append_355 = target_set.la
+@BUILD_PLUGIN_TARGET_V5UPGRADE_TRUE@am__append_356 = target_v5upgrade.la
+@BUILD_PLUGIN_TARGET_V5UPGRADE_TRUE@am__append_357 = "-dlopen" target_v5upgrade.la
+@BUILD_PLUGIN_TARGET_V5UPGRADE_TRUE@am__append_358 = target_v5upgrade.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_359 = tcpconns.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_360 = "-dlopen" tcpconns.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@am__append_361 = tcpconns.la
+@BUILD_PLUGIN_TCPCONNS_TRUE@@BUILD_WITH_LIBKVM_NLIST_TRUE@am__append_362 = -lkvm
+@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_363 = teamspeak2.la
+@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_364 = "-dlopen" teamspeak2.la
+@BUILD_PLUGIN_TEAMSPEAK2_TRUE@am__append_365 = teamspeak2.la
+@BUILD_PLUGIN_TED_TRUE@am__append_366 = ted.la
+@BUILD_PLUGIN_TED_TRUE@am__append_367 = "-dlopen" ted.la
+@BUILD_PLUGIN_TED_TRUE@am__append_368 = ted.la
+@BUILD_PLUGIN_THERMAL_TRUE@am__append_369 = thermal.la
+@BUILD_PLUGIN_THERMAL_TRUE@am__append_370 = "-dlopen" thermal.la
+@BUILD_PLUGIN_THERMAL_TRUE@am__append_371 = thermal.la
+@BUILD_PLUGIN_THRESHOLD_TRUE@am__append_372 = threshold.la
+@BUILD_PLUGIN_THRESHOLD_TRUE@am__append_373 = "-dlopen" threshold.la
+@BUILD_PLUGIN_THRESHOLD_TRUE@am__append_374 = threshold.la
+@BUILD_PLUGIN_TOKYOTYRANT_TRUE@am__append_375 = tokyotyrant.la
+@BUILD_PLUGIN_TOKYOTYRANT_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_376 = -lsocket
+@BUILD_PLUGIN_TOKYOTYRANT_TRUE@am__append_377 = "-dlopen" tokyotyrant.la
+@BUILD_PLUGIN_TOKYOTYRANT_TRUE@am__append_378 = tokyotyrant.la
+@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_379 = unixsock.la
+@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_380 = "-dlopen" unixsock.la
+@BUILD_PLUGIN_UNIXSOCK_TRUE@am__append_381 = unixsock.la
+@BUILD_PLUGIN_UPTIME_TRUE@am__append_382 = uptime.la
+@BUILD_PLUGIN_UPTIME_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_383 = -lkstat
+@BUILD_PLUGIN_UPTIME_TRUE@@BUILD_WITH_PERFSTAT_TRUE@am__append_384 = -lperfstat
+@BUILD_PLUGIN_UPTIME_TRUE@am__append_385 = "-dlopen" uptime.la
+@BUILD_PLUGIN_UPTIME_TRUE@am__append_386 = uptime.la
+@BUILD_PLUGIN_USERS_TRUE@am__append_387 = users.la
+@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_388 = $(BUILD_WITH_LIBSTATGRAB_CFLAGS)
+@BUILD_PLUGIN_USERS_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_389 = $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+@BUILD_PLUGIN_USERS_TRUE@am__append_390 = "-dlopen" users.la
+@BUILD_PLUGIN_USERS_TRUE@am__append_391 = users.la
+@BUILD_PLUGIN_UUID_TRUE@am__append_392 = uuid.la
+@BUILD_PLUGIN_UUID_TRUE@am__append_393 = "-dlopen" uuid.la
+@BUILD_PLUGIN_UUID_TRUE@am__append_394 = uuid.la
+@BUILD_PLUGIN_VARNISH_TRUE@am__append_395 = varnish.la
+@BUILD_PLUGIN_VARNISH_TRUE@am__append_396 = "-dlopen" varnish.la
+@BUILD_PLUGIN_VARNISH_TRUE@am__append_397 = varnish.la
+@BUILD_PLUGIN_VMEM_TRUE@am__append_398 = vmem.la
+@BUILD_PLUGIN_VMEM_TRUE@am__append_399 = "-dlopen" vmem.la
+@BUILD_PLUGIN_VMEM_TRUE@am__append_400 = vmem.la
+@BUILD_PLUGIN_VSERVER_TRUE@am__append_401 = vserver.la
+@BUILD_PLUGIN_VSERVER_TRUE@am__append_402 = "-dlopen" vserver.la
+@BUILD_PLUGIN_VSERVER_TRUE@am__append_403 = vserver.la
+@BUILD_PLUGIN_WIRELESS_TRUE@am__append_404 = wireless.la
+@BUILD_PLUGIN_WIRELESS_TRUE@am__append_405 = "-dlopen" wireless.la
+@BUILD_PLUGIN_WIRELESS_TRUE@am__append_406 = wireless.la
+@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@am__append_407 = write_graphite.la
+@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@am__append_408 = "-dlopen" write_graphite.la
+@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@am__append_409 = write_graphite.la
+@BUILD_PLUGIN_WRITE_HTTP_TRUE@am__append_410 = write_http.la
+@BUILD_PLUGIN_WRITE_HTTP_TRUE@am__append_411 = "-dlopen" write_http.la
+@BUILD_PLUGIN_WRITE_HTTP_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_412 = $(BUILD_WITH_LIBCURL_CFLAGS)
+@BUILD_PLUGIN_WRITE_HTTP_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_413 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_PLUGIN_WRITE_HTTP_TRUE@am__append_414 = write_http.la
+@BUILD_PLUGIN_WRITE_MONGODB_TRUE@am__append_415 = write_mongodb.la
+@BUILD_PLUGIN_WRITE_MONGODB_TRUE@am__append_416 = "-dlopen" write_mongodb.la
+@BUILD_PLUGIN_WRITE_MONGODB_TRUE@am__append_417 = write_mongodb.la
+@BUILD_PLUGIN_WRITE_REDIS_TRUE@am__append_418 = write_redis.la
+@BUILD_PLUGIN_WRITE_REDIS_TRUE@am__append_419 = "-dlopen" write_redis.la
+@BUILD_PLUGIN_WRITE_REDIS_TRUE@am__append_420 = write_redis.la
+@BUILD_PLUGIN_XMMS_TRUE@am__append_421 = xmms.la
+@BUILD_PLUGIN_XMMS_TRUE@am__append_422 = "-dlopen" xmms.la
+@BUILD_PLUGIN_XMMS_TRUE@am__append_423 = xmms.la
+@BUILD_PLUGIN_ZFS_ARC_TRUE@am__append_424 = zfs_arc.la
+@BUILD_PLUGIN_ZFS_ARC_TRUE@am__append_425 = "-dlopen" zfs_arc.la
+@BUILD_PLUGIN_ZFS_ARC_TRUE@am__append_426 = zfs_arc.la
+@BUILD_FEATURE_DEBUG_TRUE@am__append_427 = utils_vl_lookup_test
 subdir = src
 DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/collectd.conf.in \
@@ -2096,82 +2097,82 @@ collectd_LDFLAGS = -export-dynamic $(am__append_10)
 collectd_LDADD = -lm $(am__append_3) $(am__append_4) $(am__append_5) \
 	$(am__append_6) $(am__append_7) $(am__append_8) \
 	$(am__append_9) $(am__append_12) $(am__append_13) \
-	$(am__append_15) $(am__append_23) $(am__append_26) \
-	$(am__append_29) $(am__append_35) $(am__append_38) \
-	$(am__append_41) $(am__append_45) $(am__append_48) \
-	$(am__append_51) $(am__append_55) $(am__append_63) \
-	$(am__append_66) $(am__append_69) $(am__append_72) \
-	$(am__append_79) $(am__append_82) $(am__append_85) \
-	$(am__append_88) $(am__append_97) $(am__append_100) \
-	$(am__append_103) $(am__append_106) $(am__append_109) \
-	$(am__append_112) $(am__append_115) $(am__append_118) \
-	$(am__append_122) $(am__append_125) $(am__append_133) \
-	$(am__append_136) $(am__append_139) $(am__append_142) \
-	$(am__append_145) $(am__append_148) $(am__append_151) \
-	$(am__append_157) $(am__append_160) $(am__append_163) \
-	$(am__append_166) $(am__append_169) $(am__append_172) \
-	$(am__append_175) $(am__append_178) $(am__append_182) \
-	$(am__append_185) $(am__append_188) $(am__append_192) \
-	$(am__append_195) $(am__append_203) $(am__append_206) \
-	$(am__append_209) $(am__append_214) $(am__append_217) \
-	$(am__append_224) $(am__append_227) $(am__append_230) \
-	$(am__append_235) $(am__append_238) $(am__append_241) \
-	$(am__append_245) $(am__append_248) $(am__append_251) \
-	$(am__append_255) $(am__append_258) $(am__append_261) \
-	$(am__append_264) $(am__append_268) $(am__append_271) \
-	$(am__append_276) $(am__append_279) $(am__append_282) \
-	$(am__append_285) $(am__append_289) $(am__append_292) \
-	$(am__append_296) $(am__append_299) $(am__append_302) \
-	$(am__append_305) $(am__append_308) $(am__append_311) \
-	$(am__append_314) $(am__append_320) $(am__append_323) \
-	$(am__append_332) $(am__append_335) $(am__append_338) \
-	$(am__append_341) $(am__append_344) $(am__append_347) \
-	$(am__append_350) $(am__append_353) $(am__append_356) \
-	$(am__append_359) $(am__append_363) $(am__append_366) \
-	$(am__append_369) $(am__append_372) $(am__append_376) \
-	$(am__append_379) $(am__append_384) $(am__append_389) \
-	$(am__append_392) $(am__append_395) $(am__append_398) \
-	$(am__append_401) $(am__append_404) $(am__append_407) \
-	$(am__append_410) $(am__append_415) $(am__append_418) \
-	$(am__append_421) $(am__append_424)
-collectd_DEPENDENCIES = $(am__append_14) $(am__append_24) \
-	$(am__append_27) $(am__append_32) $(am__append_36) \
-	$(am__append_39) $(am__append_42) $(am__append_46) \
-	$(am__append_49) $(am__append_52) $(am__append_56) \
-	$(am__append_64) $(am__append_67) $(am__append_70) \
-	$(am__append_75) $(am__append_80) $(am__append_83) \
-	$(am__append_86) $(am__append_89) $(am__append_98) \
-	$(am__append_101) $(am__append_104) $(am__append_107) \
-	$(am__append_110) $(am__append_113) $(am__append_116) \
-	$(am__append_119) $(am__append_123) $(am__append_126) \
-	$(am__append_134) $(am__append_137) $(am__append_140) \
-	$(am__append_143) $(am__append_146) $(am__append_149) \
-	$(am__append_152) $(am__append_158) $(am__append_161) \
-	$(am__append_164) $(am__append_167) $(am__append_170) \
-	$(am__append_173) $(am__append_176) $(am__append_179) \
-	$(am__append_183) $(am__append_186) $(am__append_189) \
-	$(am__append_193) $(am__append_196) $(am__append_204) \
-	$(am__append_207) $(am__append_212) $(am__append_215) \
-	$(am__append_218) $(am__append_225) $(am__append_228) \
-	$(am__append_231) $(am__append_236) $(am__append_239) \
-	$(am__append_242) $(am__append_246) $(am__append_249) \
-	$(am__append_252) $(am__append_256) $(am__append_259) \
-	$(am__append_262) $(am__append_265) $(am__append_269) \
-	$(am__append_272) $(am__append_277) $(am__append_280) \
-	$(am__append_283) $(am__append_286) $(am__append_290) \
-	$(am__append_293) $(am__append_297) $(am__append_300) \
-	$(am__append_303) $(am__append_306) $(am__append_309) \
-	$(am__append_312) $(am__append_315) $(am__append_321) \
-	$(am__append_324) $(am__append_333) $(am__append_336) \
-	$(am__append_339) $(am__append_342) $(am__append_345) \
-	$(am__append_348) $(am__append_351) $(am__append_354) \
-	$(am__append_357) $(am__append_360) $(am__append_364) \
-	$(am__append_367) $(am__append_370) $(am__append_373) \
-	$(am__append_377) $(am__append_380) $(am__append_385) \
-	$(am__append_390) $(am__append_393) $(am__append_396) \
-	$(am__append_399) $(am__append_402) $(am__append_405) \
-	$(am__append_408) $(am__append_413) $(am__append_416) \
-	$(am__append_419) $(am__append_422) $(am__append_425)
+	$(am__append_15) $(am__append_24) $(am__append_27) \
+	$(am__append_30) $(am__append_36) $(am__append_39) \
+	$(am__append_42) $(am__append_46) $(am__append_49) \
+	$(am__append_52) $(am__append_56) $(am__append_64) \
+	$(am__append_67) $(am__append_70) $(am__append_73) \
+	$(am__append_80) $(am__append_83) $(am__append_86) \
+	$(am__append_89) $(am__append_98) $(am__append_101) \
+	$(am__append_104) $(am__append_107) $(am__append_110) \
+	$(am__append_113) $(am__append_116) $(am__append_119) \
+	$(am__append_123) $(am__append_126) $(am__append_134) \
+	$(am__append_137) $(am__append_140) $(am__append_143) \
+	$(am__append_146) $(am__append_149) $(am__append_152) \
+	$(am__append_158) $(am__append_161) $(am__append_164) \
+	$(am__append_167) $(am__append_170) $(am__append_173) \
+	$(am__append_176) $(am__append_179) $(am__append_183) \
+	$(am__append_186) $(am__append_189) $(am__append_193) \
+	$(am__append_196) $(am__append_204) $(am__append_207) \
+	$(am__append_210) $(am__append_215) $(am__append_218) \
+	$(am__append_225) $(am__append_228) $(am__append_231) \
+	$(am__append_236) $(am__append_239) $(am__append_242) \
+	$(am__append_246) $(am__append_249) $(am__append_252) \
+	$(am__append_256) $(am__append_259) $(am__append_262) \
+	$(am__append_265) $(am__append_269) $(am__append_272) \
+	$(am__append_277) $(am__append_280) $(am__append_283) \
+	$(am__append_286) $(am__append_290) $(am__append_293) \
+	$(am__append_297) $(am__append_300) $(am__append_303) \
+	$(am__append_306) $(am__append_309) $(am__append_312) \
+	$(am__append_315) $(am__append_321) $(am__append_324) \
+	$(am__append_333) $(am__append_336) $(am__append_339) \
+	$(am__append_342) $(am__append_345) $(am__append_348) \
+	$(am__append_351) $(am__append_354) $(am__append_357) \
+	$(am__append_360) $(am__append_364) $(am__append_367) \
+	$(am__append_370) $(am__append_373) $(am__append_377) \
+	$(am__append_380) $(am__append_385) $(am__append_390) \
+	$(am__append_393) $(am__append_396) $(am__append_399) \
+	$(am__append_402) $(am__append_405) $(am__append_408) \
+	$(am__append_411) $(am__append_416) $(am__append_419) \
+	$(am__append_422) $(am__append_425)
+collectd_DEPENDENCIES = $(am__append_14) $(am__append_25) \
+	$(am__append_28) $(am__append_33) $(am__append_37) \
+	$(am__append_40) $(am__append_43) $(am__append_47) \
+	$(am__append_50) $(am__append_53) $(am__append_57) \
+	$(am__append_65) $(am__append_68) $(am__append_71) \
+	$(am__append_76) $(am__append_81) $(am__append_84) \
+	$(am__append_87) $(am__append_90) $(am__append_99) \
+	$(am__append_102) $(am__append_105) $(am__append_108) \
+	$(am__append_111) $(am__append_114) $(am__append_117) \
+	$(am__append_120) $(am__append_124) $(am__append_127) \
+	$(am__append_135) $(am__append_138) $(am__append_141) \
+	$(am__append_144) $(am__append_147) $(am__append_150) \
+	$(am__append_153) $(am__append_159) $(am__append_162) \
+	$(am__append_165) $(am__append_168) $(am__append_171) \
+	$(am__append_174) $(am__append_177) $(am__append_180) \
+	$(am__append_184) $(am__append_187) $(am__append_190) \
+	$(am__append_194) $(am__append_197) $(am__append_205) \
+	$(am__append_208) $(am__append_213) $(am__append_216) \
+	$(am__append_219) $(am__append_226) $(am__append_229) \
+	$(am__append_232) $(am__append_237) $(am__append_240) \
+	$(am__append_243) $(am__append_247) $(am__append_250) \
+	$(am__append_253) $(am__append_257) $(am__append_260) \
+	$(am__append_263) $(am__append_266) $(am__append_270) \
+	$(am__append_273) $(am__append_278) $(am__append_281) \
+	$(am__append_284) $(am__append_287) $(am__append_291) \
+	$(am__append_294) $(am__append_298) $(am__append_301) \
+	$(am__append_304) $(am__append_307) $(am__append_310) \
+	$(am__append_313) $(am__append_316) $(am__append_322) \
+	$(am__append_325) $(am__append_334) $(am__append_337) \
+	$(am__append_340) $(am__append_343) $(am__append_346) \
+	$(am__append_349) $(am__append_352) $(am__append_355) \
+	$(am__append_358) $(am__append_361) $(am__append_365) \
+	$(am__append_368) $(am__append_371) $(am__append_374) \
+	$(am__append_378) $(am__append_381) $(am__append_386) \
+	$(am__append_391) $(am__append_394) $(am__append_397) \
+	$(am__append_400) $(am__append_403) $(am__append_406) \
+	$(am__append_409) $(am__append_414) $(am__append_417) \
+	$(am__append_420) $(am__append_423) $(am__append_426)
 collectdmon_SOURCES = collectdmon.c
 collectdmon_CPPFLAGS = $(AM_CPPFLAGS)
 collectd_nagios_SOURCES = collectd-nagios.c
@@ -2185,49 +2186,49 @@ collectdctl_DEPENDENCIES = libcollectdclient/libcollectdclient.la
 collectd_tg_SOURCES = collectd-tg.c \
 		      utils_heap.c utils_heap.h
 
-collectd_tg_LDADD = $(am__append_20) $(am__append_21) \
+collectd_tg_LDADD = $(am__append_20) $(am__append_21) $(am__append_22) \
 	libcollectdclient/libcollectdclient.la
 collectd_tg_DEPENDENCIES = libcollectdclient/libcollectdclient.la
-pkglib_LTLIBRARIES = $(am__append_22) $(am__append_25) \
-	$(am__append_28) $(am__append_33) $(am__append_37) \
-	$(am__append_40) $(am__append_43) $(am__append_47) \
-	$(am__append_50) $(am__append_53) $(am__append_57) \
-	$(am__append_65) $(am__append_68) $(am__append_71) \
-	$(am__append_76) $(am__append_81) $(am__append_84) \
-	$(am__append_87) $(am__append_90) $(am__append_99) \
-	$(am__append_102) $(am__append_105) $(am__append_108) \
-	$(am__append_111) $(am__append_114) $(am__append_117) \
-	$(am__append_120) $(am__append_124) $(am__append_132) \
-	$(am__append_135) $(am__append_138) $(am__append_141) \
-	$(am__append_144) $(am__append_147) $(am__append_150) \
-	$(am__append_156) $(am__append_159) $(am__append_162) \
-	$(am__append_165) $(am__append_168) $(am__append_171) \
-	$(am__append_174) $(am__append_177) $(am__append_180) \
-	$(am__append_184) $(am__append_187) $(am__append_190) \
-	$(am__append_194) $(am__append_202) $(am__append_205) \
-	$(am__append_208) $(am__append_213) $(am__append_216) \
-	$(am__append_219) $(am__append_226) $(am__append_229) \
-	$(am__append_232) $(am__append_237) $(am__append_240) \
-	$(am__append_243) $(am__append_247) $(am__append_250) \
-	$(am__append_253) $(am__append_257) $(am__append_260) \
-	$(am__append_263) $(am__append_266) $(am__append_270) \
-	$(am__append_275) $(am__append_278) $(am__append_281) \
-	$(am__append_284) $(am__append_287) $(am__append_291) \
-	$(am__append_295) $(am__append_298) $(am__append_301) \
-	$(am__append_304) $(am__append_307) $(am__append_310) \
-	$(am__append_313) $(am__append_316) $(am__append_322) \
-	$(am__append_331) $(am__append_334) $(am__append_337) \
-	$(am__append_340) $(am__append_343) $(am__append_346) \
-	$(am__append_349) $(am__append_352) $(am__append_355) \
-	$(am__append_358) $(am__append_362) $(am__append_365) \
-	$(am__append_368) $(am__append_371) $(am__append_374) \
-	$(am__append_378) $(am__append_381) $(am__append_386) \
-	$(am__append_391) $(am__append_394) $(am__append_397) \
-	$(am__append_400) $(am__append_403) $(am__append_406) \
-	$(am__append_409) $(am__append_414) $(am__append_417) \
-	$(am__append_420) $(am__append_423)
-BUILT_SOURCES = $(am__append_273) $(dist_man_MANS)
-CLEANFILES = $(am__append_274)
+pkglib_LTLIBRARIES = $(am__append_23) $(am__append_26) \
+	$(am__append_29) $(am__append_34) $(am__append_38) \
+	$(am__append_41) $(am__append_44) $(am__append_48) \
+	$(am__append_51) $(am__append_54) $(am__append_58) \
+	$(am__append_66) $(am__append_69) $(am__append_72) \
+	$(am__append_77) $(am__append_82) $(am__append_85) \
+	$(am__append_88) $(am__append_91) $(am__append_100) \
+	$(am__append_103) $(am__append_106) $(am__append_109) \
+	$(am__append_112) $(am__append_115) $(am__append_118) \
+	$(am__append_121) $(am__append_125) $(am__append_133) \
+	$(am__append_136) $(am__append_139) $(am__append_142) \
+	$(am__append_145) $(am__append_148) $(am__append_151) \
+	$(am__append_157) $(am__append_160) $(am__append_163) \
+	$(am__append_166) $(am__append_169) $(am__append_172) \
+	$(am__append_175) $(am__append_178) $(am__append_181) \
+	$(am__append_185) $(am__append_188) $(am__append_191) \
+	$(am__append_195) $(am__append_203) $(am__append_206) \
+	$(am__append_209) $(am__append_214) $(am__append_217) \
+	$(am__append_220) $(am__append_227) $(am__append_230) \
+	$(am__append_233) $(am__append_238) $(am__append_241) \
+	$(am__append_244) $(am__append_248) $(am__append_251) \
+	$(am__append_254) $(am__append_258) $(am__append_261) \
+	$(am__append_264) $(am__append_267) $(am__append_271) \
+	$(am__append_276) $(am__append_279) $(am__append_282) \
+	$(am__append_285) $(am__append_288) $(am__append_292) \
+	$(am__append_296) $(am__append_299) $(am__append_302) \
+	$(am__append_305) $(am__append_308) $(am__append_311) \
+	$(am__append_314) $(am__append_317) $(am__append_323) \
+	$(am__append_332) $(am__append_335) $(am__append_338) \
+	$(am__append_341) $(am__append_344) $(am__append_347) \
+	$(am__append_350) $(am__append_353) $(am__append_356) \
+	$(am__append_359) $(am__append_363) $(am__append_366) \
+	$(am__append_369) $(am__append_372) $(am__append_375) \
+	$(am__append_379) $(am__append_382) $(am__append_387) \
+	$(am__append_392) $(am__append_395) $(am__append_398) \
+	$(am__append_401) $(am__append_404) $(am__append_407) \
+	$(am__append_410) $(am__append_415) $(am__append_418) \
+	$(am__append_421) $(am__append_424)
+BUILT_SOURCES = $(am__append_274) $(dist_man_MANS)
+CLEANFILES = $(am__append_275)
 @BUILD_PLUGIN_AGGREGATION_TRUE@aggregation_la_SOURCES = aggregation.c \
 @BUILD_PLUGIN_AGGREGATION_TRUE@                         utils_vl_lookup.c utils_vl_lookup.h
 
@@ -2244,11 +2245,11 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_APACHE_TRUE@apache_la_SOURCES = apache.c
 @BUILD_PLUGIN_APACHE_TRUE@apache_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_APACHE_TRUE@apache_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_APACHE_TRUE@	$(am__append_30)
-@BUILD_PLUGIN_APACHE_TRUE@apache_la_LIBADD = $(am__append_31)
+@BUILD_PLUGIN_APACHE_TRUE@	$(am__append_31)
+@BUILD_PLUGIN_APACHE_TRUE@apache_la_LIBADD = $(am__append_32)
 @BUILD_PLUGIN_APCUPS_TRUE@apcups_la_SOURCES = apcups.c
 @BUILD_PLUGIN_APCUPS_TRUE@apcups_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_APCUPS_TRUE@apcups_la_LIBADD = $(am__append_34)
+@BUILD_PLUGIN_APCUPS_TRUE@apcups_la_LIBADD = $(am__append_35)
 @BUILD_PLUGIN_APPLE_SENSORS_TRUE@apple_sensors_la_SOURCES = apple_sensors.c
 @BUILD_PLUGIN_APPLE_SENSORS_TRUE@apple_sensors_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_APPLE_SENSORS_TRUE@apple_sensors_la_LIBADD = -lIOKit
@@ -2260,7 +2261,7 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_ASCENT_TRUE@ascent_la_LIBADD = $(BUILD_WITH_LIBCURL_LIBS) $(BUILD_WITH_LIBXML2_LIBS)
 @BUILD_PLUGIN_BATTERY_TRUE@battery_la_SOURCES = battery.c
 @BUILD_PLUGIN_BATTERY_TRUE@battery_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_BATTERY_TRUE@battery_la_LIBADD = $(am__append_44)
+@BUILD_PLUGIN_BATTERY_TRUE@battery_la_LIBADD = $(am__append_45)
 @BUILD_PLUGIN_BIND_TRUE@bind_la_SOURCES = bind.c
 @BUILD_PLUGIN_BIND_TRUE@bind_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_BIND_TRUE@bind_la_CFLAGS = $(AM_CFLAGS) \
@@ -2272,29 +2273,29 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_CONTEXTSWITCH_TRUE@contextswitch_la_SOURCES = contextswitch.c
 @BUILD_PLUGIN_CONTEXTSWITCH_TRUE@contextswitch_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_CONTEXTSWITCH_TRUE@contextswitch_la_LIBADD =  \
-@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@	$(am__append_54)
+@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@	$(am__append_55)
 @BUILD_PLUGIN_CPU_TRUE@cpu_la_SOURCES = cpu.c
-@BUILD_PLUGIN_CPU_TRUE@cpu_la_CFLAGS = $(AM_CFLAGS) $(am__append_60)
+@BUILD_PLUGIN_CPU_TRUE@cpu_la_CFLAGS = $(AM_CFLAGS) $(am__append_61)
 @BUILD_PLUGIN_CPU_TRUE@cpu_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_CPU_TRUE@cpu_la_LIBADD = $(am__append_58) \
-@BUILD_PLUGIN_CPU_TRUE@	$(am__append_59) $(am__append_61) \
-@BUILD_PLUGIN_CPU_TRUE@	$(am__append_62)
+@BUILD_PLUGIN_CPU_TRUE@cpu_la_LIBADD = $(am__append_59) \
+@BUILD_PLUGIN_CPU_TRUE@	$(am__append_60) $(am__append_62) \
+@BUILD_PLUGIN_CPU_TRUE@	$(am__append_63)
 @BUILD_PLUGIN_CPUFREQ_TRUE@cpufreq_la_SOURCES = cpufreq.c
 @BUILD_PLUGIN_CPUFREQ_TRUE@cpufreq_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_CSV_TRUE@csv_la_SOURCES = csv.c
 @BUILD_PLUGIN_CSV_TRUE@csv_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_CURL_TRUE@curl_la_SOURCES = curl.c
 @BUILD_PLUGIN_CURL_TRUE@curl_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_CURL_TRUE@curl_la_CFLAGS = $(AM_CFLAGS) $(am__append_73)
-@BUILD_PLUGIN_CURL_TRUE@curl_la_LIBADD = $(am__append_74)
+@BUILD_PLUGIN_CURL_TRUE@curl_la_CFLAGS = $(AM_CFLAGS) $(am__append_74)
+@BUILD_PLUGIN_CURL_TRUE@curl_la_LIBADD = $(am__append_75)
 @BUILD_PLUGIN_CURL_JSON_TRUE@curl_json_la_SOURCES = curl_json.c
 @BUILD_PLUGIN_CURL_JSON_TRUE@curl_json_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_CURL_JSON_TRUE@	$(am__append_77)
+@BUILD_PLUGIN_CURL_JSON_TRUE@	$(am__append_78)
 @BUILD_PLUGIN_CURL_JSON_TRUE@curl_json_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBYAJL_LDFLAGS)
 @BUILD_PLUGIN_CURL_JSON_TRUE@curl_json_la_CPPFLAGS = $(BUILD_WITH_LIBYAJL_CPPFLAGS)
 @BUILD_PLUGIN_CURL_JSON_TRUE@curl_json_la_LIBADD =  \
 @BUILD_PLUGIN_CURL_JSON_TRUE@	$(BUILD_WITH_LIBYAJL_LIBS) \
-@BUILD_PLUGIN_CURL_JSON_TRUE@	$(am__append_78)
+@BUILD_PLUGIN_CURL_JSON_TRUE@	$(am__append_79)
 @BUILD_PLUGIN_CURL_XML_TRUE@curl_xml_la_SOURCES = curl_xml.c
 @BUILD_PLUGIN_CURL_XML_TRUE@curl_xml_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_CURL_XML_TRUE@curl_xml_la_CFLAGS = $(AM_CFLAGS) \
@@ -2310,11 +2311,11 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_DF_TRUE@df_la_SOURCES = df.c utils_mount.c utils_mount.h
 @BUILD_PLUGIN_DF_TRUE@df_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_DISK_TRUE@disk_la_SOURCES = disk.c
-@BUILD_PLUGIN_DISK_TRUE@disk_la_CFLAGS = $(AM_CFLAGS) $(am__append_94)
+@BUILD_PLUGIN_DISK_TRUE@disk_la_CFLAGS = $(AM_CFLAGS) $(am__append_95)
 @BUILD_PLUGIN_DISK_TRUE@disk_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_DISK_TRUE@disk_la_LIBADD = $(am__append_91) \
-@BUILD_PLUGIN_DISK_TRUE@	$(am__append_92) $(am__append_93) \
-@BUILD_PLUGIN_DISK_TRUE@	$(am__append_95) $(am__append_96)
+@BUILD_PLUGIN_DISK_TRUE@disk_la_LIBADD = $(am__append_92) \
+@BUILD_PLUGIN_DISK_TRUE@	$(am__append_93) $(am__append_94) \
+@BUILD_PLUGIN_DISK_TRUE@	$(am__append_96) $(am__append_97)
 @BUILD_PLUGIN_DNS_TRUE@dns_la_SOURCES = dns.c utils_dns.c utils_dns.h
 @BUILD_PLUGIN_DNS_TRUE@dns_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_DNS_TRUE@dns_la_LIBADD = -lpcap -lpthread
@@ -2339,15 +2340,15 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_GMOND_TRUE@gmond_la_LIBADD = $(GANGLIA_LIBS)
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_SOURCES = hddtemp.c
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_LIBADD = $(am__append_121)
+@BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_LIBADD = $(am__append_122)
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_SOURCES = interface.c
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_127)
+@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_128)
 @BUILD_PLUGIN_INTERFACE_TRUE@interface_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_INTERFACE_TRUE@interface_la_LIBADD = $(am__append_128) \
-@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_129) \
+@BUILD_PLUGIN_INTERFACE_TRUE@interface_la_LIBADD = $(am__append_129) \
 @BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_130) \
-@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_131)
+@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_131) \
+@BUILD_PLUGIN_INTERFACE_TRUE@	$(am__append_132)
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_SOURCES = iptables.c
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBIPTC_CPPFLAGS)
 @BUILD_PLUGIN_IPTABLES_TRUE@iptables_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBIPTC_LDFLAGS)
@@ -2374,10 +2375,10 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_LIBVIRT_TRUE@libvirt_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_LOAD_TRUE@load_la_SOURCES = load.c
 @BUILD_PLUGIN_LOAD_TRUE@load_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_LOAD_TRUE@	$(am__append_153)
+@BUILD_PLUGIN_LOAD_TRUE@	$(am__append_154)
 @BUILD_PLUGIN_LOAD_TRUE@load_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_LOAD_TRUE@load_la_LIBADD = $(am__append_154) \
-@BUILD_PLUGIN_LOAD_TRUE@	$(am__append_155)
+@BUILD_PLUGIN_LOAD_TRUE@load_la_LIBADD = $(am__append_155) \
+@BUILD_PLUGIN_LOAD_TRUE@	$(am__append_156)
 @BUILD_PLUGIN_LOGFILE_TRUE@logfile_la_SOURCES = logfile.c
 @BUILD_PLUGIN_LOGFILE_TRUE@logfile_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_LPAR_TRUE@lpar_la_SOURCES = lpar.c
@@ -2397,7 +2398,7 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_MATCH_VALUE_TRUE@match_value_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_MBMON_TRUE@mbmon_la_SOURCES = mbmon.c
 @BUILD_PLUGIN_MBMON_TRUE@mbmon_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_MBMON_TRUE@mbmon_la_LIBADD = $(am__append_181)
+@BUILD_PLUGIN_MBMON_TRUE@mbmon_la_LIBADD = $(am__append_182)
 @BUILD_PLUGIN_MD_TRUE@md_la_SOURCES = md.c
 @BUILD_PLUGIN_MD_TRUE@md_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_MEMCACHEC_TRUE@memcachec_la_SOURCES = memcachec.c
@@ -2406,14 +2407,14 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_MEMCACHEC_TRUE@memcachec_la_LIBADD = $(BUILD_WITH_LIBMEMCACHED_LIBS)
 @BUILD_PLUGIN_MEMCACHED_TRUE@memcached_la_SOURCES = memcached.c
 @BUILD_PLUGIN_MEMCACHED_TRUE@memcached_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_MEMCACHED_TRUE@memcached_la_LIBADD = $(am__append_191)
+@BUILD_PLUGIN_MEMCACHED_TRUE@memcached_la_LIBADD = $(am__append_192)
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_SOURCES = memory.c
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_199)
+@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_200)
 @BUILD_PLUGIN_MEMORY_TRUE@memory_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_MEMORY_TRUE@memory_la_LIBADD = $(am__append_197) \
-@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_198) $(am__append_200) \
-@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_201)
+@BUILD_PLUGIN_MEMORY_TRUE@memory_la_LIBADD = $(am__append_198) \
+@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_199) $(am__append_201) \
+@BUILD_PLUGIN_MEMORY_TRUE@	$(am__append_202)
 @BUILD_PLUGIN_MODBUS_TRUE@modbus_la_SOURCES = modbus.c
 @BUILD_PLUGIN_MODBUS_TRUE@modbus_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_MODBUS_TRUE@modbus_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBMODBUS_CFLAGS)
@@ -2423,8 +2424,8 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_SOURCES = mysql.c
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_MYSQL_TRUE@mysql_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_MYSQL_TRUE@	$(am__append_210)
-@BUILD_PLUGIN_MYSQL_TRUE@mysql_la_LIBADD = $(am__append_211)
+@BUILD_PLUGIN_MYSQL_TRUE@	$(am__append_211)
+@BUILD_PLUGIN_MYSQL_TRUE@mysql_la_LIBADD = $(am__append_212)
 @BUILD_PLUGIN_NETAPP_TRUE@netapp_la_SOURCES = netapp.c
 @BUILD_PLUGIN_NETAPP_TRUE@netapp_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBNETAPP_CPPFLAGS)
 @BUILD_PLUGIN_NETAPP_TRUE@netapp_la_LDFLAGS = -module -avoid-version $(LIBNETAPP_LDFLAGS)
@@ -2437,19 +2438,19 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_NETWORK_TRUE@		     utils_fbhash.c utils_fbhash.h
 
 @BUILD_PLUGIN_NETWORK_TRUE@network_la_CPPFLAGS = $(AM_CPPFLAGS) \
-@BUILD_PLUGIN_NETWORK_TRUE@	$(am__append_221)
-@BUILD_PLUGIN_NETWORK_TRUE@network_la_LDFLAGS = -module -avoid-version \
 @BUILD_PLUGIN_NETWORK_TRUE@	$(am__append_222)
+@BUILD_PLUGIN_NETWORK_TRUE@network_la_LDFLAGS = -module -avoid-version \
+@BUILD_PLUGIN_NETWORK_TRUE@	$(am__append_223)
 @BUILD_PLUGIN_NETWORK_TRUE@network_la_LIBADD = -lpthread \
-@BUILD_PLUGIN_NETWORK_TRUE@	$(am__append_220) $(am__append_223)
+@BUILD_PLUGIN_NETWORK_TRUE@	$(am__append_221) $(am__append_224)
 @BUILD_PLUGIN_NFS_TRUE@nfs_la_SOURCES = nfs.c
 @BUILD_PLUGIN_NFS_TRUE@nfs_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_FSCACHE_TRUE@fscache_la_SOURCES = fscache.c
 @BUILD_PLUGIN_FSCACHE_TRUE@fscache_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_NGINX_TRUE@nginx_la_SOURCES = nginx.c
 @BUILD_PLUGIN_NGINX_TRUE@nginx_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_NGINX_TRUE@	$(am__append_233)
-@BUILD_PLUGIN_NGINX_TRUE@nginx_la_LIBADD = $(am__append_234)
+@BUILD_PLUGIN_NGINX_TRUE@	$(am__append_234)
+@BUILD_PLUGIN_NGINX_TRUE@nginx_la_LIBADD = $(am__append_235)
 @BUILD_PLUGIN_NGINX_TRUE@nginx_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@notify_desktop_la_SOURCES = notify_desktop.c
 @BUILD_PLUGIN_NOTIFY_DESKTOP_TRUE@notify_desktop_la_CFLAGS = $(AM_CFLAGS) $(LIBNOTIFY_CFLAGS)
@@ -2460,7 +2461,7 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_NOTIFY_EMAIL_TRUE@notify_email_la_LIBADD = -lesmtp -lssl -lcrypto -lpthread -ldl
 @BUILD_PLUGIN_NTPD_TRUE@ntpd_la_SOURCES = ntpd.c
 @BUILD_PLUGIN_NTPD_TRUE@ntpd_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_NTPD_TRUE@ntpd_la_LIBADD = $(am__append_244)
+@BUILD_PLUGIN_NTPD_TRUE@ntpd_la_LIBADD = $(am__append_245)
 @BUILD_PLUGIN_NUMA_TRUE@numa_la_SOURCES = numa.c
 @BUILD_PLUGIN_NUMA_TRUE@numa_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_NUT_TRUE@nut_la_SOURCES = nut.c
@@ -2469,7 +2470,7 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_NUT_TRUE@nut_la_LIBADD = -lpthread $(BUILD_WITH_LIBUPSCLIENT_LIBS)
 @BUILD_PLUGIN_OLSRD_TRUE@olsrd_la_SOURCES = olsrd.c
 @BUILD_PLUGIN_OLSRD_TRUE@olsrd_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_OLSRD_TRUE@olsrd_la_LIBADD = $(am__append_254)
+@BUILD_PLUGIN_OLSRD_TRUE@olsrd_la_LIBADD = $(am__append_255)
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_SOURCES = onewire.c
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_CFLAGS = $(AM_CFLAGS)
 @BUILD_PLUGIN_ONEWIRE_TRUE@onewire_la_CPPFLAGS = $(BUILD_WITH_LIBOWCAPI_CPPFLAGS)
@@ -2492,7 +2493,7 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_PERL_TRUE@perl_la_CFLAGS = $(AM_CFLAGS) $(PERL_CFLAGS) \
 @BUILD_PLUGIN_PERL_TRUE@	-DXS_VERSION=\"$(VERSION)\" \
 @BUILD_PLUGIN_PERL_TRUE@	-DVERSION=\"$(VERSION)\" \
-@BUILD_PLUGIN_PERL_TRUE@	$(am__append_267)
+@BUILD_PLUGIN_PERL_TRUE@	$(am__append_268)
 @BUILD_PLUGIN_PERL_TRUE@perl_la_LDFLAGS = -module -avoid-version \
 @BUILD_PLUGIN_PERL_TRUE@		$(PERL_LDFLAGS)
 
@@ -2518,12 +2519,12 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_PYTHON_TRUE@python_la_SOURCES = python.c pyconfig.c pyvalues.c cpython.h
 @BUILD_PLUGIN_PYTHON_TRUE@python_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_PYTHON_CPPFLAGS)
 @BUILD_PLUGIN_PYTHON_TRUE@python_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_PYTHON_TRUE@	$(am__append_288)
+@BUILD_PLUGIN_PYTHON_TRUE@	$(am__append_289)
 @BUILD_PLUGIN_PYTHON_TRUE@python_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_PYTHON_LDFLAGS)
 @BUILD_PLUGIN_PYTHON_TRUE@python_la_LIBADD = $(BUILD_WITH_PYTHON_LIBS)
 @BUILD_PLUGIN_PROCESSES_TRUE@processes_la_SOURCES = processes.c
 @BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LIBADD = $(am__append_294)
+@BUILD_PLUGIN_PROCESSES_TRUE@processes_la_LIBADD = $(am__append_295)
 @BUILD_PLUGIN_PROTOCOLS_TRUE@protocols_la_SOURCES = protocols.c
 @BUILD_PLUGIN_PROTOCOLS_TRUE@protocols_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_REDIS_TRUE@redis_la_SOURCES = redis.c
@@ -2551,16 +2552,16 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_SNMP_TRUE@snmp_la_SOURCES = snmp.c
 @BUILD_PLUGIN_SNMP_TRUE@snmp_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_SNMP_TRUE@snmp_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_317)
-@BUILD_PLUGIN_SNMP_TRUE@snmp_la_LIBADD = $(am__append_318) \
-@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_319)
+@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_318)
+@BUILD_PLUGIN_SNMP_TRUE@snmp_la_LIBADD = $(am__append_319) \
+@BUILD_PLUGIN_SNMP_TRUE@	$(am__append_320)
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_SOURCES = swap.c
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_328)
+@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_329)
 @BUILD_PLUGIN_SWAP_TRUE@swap_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_SWAP_TRUE@swap_la_LIBADD = $(am__append_325) \
-@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_326) $(am__append_327) \
-@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_329) $(am__append_330)
+@BUILD_PLUGIN_SWAP_TRUE@swap_la_LIBADD = $(am__append_326) \
+@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_327) $(am__append_328) \
+@BUILD_PLUGIN_SWAP_TRUE@	$(am__append_330) $(am__append_331)
 @BUILD_PLUGIN_SYSLOG_TRUE@syslog_la_SOURCES = syslog.c
 @BUILD_PLUGIN_SYSLOG_TRUE@syslog_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_TABLE_TRUE@table_la_SOURCES = table.c
@@ -2582,7 +2583,7 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_TARGET_V5UPGRADE_TRUE@target_v5upgrade_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_SOURCES = tcpconns.c
 @BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_LIBADD = $(am__append_361)
+@BUILD_PLUGIN_TCPCONNS_TRUE@tcpconns_la_LIBADD = $(am__append_362)
 @BUILD_PLUGIN_TEAMSPEAK2_TRUE@teamspeak2_la_SOURCES = teamspeak2.c
 @BUILD_PLUGIN_TEAMSPEAK2_TRUE@teamspeak2_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_TED_TRUE@ted_la_SOURCES = ted.c
@@ -2595,7 +2596,7 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_TOKYOTYRANT_TRUE@tokyotyrant_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBTOKYOTYRANT_CPPFLAGS)
 @BUILD_PLUGIN_TOKYOTYRANT_TRUE@tokyotyrant_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBTOKYOTYRANT_LDFLAGS)
 @BUILD_PLUGIN_TOKYOTYRANT_TRUE@tokyotyrant_la_LIBADD = $(BUILD_WITH_LIBTOKYOTYRANT_LIBS) \
-@BUILD_PLUGIN_TOKYOTYRANT_TRUE@	$(am__append_375)
+@BUILD_PLUGIN_TOKYOTYRANT_TRUE@	$(am__append_376)
 @BUILD_PLUGIN_UNIXSOCK_TRUE@unixsock_la_SOURCES = unixsock.c \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@		      utils_cmd_flush.h utils_cmd_flush.c \
 @BUILD_PLUGIN_UNIXSOCK_TRUE@		      utils_cmd_getval.h utils_cmd_getval.c \
@@ -2608,13 +2609,13 @@ CLEANFILES = $(am__append_274)
 @BUILD_PLUGIN_UPTIME_TRUE@uptime_la_SOURCES = uptime.c
 @BUILD_PLUGIN_UPTIME_TRUE@uptime_la_CFLAGS = $(AM_CFLAGS)
 @BUILD_PLUGIN_UPTIME_TRUE@uptime_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_UPTIME_TRUE@uptime_la_LIBADD = $(am__append_382) \
-@BUILD_PLUGIN_UPTIME_TRUE@	$(am__append_383)
+@BUILD_PLUGIN_UPTIME_TRUE@uptime_la_LIBADD = $(am__append_383) \
+@BUILD_PLUGIN_UPTIME_TRUE@	$(am__append_384)
 @BUILD_PLUGIN_USERS_TRUE@users_la_SOURCES = users.c
 @BUILD_PLUGIN_USERS_TRUE@users_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_USERS_TRUE@	$(am__append_387)
+@BUILD_PLUGIN_USERS_TRUE@	$(am__append_388)
 @BUILD_PLUGIN_USERS_TRUE@users_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_USERS_TRUE@users_la_LIBADD = $(am__append_388)
+@BUILD_PLUGIN_USERS_TRUE@users_la_LIBADD = $(am__append_389)
 @BUILD_PLUGIN_UUID_TRUE@uuid_la_SOURCES = uuid.c
 @BUILD_PLUGIN_UUID_TRUE@uuid_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBHAL_CFLAGS)
 @BUILD_PLUGIN_UUID_TRUE@uuid_la_LIBADD = $(BUILD_WITH_LIBHAL_LIBS)
@@ -2639,9 +2640,9 @@ CLEANFILES = $(am__append_274)
 
 @BUILD_PLUGIN_WRITE_HTTP_TRUE@write_http_la_LDFLAGS = -module -avoid-version
 @BUILD_PLUGIN_WRITE_HTTP_TRUE@write_http_la_CFLAGS = $(AM_CFLAGS) \
-@BUILD_PLUGIN_WRITE_HTTP_TRUE@	$(am__append_411)
-@BUILD_PLUGIN_WRITE_HTTP_TRUE@write_http_la_LIBADD =  \
 @BUILD_PLUGIN_WRITE_HTTP_TRUE@	$(am__append_412)
+@BUILD_PLUGIN_WRITE_HTTP_TRUE@write_http_la_LIBADD =  \
+@BUILD_PLUGIN_WRITE_HTTP_TRUE@	$(am__append_413)
 @BUILD_PLUGIN_WRITE_MONGODB_TRUE@write_mongodb_la_SOURCES = write_mongodb.c
 @BUILD_PLUGIN_WRITE_MONGODB_TRUE@write_mongodb_la_CPPFLAGS = $(AM_CPPFLAGS) $(BUILD_WITH_LIBMONGOC_CPPFLAGS)
 @BUILD_PLUGIN_WRITE_MONGODB_TRUE@write_mongodb_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBMONGOC_LDFLAGS)
@@ -2669,6 +2670,7 @@ dist_man_MANS = collectd.1 \
 		collectd-perl.5 \
 		collectd-python.5 \
 		collectd-snmp.5 \
+		collectd-tg.1 \
 		collectd-threshold.5 \
 		collectd-unixsock.5 \
 		types.db.5
@@ -2679,7 +2681,7 @@ EXTRA_DIST = types.db pinba.proto collectd.conf.pod collectd-email.pod \
 	collectd-exec.pod collectdctl.pod collectd-java.pod \
 	collectdmon.pod collectd-nagios.pod collectd-perl.pod \
 	collectd-python.pod collectd.pod collectd-snmp.pod \
-	collectd-threshold.pod collectd-unixsock.pod \
+	collectd-tg.pod collectd-threshold.pod collectd-unixsock.pod \
 	postgresql_default.conf types.db.pod
 @BUILD_FEATURE_DEBUG_TRUE@utils_vl_lookup_test_SOURCES = utils_vl_lookup_test.c \
 @BUILD_FEATURE_DEBUG_TRUE@                               utils_vl_lookup.h utils_vl_lookup.c \
@@ -4508,7 +4510,7 @@ uninstall-man: uninstall-man1 uninstall-man5
 	fi
 
 pinba.pb-c.c pinba.pb-c.h: pinba.proto
-	protoc-c --c_out . pinba.proto
+	protoc-c -I$(srcdir) --c_out . $(srcdir)/pinba.proto
 
 install-exec-hook:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)

@@ -123,71 +123,55 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "COLLECTD-EMAIL 5"
-.TH COLLECTD-EMAIL 5 "2013-01-27" "5.2.1" "collectd"
+.IX Title "COLLECTD-TG 1"
+.TH COLLECTD-TG 1 "2013-01-27" "5.2.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-collectd\-email \- Documentation of collectd's \f(CW\*(C`email plugin\*(C'\fR
+collectd\-tg \- Traffic generator for collectd.
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 8
-\&  # See collectd.conf(5)
-\&  LoadPlugin email
-\&  # ...
-\&  <Plugin email>
-\&    SocketGroup "collectd"
-\&    SocketPerms "0770"
-\&    MaxConns 5
-\&  </Plugin>
-.Ve
+collectd-tg \fB\-n\fR \fInum_vl\fR \fB\-H\fR \fInum_hosts\fR \fB\-p\fR \fInum_plugins\fR \fB\-i\fR \fIinterval\fR \fB\-d\fR \fIdest\fR \fB\-D\fR \fIdport\fR
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-The \f(CW\*(C`email plugin\*(C'\fR opens an UNIX-socket over which one can submit email
-statistics, such as the number of \*(L"ham\*(R", \*(L"spam\*(R", \*(L"virus\*(R", etc. mails
-received/handled, spam scores and matched spam checks.
-.PP
-This plugin is intended to be used with the
-Mail::SpamAssassin::Plugin::Collectd SpamAssassin-plugin which is included
-in \fIcontrib/\fR, but is of course not limited to that use.
-.SH "OPERATION"
-.IX Header "OPERATION"
-This plugin collects data indirectly by providing a UNIX-socket that external
-programs can connect to. A simple line based protocol is used to communicate
-with the plugin:
-.IP "\(bu" 4
-E\-Mail type (e.g. \*(L"ham\*(R", \*(L"spam\*(R", \*(L"virus\*(R", ...) and size (bytes):
-.Sp
-.Vb 1
-\&  e:<type>:<size>
-.Ve
-.Sp
-If \f(CW\*(C`size\*(C'\fR is less than or equal to zero, \f(CW\*(C`size\*(C'\fR is ignored.
-.IP "\(bu" 4
-Spam score:
-.Sp
-.Vb 1
-\&  s:<value>
-.Ve
-.IP "\(bu" 4
-Successful spam checks (e.g. \*(L"\s-1BAYES_99\s0\*(R", \*(L"\s-1SUBJECT_DRUG_GAP_C\s0\*(R", ...):
-.Sp
-.Vb 1
-\&  c:<type1>[,<type2>,...]
-.Ve
-.Sp
-Each line is limited to 256 characters (including the newline character). 
-Longer lines will be ignored.
+\&\fBcollectd-tg\fR generates bogus \fIcollectd\fR network traffic. While host, plugin
+and values are generated randomly, the generated traffic tries to mimic \*(L"real\*(R"
+traffic as closely as possible.
+.SH "ARGUMENTS AND OPTIONS"
+.IX Header "ARGUMENTS AND OPTIONS"
+The following options are understood by \fIcollectd-tg\fR. The order of the
+arguments generally doesn't matter, as long as no argument is passed more than
+once.
+.IP "\fB\-n\fR \fInum_vl\fR" 4
+.IX Item "-n num_vl"
+Sets the number of unique \fIvalue lists\fR (\s-1VL\s0) to generate. Defaults to 10000.
+.IP "\fB\-H\fR \fInum_hosts\fR" 4
+.IX Item "-H num_hosts"
+Sets the number of unique hosts to simulate. Defaults to 1000.
+.IP "\fB\-p\fR \fInum_plugins\fR" 4
+.IX Item "-p num_plugins"
+Sets the number of unique plugins to simulate. Defaults to 20.
+.IP "\fB\-i\fR \fIinterval\fR" 4
+.IX Item "-i interval"
+Sets the interval in which each \fIvalue list\fR is dispatched. Defaults to 10.0
+seconds.
+.IP "\fB\-d\fR \fIdest\fR" 4
+.IX Item "-d dest"
+Sets the destination to which to send the generated network traffic. Defaults
+to the IPv6 multicast address, \f(CW\*(C`ff18::efc0:4a42\*(C'\fR.
+.IP "\fB\-D\fR \fIdport\fR" 4
+.IX Item "-D dport"
+Sets the destination port or service to which to send the generated network
+traffic. Defaults to \fIcollectd's\fR default port, \f(CW25826\fR.
+.IP "\fB\-h\fR" 4
+.IX Item "-h"
+Print usage summary.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),
 \&\fIcollectd.conf\fR\|(5)
 .SH "AUTHOR"
 .IX Header "AUTHOR"
-The \f(CW\*(C`email plugin\*(C'\fR has been written by Sebastian Harl <sh\ at\ tokkee.org>.
-.PP
-The SpamAssassin-plugin has been written by Alexander Wirt <formorer\ at\ formorer.de>.
-.PP
-This manpage has been written by Florian Forster <octo\ at\ verplant.org>.
+Florian Forster <octo\ at\ collectd.org>

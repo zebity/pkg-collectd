@@ -348,7 +348,8 @@ lib_LTLIBRARIES = libcollectdclient.la
 nodist_pkgconfig_DATA = libcollectdclient.pc
 BUILT_SOURCES = collectd/lcc_features.h
 libcollectdclient_la_SOURCES = client.c network.c network_buffer.c
-libcollectdclient_la_CPPFLAGS = $(AM_CPPFLAGS) $(am__append_1)
+libcollectdclient_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src \
+	$(am__append_1)
 libcollectdclient_la_LDFLAGS = -version-info 1:0:0 $(am__append_2)
 libcollectdclient_la_LIBADD = $(am__append_3)
 all: $(BUILT_SOURCES)

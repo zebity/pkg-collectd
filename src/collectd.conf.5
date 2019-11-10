@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2012-11-17" "5.2.0" "collectd"
+.TH COLLECTD.CONF 5 "2013-01-27" "5.2.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -137,11 +137,15 @@ collectd.conf \- Configuration for the system statistics collection daemon \fBco
 \&  BaseDir "/path/to/data/"
 \&  PIDFile "/path/to/pidfile/collectd.pid"
 \&  Server  "123.123.123.123" 12345
-\&
+\&  
 \&  LoadPlugin cpu
 \&  LoadPlugin load
+\&  
+\&  <LoadPlugin df>
+\&    Interval 3600
+\&  </LoadPlugin>
+\&  
 \&  LoadPlugin ping
-\&
 \&  <Plugin ping>
 \&    Host "example.org"
 \&    Host "provider.net"
@@ -197,9 +201,10 @@ Starting with collectd 4.9, this may also be a block in which further options
 affecting the behavior of \fBLoadPlugin\fR may be specified. The following
 options are allowed inside a \fBLoadPlugin\fR block:
 .Sp
-.Vb 3
+.Vb 4
 \&  <LoadPlugin perl>
 \&    Globals true
+\&    Interval 10
 \&  </LoadPlugin>
 .Ve
 .RS 4
@@ -531,8 +536,8 @@ Selects the \fIdelivery method\fR to use. If set to \fBtrue\fR, the \fIpersisten
 mode will be used, i.e. delivery is guaranteed. If set to \fBfalse\fR (the
 default), the \fItransient\fR delivery mode will be used, i.e. messages may be
 lost due to high load, overflowing queues or similar issues.
-.IP "\fBFormat\fR \fBCommand\fR|\fB\s-1JSON\s0\fR (Publish only)" 4
-.IX Item "Format Command|JSON (Publish only)"
+.IP "\fBFormat\fR \fBCommand\fR|\fB\s-1JSON\s0\fR|\fBGraphite\fR (Publish only)" 4
+.IX Item "Format Command|JSON|Graphite (Publish only)"
 Selects the format in which messages are sent to the broker. If set to
 \&\fBCommand\fR (the default), values are sent as \f(CW\*(C`PUTVAL\*(C'\fR commands which are
 identical to the syntax used by the \fIExec\fR and \fIUnixSock plugins\fR. In this
