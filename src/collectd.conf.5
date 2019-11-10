@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2016-09-11" "5.6.0" "collectd"
+.TH COLLECTD.CONF 5 "2016-10-07" "5.6.1" "collectd"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -370,6 +370,12 @@ Path to the plugins (shared objects) of collectd.
 .IX Item "TypesDB File [File ...]"
 Set one or more files that contain the data-set descriptions. See
 \&\fItypes.db\fR\|(5) for a description of the format of this file.
+.Sp
+If this option is not specified, a default file is read. If you need to define
+custom types in addition to the types defined in the default file, you need to
+explicitly load both. In other words, if the \fBTypesDB\fR option is encountered
+the default behavior is disabled and if you need the default types you have to
+also explicitly load them.
 .IP "\fBInterval\fR \fISeconds\fR" 4
 .IX Item "Interval Seconds"
 Configures the interval in which to query the read plugins. Obviously smaller
