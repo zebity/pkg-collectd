@@ -66,7 +66,8 @@ Build-Depends: debhelper (>= 9.20160709~), dpkg-dev (>= 1.14.10), po-debconf, dh
  protobuf-compiler-grpc [amd64 arm64 armel armhf i386 ppc64el powerpc],
  python-dev,
  riemann-c-client,
- libqpid-proton11-dev
+ libqpid-proton11-dev,
+ libmosquitto-dev
 Build-Conflicts: libpthread-dev, libhal-dev
 Standards-Version: 4.2.1
 Homepage: https://collectd.org/

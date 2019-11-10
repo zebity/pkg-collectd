@@ -101,9 +101,6 @@ confflags += --disable-lvm
 confflags += --disable-gpu_nvidia
 
 
-# temporarily disable mqtt plugin, as #911265, #911266 blocks collectd from
-# migrating to testing.
-confflags += --disable-mqtt
 
 # These plugins are Linux-specific.
 ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
