@@ -243,12 +243,6 @@
 /* Define to 1 if you have the 'curl' library (-lcurl). */
 #undef HAVE_LIBCURL
 
-/* Define to 1 if you have the `devinfo' library (-ldevinfo). */
-#undef HAVE_LIBDEVINFO
-
-/* Define to 1 if you have the `kstat' library (-lkstat). */
-#undef HAVE_LIBKSTAT
-
 /* Define to 1 if you have the 'kvm' library (-lkvm) */
 #undef HAVE_LIBKVM
 
@@ -543,6 +537,18 @@
 /* Define to 1 if `tx_packets' is member of `struct net_device_stats'. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS_TX_PACKETS
 
+/* Define to 1 if `dest' is member of `struct udphdr'. */
+#undef HAVE_STRUCT_UDPHDR_DEST
+
+/* Define to 1 if `source' is member of `struct udphdr'. */
+#undef HAVE_STRUCT_UDPHDR_SOURCE
+
+/* Define to 1 if `uh_dport' is member of `struct udphdr'. */
+#undef HAVE_STRUCT_UDPHDR_UH_DPORT
+
+/* Define to 1 if `uh_sport' is member of `struct udphdr'. */
+#undef HAVE_STRUCT_UDPHDR_UH_SPORT
+
 /* Define if the function getmntent exists. It's the version from libsun. */
 #undef HAVE_SUN_GETMNTENT
 
@@ -695,7 +701,7 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to `int' if <sys/types.h> doesn't define. */

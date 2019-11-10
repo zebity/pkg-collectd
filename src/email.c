@@ -486,9 +486,11 @@ static void *collect (void *arg)
 				type_list_incr (&count, type, 1);
 				pthread_mutex_unlock (&count_mutex);
 
-				pthread_mutex_lock (&size_mutex);
-				type_list_incr (&size, type, bytes);
-				pthread_mutex_unlock (&size_mutex);
+				if (bytes > 0) {
+					pthread_mutex_lock (&size_mutex);
+					type_list_incr (&size, type, bytes);
+					pthread_mutex_unlock (&size_mutex);
+				}
 			}
 			else if ('s' == line[0]) { /* s:<value> */
 				pthread_mutex_lock (&score_mutex);
@@ -773,7 +775,7 @@ static void score_submit (double value)
 	if ((len < 0) || (len >= BUFSIZE))
 		return;
 
-	plugin_submit ("email_spam_score", NULL, buf);
+	plugin_submit ("email_spam_score", "-", buf);
 	return;
 } /* static void score_submit (double) */
 

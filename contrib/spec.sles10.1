@@ -1,12 +1,13 @@
 Summary:	Statistics collection daemon for filling RRD files.
 Name:           collectd
-Version:	3.11.2
-Release:	0
+Version:	3.11.1
+Release:	0.sl10.1
 Source:		http://collectd.org/files/%{name}-%{version}.tar.gz
+Source1:	collectd-init.d
 License:	GPL
 Group:		System Environment/Daemons
 BuildRoot:	%{_tmppath}/%{name}-%{version}-root
-BuildPrereq:	lm_sensors-devel, mysql-devel, rrdtool-devel
+BuildPrereq:	curl-devel, sensors, mysql-devel, rrdtool, libpcap
 Requires:	rrdtool
 Packager:	Florian octo Forster <octo@verplant.org>
 Vendor:		Florian octo Forster <octo@verplant.org>
@@ -21,9 +22,16 @@ fine grained since the files are updated every 10 seconds.
 %package apache
 Summary:	apache-plugin for collectd.
 Group:		System Environment/Daemons
-Requires:	collectd = %{version}, libcurl3
+Requires:	collectd = %{version}, curl
 %description apache
-This plugin collectd data provided by Apache's `mod_status'.
+This plugin collects data provided by Apache's `mod_status'.
+
+%package dns
+Summary:	dns-plugin for collectd.
+Group:		System Environment/Daemons
+Requires:	collectd = %{version}, libpcap
+%description dns
+This plugin collects information about DNS traffic, queries and responses.
 
 %package mysql
 Summary:	mysql-module for collectd.
@@ -36,7 +44,7 @@ called handlers and database traffic.
 %package sensors
 Summary:	libsensors-module for collectd.
 Group:		System Environment/Daemons
-Requires:	collectd = %{version}, lm_sensors
+Requires:	collectd = %{version}, sensors
 %description sensors
 This  plugin  for  collectd  provides  querying  of sensors  supported  by
 lm_sensors.
@@ -46,66 +54,76 @@ rm -rf $RPM_BUILD_ROOT
 %setup
 
 %build
-./configure --prefix=%{_prefix} --sbindir=%{_sbindir} --mandir=%{_mandir} --libdir=%{_libdir} --sysconfdir=%{_sysconfdir}
+./configure --prefix=%{_prefix} --sbindir=%{_sbindir} --mandir=%{_mandir} --libdir=%{_libdir} --sysconfdir=%{_sysconfdir} --localstatedir=%{_localstatedir}
 make
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
 cp src/collectd.conf $RPM_BUILD_ROOT/etc/collectd.conf
-cp contrib/init.d-rh7 $RPM_BUILD_ROOT/etc/rc.d/init.d/collectd
 mkdir -p $RPM_BUILD_ROOT/var/lib/collectd
 rm -f $RPM_BUILD_ROOT%{_libdir}/%{name}/*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/%{name}/*.la
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
+cp %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/init.d/collectd
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%post
+chkconfig collectd on
+/etc/init.d/collectd start
+
+%preun
+/etc/init.d/collectd stop
+chkconfig collectd off
 
 %files
 %defattr(-,root,root)
 %doc AUTHORS COPYING ChangeLog INSTALL NEWS README
 %doc contrib
 %config /etc/collectd.conf
-%attr(0755,root,root) /etc/rc.d/init.d/collectd
+%attr(0755,root,root) /etc/init.d/collectd
 %attr(0755,root,root) %{_sbindir}/collectd
 %attr(0444,root,root) %{_mandir}/man1/*
 %attr(0444,root,root) %{_mandir}/man5/*
-%attr(0444,root,root) %{_libdir}/%{name}/apcups.so*
-%attr(0444,root,root) %{_libdir}/%{name}/apple_sensors.so*
-%attr(0444,root,root) %{_libdir}/%{name}/battery.so*
-%attr(0444,root,root) %{_libdir}/%{name}/cpu.so*
-%attr(0444,root,root) %{_libdir}/%{name}/cpufreq.so*
-%attr(0444,root,root) %{_libdir}/%{name}/df.so*
-%attr(0444,root,root) %{_libdir}/%{name}/disk.so*
-%attr(0444,root,root) %{_libdir}/%{name}/dns.so
+%attr(0444,root,root) %{_libdir}/%{name}/apcups.so
+%attr(0444,root,root) %{_libdir}/%{name}/apple_sensors.so
+%attr(0444,root,root) %{_libdir}/%{name}/battery.so
+%attr(0444,root,root) %{_libdir}/%{name}/cpu.so
+%attr(0444,root,root) %{_libdir}/%{name}/cpufreq.so
+%attr(0444,root,root) %{_libdir}/%{name}/df.so
+%attr(0444,root,root) %{_libdir}/%{name}/disk.so
 %attr(0444,root,root) %{_libdir}/%{name}/email.so
-%attr(0444,root,root) %{_libdir}/%{name}/hddtemp.so*
-%attr(0444,root,root) %{_libdir}/%{name}/load.so*
+%attr(0444,root,root) %{_libdir}/%{name}/hddtemp.so
+%attr(0444,root,root) %{_libdir}/%{name}/load.so
 %attr(0444,root,root) %{_libdir}/%{name}/mbmon.so
-%attr(0444,root,root) %{_libdir}/%{name}/memory.so*
-%attr(0444,root,root) %{_libdir}/%{name}/multimeter.so*
-%attr(0444,root,root) %{_libdir}/%{name}/nfs.so*
-%attr(0444,root,root) %{_libdir}/%{name}/ntpd.so*
-%attr(0444,root,root) %{_libdir}/%{name}/ping.so*
-%attr(0444,root,root) %{_libdir}/%{name}/processes.so*
-%attr(0444,root,root) %{_libdir}/%{name}/serial.so*
-%attr(0444,root,root) %{_libdir}/%{name}/swap.so*
-%attr(0444,root,root) %{_libdir}/%{name}/tape.so*
-%attr(0444,root,root) %{_libdir}/%{name}/traffic.so*
-%attr(0444,root,root) %{_libdir}/%{name}/users.so*
-%attr(0444,root,root) %{_libdir}/%{name}/vserver.so*
-%attr(0444,root,root) %{_libdir}/%{name}/wireless.so*
+%attr(0444,root,root) %{_libdir}/%{name}/memory.so
+%attr(0444,root,root) %{_libdir}/%{name}/multimeter.so
+%attr(0444,root,root) %{_libdir}/%{name}/nfs.so
+%attr(0444,root,root) %{_libdir}/%{name}/ntpd.so
+%attr(0444,root,root) %{_libdir}/%{name}/ping.so
+%attr(0444,root,root) %{_libdir}/%{name}/processes.so
+%attr(0444,root,root) %{_libdir}/%{name}/serial.so
+%attr(0444,root,root) %{_libdir}/%{name}/swap.so
+%attr(0444,root,root) %{_libdir}/%{name}/tape.so
+%attr(0444,root,root) %{_libdir}/%{name}/traffic.so
+%attr(0444,root,root) %{_libdir}/%{name}/users.so
+%attr(0444,root,root) %{_libdir}/%{name}/vserver.so
+%attr(0444,root,root) %{_libdir}/%{name}/wireless.so
 
 %dir /var/lib/collectd
 
 %files apache
-%attr(0444,root,root) %{_libdir}/%{name}/apache.so*
+%attr(0444,root,root) %{_libdir}/%{name}/apache.so
+
+%files dns
+%attr(0444,root,root) %{_libdir}/%{name}/dns.so
 
 %files mysql
-%attr(0444,root,root) %{_libdir}/%{name}/mysql.so*
+%attr(0444,root,root) %{_libdir}/%{name}/mysql.so
 
 %files sensors
-%attr(0444,root,root) %{_libdir}/%{name}/sensors.so*
+%attr(0444,root,root) %{_libdir}/%{name}/sensors.so
 
 %changelog
 * Sun Jul 09 2006 Florian octo Forster <octo@verplant.org> 3.10.0-1
