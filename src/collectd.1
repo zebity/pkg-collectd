@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD 1"
-.TH COLLECTD 1 "2007-10-24" "4.2.4" "collectd"
+.TH COLLECTD 1 "2008-02-18" "4.3.0" "collectd"
 .SH "NAME"
 collectd \- System statistics collection daemon
 .SH "SYNOPSIS"
@@ -199,6 +199,11 @@ In addition to the above, there are \*(L"logging plugins\*(R". Right now those a
 provide information about issues and significant situations to the user.
 Several loglevels let you suppress uninteresting messages.
 .PP
+Starting with version \f(CW4.3.0\fR collectd has support for \fBmonitoring\fR. This is
+done by checking thresholds defined by the user. If a value is out of range, a
+notification will be dispatched to \*(L"notification plugins\*(R". See
+\&\fIcollectd.conf\fR\|(5) for more detailed information about threshold checking.
+.PP
 Please note that some plugins, that provide other means of communicating with
 the daemon, have manpages of their own to describe their functionality in more
 detail. In particular those are \fIcollectd\-email\fR\|(5), \fIcollectd\-exec\fR\|(5),
@@ -211,6 +216,7 @@ detail. In particular those are \fIcollectd\-email\fR\|(5), \fIcollectd\-exec\fR
 \&\fIcollectd\-perl\fR\|(5),
 \&\fIcollectd\-snmp\fR\|(5),
 \&\fIcollectd\-unixsock\fR\|(5),
+\&\fItypes.db\fR\|(5),
 <http://collectd.org/>
 .SH "AUTHOR"
 .IX Header "AUTHOR"

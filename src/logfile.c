@@ -1,7 +1,7 @@
 /**
  * collectd - src/logfile.c
  * Copyright (C) 2007  Sebastian Harl
- * Copyright (C) 2007  Florian Forster
+ * Copyright (C) 2007,2008  Florian Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +26,8 @@
 #include "plugin.h"
 
 #include <pthread.h>
+
+#define DEFAULT_LOGFILE LOCALSTATEDIR"/log/collectd.log"
 
 #if COLLECT_DEBUG
 static int log_level = LOG_DEBUG;
@@ -85,20 +87,15 @@ static int logfile_config (const char *key, const char *value)
 	return 0;
 } /* int logfile_config (const char *, const char *) */
 
-static void logfile_log (int severity, const char *msg)
+static void logfile_print (const char *msg, time_t timestamp_time)
 {
 	FILE *fh;
 	int do_close = 0;
-	time_t timestamp_time;
 	struct tm timestamp_tm;
 	char timestamp_str[64];
 
-	if (severity > log_level)
-		return;
-
 	if (print_timestamp)
 	{
-		timestamp_time = time (NULL);
 		localtime_r (&timestamp_time, &timestamp_tm);
 
 		strftime (timestamp_str, sizeof (timestamp_str), "%Y-%m-%d %H:%M:%S",
@@ -108,7 +105,12 @@ static void logfile_log (int severity, const char *msg)
 
 	pthread_mutex_lock (&file_lock);
 
-	if ((log_file == NULL) || (strcasecmp (log_file, "stderr") == 0))
+	if (log_file == NULL)
+	{
+		fh = fopen (DEFAULT_LOGFILE, "a");
+		do_close = 1;
+	}
+	else if (strcasecmp (log_file, "stderr") == 0)
 		fh = stderr;
 	else if (strcasecmp (log_file, "stdout") == 0)
 		fh = stdout;
@@ -122,7 +124,7 @@ static void logfile_log (int severity, const char *msg)
 	{
 			char errbuf[1024];
 			fprintf (stderr, "logfile plugin: fopen (%s) failed: %s\n",
-					(log_file == NULL) ? "<null>" : log_file,
+					(log_file == NULL) ? DEFAULT_LOGFILE : log_file,
 					sstrerror (errno, errbuf, sizeof (errbuf)));
 	}
 	else
@@ -139,13 +141,61 @@ static void logfile_log (int severity, const char *msg)
 	pthread_mutex_unlock (&file_lock);
 
 	return;
+} /* void logfile_print */
+
+static void logfile_log (int severity, const char *msg)
+{
+	if (severity > log_level)
+		return;
+
+	logfile_print (msg, time (NULL));
 } /* void logfile_log (int, const char *) */
+
+static int logfile_notification (const notification_t *n)
+{
+	char  buf[1024] = "";
+	char *buf_ptr = buf;
+	int   buf_len = sizeof (buf);
+	int status;
+
+	status = snprintf (buf_ptr, buf_len, "Notification: severity = %s",
+			(n->severity == NOTIF_FAILURE) ? "FAILURE"
+			: ((n->severity == NOTIF_WARNING) ? "WARNING"
+				: ((n->severity == NOTIF_OKAY) ? "OKAY" : "UNKNOWN")));
+	if (status > 0)
+	{
+		buf_ptr += status;
+		buf_len -= status;
+	}
+
+#define APPEND(bufptr, buflen, key, value) \
+	if ((buflen > 0) && (strlen (value) > 0)) { \
+		int status = snprintf (bufptr, buflen, ", %s = %s", key, value); \
+		if (status > 0) { \
+			bufptr += status; \
+			buflen -= status; \
+		} \
+	}
+	APPEND (buf_ptr, buf_len, "host", n->host);
+	APPEND (buf_ptr, buf_len, "plugin", n->plugin);
+	APPEND (buf_ptr, buf_len, "plugin_instance", n->plugin_instance);
+	APPEND (buf_ptr, buf_len, "type", n->type);
+	APPEND (buf_ptr, buf_len, "type_instance", n->type_instance);
+	APPEND (buf_ptr, buf_len, "message", n->message);
+
+	buf[sizeof (buf) - 1] = '\0';
+
+	logfile_print (buf, n->time);
+
+	return (0);
+} /* int logfile_notification */
 
 void module_register (void)
 {
 	plugin_register_config ("logfile", logfile_config,
 			config_keys, config_keys_num);
 	plugin_register_log ("logfile", logfile_log);
+	plugin_register_notification ("logfile", logfile_notification);
 } /* void module_register (void) */
 
 /* vim: set sw=4 ts=4 tw=78 noexpandtab : */

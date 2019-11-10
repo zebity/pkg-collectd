@@ -1,4 +1,5 @@
-EXTRA_DIST = perl/Collectd.pm perl/Makefile.PL perl/Collectd/Makefile.PL perl/Collectd/Unixsock.pm
+EXTRA_DIST = perl/Collectd.pm perl/Makefile.PL perl/Collectd/Makefile.PL \
+		perl/Collectd/Unixsock.pm
 
 all-local: @PERL_BINDINGS@
 
@@ -11,7 +12,8 @@ clean-local:
 perl: perl/Makefile
 	cd perl && $(MAKE)
 
-perl/Makefile: .perl-directory-stamp perl/Makefile.PL perl/Collectd/Makefile.PL
+perl/Makefile: .perl-directory-stamp perl/Makefile.PL \
+	perl/Collectd/Makefile.PL $(top_builddir)/config.status
 	cd perl && @PERL@ Makefile.PL PREFIX=$(prefix) @PERL_BINDINGS_OPTIONS@
 
 .perl-directory-stamp:

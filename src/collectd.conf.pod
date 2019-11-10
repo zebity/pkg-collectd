@@ -53,11 +53,21 @@ directory for the daemon.
 Loads the plugin I<Plugin>. There must be at least one such line or B<collectd>
 will be mostly useless.
 
-=item B<Include> I<File>
+=item B<Include> I<Path>
 
-Includes the file I<File> as if it was copy and pasted here. To prevent loops
-and shooting yourself in the foot in interesting ways the nesting is limited to
-a depth of 8E<nbsp>levels, which should be sufficient for most uses.
+If I<Path> points to a file, includes that file. If I<Path> points to a
+directory, recursively includes all files within that directory and its
+subdirectories. If the C<wordexp> function is available on your system,
+shell-like wildcards are expanded before files are included. This means you can
+use statements like the following:
+
+  Include "/etc/collectd.d/*.conf"
+
+To prevent loops and shooting yourself in the foot in interesting ways the
+nesting is limited to a depth of 8E<nbsp>levels, which should be sufficient for
+most uses. Since symlinks are followed it is still possible to crash the daemon
+by looping symlinks. In our opinion significant stupidity should result in an
+appropriate amount of pain.
 
 It is no problem to have a block like C<E<lt>Plugin fooE<gt>> in more than one
 file, but you cannot include files from within blocks.
@@ -72,22 +82,40 @@ setting using the B<-P> command-line option.
 
 Path to the plugins (shared objects) of collectd.
 
-=item B<TypesDB> I<File>
+=item B<TypesDB> I<File> [I<File> ...]
 
-Set the file that contains the data-set descriptions.
+Set one or more files that contain the data-set descriptions. See
+L<types.db(5)> for a description of the format of this file.
 
 =item B<Interval> I<Seconds>
 
 Configures the interval in which to query the read plugins. Obviously smaller
-values lead to a higher system load produces by collectd, while higher values
+values lead to a higher system load produced by collectd, while higher values
 lead to more coarse statistics.
 
 =item B<ReadThreads> I<Num>
 
-Number of threads to start for reading plugins. The default value if B<5>, but
+Number of threads to start for reading plugins. The default value is B<5>, but
 you may want to increase this if you have more than five plugins that take a
 long time to read. Mostly those are plugin that do network-IO. Setting this to
 a value higher than the number of plugins you've loaded is totally useless.
+
+=item B<Hostname> I<Name>
+
+Sets the hostname that identifies a host. If you omit this setting, the
+hostname will be determinded using the L<gethostname(2)> system call.
+
+=item B<FQDNLookup> B<true|false>
+
+If B<Hostname> is determined automatically this setting controls whether or not
+the daemon should try to figure out the "fully qualified domain name", FQDN.
+This is done using a lookup of the name returned by C<gethostname>.
+
+Using this feature (i.E<nbsp>e. setting this option to B<true>) is recommended.
+However, to preserve backwards compatibility the default is set to B<false>.
+The sample config file that is installed with C<makeE<nbsp>install> includes a
+line which sets this option, though, so that default installations will have
+this setting enabled.
 
 =back
 
@@ -181,6 +209,12 @@ installed and an "cpu governor" (that's a kernel module) is loaded.
 Set the directory to store CSV-files under. Per default CSV-files are generated
 beneath the daemon's working directory, i.E<nbsp>e. the B<BaseDir>.
 
+=item B<StoreRates> B<true|false>
+
+If set to B<true>, convert counter values to rates. If set to B<false> (the
+default) counter values are stored as is, i.E<nbsp>e. as an increasing integer
+number.
+
 =back
 
 =head2 Plugin C<df>
@@ -261,7 +295,9 @@ output that is expected from it.
 
 =over 4
 
-=item B<Exec> I<User>[:[I<Group>]] I<Executable>
+=item B<Exec> I<User>[:[I<Group>]] I<Executable> [I<E<lt>argE<gt>> [I<E<lt>argE<gt>> ...]]
+
+=item B<NotificationExec> I<User>[:[I<Group>]] I<Executable> [I<E<lt>argE<gt>> [I<E<lt>argE<gt>> ...]]
 
 Execute the executable I<Executable> as user I<User>. If the user name is
 followed by a colon and a group name, the effective group is set to that group.
@@ -273,6 +309,15 @@ Please note that in order to change the user and/or group the daemon needs
 superuser privileges. If the daemon is run as an unprivileged user you must
 specify the same user/group here. If the daemon is run with superuser
 privileges, you must supply a non-root user here.
+
+The executable may be followed by optional arguments that are passed to the
+program. Please note that due to the configuration parsing numbers and boolean
+values may be changed. If you want to be absolutely sure that something is
+passed as-is please enclose it in quotes.
+
+The B<Exec> and B<NotificationExec> statements change the semantics of the
+programs executed, i.E<nbsp>e. the data passed to them and the response
+expected from them. This is documented in great detail in L<collectd-exec(5)>.
 
 =back
 
@@ -296,6 +341,13 @@ Hostname to connect to. Defaults to B<127.0.0.1>.
 =item B<Port> I<Port>
 
 TCP-Port to connect to. Defaults to B<7634>.
+
+=item B<TranslateDevicename> I<true>|I<false>
+
+If enabled, translate the disk names to major/minor device numbers
+(e.E<nbsp>g. "8-0" for /dev/sda). For backwards compatibility this defaults to
+I<true> but it's recommended to disable it as it will probably be removed in
+the next major version.
 
 =back
 
@@ -361,6 +413,83 @@ and all other interrupts are collected.
 
 =back
 
+=head2 Plugin C<libvirt>
+
+This plugin allows CPU, disk and network load to be collected for virtualized
+guests on the machine. This means that these characteristics can be collected
+for guest systems without installing any software on them - collectd only runs
+on the hosting system. The statistics are collected through libvirt
+(L<http://libvirt.org/>).
+
+Only I<Connection> is required.
+
+=over 4
+
+=item B<Connection> I<uri>
+
+Connect to the hypervisor given by I<uri>. For example if using Xen use:
+
+ Connection "xen:///"
+
+Details which URIs allowed are given at L<http://libvirt.org/uri.html>.
+
+=item B<RefreshInterval> I<seconds>
+
+Refresh the list of domains and devices every I<seconds>. The default is 60
+seconds. Setting this to be the same or smaller than the I<Interval> will cause
+the list of domains and devices to be refreshed on every iteration.
+
+Refreshing the devices in particular is quite a costly operation, so if your
+virtualization setup is static you might consider increasing this. If this
+option is set to 0, refreshing is disabled completely.
+
+=item B<Domain> I<name>
+
+=item B<BlockDevice> I<name:dev>
+
+=item B<InterfaceDevice> I<name:dev>
+
+=item B<IgnoreSelected> I<true>|I<false>
+
+Select which domains and devices are collected.
+
+If I<IgnoreSelected> is not given or I<false> then only the listed domains and
+disk/network devices are collected.
+
+If I<IgnoreSelected> is I<true> then the test is reversed and the listed
+domains and disk/network devices are ignored, while the rest are collected.
+
+The domain name and device names may use a regular expression, if the name is
+surrounded by I</.../> and collectd was compiled with support for regexps.
+
+The default is to collect statistics for all domains and all their devices.
+
+Example:
+
+ BlockDevice "/:hdb/"
+ IgnoreSelected "true"
+
+Ignore all I<hdb> devices on any domain, but other block devices (eg. I<hda>)
+will be collected.
+
+=item B<HostnameFormat> B<name|uuid|hostname|...>
+
+When the libvirt plugin logs data, it sets the hostname of the collected data
+according to this setting. The default is to use the guest name as provided by
+the hypervisor, which is equal to setting B<name>.
+
+B<uuid> means use the guest's UUID. This is useful if you want to track the
+same guest across migrations.
+
+B<hostname> means to use the global B<Hostname> setting, which is probably not
+useful on its own because all guests will appear to have the same name.
+
+You can also specify combinations of these fields. For example B<name uuid>
+means to concatenate the guest name and UUID (with a literal colon character
+between, thus I<"foo:1234-1234-1234-1234">).
+
+=back
+
 =head2 Plugin C<logfile>
 
 =over 4
@@ -390,7 +519,7 @@ Prefix all lines printed by the current time. Defaults to B<true>.
 
 The C<mbmon plugin> uses mbmon to retrieve temperature, voltage, etc.
 
-Be default collectd connects to B<localhost> (127.0.0.1), port B<411/tcp>.  The
+Be default collectd connects to B<localhost> (127.0.0.1), port B<411/tcp>. The
 B<Host> and B<Port> options can be used to change these values, see below.
 C<mbmon> has to be running to work correctly. If C<mbmon> is not running
 timeouts may appear which may interfere with other statistics..
@@ -507,7 +636,7 @@ QDiscs and classes are identified by their type and handle (or classid).
 Filters don't necessarily have a handle, therefore the parent's handle is used.
 The notation used in collectd differs from that used in tc(1) in that it
 doesn't skip the major or minor number if it's zero and doesn't print special
-ids by their name.  So, for example, a qdisc may be identified by
+ids by their name. So, for example, a qdisc may be identified by
 C<pfifo_fast-1:0> even though the minor number of B<all> qdiscs is zero and
 thus not displayed by tc(1).
 
@@ -644,6 +773,13 @@ Hostname of the host running B<ntpd>. Defaults to B<localhost>.
 =item B<Port> I<Port>
 
 UDP-Port to connect to. Defaults to B<123>.
+
+=item B<ReverseLookups> B<true>|B<false>
+
+Sets wether or not to perform reverse lookups on peers. Since the name or
+IP-address may be used in a filename it is recommended to disable reverse
+lookups. The default is to do reverse lookups to preserve backwards
+compatibility, though.
 
 =back
 
@@ -881,6 +1017,47 @@ L<chmod(1)>. Defaults to B<0770>.
 
 =back
 
+=head2 Plugin C<uuid>
+
+This plugin, if loaded, causes the Hostname to be taken from the machine's
+UUID. The UUID is a universally unique designation for the machine, usually
+taken from the machine's BIOS. This is most useful if the machine is running in
+a virtual environment such as Xen, in which case the UUID is preserved across
+shutdowns and migration.
+
+The following methods are used to find the machine's UUID, in order:
+
+=over 4
+
+=item
+
+Check I</etc/uuid> (or I<UUIDFile>).
+
+=item
+
+Check for UUID from HAL (L<http://www.freedesktop.org/wiki/Software/hal>) if
+present.
+
+=item
+
+Check for UUID from C<dmidecode> / SMBIOS.
+
+=item
+
+Check for UUID from Xen hypervisor.
+
+=back
+
+If no UUID can be found then the hostname is not modified.
+
+=over 4
+
+=item B<UUIDFile> I<Path>
+
+Take the UUID from the given file (default I</etc/uuid>).
+
+=back
+
 =head2 Plugin C<vserver>
 
 This plugin doesn't have any options. B<VServer> support is only available for
@@ -891,12 +1068,123 @@ the F</proc/virtual> filesystem that is required by this plugin.
 
 The B<VServer> homepage can be found at L<http://linux-vserver.org/>.
 
+=head1 THRESHOLD CONFIGURATION
+
+Starting with version C<4.3.0> collectd has support for B<monitoring>. By that
+we mean that the values are not only stored or sent somewhere, but that they
+are judged and, if a problem is recognized, acted upon. The only action
+collectd takes itself is to generate and dispatch a "notification". Plugins can
+register to receive notifications and perform appropriate further actions.
+
+Since systems and what you expect them to do differ a lot, you can configure
+B<thresholds> for your values freely. This gives you a lot of flexibility but
+also a lot of responsibility.
+
+Every time a value is out of range a notification is dispatched. This means
+that the idle percentage of your CPU needs to be less then the configured
+threshold only once for a notification to be generated. There's no such thing
+as a moving average or similar - at least not now.
+
+Also, all values that match a threshold are considered to be relevant or
+"interesting". As a consequence collectd will issue a notification if they are
+not received for twice the last timeout of the values. If, for example, some
+hosts sends it's CPU statistics to the server every 60 seconds, a notification
+will be dispatched after about 120 seconds. It may take a little longer because
+the timeout is checked only once each B<Interval> on the server.
+
+Here is a configuration example to get you started. Read below for more
+information.
+
+ <Threshold>
+   <Type "foo">
+     WarningMin    0.00
+     WarningMax 1000.00
+     FailureMin    0.00
+     FailureMax 1200.00
+     Invert false
+     Instance "bar"
+   </Type>
+
+   <Plugin "interface">
+     Instance "eth0"
+     <Type "if_octets">
+       FailureMax 10000000
+     </Type>
+   </Plugin>
+
+   <Host "hostname">
+     <Type "cpu">
+       Instance "idle"
+       FailureMin 10
+     </Type>
+
+     <Plugin "memory">
+       <Type "memory">
+         Instance "cached"
+	 WarningMin 100000000
+       </Type>
+     </Plugin>
+   </Host>
+ </Threshold>
+
+There are basically two types of configuration statements: The C<Host>,
+C<Plugin>, and C<Type> blocks select the value for which a threshold should be
+configured. The C<Plugin> and C<Type> blocks may be specified further using the
+C<Instance> option. You can combine the block by nesting the blocks, though
+they must be nested in the above order, i.E<nbsp>e. C<Host> may contain either
+C<Plugin> and C<Type> blocks, C<Plugin> may only contain C<Type> blocks and
+C<Type> may not contain other blocks. If multiple blocks apply to the same
+value the most specific block is used.
+
+The other statements specify the threshold to configure. They B<must> be
+included in a C<Type> block. Currently the following statements are recognized:
+
+=over 4
+
+=item B<FailureMax> I<Value>
+
+=item B<WarningMax> I<Value>
+
+Sets the upper bound of acceptable values. If unset defaults to positive
+infinity. If a value is greater than B<FailureMax> a B<FAILURE> notification
+will be created. If the value is greater than B<WarningMax> but less than (or
+equal to) B<FailureMax> a B<WARNING> notification will be created.
+
+=item B<FailureMin> I<Value>
+
+=item B<WarningMin> I<Value>
+
+Sets the lower bound of acceptable values. If unset defaults to negative
+infinity. If a value is less than B<FailureMin> a B<FAILURE> notification will
+be created. If the value is less than B<WarningMin> but greater than (or equal
+to) B<FailureMin> a B<WARNING> notification will be created.
+
+=item B<Invert> B<true>|B<false>
+
+If set to B<true> the range of acceptable values is inverted, i.E<nbsp>e.
+values between B<FailureMin> and B<FailureMax> (B<WarningMin> and
+B<WarningMax>) are not okay. Defaults to B<false>.
+
+=item B<Persist> B<true>|B<false>
+
+Sets how often notifications are generated. If set to B<true> one notification
+will be generated for each value that is out of the acceptable range. If set to
+B<false> (the default) then a notification is only generated if a value is out
+of range but the previous value was okay.
+
+This applies to missing values, too: If set to B<true> a notification about a
+missing value is generated once every B<Interval> seconds. If set to B<false>
+only one such notification is generated until the value appears again.
+
+=back
+
 =head1 SEE ALSO
 
 L<collectd(1)>,
 L<collectd-exec(5)>,
 L<collectd-perl(5)>,
 L<collectd-unixsock(5)>,
+L<types.db(5)>,
 L<hddtemp(8)>,
 L<kstat(3KSTAT)>,
 L<mbmon(1)>,

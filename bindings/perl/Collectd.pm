@@ -22,6 +22,17 @@ package Collectd;
 use strict;
 use warnings;
 
+use Config;
+
+use threads;
+use threads::shared;
+
+BEGIN {
+	if (! $Config{'useithreads'}) {
+		die "Perl does not support ithreads!";
+	}
+}
+
 require Exporter;
 
 our @ISA = qw( Exporter );
@@ -31,6 +42,7 @@ our %EXPORT_TAGS = (
 			plugin_register
 			plugin_unregister
 			plugin_dispatch_values
+			plugin_dispatch_notification
 			plugin_log
 	) ],
 	'types' => [ qw(
@@ -39,6 +51,7 @@ our %EXPORT_TAGS = (
 			TYPE_WRITE
 			TYPE_SHUTDOWN
 			TYPE_LOG
+			TYPE_NOTIF
 			TYPE_DATASET
 	) ],
 	'ds_types' => [ qw(
@@ -57,6 +70,15 @@ our %EXPORT_TAGS = (
 			LOG_INFO
 			LOG_DEBUG
 	) ],
+	'notif' => [ qw(
+			NOTIF_FAILURE
+			NOTIF_WARNING
+			NOTIF_OKAY
+	) ],
+	'globals' => [ qw(
+			$hostname_g
+			$interval_g
+	) ],
 );
 
 {
@@ -65,21 +87,25 @@ our %EXPORT_TAGS = (
 		foreach keys %EXPORT_TAGS;
 }
 
+# global variables
+our $hostname_g;
+our $interval_g;
+
 Exporter::export_ok_tags ('all');
 
-my @plugins  = ();
-my @datasets = ();
+my @plugins : shared = ();
 
 my %types = (
 	TYPE_INIT,     "init",
 	TYPE_READ,     "read",
 	TYPE_WRITE,    "write",
 	TYPE_SHUTDOWN, "shutdown",
-	TYPE_LOG,      "log"
+	TYPE_LOG,      "log",
+	TYPE_NOTIF,    "notify"
 );
 
 foreach my $type (keys %types) {
-	$plugins[$type] = {};
+	$plugins[$type] = &share ({});
 }
 
 sub _log {
@@ -102,6 +128,8 @@ sub DEBUG   { _log (scalar caller, LOG_DEBUG,   shift); }
 sub plugin_call_all {
 	my $type = shift;
 
+	our $cb_name = undef;
+
 	if (! defined $type) {
 		return;
 	}
@@ -115,21 +143,47 @@ sub plugin_call_all {
 		return;
 	}
 
+	lock @plugins;
 	foreach my $plugin (keys %{$plugins[$type]}) {
 		my $p = $plugins[$type]->{$plugin};
 
+		my $status = 0;
+
 		if ($p->{'wait_left'} > 0) {
-			# TODO: use interval_g
-			$p->{'wait_left'} -= 10;
+			$p->{'wait_left'} -= $interval_g;
 		}
 
 		next if ($p->{'wait_left'} > 0);
 
-		if (my $status = $p->{'code'}->(@_)) {
+		$cb_name = $p->{'cb_name'};
+		$status = call_by_name (@_);
+
+		if (! $status) {
+			my $err = undef;
+
+			if ($@) {
+				$err = $@;
+			}
+			else {
+				$err = "callback returned false";
+			}
+
+			if (TYPE_LOG != $type) {
+				ERROR ("Execution of callback \"$cb_name\" failed: $err");
+			}
+
+			$status = 0;
+		}
+
+		if ($status) {
 			$p->{'wait_left'} = 0;
-			$p->{'wait_time'} = 10;
+			$p->{'wait_time'} = $interval_g;
 		}
 		elsif (TYPE_READ == $type) {
+			if ($p->{'wait_time'} < $interval_g) {
+				$p->{'wait_time'} = $interval_g;
+			}
+
 			$p->{'wait_left'} = $p->{'wait_time'};
 			$p->{'wait_time'} *= 2;
 
@@ -141,12 +195,12 @@ sub plugin_call_all {
 				. "Will suspend it for $p->{'wait_left'} seconds.");
 		}
 		elsif (TYPE_INIT == $type) {
+			ERROR ("${plugin}->init() failed with status $status. "
+				. "Plugin will be disabled.");
+
 			foreach my $type (keys %types) {
 				plugin_unregister ($type, $plugin);
 			}
-
-			ERROR ("${plugin}->init() failed with status $status. "
-				. "Plugin will be disabled.");
 		}
 		elsif (TYPE_LOG != $type) {
 			WARNING ("${plugin}->$types{$type}() failed with status $status.");
@@ -187,13 +241,23 @@ sub plugin_register {
 	if ((TYPE_DATASET == $type) && ("ARRAY" eq ref $data)) {
 		return plugin_register_data_set ($name, $data);
 	}
-	elsif ("CODE" eq ref $data) {
-		# TODO: make interval_g available at configuration time
-		$plugins[$type]->{$name} = {
-				wait_time => 10,
-				wait_left => 0,
-				code      => $data,
-		};
+	elsif ((TYPE_DATASET != $type) && (! ref $data)) {
+		my $pkg = scalar caller;
+
+		my %p : shared;
+
+		if ($data !~ m/^$pkg/) {
+			$data = $pkg . "::" . $data;
+		}
+
+		%p = (
+			wait_time => $interval_g,
+			wait_left => 0,
+			cb_name   => $data,
+		);
+
+		lock @plugins;
+		$plugins[$type]->{$name} = \%p;
 	}
 	else {
 		ERROR ("Collectd::plugin_register: Invalid data.");
@@ -217,6 +281,7 @@ sub plugin_unregister {
 		return plugin_unregister_data_set ($name);
 	}
 	elsif (defined $plugins[$type]) {
+		lock @plugins;
 		delete $plugins[$type]->{$name};
 	}
 	else {

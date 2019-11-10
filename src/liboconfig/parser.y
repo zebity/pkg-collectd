@@ -1,6 +1,6 @@
 /**
  * oconfig - src/parser.y
- * Copyright (C) 2007  Florian octo Forster <octo at verplant.org>
+ * Copyright (C) 2007,2008  Florian octo Forster <octo at verplant.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -108,6 +108,12 @@ option:
 	;
 
 block_begin:
+	OPENBRAC identifier CLOSEBRAC EOL
+	{
+	 memset (&$$, '\0', sizeof ($$));
+	 $$.key = $2;
+	}
+	|
 	OPENBRAC identifier argument_list CLOSEBRAC EOL
 	{
 	 memset (&$$, '\0', sizeof ($$));
@@ -150,7 +156,7 @@ statement_list:
 	statement_list statement
 	{
 	 $$ = $1;
-	 if ($2.values_num > 0)
+	 if (($2.values_num > 0) || ($2.children_num > 0))
 	 {
 		 $$.statement_num++;
 		 $$.statement = realloc ($$.statement, $$.statement_num * sizeof (oconfig_item_t));
@@ -159,7 +165,7 @@ statement_list:
 	}
 	| statement
 	{
-	 if ($1.values_num > 0)
+	 if (($1.values_num > 0) || ($1.children_num > 0))
 	 {
 		 $$.statement = malloc (sizeof (oconfig_item_t));
 		 $$.statement[0] = $1;
@@ -204,8 +210,8 @@ static char *unquote (const char *orig)
 	if ((len < 2) || (ret[0] != '"') || (ret[len - 1] != '"'))
 		return (ret);
 
-	ret++;
 	len -= 2;
+	memmove (ret, ret + 1, len);
 	ret[len] = '\0';
 
 	for (i = 0; i < len; i++)

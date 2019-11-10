@@ -30,7 +30,10 @@
 #include "common.h"
 #include "plugin.h"
 #include "configfile.h"
+#include "utils_avltree.h"
 #include "utils_llist.h"
+#include "utils_cache.h"
+#include "utils_threshold.h"
 
 /*
  * Private structures
@@ -51,8 +54,10 @@ static llist_t *list_init;
 static llist_t *list_read;
 static llist_t *list_write;
 static llist_t *list_shutdown;
-static llist_t *list_data_set;
 static llist_t *list_log;
+static llist_t *list_notification;
+
+static c_avl_tree_t *data_sets;
 
 static char *plugindir = NULL;
 
@@ -76,6 +81,7 @@ static const char *plugin_get_dir (void)
 static int register_callback (llist_t **list, const char *name, void *callback)
 {
 	llentry_t *le;
+	char *key;
 
 	if ((*list == NULL)
 			&& ((*list = llist_create ()) == NULL))
@@ -84,9 +90,16 @@ static int register_callback (llist_t **list, const char *name, void *callback)
 	le = llist_search (*list, name);
 	if (le == NULL)
 	{
-		le = llentry_create (name, callback);
-		if (le == NULL)
+		key = strdup (name);
+		if (key == NULL)
 			return (-1);
+
+		le = llentry_create (key, callback);
+		if (le == NULL)
+		{
+			free (key);
+			return (-1);
+		}
 
 		llist_append (*list, le);
 	}
@@ -108,6 +121,7 @@ static int plugin_unregister (llist_t *list, const char *name)
 		return (-1);
 
 	llist_remove (list, e);
+	free (e->key);
 	llentry_destroy (e);
 
 	return (0);
@@ -430,11 +444,17 @@ int plugin_register_data_set (const data_set_t *ds)
 	data_set_t *ds_copy;
 	int i;
 
-	if ((list_data_set != NULL)
-			&& (llist_search (list_data_set, ds->type) != NULL))
+	if ((data_sets != NULL)
+			&& (c_avl_get (data_sets, ds->type, NULL) == 0))
 	{
 		NOTICE ("Replacing DS `%s' with another version.", ds->type);
 		plugin_unregister_data_set (ds->type);
+	}
+	else if (data_sets == NULL)
+	{
+		data_sets = c_avl_create ((int (*) (const void *, const void *)) strcmp);
+		if (data_sets == NULL)
+			return (-1);
 	}
 
 	ds_copy = (data_set_t *) malloc (sizeof (data_set_t));
@@ -453,13 +473,19 @@ int plugin_register_data_set (const data_set_t *ds)
 	for (i = 0; i < ds->ds_num; i++)
 		memcpy (ds_copy->ds + i, ds->ds + i, sizeof (data_source_t));
 
-	return (register_callback (&list_data_set, ds->type, (void *) ds_copy));
+	return (c_avl_insert (data_sets, (void *) ds_copy->type, (void *) ds_copy));
 } /* int plugin_register_data_set */
 
 int plugin_register_log (char *name,
 		void (*callback) (int priority, const char *msg))
 {
 	return (register_callback (&list_log, name, (void *) callback));
+} /* int plugin_register_log */
+
+int plugin_register_notification (const char *name,
+		int (*callback) (const notification_t *notif))
+{
+	return (register_callback (&list_notification, name, (void *) callback));
 } /* int plugin_register_log */
 
 int plugin_unregister_config (const char *name)
@@ -490,6 +516,7 @@ int plugin_unregister_read (const char *name)
 
 	llist_remove (list_read, e);
 	free (e->value);
+	free (e->key);
 	llentry_destroy (e);
 
 	return (0);
@@ -507,20 +534,13 @@ int plugin_unregister_shutdown (const char *name)
 
 int plugin_unregister_data_set (const char *name)
 {
-	llentry_t  *e;
 	data_set_t *ds;
 
-	if (list_data_set == NULL)
+	if (data_sets == NULL)
 		return (-1);
 
-	e = llist_search (list_data_set, name);
-
-	if (e == NULL)
+	if (c_avl_remove (data_sets, name, NULL, (void *) &ds) != 0)
 		return (-1);
-
-	llist_remove (list_data_set, e);
-	ds = (data_set_t *) e->value;
-	llentry_destroy (e);
 
 	sfree (ds->ds);
 	sfree (ds);
@@ -531,6 +551,11 @@ int plugin_unregister_data_set (const char *name)
 int plugin_unregister_log (const char *name)
 {
 	return (plugin_unregister (list_log, name));
+}
+
+int plugin_unregister_notification (const char *name)
+{
+	return (plugin_unregister (list_notification, name));
 }
 
 void plugin_init_all (void)
@@ -548,6 +573,9 @@ void plugin_init_all (void)
 		num = atoi (rt);
 		start_threads ((num > 0) ? num : 5);
 	}
+
+	/* Init the value cache */
+	uc_init ();
 
 	if (list_init == NULL)
 		return;
@@ -572,10 +600,12 @@ void plugin_init_all (void)
 	}
 } /* void plugin_init_all */
 
-void plugin_read_all (const int *loop)
+void plugin_read_all (void)
 {
 	llentry_t   *le;
 	read_func_t *rf;
+
+	uc_check_timeout ();
 
 	if (list_read == NULL)
 		return;
@@ -640,17 +670,14 @@ int plugin_dispatch_values (const char *name, value_list_t *vl)
 	data_set_t *ds;
 	llentry_t *le;
 
-	if ((list_write == NULL) || (list_data_set == NULL))
+	if ((list_write == NULL) || (data_sets == NULL))
 		return (-1);
 
-	le = llist_search (list_data_set, name);
-	if (le == NULL)
+	if (c_avl_get (data_sets, name, (void *) &ds) != 0)
 	{
 		DEBUG ("No such dataset registered: %s", name);
 		return (-1);
 	}
-
-	ds = (data_set_t *) le->value;
 
 	DEBUG ("plugin: plugin_dispatch_values: time = %u; interval = %i; "
 			"host = %s; "
@@ -678,6 +705,10 @@ int plugin_dispatch_values (const char *name, value_list_t *vl)
 	escape_slashes (vl->plugin_instance, sizeof (vl->plugin_instance));
 	escape_slashes (vl->type_instance, sizeof (vl->type_instance));
 
+	/* Update the value cache */
+	uc_update (ds, vl);
+	ut_check_threshold (ds, vl);
+
 	le = llist_head (list_write);
 	while (le != NULL)
 	{
@@ -689,6 +720,33 @@ int plugin_dispatch_values (const char *name, value_list_t *vl)
 
 	return (0);
 } /* int plugin_dispatch_values */
+
+int plugin_dispatch_notification (const notification_t *notif)
+{
+	int (*callback) (const notification_t *);
+	llentry_t *le;
+	/* Possible TODO: Add flap detection here */
+
+	DEBUG ("plugin_dispatch_notification: severity = %i; message = %s; "
+			"time = %u; host = %s;",
+			notif->severity, notif->message,
+			(unsigned int) notif->time, notif->host);
+
+	/* Nobody cares for notifications */
+	if (list_notification == NULL)
+		return (-1);
+
+	le = llist_head (list_notification);
+	while (le != NULL)
+	{
+		callback = (int (*) (const notification_t *)) le->value;
+		(*callback) (notif);
+
+		le = le->next;
+	}
+
+	return (0);
+} /* int plugin_dispatch_notification */
 
 void plugin_log (int level, const char *format, ...)
 {
@@ -721,66 +779,15 @@ void plugin_log (int level, const char *format, ...)
 	}
 } /* void plugin_log */
 
-void plugin_complain (int level, complain_t *c, const char *format, ...)
-{
-	char message[512];
-	va_list ap;
-
-	if (c->delay > 0)
-	{
-		c->delay--;
-		return;
-	}
-
-	if (c->interval < interval_g)
-		c->interval = interval_g;
-	else
-		c->interval *= 2;
-
-	if (c->interval > 86400)
-		c->interval = 86400;
-
-	c->delay = c->interval / interval_g;
-
-	va_start (ap, format);
-	vsnprintf (message, 512, format, ap);
-	message[511] = '\0';
-	va_end (ap);
-
-	plugin_log (level, message);
-}
-
-void plugin_relief (int level, complain_t *c, const char *format, ...)
-{
-	char message[512];
-	va_list ap;
-
-	if (c->interval == 0)
-		return;
-
-	c->interval = 0;
-
-	va_start (ap, format);
-	vsnprintf (message, 512, format, ap);
-	message[511] = '\0';
-	va_end (ap);
-
-	plugin_log (level, message);
-}
-
 const data_set_t *plugin_get_ds (const char *name)
 {
 	data_set_t *ds;
-	llentry_t *le;
 
-	le = llist_search (list_data_set, name);
-	if (le == NULL)
+	if (c_avl_get (data_sets, name, (void *) &ds) != 0)
 	{
 		DEBUG ("No such dataset registered: %s", name);
 		return (NULL);
 	}
-
-	ds = (data_set_t *) le->value;
 
 	return (ds);
 } /* data_set_t *plugin_get_ds */

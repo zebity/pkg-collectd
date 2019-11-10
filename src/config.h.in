@@ -163,6 +163,9 @@
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
+/* Define to 1 if you have 'hal' library */
+#undef HAVE_LIBHAL
+
 /* Define to 1 if you have the iptc library (-liptc). */
 #undef HAVE_LIBIPTC
 
@@ -192,6 +195,12 @@
 
 /* Define to 1 if you have the sensors library (-lsensors). */
 #undef HAVE_LIBSENSORS
+
+/* Define to 1 if you have the <libvirt/libvirt.h> header file. */
+#undef HAVE_LIBVIRT_LIBVIRT_H
+
+/* Define to 1 if you have the <libxml/parser.h> header file. */
+#undef HAVE_LIBXML_PARSER_H
 
 /* Define to 1 if you have the 'xmms' library (-lxmms). */
 #undef HAVE_LIBXMMS
@@ -364,6 +373,9 @@
 /* Define to 1 if you have the <pcap.h> header file. */
 #undef HAVE_PCAP_H
 
+/* Define if Perl supports ithreads. */
+#undef HAVE_PERL_ITHREADS
+
 /* Define to 1 if the apache plugin is enabled. */
 #undef HAVE_PLUGIN_APACHE
 
@@ -417,6 +429,9 @@
 
 /* Define to 1 if the irq plugin is enabled. */
 #undef HAVE_PLUGIN_IRQ
+
+/* Define to 1 if the libvirt plugin is enabled. */
+#undef HAVE_PLUGIN_LIBVIRT
 
 /* Define to 1 if the load plugin is enabled. */
 #undef HAVE_PLUGIN_LOAD
@@ -495,6 +510,9 @@
 
 /* Define to 1 if the users plugin is enabled. */
 #undef HAVE_PLUGIN_USERS
+
+/* Define to 1 if the uuid plugin is enabled. */
+#undef HAVE_PLUGIN_UUID
 
 /* Define to 1 if the vserver plugin is enabled. */
 #undef HAVE_PLUGIN_VSERVER
@@ -774,6 +792,9 @@
 /* Define to 1 if you have the <utmp.h> header file. */
 #undef HAVE_UTMP_H
 
+/* Define to 1 if you have the <wordexp.h> header file. */
+#undef HAVE_WORDEXP_H
+
 /* Define to 1 if you have the <xfs/xqm.h> header file. */
 #undef HAVE_XFS_XQM_H
 
@@ -792,6 +813,9 @@
 
 /* Define if NAN can be defined as (0.0 / 0.0) */
 #undef NAN_ZERO_ZERO
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE

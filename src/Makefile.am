@@ -10,27 +10,31 @@ if COMPILER_IS_GCC
 AM_CFLAGS = -Wall -Werror
 endif
 
-sbin_PROGRAMS = collectd
+AM_CPPFLAGS = -DPREFIX='"${prefix}"'
+AM_CPPFLAGS += -DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"'
+AM_CPPFLAGS += -DLOCALSTATEDIR='"${localstatedir}"'
+AM_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"'
+if BUILD_FEATURE_DAEMON
+AM_CPPFLAGS += -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
+endif
+AM_CPPFLAGS += -DPLUGINDIR='"${pkglibdir}"'
+
+sbin_PROGRAMS = collectd collectdmon
 bin_PROGRAMS = collectd-nagios
 
 collectd_SOURCES = collectd.c collectd.h \
-		   utils_avltree.c utils_avltree.h \
-		   utils_mount.c utils_mount.h \
-		   utils_llist.c utils_llist.h \
-		   utils_ignorelist.c utils_ignorelist.h \
 		   common.c common.h \
-		   plugin.c plugin.h \
 		   configfile.c configfile.h \
+		   plugin.c plugin.h \
+		   utils_avltree.c utils_avltree.h \
+		   utils_cache.c utils_cache.h \
+		   utils_ignorelist.c utils_ignorelist.h \
+		   utils_llist.c utils_llist.h \
+		   utils_mount.c utils_mount.h \
+		   utils_threshold.c utils_threshold.h \
 		   types_list.c types_list.h
 collectd_CPPFLAGS = $(LTDLINCL)
-collectd_CPPFLAGS += -DPREFIX='"${prefix}"'
-collectd_CPPFLAGS += -DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"'
-collectd_CPPFLAGS += -DLOCALSTATEDIR='"${localstatedir}"'
-collectd_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"'
-if BUILD_FEATURE_DAEMON
-collectd_CPPFLAGS += -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
-endif
-collectd_CPPFLAGS += -DPLUGINDIR='"${pkglibdir}"'
+collectd_CPPFLAGS += $(AM_CPPFLAGS)
 
 # Link to these libraries..
 collectd_LDFLAGS = -export-dynamic
@@ -72,6 +76,9 @@ collectd_DEPENDENCIES += $(LIBLTDL) liboconfig/liboconfig.la
 else
 collectd_LDFLAGS += -loconfig
 endif
+
+collectdmon_SOURCES = collectdmon.c
+collectdmon_CPPFLAGS = $(AM_CPPFLAGS)
 
 collectd_nagios_SOURCES = collectd-nagios.c
 collectd_nagios_LDFLAGS =
@@ -274,6 +281,16 @@ irq_la_SOURCES = irq.c
 irq_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" irq.la
 collectd_DEPENDENCIES += irq.la
+endif
+
+if BUILD_PLUGIN_LIBVIRT
+pkglib_LTLIBRARIES += libvirt.la
+libvirt_la_SOURCES = libvirt.c
+libvirt_la_CFLAGS = $(BUILD_WITH_LIBVIRT_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
+libvirt_la_LIBADD = $(BUILD_WITH_LIBVIRT_LIBS) $(BUILD_WITH_LIBXML2_LIBS)
+libvirt_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" libvirt.la
+collectd_DEPENDENCIES += libvirt.la
 endif
 
 if BUILD_PLUGIN_LOAD
@@ -564,8 +581,7 @@ endif
 
 if BUILD_PLUGIN_UNIXSOCK
 pkglib_LTLIBRARIES += unixsock.la
-unixsock_la_SOURCES = unixsock.c utils_cmd_putval.h utils_cmd_putval.c
-unixsock_la_CPPFLAGS = -DLOCALSTATEDIR='"${localstatedir}"'
+unixsock_la_SOURCES = unixsock.c utils_cmd_putval.h utils_cmd_putval.c utils_cmd_putnotif.h utils_cmd_putnotif.c
 unixsock_la_LDFLAGS = -module -avoid-version -lpthread
 collectd_LDADD += "-dlopen" unixsock.la
 collectd_DEPENDENCIES += unixsock.la
@@ -577,6 +593,16 @@ users_la_SOURCES = users.c
 users_la_LDFLAGS = -module -avoid-version
 collectd_LDADD += "-dlopen" users.la
 collectd_DEPENDENCIES += users.la
+endif
+
+if BUILD_PLUGIN_UUID
+pkglib_LTLIBRARIES += uuid.la
+uuid_la_SOURCES = uuid.c
+uuid_la_CFLAGS  = $(BUILD_WITH_LIBHAL_CFLAGS)
+uuid_la_LIBADD  = $(BUILD_WITH_LIBHAL_LIBS)
+uuid_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" uuid.la
+collectd_DEPENDENCIES += uuid.la
 endif
 
 if BUILD_PLUGIN_VSERVER
@@ -607,7 +633,8 @@ endif
 
 dist_man_MANS = collectd.1 collectd-nagios.1 collectd.conf.5 \
 		collectd-email.5 collectd-exec.5 collectd-perl.5 \
-		collectd-snmp.5 collectd-unixsock.5
+		collectd-snmp.5 collectd-unixsock.5 collectdmon.1 \
+		types.db.5
 
 #collectd_1_SOURCES = collectd.pod
 
@@ -615,7 +642,7 @@ EXTRA_DIST = types.db
 
 EXTRA_DIST += collectd-email.pod collectd-exec.pod collectd-nagios.pod \
 	collectd-perl.pod collectd-snmp.pod collectd-unixsock.pod \
-	collectd.conf.pod collectd.pod
+	collectd.conf.pod collectd.pod collectdmon.pod types.db.pod
 
 .pod.1:
 	pod2man --release=$(VERSION) --center=$(PACKAGE) $< >.pod2man.tmp 2>/dev/null && mv -f .pod2man.tmp $@ || true

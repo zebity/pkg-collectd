@@ -1,15 +1,20 @@
-src/battery.c: commend not working code.
-general: build Darwin package
+For version 4.3:
+* unixsock plugin: Remove the custom cache if possible.
 
-Near future:
+src/battery.c: commend not working code.
+
+Wishlist:
 * Update the RPM specfile to
   - build `collectd-apache'
-  - be free of syntax erros.
-
-For version 3.*:
+  - be free of syntax errors.
 * Port nfs module to solaris
 * Port tape module to Linux
 * Maybe look into porting the serial module
+* Build Darwin package
+* Maybe let the network plugin configure whether or not notifications should be
+  sent/received.
+* Maybe find a way for processes connected to the unixsock plugin to receive
+  notifications, too.
 
 http://developer.apple.com/documentation/DeviceDrivers/Conceptual/AccessingHardware/AH_IOKitLib_API/chapter_5_section_1.html
 http://developer.apple.com/documentation/DeviceDrivers/Conceptual/IOKitFundamentals/index.html#//apple_ref/doc/uid/TP0000011

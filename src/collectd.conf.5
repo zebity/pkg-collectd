@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2008-01-21" "4.2.4" "collectd"
+.TH COLLECTD.CONF 5 "2008-02-18" "4.3.0" "collectd"
 .SH "NAME"
 collectd.conf \- Configuration for the system statistics collection daemon \fBcollectd\fR
 .SH "SYNOPSIS"
@@ -183,11 +183,23 @@ directory for the daemon.
 .IX Item "LoadPlugin Plugin"
 Loads the plugin \fIPlugin\fR. There must be at least one such line or \fBcollectd\fR
 will be mostly useless.
-.IP "\fBInclude\fR \fIFile\fR" 4
-.IX Item "Include File"
-Includes the file \fIFile\fR as if it was copy and pasted here. To prevent loops
-and shooting yourself in the foot in interesting ways the nesting is limited to
-a depth of 8\ levels, which should be sufficient for most uses.
+.IP "\fBInclude\fR \fIPath\fR" 4
+.IX Item "Include Path"
+If \fIPath\fR points to a file, includes that file. If \fIPath\fR points to a
+directory, recursively includes all files within that directory and its
+subdirectories. If the \f(CW\*(C`wordexp\*(C'\fR function is available on your system,
+shell-like wildcards are expanded before files are included. This means you can
+use statements like the following:
+.Sp
+.Vb 1
+\&  Include "/etc/collectd.d/*.conf"
+.Ve
+.Sp
+To prevent loops and shooting yourself in the foot in interesting ways the
+nesting is limited to a depth of 8\ levels, which should be sufficient for
+most uses. Since symlinks are followed it is still possible to crash the daemon
+by looping symlinks. In our opinion significant stupidity should result in an
+appropriate amount of pain.
 .Sp
 It is no problem to have a block like \f(CW\*(C`<Plugin foo>\*(C'\fR in more than one
 file, but you cannot include files from within blocks.
@@ -199,20 +211,36 @@ setting using the \fB\-P\fR command-line option.
 .IP "\fBPluginDir\fR \fIDirectory\fR" 4
 .IX Item "PluginDir Directory"
 Path to the plugins (shared objects) of collectd.
-.IP "\fBTypesDB\fR \fIFile\fR" 4
-.IX Item "TypesDB File"
-Set the file that contains the data-set descriptions.
+.IP "\fBTypesDB\fR \fIFile\fR [\fIFile\fR ...]" 4
+.IX Item "TypesDB File [File ...]"
+Set one or more files that contain the data-set descriptions. See
+\&\fItypes.db\fR\|(5) for a description of the format of this file.
 .IP "\fBInterval\fR \fISeconds\fR" 4
 .IX Item "Interval Seconds"
 Configures the interval in which to query the read plugins. Obviously smaller
-values lead to a higher system load produces by collectd, while higher values
+values lead to a higher system load produced by collectd, while higher values
 lead to more coarse statistics.
 .IP "\fBReadThreads\fR \fINum\fR" 4
 .IX Item "ReadThreads Num"
-Number of threads to start for reading plugins. The default value if \fB5\fR, but
+Number of threads to start for reading plugins. The default value is \fB5\fR, but
 you may want to increase this if you have more than five plugins that take a
 long time to read. Mostly those are plugin that do network\-IO. Setting this to
 a value higher than the number of plugins you've loaded is totally useless.
+.IP "\fBHostname\fR \fIName\fR" 4
+.IX Item "Hostname Name"
+Sets the hostname that identifies a host. If you omit this setting, the
+hostname will be determinded using the \fIgethostname\fR\|(2) system call.
+.IP "\fBFQDNLookup\fR \fBtrue|false\fR" 4
+.IX Item "FQDNLookup true|false"
+If \fBHostname\fR is determined automatically this setting controls whether or not
+the daemon should try to figure out the \*(L"fully qualified domain name\*(R", \s-1FQDN\s0.
+This is done using a lookup of the name returned by \f(CW\*(C`gethostname\*(C'\fR.
+.Sp
+Using this feature (i.\ e. setting this option to \fBtrue\fR) is recommended.
+However, to preserve backwards compatibility the default is set to \fBfalse\fR.
+The sample config file that is installed with \f(CW\*(C`make\ install\*(C'\fR includes a
+line which sets this option, though, so that default installations will have
+this setting enabled.
 .SH "PLUGIN OPTIONS"
 .IX Header "PLUGIN OPTIONS"
 Some plugins may register own options. These options must be enclosed in a
@@ -289,6 +317,11 @@ installed and an \*(L"cpu governor\*(R" (that's a kernel module) is loaded.
 .IX Item "DataDir Directory"
 Set the directory to store CSV-files under. Per default CSV-files are generated
 beneath the daemon's working directory, i.\ e. the \fBBaseDir\fR.
+.IP "\fBStoreRates\fR \fBtrue|false\fR" 4
+.IX Item "StoreRates true|false"
+If set to \fBtrue\fR, convert counter values to rates. If set to \fBfalse\fR (the
+default) counter values are stored as is, i.\ e. as an increasing integer
+number.
 .ie n .Sh "Plugin ""df"""
 .el .Sh "Plugin \f(CWdf\fP"
 .IX Subsection "Plugin df"
@@ -346,8 +379,12 @@ at most \fB16384\fR to prevent typos and dumb mistakes.
 Please make sure to read \fIcollectd\-exec\fR\|(5) before using this plugin. It
 contains valuable information on when the executable is executed and the
 output that is expected from it.
-.IP "\fBExec\fR \fIUser\fR[:[\fIGroup\fR]] \fIExecutable\fR" 4
-.IX Item "Exec User[:[Group]] Executable"
+.IP "\fBExec\fR \fIUser\fR[:[\fIGroup\fR]] \fIExecutable\fR [\fI<arg>\fR [\fI<arg>\fR ...]]" 4
+.IX Item "Exec User[:[Group]] Executable [<arg> [<arg> ...]]"
+.PD 0
+.IP "\fBNotificationExec\fR \fIUser\fR[:[\fIGroup\fR]] \fIExecutable\fR [\fI<arg>\fR [\fI<arg>\fR ...]]" 4
+.IX Item "NotificationExec User[:[Group]] Executable [<arg> [<arg> ...]]"
+.PD
 Execute the executable \fIExecutable\fR as user \fIUser\fR. If the user name is
 followed by a colon and a group name, the effective group is set to that group.
 The real group and saved-set group will be set to the default group of that
@@ -358,6 +395,15 @@ Please note that in order to change the user and/or group the daemon needs
 superuser privileges. If the daemon is run as an unprivileged user you must
 specify the same user/group here. If the daemon is run with superuser
 privileges, you must supply a non-root user here.
+.Sp
+The executable may be followed by optional arguments that are passed to the
+program. Please note that due to the configuration parsing numbers and boolean
+values may be changed. If you want to be absolutely sure that something is
+passed as-is please enclose it in quotes.
+.Sp
+The \fBExec\fR and \fBNotificationExec\fR statements change the semantics of the
+programs executed, i.\ e. the data passed to them and the response
+expected from them. This is documented in great detail in \fIcollectd\-exec\fR\|(5).
 .ie n .Sh "Plugin ""hddtemp"""
 .el .Sh "Plugin \f(CWhddtemp\fP"
 .IX Subsection "Plugin hddtemp"
@@ -375,6 +421,12 @@ Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB7634\fR.
+.IP "\fBTranslateDevicename\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "TranslateDevicename true|false"
+If enabled, translate the disk names to major/minor device numbers
+(e.\ g. \*(L"8\-0\*(R" for /dev/sda). For backwards compatibility this defaults to
+\&\fItrue\fR but it's recommended to disable it as it will probably be removed in
+the next major version.
 .ie n .Sh "Plugin ""interface"""
 .el .Sh "Plugin \f(CWinterface\fP"
 .IX Subsection "Plugin interface"
@@ -423,6 +475,81 @@ Sometimes, however, it's easier/preferred to collect all interrupts \fIexcept\fR
 few ones. This option enables you to do that: By setting \fBIgnoreSelected\fR to
 \&\fItrue\fR the effect of \fBIrq\fR is inversed: All selected interrupts are ignored
 and all other interrupts are collected.
+.ie n .Sh "Plugin ""libvirt"""
+.el .Sh "Plugin \f(CWlibvirt\fP"
+.IX Subsection "Plugin libvirt"
+This plugin allows \s-1CPU\s0, disk and network load to be collected for virtualized
+guests on the machine. This means that these characteristics can be collected
+for guest systems without installing any software on them \- collectd only runs
+on the hosting system. The statistics are collected through libvirt
+(<http://libvirt.org/>).
+.PP
+Only \fIConnection\fR is required.
+.IP "\fBConnection\fR \fIuri\fR" 4
+.IX Item "Connection uri"
+Connect to the hypervisor given by \fIuri\fR. For example if using Xen use:
+.Sp
+.Vb 1
+\& Connection "xen:///"
+.Ve
+.Sp
+Details which URIs allowed are given at <http://libvirt.org/uri.html>.
+.IP "\fBRefreshInterval\fR \fIseconds\fR" 4
+.IX Item "RefreshInterval seconds"
+Refresh the list of domains and devices every \fIseconds\fR. The default is 60
+seconds. Setting this to be the same or smaller than the \fIInterval\fR will cause
+the list of domains and devices to be refreshed on every iteration.
+.Sp
+Refreshing the devices in particular is quite a costly operation, so if your
+virtualization setup is static you might consider increasing this. If this
+option is set to 0, refreshing is disabled completely.
+.IP "\fBDomain\fR \fIname\fR" 4
+.IX Item "Domain name"
+.PD 0
+.IP "\fBBlockDevice\fR \fIname:dev\fR" 4
+.IX Item "BlockDevice name:dev"
+.IP "\fBInterfaceDevice\fR \fIname:dev\fR" 4
+.IX Item "InterfaceDevice name:dev"
+.IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "IgnoreSelected true|false"
+.PD
+Select which domains and devices are collected.
+.Sp
+If \fIIgnoreSelected\fR is not given or \fIfalse\fR then only the listed domains and
+disk/network devices are collected.
+.Sp
+If \fIIgnoreSelected\fR is \fItrue\fR then the test is reversed and the listed
+domains and disk/network devices are ignored, while the rest are collected.
+.Sp
+The domain name and device names may use a regular expression, if the name is
+surrounded by \fI/.../\fR and collectd was compiled with support for regexps.
+.Sp
+The default is to collect statistics for all domains and all their devices.
+.Sp
+Example:
+.Sp
+.Vb 2
+\& BlockDevice "/:hdb/"
+\& IgnoreSelected "true"
+.Ve
+.Sp
+Ignore all \fIhdb\fR devices on any domain, but other block devices (eg. \fIhda\fR)
+will be collected.
+.IP "\fBHostnameFormat\fR \fBname|uuid|hostname|...\fR" 4
+.IX Item "HostnameFormat name|uuid|hostname|..."
+When the libvirt plugin logs data, it sets the hostname of the collected data
+according to this setting. The default is to use the guest name as provided by
+the hypervisor, which is equal to setting \fBname\fR.
+.Sp
+\&\fBuuid\fR means use the guest's \s-1UUID\s0. This is useful if you want to track the
+same guest across migrations.
+.Sp
+\&\fBhostname\fR means to use the global \fBHostname\fR setting, which is probably not
+useful on its own because all guests will appear to have the same name.
+.Sp
+You can also specify combinations of these fields. For example \fBname uuid\fR
+means to concatenate the guest name and \s-1UUID\s0 (with a literal colon character
+between, thus \fI\*(L"foo:1234\-1234\-1234\-1234\*(R"\fR).
 .ie n .Sh "Plugin ""logfile"""
 .el .Sh "Plugin \f(CWlogfile\fP"
 .IX Subsection "Plugin logfile"
@@ -447,7 +574,7 @@ Prefix all lines printed by the current time. Defaults to \fBtrue\fR.
 .IX Subsection "Plugin mbmon"
 The \f(CW\*(C`mbmon plugin\*(C'\fR uses mbmon to retrieve temperature, voltage, etc.
 .PP
-Be default collectd connects to \fBlocalhost\fR (127.0.0.1), port \fB411/tcp\fR.  The
+Be default collectd connects to \fBlocalhost\fR (127.0.0.1), port \fB411/tcp\fR. The
 \&\fBHost\fR and \fBPort\fR options can be used to change these values, see below.
 \&\f(CW\*(C`mbmon\*(C'\fR has to be running to work correctly. If \f(CW\*(C`mbmon\*(C'\fR is not running
 timeouts may appear which may interfere with other statistics..
@@ -546,7 +673,7 @@ QDiscs and classes are identified by their type and handle (or classid).
 Filters don't necessarily have a handle, therefore the parent's handle is used.
 The notation used in collectd differs from that used in \fItc\fR\|(1) in that it
 doesn't skip the major or minor number if it's zero and doesn't print special
-ids by their name.  So, for example, a qdisc may be identified by
+ids by their name. So, for example, a qdisc may be identified by
 \&\f(CW\*(C`pfifo_fast\-1:0\*(C'\fR even though the minor number of \fBall\fR qdiscs is zero and
 thus not displayed by \fItc\fR\|(1).
 .Sp
@@ -666,6 +793,12 @@ Hostname of the host running \fBntpd\fR. Defaults to \fBlocalhost\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 UDP-Port to connect to. Defaults to \fB123\fR.
+.IP "\fBReverseLookups\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "ReverseLookups true|false"
+Sets wether or not to perform reverse lookups on peers. Since the name or
+IP-address may be used in a filename it is recommended to disable reverse
+lookups. The default is to do reverse lookups to preserve backwards
+compatibility, though.
 .ie n .Sh "Plugin ""nut"""
 .el .Sh "Plugin \f(CWnut\fP"
 .IX Subsection "Plugin nut"
@@ -852,6 +985,30 @@ created. Defaults to \fBcollectd\fR.
 Change the file permissions of the UNIX-socket after it has been created. The
 permissions must be given as a numeric, octal value as you would pass to
 \&\fIchmod\fR\|(1). Defaults to \fB0770\fR.
+.ie n .Sh "Plugin ""uuid"""
+.el .Sh "Plugin \f(CWuuid\fP"
+.IX Subsection "Plugin uuid"
+This plugin, if loaded, causes the Hostname to be taken from the machine's
+\&\s-1UUID\s0. The \s-1UUID\s0 is a universally unique designation for the machine, usually
+taken from the machine's \s-1BIOS\s0. This is most useful if the machine is running in
+a virtual environment such as Xen, in which case the \s-1UUID\s0 is preserved across
+shutdowns and migration.
+.PP
+The following methods are used to find the machine's \s-1UUID\s0, in order:
+.IP "\(bu" 4
+Check \fI/etc/uuid\fR (or \fIUUIDFile\fR).
+.IP "\(bu" 4
+Check for \s-1UUID\s0 from \s-1HAL\s0 (<http://www.freedesktop.org/wiki/Software/hal>) if
+present.
+.IP "\(bu" 4
+Check for \s-1UUID\s0 from \f(CW\*(C`dmidecode\*(C'\fR / \s-1SMBIOS\s0.
+.IP "\(bu" 4
+Check for \s-1UUID\s0 from Xen hypervisor.
+.PP
+If no \s-1UUID\s0 can be found then the hostname is not modified.
+.IP "\fBUUIDFile\fR \fIPath\fR" 4
+.IX Item "UUIDFile Path"
+Take the \s-1UUID\s0 from the given file (default \fI/etc/uuid\fR).
 .ie n .Sh "Plugin ""vserver"""
 .el .Sh "Plugin \f(CWvserver\fP"
 .IX Subsection "Plugin vserver"
@@ -862,12 +1019,126 @@ need to apply the patches and compile your own kernel, which will then provide
 the \fI/proc/virtual\fR filesystem that is required by this plugin.
 .PP
 The \fBVServer\fR homepage can be found at <http://linux\-vserver.org/>.
+.SH "THRESHOLD CONFIGURATION"
+.IX Header "THRESHOLD CONFIGURATION"
+Starting with version \f(CW4.3.0\fR collectd has support for \fBmonitoring\fR. By that
+we mean that the values are not only stored or sent somewhere, but that they
+are judged and, if a problem is recognized, acted upon. The only action
+collectd takes itself is to generate and dispatch a \*(L"notification\*(R". Plugins can
+register to receive notifications and perform appropriate further actions.
+.PP
+Since systems and what you expect them to do differ a lot, you can configure
+\&\fBthresholds\fR for your values freely. This gives you a lot of flexibility but
+also a lot of responsibility.
+.PP
+Every time a value is out of range a notification is dispatched. This means
+that the idle percentage of your \s-1CPU\s0 needs to be less then the configured
+threshold only once for a notification to be generated. There's no such thing
+as a moving average or similar \- at least not now.
+.PP
+Also, all values that match a threshold are considered to be relevant or
+\&\*(L"interesting\*(R". As a consequence collectd will issue a notification if they are
+not received for twice the last timeout of the values. If, for example, some
+hosts sends it's \s-1CPU\s0 statistics to the server every 60 seconds, a notification
+will be dispatched after about 120 seconds. It may take a little longer because
+the timeout is checked only once each \fBInterval\fR on the server.
+.PP
+Here is a configuration example to get you started. Read below for more
+information.
+.PP
+.Vb 9
+\& <Threshold>
+\&   <Type "foo">
+\&     WarningMin    0.00
+\&     WarningMax 1000.00
+\&     FailureMin    0.00
+\&     FailureMax 1200.00
+\&     Invert false
+\&     Instance "bar"
+\&   </Type>
+.Ve
+.PP
+.Vb 6
+\&   <Plugin "interface">
+\&     Instance "eth0"
+\&     <Type "if_octets">
+\&       FailureMax 10000000
+\&     </Type>
+\&   </Plugin>
+.Ve
+.PP
+.Vb 5
+\&   <Host "hostname">
+\&     <Type "cpu">
+\&       Instance "idle"
+\&       FailureMin 10
+\&     </Type>
+.Ve
+.PP
+.Vb 8
+\&     <Plugin "memory">
+\&       <Type "memory">
+\&         Instance "cached"
+\&         WarningMin 100000000
+\&       </Type>
+\&     </Plugin>
+\&   </Host>
+\& </Threshold>
+.Ve
+.PP
+There are basically two types of configuration statements: The \f(CW\*(C`Host\*(C'\fR,
+\&\f(CW\*(C`Plugin\*(C'\fR, and \f(CW\*(C`Type\*(C'\fR blocks select the value for which a threshold should be
+configured. The \f(CW\*(C`Plugin\*(C'\fR and \f(CW\*(C`Type\*(C'\fR blocks may be specified further using the
+\&\f(CW\*(C`Instance\*(C'\fR option. You can combine the block by nesting the blocks, though
+they must be nested in the above order, i.\ e. \f(CW\*(C`Host\*(C'\fR may contain either
+\&\f(CW\*(C`Plugin\*(C'\fR and \f(CW\*(C`Type\*(C'\fR blocks, \f(CW\*(C`Plugin\*(C'\fR may only contain \f(CW\*(C`Type\*(C'\fR blocks and
+\&\f(CW\*(C`Type\*(C'\fR may not contain other blocks. If multiple blocks apply to the same
+value the most specific block is used.
+.PP
+The other statements specify the threshold to configure. They \fBmust\fR be
+included in a \f(CW\*(C`Type\*(C'\fR block. Currently the following statements are recognized:
+.IP "\fBFailureMax\fR \fIValue\fR" 4
+.IX Item "FailureMax Value"
+.PD 0
+.IP "\fBWarningMax\fR \fIValue\fR" 4
+.IX Item "WarningMax Value"
+.PD
+Sets the upper bound of acceptable values. If unset defaults to positive
+infinity. If a value is greater than \fBFailureMax\fR a \fB\s-1FAILURE\s0\fR notification
+will be created. If the value is greater than \fBWarningMax\fR but less than (or
+equal to) \fBFailureMax\fR a \fB\s-1WARNING\s0\fR notification will be created.
+.IP "\fBFailureMin\fR \fIValue\fR" 4
+.IX Item "FailureMin Value"
+.PD 0
+.IP "\fBWarningMin\fR \fIValue\fR" 4
+.IX Item "WarningMin Value"
+.PD
+Sets the lower bound of acceptable values. If unset defaults to negative
+infinity. If a value is less than \fBFailureMin\fR a \fB\s-1FAILURE\s0\fR notification will
+be created. If the value is less than \fBWarningMin\fR but greater than (or equal
+to) \fBFailureMin\fR a \fB\s-1WARNING\s0\fR notification will be created.
+.IP "\fBInvert\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "Invert true|false"
+If set to \fBtrue\fR the range of acceptable values is inverted, i.\ e.
+values between \fBFailureMin\fR and \fBFailureMax\fR (\fBWarningMin\fR and
+\&\fBWarningMax\fR) are not okay. Defaults to \fBfalse\fR.
+.IP "\fBPersist\fR \fBtrue\fR|\fBfalse\fR" 4
+.IX Item "Persist true|false"
+Sets how often notifications are generated. If set to \fBtrue\fR one notification
+will be generated for each value that is out of the acceptable range. If set to
+\&\fBfalse\fR (the default) then a notification is only generated if a value is out
+of range but the previous value was okay.
+.Sp
+This applies to missing values, too: If set to \fBtrue\fR a notification about a
+missing value is generated once every \fBInterval\fR seconds. If set to \fBfalse\fR
+only one such notification is generated until the value appears again.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),
 \&\fIcollectd\-exec\fR\|(5),
 \&\fIcollectd\-perl\fR\|(5),
 \&\fIcollectd\-unixsock\fR\|(5),
+\&\fItypes.db\fR\|(5),
 \&\fIhddtemp\fR\|(8),
 kstat(3KSTAT),
 \&\fImbmon\fR\|(1),

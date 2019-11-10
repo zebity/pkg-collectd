@@ -91,7 +91,7 @@ static int parse_ds (data_source_t *dsrc, char *buf, size_t buf_len)
   return (0);
 } /* int parse_ds */
 
-static void parse_line (char *buf, size_t buf_len)
+static void parse_line (char *buf)
 {
   char  *fields[64];
   size_t fields_num;
@@ -165,21 +165,16 @@ static void parse_file (FILE *fh)
     if (buf_len == 0)
       continue;
 
-    parse_line (buf, buf_len);
+    parse_line (buf);
   } /* while (fgets) */
 } /* void parse_file */
 
-int read_types_list (void)
+int read_types_list (const char *file)
 {
-  const char *file;
   FILE *fh;
 
-  file = global_option_get ("TypesDB");
   if (file == NULL)
-  {
-    ERROR ("global_option_get (\"TypesDB\") returned NULL.");
     return (-1);
-  }
 
   fh = fopen (file, "r");
   if (fh == NULL)

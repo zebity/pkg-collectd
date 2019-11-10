@@ -106,7 +106,7 @@ static int iptables_config (const char *key, const char *value)
 		chain = fields[1];
 
 		table_len = strlen (table);
-		if (table_len >= sizeof(temp.table))
+		if ((unsigned int)table_len >= sizeof(temp.table))
 		{
 			ERROR ("Table `%s' too long.", table);
 			free (value_copy);
@@ -116,7 +116,7 @@ static int iptables_config (const char *key, const char *value)
 		temp.table[table_len] = '\0';
 
 		chain_len = strlen (chain);
-		if (chain_len >= sizeof(temp.chain))
+		if ((unsigned int)chain_len >= sizeof(temp.chain))
 		{
 			ERROR ("Chain `%s' too long.", chain);
 			free (value_copy);
@@ -224,7 +224,7 @@ static int submit_match (const struct ipt_entry_match *match,
 
     status = snprintf (vl.plugin_instance, sizeof (vl.plugin_instance),
 	    "%s-%s", chain->table, chain->chain);
-    if ((status >= sizeof (vl.plugin_instance)) || (status < 1))
+    if ((status < 1) || ((unsigned int)status >= sizeof (vl.plugin_instance)))
 	return (0);
 
     if (chain->name[0] != '\0')
@@ -284,7 +284,7 @@ static void submit_chain( iptc_handle_t *handle, ip_chain_t *chain ) {
 static int iptables_read (void)
 {
     int i;
-    static complain_t complaint;
+    int num_failures = 0;
 
     /* Init the iptc handle structure and query the correct table */    
     for (i = 0; i < chain_num; i++)
@@ -295,26 +295,24 @@ static int iptables_read (void)
 	chain = chain_list[i];
 	if (!chain)
 	{
-	    DEBUG ("chain == NULL");
+	    DEBUG ("iptables plugin: chain == NULL");
 	    continue;
 	}
 
-	handle = iptc_init( chain->table );
+	handle = iptc_init (chain->table);
 	if (!handle)
 	{
-	    DEBUG ("iptc_init (%s) failed: %s", chain->table, iptc_strerror (errno));
-	    plugin_complain (LOG_ERR, &complaint, "iptc_init (%s) failed: %s",
+	    ERROR ("iptables plugin: iptc_init (%s) failed: %s",
 		    chain->table, iptc_strerror (errno));
+	    num_failures++;
 	    continue;
 	}
-	plugin_relief (LOG_INFO, &complaint, "iptc_init (%s) succeeded",
-		chain->table);
 
 	submit_chain (&handle, chain);
 	iptc_free (&handle);
-    }
+    } /* for (i = 0 .. chain_num) */
 
-    return (0);
+    return ((num_failures < chain_num) ? 0 : -1);
 } /* int iptables_read */
 
 static int iptables_shutdown (void)

@@ -17,6 +17,7 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AM_PROG_CC_C_O
 AM_CONDITIONAL(COMPILER_IS_GCC, test "x$GCC" = "xyes")
 
 dnl configure libtool
@@ -310,7 +311,7 @@ AC_CHECK_HEADERS(linux/un.h, [], [],
 #endif
 ])
 
-AC_CHECK_HEADERS(pwd.h grp.h sys/un.h ctype.h limits.h sys/quota.h xfs/xqm.h fs_info.h fshelp.h paths.h mntent.h mnttab.h sys/fstyp.h sys/fs_types.h sys/mntent.h sys/mnttab.h sys/statfs.h sys/statvfs.h sys/vfs.h sys/vfstab.h kvm.h)
+AC_CHECK_HEADERS(pwd.h grp.h sys/un.h ctype.h limits.h sys/quota.h xfs/xqm.h fs_info.h fshelp.h paths.h mntent.h mnttab.h sys/fstyp.h sys/fs_types.h sys/mntent.h sys/mnttab.h sys/statfs.h sys/statvfs.h sys/vfs.h sys/vfstab.h kvm.h wordexp.h)
 
 # For the dns plugin
 AC_CHECK_HEADERS(arpa/nameser.h)
@@ -669,6 +670,20 @@ AC_CHECK_LIB(resolv, res_search,
 [with_libresolv="no"])
 AM_CONDITIONAL(BUILD_WITH_LIBRESOLV, test "x$with_libresolv" = "xyes")
 
+dnl Check for HAL (hardware abstraction library)
+with_libhal="yes"
+AC_CHECK_LIB(hal,libhal_device_property_exists,
+	     [AC_DEFINE(HAVE_LIBHAL, 1, [Define to 1 if you have 'hal' library])],
+	     [with_libhal="no"])
+if test "x$with_libhal" = "xyes"; then
+	PKG_PROG_PKG_CONFIG
+	if test "x$PKG_CONFIG" != "x"; then
+		BUILD_WITH_LIBHAL_CFLAGS="`pkg-config --cflags hal`"
+		BUILD_WITH_LIBHAL_LIBS="`pkg-config --libs hal`"
+		AC_SUBST(BUILD_WITH_LIBHAL_CFLAGS)
+		AC_SUBST(BUILD_WITH_LIBHAL_LIBS)
+	fi
+fi
 
 m4_divert_once([HELP_WITH], [
 collectd additional packages:])
@@ -683,6 +698,8 @@ AC_ARG_WITH(rrdtool, [AS_HELP_STRING([--with-rrdtool@<:@=PREFIX@:>@], [Path to r
 		librrd_cflags="-I$withval/include"
 		librrd_ldflags="-L$withval/lib"
 		with_rrdtool="yes"
+	else
+		with_rrdtool="$withval"
 	fi
 ], [with_rrdtool="yes"])
 if test "x$with_rrdtool" = "xyes"
@@ -868,7 +885,7 @@ AC_CHECK_LIB(IOKit, IOServiceGetMatchingServices,
 [
 	with_libiokit="yes"
 	collectd_libiokit=1
-], 
+],
 [
 	with_libiokit="no"
 	collectd_libiokit=0
@@ -885,6 +902,8 @@ AC_ARG_WITH(libstatgrab, [AS_HELP_STRING([--with-libstatgrab@<:@=PREFIX@:>@], [P
 		LDFLAGS="$LDFLAGS -L$withval/lib"
 		CPPFLAGS="$CPPFLAGS -I$withval/include"
 		with_libstatgrab="yes"
+	else
+		with_libstatgrab="$withval"
 	fi
 ],
 [
@@ -1123,10 +1142,12 @@ AC_ARG_WITH(liboping, [AS_HELP_STRING([--with-liboping@<:@=PREFIX@:>@], [Path to
 	then
 		with_liboping="no"
 		with_own_liboping="no"
-	fi
+	else if test "x$withval" = "xyes"
+	then
+		with_liboping="yes"
+	fi; fi
 ],
 [
- 	#753
 	with_liboping="yes"
 ])
 
@@ -1158,6 +1179,8 @@ AC_ARG_WITH(libpcap, [AS_HELP_STRING([--with-libpcap@<:@=PREFIX@:>@], [Path to l
 		LDFLAGS="$LDFLAGS -L$withval/lib"
 		CPPFLAGS="$CPPFLAGS -I$withval/include"
 		with_libpcap="yes"
+	else
+		with_libpcap="$withval"
 	fi
 ],
 [
@@ -1196,6 +1219,8 @@ AC_ARG_WITH(libperl, [AS_HELP_STRING([--with-libperl@<:@=PREFIX@:>@], [Path to l
 		CPPFLAGS="$CPPFLAGS -I$withval/include"
 		perl_interpreter="$withval/bin/perl"
 		with_libperl="yes"
+	else
+		with_libperl="$withval"
 	fi
 ],
 [
@@ -1247,6 +1272,41 @@ then
 fi
 AM_CONDITIONAL(BUILD_WITH_LIBPERL, test "x$with_libperl" = "xyes")
 
+if test "x$with_libperl" = "xyes"
+then
+	SAVE_CFLAGS=$CFLAGS
+	SAVE_LDFLAGS=$LDFLAGS
+	CFLAGS="$CFLAGS $PERL_CFLAGS"
+	LDFLAGS="$LDFLAGS $PERL_LDFLAGS"
+
+	AC_CACHE_CHECK([if perl supports ithreads],
+		[have_perl_ithreads],
+		AC_LINK_IFELSE(
+			AC_LANG_PROGRAM(
+			[[
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
+
+#if !defined(USE_ITHREADS)
+# error "Perl does not support ithreads!"
+#endif /* !defined(USE_ITHREADS) */
+			]],
+			[[ ]]),
+			[have_perl_ithreads="yes"],
+			[have_perl_ithreads="no"]
+		)
+	)
+
+	if test "x$have_perl_ithreads" = "xyes"
+	then
+		AC_DEFINE(HAVE_PERL_ITHREADS, 1, [Define if Perl supports ithreads.])
+	fi
+
+	CFLAGS=$SAVE_CFLAGS
+	LDFLAGS=$SAVE_LDFLAGS
+fi
+
 AC_ARG_WITH(libiptc, [AS_HELP_STRING([--with-libiptc@<:@=PREFIX@:>@], [Path to libiptc.])],
 [
 	if test "x$withval" != "xno" && test "x$withval" != "xyes"
@@ -1254,10 +1314,12 @@ AC_ARG_WITH(libiptc, [AS_HELP_STRING([--with-libiptc@<:@=PREFIX@:>@], [Path to l
 		LDFLAGS="$LDFLAGS -L$withval/lib"
 		CPPFLAGS="$CPPFLAGS -I$withval/include"
 		with_libiptc="yes"
+	else
+		with_libiptc="$withval"
 	fi
 ],
 [
- 	if test "x$ac_system" = "xLinux"
+	if test "x$ac_system" = "xLinux"
 	then
 		with_libiptc="yes"
 	else
@@ -1291,14 +1353,14 @@ with_snmp_cflags=""
 with_snmp_libs=""
 AC_ARG_WITH(libnetsnmp, [AS_HELP_STRING([--with-libnetsnmp@<:@=PREFIX@:>@], [Path to the Net-SNMPD library.])],
 [
- 	if test "x$withval" = "xno"
+	if test "x$withval" = "xno"
 	then
 		with_libnetsnmp="no"
 	else if test "x$withval" = "xyes"
 	then
 		with_libnetsnmp="yes"
 	else
-	       	if test -x "$withval"
+		if test -x "$withval"
 		then
 			with_snmp_config="$withval"
 			with_libnetsnmp="yes"
@@ -1418,7 +1480,7 @@ then
 fi
 if test "x$with_libupsclient" = "xyes"
 then
-	AC_CHECK_TYPES([UPSCONN_t, UPSCONN], [], [], 
+	AC_CHECK_TYPES([UPSCONN_t, UPSCONN], [], [],
 [#include <stdlib.h>
 #include <stdio.h>
 #include <upsclient.h>])
@@ -1598,6 +1660,125 @@ then
 fi
 AM_CONDITIONAL(BUILD_WITH_LIBNETLINK, test "x$with_libnetlink" = "xyes")
 
+dnl Check for libvirt and libxml2 libraries.
+with_libxml2="no (pkg-config isn't available)"
+with_libxml2_cflags=""
+with_libxml2_ldflags=""
+with_libvirt="no (pkg-config isn't available)"
+with_libvirt_cflags=""
+with_libvirt_ldflags=""
+PKG_PROG_PKG_CONFIG
+if test "x$PKG_CONFIG" != "x"
+then
+	pkg-config --exists 'libxml-2.0' 2>/dev/null
+	if test "$?" = "0"
+	then
+		with_libxml2="yes"
+	else
+		with_libxml2="no (pkg-config doesn't know library)"
+	fi
+
+	pkg-config --exists libvirt 2>/dev/null
+	if test "$?" = "0"
+	then
+		with_libvirt="yes"
+	else
+		with_libvirt="no (pkg-config doesn't know library)"
+	fi
+fi
+if test "x$with_libxml2" = "xyes"
+then
+	with_libxml2_cflags="`pkg-config --cflags libxml-2.0`"
+	if test $? -ne 0
+	then
+		with_libxml2="no"
+	fi
+	with_libxml2_ldflags="`pkg-config --libs libxml-2.0`"
+	if test $? -ne 0
+	then
+		with_libxml2="no"
+	fi
+fi
+if test "x$with_libxml2" = "xyes"
+then
+	SAVE_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $with_libxml2_cflags"
+
+	AC_CHECK_HEADERS(libxml/parser.h, [],
+		      [with_libxml2="no (libxml/parser.h not found)"])
+
+	CPPFLAGS="$SAVE_CPPFLAGS"
+fi
+if test "x$with_libxml2" = "xyes"
+then
+	SAVE_CFLAGS="$CFLAGS"
+	SAVE_LD_FLAGS="$LDFLAGS"
+
+	CFLAGS="$CFLAGS $with_libxml2_cflags"
+	LDFLAGS="$LDFLAGS $with_libxml2_ldflags"
+
+	AC_CHECK_LIB(xml2, xmlXPathEval,
+		     [with_libxml2="yes"],
+		     [with_libxml2="no (symbol xmlXPathEval not found)"])
+
+	CFLAGS="$SAVE_CFLAGS"
+	LDFLAGS="$SAVE_LDFLAGS"
+fi
+dnl Add the right compiler flags and libraries.
+if test "x$with_libxml2" = "xyes"; then
+	BUILD_WITH_LIBXML2_CFLAGS="$with_libxml2_cflags"
+	BUILD_WITH_LIBXML2_LIBS="$with_libxml2_ldflags"
+	AC_SUBST(BUILD_WITH_LIBXML2_CFLAGS)
+	AC_SUBST(BUILD_WITH_LIBXML2_LIBS)
+fi
+if test "x$with_libvirt" = "xyes"
+then
+	with_libvirt_cflags="`pkg-config --cflags libvirt`"
+	if test $? -ne 0
+	then
+		with_libvirt="no"
+	fi
+	with_libvirt_ldflags="`pkg-config --libs libvirt`"
+	if test $? -ne 0
+	then
+		with_libvirt="no"
+	fi
+fi
+if test "x$with_libvirt" = "xyes"
+then
+	SAVE_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $with_libvirt_cflags"
+
+	AC_CHECK_HEADERS(libvirt/libvirt.h, [],
+		      [with_libvirt="no (libvirt/libvirt.h not found)"])
+
+	CPPFLAGS="$SAVE_CPPFLAGS"
+fi
+if test "x$with_libvirt" = "xyes"
+then
+	SAVE_CFLAGS="$CFLAGS"
+	SAVE_LD_FLAGS="$LDFLAGS"
+
+	CFLAGS="$CFLAGS $with_libvirt_cflags"
+	LDFLAGS="$LDFLAGS $with_libvirt_ldflags"
+
+	AC_CHECK_LIB(virt, virDomainBlockStats,
+		     [with_libvirt="yes"],
+		     [with_libvirt="no (symbol virDomainBlockStats not found)"])
+
+	CFLAGS="$SAVE_CFLAGS"
+	LDFLAGS="$SAVE_LDFLAGS"
+fi
+dnl Add the right compiler flags and libraries.
+if test "x$with_libvirt" = "xyes"; then
+	BUILD_WITH_LIBVIRT_CFLAGS="$with_libvirt_cflags"
+	BUILD_WITH_LIBVIRT_LIBS="$with_libvirt_ldflags"
+	AC_SUBST(BUILD_WITH_LIBVIRT_CFLAGS)
+	AC_SUBST(BUILD_WITH_LIBVIRT_LIBS)
+fi
+
+dnl End of check for libvirt and libxml2 libraries.
+
 # Check for enabled/disabled features
 #
 
@@ -1710,10 +1891,12 @@ plugin_entropy="no"
 plugin_interface="no"
 plugin_ipvs="no"
 plugin_irq="no"
+plugin_libvirt="no"
 plugin_load="no"
 plugin_memory="no"
 plugin_multimeter="no"
 plugin_nfs="no"
+plugin_perl="no"
 plugin_processes="no"
 plugin_serial="no"
 plugin_swap="no"
@@ -1801,9 +1984,19 @@ then
 	plugin_interface="yes"
 fi
 
+if test "x$with_libxml2" = "xyes" && test "x$with_libvirt" = "xyes"
+then
+	plugin_libvirt="yes"
+fi
+
 if test "x$have_getloadavg" = "xyes"
 then
 	plugin_load="yes"
+fi
+
+if test "x$have_libperl$have_perl_ithreads" = "xyesyes"
+then
+	plugin_perl="yes"
 fi
 
 # Mac OS X memory interface
@@ -1859,6 +2052,7 @@ AC_PLUGIN([interface],   [$plugin_interface],  [Interface traffic statistics])
 AC_PLUGIN([iptables],    [$with_libiptc],      [IPTables rule counters])
 AC_PLUGIN([ipvs],        [$plugin_ipvs],       [IPVS connection statistics])
 AC_PLUGIN([irq],         [$plugin_irq],        [IRQ statistics])
+AC_PLUGIN([libvirt],     [$plugin_libvirt],    [Virtual machine statistics])
 AC_PLUGIN([load],        [$plugin_load],       [System load])
 AC_PLUGIN([logfile],     [yes],                [File logging plugin])
 AC_PLUGIN([mbmon],       [yes],                [Query mbmond])
@@ -1872,7 +2066,7 @@ AC_PLUGIN([nfs],         [$plugin_nfs],        [NFS statistics])
 AC_PLUGIN([nginx],       [$with_libcurl],      [nginx statistics])
 AC_PLUGIN([ntpd],        [yes],                [NTPd statistics])
 AC_PLUGIN([nut],         [$with_libupsclient], [Network UPS tools statistics])
-AC_PLUGIN([perl],        [$with_libperl],      [Embed a Perl interpreter])
+AC_PLUGIN([perl],        [$plugin_perl],       [Embed a Perl interpreter])
 AC_PLUGIN([ping],        [$with_liboping],     [Network latency statistics])
 AC_PLUGIN([processes],   [$plugin_processes],  [Process statistics])
 AC_PLUGIN([rrdtool],     [$with_rrdtool],      [RRDTool output plugin])
@@ -1885,6 +2079,7 @@ AC_PLUGIN([tape],        [$plugin_tape],       [Tape drive statistics])
 AC_PLUGIN([tcpconns],    [$plugin_tcpconns],   [TCP connection statistics])
 AC_PLUGIN([unixsock],    [yes],                [Unixsock communication plugin])
 AC_PLUGIN([users],       [$plugin_users],      [User statistics])
+AC_PLUGIN([uuid],        [yes],                [UUID as hostname plugin])
 AC_PLUGIN([vserver],     [$plugin_vserver],    [Linux VServer statistics])
 AC_PLUGIN([wireless],    [$plugin_wireless],   [Wireless statistics])
 AC_PLUGIN([xmms],        [$with_libxmms],      [XMMS statistics])
@@ -1902,6 +2097,9 @@ AC_ARG_WITH(perl-bindings, [AS_HELP_STRING([--with-perl-bindings@<:@=OPTIONS@:>@
 	then
 		PERL_BINDINGS_OPTIONS="$withval"
 		with_perl_bindings="yes"
+	else
+		PERL_BINDINGS_OPTIONS=""
+		with_perl_bindings="$withval"
 	fi
 ],
 [
@@ -1918,6 +2116,11 @@ AC_SUBST(PERL_BINDINGS)
 AC_SUBST(PERL_BINDINGS_OPTIONS)
 
 AC_OUTPUT(Makefile src/Makefile src/collectd.conf src/liboconfig/Makefile src/liboping/Makefile bindings/Makefile)
+
+if test "x$with_rrdtool" = "xyes" -a "x$librrd_threadsafe" != "xyes"
+then
+	with_rrdtool="yes (warning: librrd is not thread-safe)"
+fi
 
 if test "x$with_liboping" = "xyes" -a "x$with_own_liboping" = "xyes"
 then
@@ -1957,6 +2160,8 @@ Configuration:
     libsensors  . . . . $with_lm_sensors
     libstatgrab . . . . $with_libstatgrab
     libupsclient  . . . $with_libupsclient
+    libvirt . . . . . . $with_libvirt
+    libxml2 . . . . . . $with_libxml2
     libxmms . . . . . . $with_libxmms
 
   Features:
@@ -1985,6 +2190,7 @@ Configuration:
     iptables  . . . . . $enable_iptables
     ipvs  . . . . . . . $enable_ipvs
     irq . . . . . . . . $enable_irq
+    libvirt . . . . . . $enable_libvirt
     load  . . . . . . . $enable_load
     logfile . . . . . . $enable_logfile
     mbmon . . . . . . . $enable_mbmon
@@ -2011,6 +2217,7 @@ Configuration:
     tcpconns  . . . . . $enable_tcpconns
     unixsock  . . . . . $enable_unixsock
     users . . . . . . . $enable_users
+    uuid  . . . . . . . $enable_uuid
     vserver . . . . . . $enable_vserver
     wireless  . . . . . $enable_wireless
     xmms  . . . . . . . $enable_xmms

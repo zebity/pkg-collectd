@@ -5,6 +5,7 @@
 #
 
 #Hostname    "localhost"
+FQDNLookup   true
 #BaseDir     "@prefix@/var/lib/@PACKAGE_NAME@"
 #PIDFile     "@prefix@/var/run/@PACKAGE_NAME@.pid"
 #PluginDir   "@prefix@/lib/@PACKAGE_NAME@"
@@ -30,6 +31,7 @@
 @BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
 @BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
 @BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
+@BUILD_PLUGIN_LIBVIRT_TRUE@LoadPlugin libvirt
 @BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
 @BUILD_PLUGIN_LOGFILE_TRUE@LoadPlugin logfile
 @BUILD_PLUGIN_MBMON_TRUE@LoadPlugin mbmon
@@ -56,6 +58,7 @@
 @BUILD_PLUGIN_TCPCONNS_TRUE@LoadPlugin tcpconns
 @BUILD_PLUGIN_UNIXSOCK_TRUE@LoadPlugin unixsock
 @BUILD_PLUGIN_USERS_TRUE@LoadPlugin users
+@BUILD_PLUGIN_UUID_TRUE@LoadPlugin uuid
 @BUILD_PLUGIN_VSERVER_TRUE@LoadPlugin vserver
 @BUILD_PLUGIN_WIRELESS_TRUE@LoadPlugin wireless
 @BUILD_PLUGIN_XMMS_TRUE@LoadPlugin xmms
@@ -74,6 +77,7 @@
 
 #<Plugin csv>
 #	DataDir "@prefix@/var/lib/@PACKAGE_NAME@/csv"
+#	StoreRates false
 #</Plugin>
 
 #<Plugin df>
@@ -98,12 +102,14 @@
 
 #<Plugin exec>
 #	Exec "user:group" "/path/to/exec"
+#	NotificationExec "/path/to/exec"
 #</Plugin>
 
-#<Plugin hddtemp>
+@BUILD_PLUGIN_HDDTEMP_TRUE@<Plugin hddtemp>
 #	Host "127.0.0.1"
 #	Port "7634"
-#</Plugin>
+@BUILD_PLUGIN_HDDTEMP_TRUE@	TranslateDevicename false
+@BUILD_PLUGIN_HDDTEMP_TRUE@</Plugin>
 
 #<Plugin interface>
 #	Interface "eth0"
@@ -121,9 +127,20 @@
 #	IgnoreSelected true
 #</Plugin>
 
+#<Plugin libvirt>
+#	Connection "xen:///"
+#	RefreshInterval 60
+#	Domain "name"
+#	BlockDevice "name:device"
+#	InterfaceDevice "name:device"
+#	IgnoreSelected false
+#	HostnameFormat name
+#</Plugin>
+
 #<Plugin logfile>
 #	LogLevel info
 #	File STDOUT
+#	Timestamp true
 #</Plugin>
 
 #<Plugin mbmon>
@@ -149,6 +166,7 @@
 #	QDisc "eth0" "pfifo_fast-1:0"
 #	Class "ppp0" "htb-1:10"
 #	Filter "ppp0" "u32-1:0"
+#	IgnoreSelected false
 #</Plugin>
 
 #<Plugin network>
@@ -171,6 +189,7 @@
 #<Plugin ntpd>
 #	Host "localhost"
 #	Port 123
+#	ReverseLookups false
 #</Plugin>
 
 #<Plugin nut>
@@ -180,11 +199,13 @@
 #<Plugin perl>
 #	IncludeDir "/my/include/path"
 #	BaseName "Collectd::Plugin"
+#	EnableDebugger ""
 #	LoadPlugin foo
 #</Plugin>
 
 #<Plugin ping>
 #	Host "host.foo.bar"
+#	TTL 255
 #</Plugin>
 
 #<Plugin processes>
@@ -261,3 +282,8 @@
 #	SocketGroup "collectd"
 #	SocketPerms "0660"
 #</Plugin>
+
+#<Plugin uuid>
+#	UUIDFile "/etc/uuid"
+#</Plugin>
+

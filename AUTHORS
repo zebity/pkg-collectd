@@ -13,6 +13,10 @@ hddtemp module by:
 iptables module by:
   Sjoerd van der Berg <harekiet at gmail.com>
 
+libvirt and uuid plugins by:
+  Richard Jones <rjones at redhat.com>
+  of Red Hat's Emerging Technology group
+
 mbmon plugin by:
   Flavio Stanchina <flavio at stanchina.net>
 
@@ -59,6 +63,13 @@ The `log' mode has been written by:
 Much time and effort to find a nasty bug in the ntpd-plugin has been
 contributed by:
   Luboš Staněk <lubek at users.sourceforge.net>
+
+uuid module by:
+  Dan Berrange <berrange@redhat.com>
+  Richard W.M. Jones <rjones@redhat.com>
+
+Libvirt integration by:
+  Richard Jones <rjones@redhat.com>
 
 collectd is available at:
   <http://collectd.org/>

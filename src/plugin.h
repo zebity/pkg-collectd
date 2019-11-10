@@ -45,6 +45,12 @@
 # define LOG_DEBUG 7
 #endif
 
+#define NOTIF_MAX_MSG_LEN 256
+
+#define NOTIF_FAILURE 1
+#define NOTIF_WARNING 2
+#define NOTIF_OKAY    4
+
 /*
  * Public data types
  */
@@ -91,11 +97,17 @@ struct data_set_s
 };
 typedef struct data_set_s data_set_t;
 
-typedef struct complain_s
+typedef struct notification_s
 {
-	unsigned int interval; /* how long we wait for reporting this error again */
-	unsigned int delay;    /* how many more iterations we still need to wait */
-} complain_t;
+	int    severity;
+	time_t time;
+	char   message[NOTIF_MAX_MSG_LEN];
+	char   host[DATA_MAX_NAME_LEN];
+	char   plugin[DATA_MAX_NAME_LEN];
+	char   plugin_instance[DATA_MAX_NAME_LEN];
+	char   type[DATA_MAX_NAME_LEN];
+	char   type_instance[DATA_MAX_NAME_LEN];
+} notification_t;
 
 /*
  * NAME
@@ -136,7 +148,7 @@ void plugin_set_dir (const char *dir);
 int plugin_load (const char *name);
 
 void plugin_init_all (void);
-void plugin_read_all (const int *loop);
+void plugin_read_all (void);
 void plugin_shutdown_all (void);
 
 /*
@@ -160,6 +172,8 @@ int plugin_register_shutdown (char *name,
 int plugin_register_data_set (const data_set_t *ds);
 int plugin_register_log (char *name,
 		void (*callback) (int, const char *));
+int plugin_register_notification (const char *name,
+		int (*callback) (const notification_t *notif));
 
 int plugin_unregister_config (const char *name);
 int plugin_unregister_complex_config (const char *name);
@@ -169,6 +183,7 @@ int plugin_unregister_write (const char *name);
 int plugin_unregister_shutdown (const char *name);
 int plugin_unregister_data_set (const char *name);
 int plugin_unregister_log (const char *name);
+int plugin_unregister_notification (const char *name);
 
 
 /*
@@ -188,6 +203,8 @@ int plugin_unregister_log (const char *name);
  */
 int plugin_dispatch_values (const char *name, value_list_t *vl);
 
+int plugin_dispatch_notification (const notification_t *notif);
+
 void plugin_log (int level, const char *format, ...);
 #define ERROR(...)   plugin_log (LOG_ERR,     __VA_ARGS__)
 #define WARNING(...) plugin_log (LOG_WARNING, __VA_ARGS__)
@@ -198,10 +215,6 @@ void plugin_log (int level, const char *format, ...);
 #else /* COLLECT_DEBUG */
 # define DEBUG(...)  /* noop */
 #endif /* ! COLLECT_DEBUG */
-
-/* TODO: Move plugin_{complain,relief} into `utils_complain.[ch]'. -octo */
-void plugin_complain (int level, complain_t *c, const char *format, ...);
-void plugin_relief (int level, complain_t *c, const char *format, ...);
 
 const data_set_t *plugin_get_ds (const char *name);
 

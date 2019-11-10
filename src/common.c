@@ -1,6 +1,6 @@
 /**
  * collectd - src/common.c
- * Copyright (C) 2005-2007  Florian octo Forster
+ * Copyright (C) 2005-2008  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -176,7 +176,7 @@ ssize_t sread (int fd, void *buf, size_t count)
 			return (-1);
 		}
 
-		assert (nleft >= status);
+		assert ((0 > status) || (nleft >= (size_t)status));
 
 		nleft = nleft - status;
 		ptr   = ptr   + status;
@@ -237,8 +237,8 @@ int strjoin (char *dst, size_t dst_len,
 		char **fields, size_t fields_num,
 		const char *sep)
 {
-	int field_len;
-	int sep_len;
+	size_t field_len;
+	size_t sep_len;
 	int i;
 
 	memset (dst, '\0', dst_len);
@@ -250,7 +250,7 @@ int strjoin (char *dst, size_t dst_len,
 	if (sep != NULL)
 		sep_len = strlen (sep);
 
-	for (i = 0; i < fields_num; i++)
+	for (i = 0; i < (int)fields_num; i++)
 	{
 		if ((i > 0) && (sep_len > 0))
 		{
@@ -746,4 +746,38 @@ int getpwnam_r (const char *name, struct passwd *pwbuf, char *buf,
 
 	return (status);
 } /* int getpwnam_r */
-#endif
+#endif /* !HAVE_GETPWNAM_R */
+
+int notification_init (notification_t *n, int severity, const char *message,
+		const char *host,
+		const char *plugin, const char *plugin_instance,
+		const char *type, const char *type_instance)
+{
+	memset (n, '\0', sizeof (notification_t));
+
+	n->severity = severity;
+
+	if (message != NULL)
+		strncpy (n->message, message, sizeof (n->message));
+	if (host != NULL)
+		strncpy (n->host, host, sizeof (n->host));
+	if (plugin != NULL)
+		strncpy (n->plugin, plugin, sizeof (n->plugin));
+	if (plugin_instance != NULL)
+		strncpy (n->plugin_instance, plugin_instance,
+				sizeof (n->plugin_instance));
+	if (type != NULL)
+		strncpy (n->type, type, sizeof (n->type));
+	if (type_instance != NULL)
+		strncpy (n->type_instance, type_instance,
+				sizeof (n->type_instance));
+
+	n->message[sizeof (n->message) - 1] = '\0';
+	n->host[sizeof (n->host) - 1] = '\0';
+	n->plugin[sizeof (n->plugin) - 1] = '\0';
+	n->plugin_instance[sizeof (n->plugin_instance) - 1] = '\0';
+	n->type[sizeof (n->type) - 1] = '\0';
+	n->type_instance[sizeof (n->type_instance) - 1] = '\0';
+
+	return (0);
+} /* int notification_init */

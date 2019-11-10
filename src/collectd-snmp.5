@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-SNMP 5"
-.TH COLLECTD-SNMP 5 "2008-01-21" "4.2.4" "collectd"
+.TH COLLECTD-SNMP 5 "2008-02-18" "4.3.0" "collectd"
 .SH "NAME"
 collectd\-snmp \- Documentation of collectd's \f(CW\*(C`snmp plugin\*(C'\fR
 .SH "SYNOPSIS"
@@ -213,7 +213,7 @@ queried. The following options can be set:
 collectd's type that is to be used, e.\ g. \*(L"if_octets\*(R" for interface
 traffic or \*(L"users\*(R" for a user count. The types are read from the \fBTypesDB\fR
 (see \fIcollectd.conf\fR\|(5)), so you may want to check for which types are
-defined.
+defined. See \fItypes.db\fR\|(5) for a description of the format of this file.
 .IP "\fBTable\fR \fItrue|false\fR" 4
 .IX Item "Table true|false"
 Define if this is a single list of values or a table of values. The difference

@@ -1,6 +1,6 @@
 /**
  * collectd - src/unixsock.c
- * Copyright (C) 2007  Florian octo Forster
+ * Copyright (C) 2007,2008  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,9 @@
 #include "common.h"
 #include "plugin.h"
 #include "configfile.h"
+
 #include "utils_cmd_putval.h"
+#include "utils_cmd_putnotif.h"
 
 /* Folks without pthread will need to disable this plugin. */
 #include <pthread.h>
@@ -81,7 +83,7 @@ static pthread_t listen_thread = (pthread_t) 0;
 /* Linked list and auxilliary variables for saving values */
 static value_cache_t   *cache_head = NULL;
 static pthread_mutex_t  cache_lock = PTHREAD_MUTEX_INITIALIZER;
-static unsigned int     cache_oldest = UINT_MAX;
+static time_t           cache_oldest = -1;
 
 /*
  * Functions
@@ -188,7 +190,7 @@ static int cache_insert (const data_set_t *ds, const value_list_t *vl)
 	cache_head = vc;
 
 	vc->time = vl->time;
-	if (vc->time < cache_oldest)
+	if ((vc->time < cache_oldest) || (-1 == cache_oldest))
 		cache_oldest = vc->time;
 
 	pthread_mutex_unlock (&cache_lock);
@@ -275,7 +277,7 @@ static int cache_update (const data_set_t *ds, const value_list_t *vl)
 	vc->ds = ds;
 	vc->time = vl->time;
 
-	if (vc->time < cache_oldest)
+	if ((vc->time < cache_oldest) || (-1 == cache_oldest))
 		cache_oldest = vc->time;
 
 	pthread_mutex_unlock (&cache_lock);
@@ -600,6 +602,10 @@ static void *us_handle_client (void *arg)
 		else if (strcasecmp (fields[0], "listval") == 0)
 		{
 			us_handle_listval (fh, fields, fields_num);
+		}
+		else if (strcasecmp (fields[0], "putnotif") == 0)
+		{
+			handle_putnotif (fh, fields, fields_num);
 		}
 		else
 		{
