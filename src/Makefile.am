@@ -12,6 +12,7 @@ sbin_PROGRAMS = collectd
 collectd_SOURCES = collectd.c collectd.h \
 		   utils_debug.c utils_debug.h \
 		   utils_mount.c utils_mount.h \
+		   utils_ignorelist.c utils_ignorelist.h \
 		   common.c common.h \
 		   network.c network.h \
 		   plugin.c plugin.h \
@@ -155,6 +156,31 @@ collectd_LDADD += "-dlopen" disk.la
 collectd_DEPENDENCIES += disk.la
 endif
 
+if BUILD_MODULE_DNS
+pkglib_LTLIBRARIES += dns.la
+dns_la_SOURCES = dns.c utils_dns.c utils_dns.h
+dns_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_LIBPCAP
+dns_la_LDFLAGS += -lpcap
+endif
+if BUILD_WITH_LIBPTHREAD
+dns_la_LDFLAGS += -lpthread
+endif
+collectd_LDADD += "-dlopen" dns.la
+collectd_DEPENDENCIES += dns.la
+endif
+
+if BUILD_MODULE_EMAIL
+pkglib_LTLIBRARIES += email.la
+email_la_SOURCES = email.c
+email_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_LIBPTHREAD
+email_la_LDFLAGS += -lpthread
+endif
+collectd_LDADD += "-dlopen" email.la
+collectd_DEPENDENCIES += email.la
+endif
+
 #if BUILD_MODULE_QUOTA
 #pkglib_LTLIBRARIES += quota.la
 #quota_la_SOURCES = quota_plugin.c quota_plugin.h
@@ -194,6 +220,17 @@ load_la_LDFLAGS += -lstatgrab
 endif
 endif
 
+if BUILD_MODULE_MBMON
+pkglib_LTLIBRARIES += mbmon.la
+mbmon_la_SOURCES = mbmon.c
+mbmon_la_LDFLAGS = -module -avoid-version
+if BUILD_WITH_LIBSOCKET
+mbmon_la_LDFLAGS += -lsocket
+endif
+collectd_LDADD += "-dlopen" mbmon.la
+collectd_DEPENDENCIES += mbmon.la
+endif
+
 if BUILD_MODULE_MEMORY
 pkglib_LTLIBRARIES += memory.la
 memory_la_SOURCES = memory.c
@@ -215,6 +252,14 @@ memory_la_LDFLAGS += -ldevstat
 endif
 memory_la_LDFLAGS += -lstatgrab
 endif
+endif
+
+if BUILD_MODULE_MULTIMETER
+pkglib_LTLIBRARIES += multimeter.la
+multimeter_la_SOURCES = multimeter.c
+multimeter_la_LDFLAGS = -module -avoid-version
+collectd_LDADD += "-dlopen" multimeter.la
+collectd_DEPENDENCIES += multimeter.la
 endif
 
 if BUILD_MODULE_MYSQL
@@ -389,7 +434,7 @@ install-exec-hook:
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
 	if test -e $(DESTDIR)$(sysconfdir)/collectd.conf; \
 	then \
-		$(INSTALL_DATA) collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.pkg-orig; \
+		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.pkg-orig; \
 	else \
-		$(INSTALL_DATA) collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
+		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
 	fi

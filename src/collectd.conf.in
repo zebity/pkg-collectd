@@ -28,9 +28,12 @@
 @BUILD_MODULE_CPUFREQ_TRUE@LoadPlugin cpufreq
 @BUILD_MODULE_DF_TRUE@LoadPlugin df
 @BUILD_MODULE_DISK_TRUE@LoadPlugin disk
+@BUILD_MODULE_DNS_TRUE@LoadPlugin dns
 @BUILD_MODULE_HDDTEMP_TRUE@LoadPlugin hddtemp
 @BUILD_MODULE_LOAD_TRUE@LoadPlugin load
+@BUILD_MODULE_MBMON_TRUE@LoadPlugin mbmon
 @BUILD_MODULE_MEMORY_TRUE@LoadPlugin memory
+@BUILD_MODULE_MULTIMETER_TRUE@LoadPlugin multimeter
 @BUILD_MODULE_MYSQL_TRUE@LoadPlugin mysql
 @BUILD_MODULE_NFS_TRUE@LoadPlugin nfs
 @BUILD_MODULE_NTPD_TRUE@LoadPlugin ntpd
@@ -57,9 +60,19 @@
 #	Port 3551
 #</Plugin>
 
+#<Plugin dns>
+#	Interface eth0
+#	IgnoreSource 192.168.0.1
+#</Plugin>
+
 #<Plugin hddtemp>
 #	Host 127.0.0.1
 #	Port 7634
+#</Plugin>
+
+#<Plugin mbmon>
+#	Host 127.0.0.1
+#	Port 411
 #</Plugin>
 
 #<Plugin ntpd>
@@ -76,6 +89,27 @@
 
 #<Plugin ping>
 #	Host host.foo.bar
+#</Plugin>
+
+#<Plugin processes>
+#	Process name
+#</Plugin>
+
+## There are two different naming schemes for the sensors plugin, to preserver
+## backwards compatibility. The `extended naming' is prefered, but not the
+## default for this reason. See `collectd.conf(5)' for more information.
+#<Plugin sensors>
+#	ExtendedSensorNaming false
+#	Sensor it8712-temp1
+#	Sensor it8712-fan3
+#	Sensor it8712-in8
+## -- OR --
+#	ExtendedSensorNaming true
+#	Sensor it8712-isa-0290/temperature-temp1
+#	Sensor it8712-isa-0290/fanspeed-fan3
+#	Sensor it8712-isa-0290/voltage-in8
+#
+#	IgnoreSelected false
 #</Plugin>
 
 #<Plugin traffic>

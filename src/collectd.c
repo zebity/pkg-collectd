@@ -123,6 +123,8 @@ static void exit_usage (char *name)
 			"  General:\n"
 			"    -C <file>       Configuration file.\n"
 			"                    Default: "CONFIGFILE"\n"
+			"    -P <file>       PID-file.\n"
+			"                    Default: "PIDFILE"\n"
 #if COLLECT_DAEMON
 			"    -f              Don't fork to the background.\n"
 #endif
@@ -191,7 +193,7 @@ static int start_client (void)
 		curtime = time (NULL);
 
 		/* Issue all plugins */
-		plugin_read_all ();
+		plugin_read_all (&loop);
 
 		if (gettimeofday (&tv_now, NULL) < 0)
 		{
@@ -205,7 +207,7 @@ static int start_client (void)
 			continue;
 		}
 
-		while (nanosleep (&ts_wait, &ts_wait) == -1)
+		while ((loop == 0) && (nanosleep (&ts_wait, &ts_wait) == -1))
 		{
 			if (errno != EINTR)
 			{
@@ -292,7 +294,7 @@ int main (int argc, char **argv)
 	char *configfile = CONFIGFILE;
 #if COLLECT_DAEMON
 	struct sigaction sigChldAction;
-	char *pidfile    = PIDFILE;
+	char *pidfile    = NULL;
 	pid_t pid;
 	int daemonize    = 1;
 #endif
@@ -316,7 +318,7 @@ int main (int argc, char **argv)
 
 		c = getopt (argc, argv, "hC:"
 #if COLLECT_DAEMON
-				"f"
+				"fP:"
 #endif
 		);
 
@@ -329,6 +331,9 @@ int main (int argc, char **argv)
 				configfile = optarg;
 				break;
 #if COLLECT_DAEMON
+			case 'P':
+				pidfile = optarg;
+				break;
 			case 'f':
 				daemonize = 0;
 				break;
@@ -379,7 +384,8 @@ int main (int argc, char **argv)
 	sigChldAction.sa_handler = SIG_IGN;
 	sigaction (SIGCHLD, &sigChldAction, NULL);
 
-	if ((pidfile = cf_get_option ("PIDFile", PIDFILE)) == NULL)
+	if ((pidfile == NULL)
+			&& ((pidfile = cf_get_option ("PIDFile", PIDFILE)) == NULL))
 	{
 		fprintf (stderr, "Cannot obtain pidfile. This shoud not happen. Ever.");
 		return (1);
@@ -448,6 +454,8 @@ int main (int argc, char **argv)
 	else /* if (operating_mode == MODE_CLIENT || operating_mode == MODE_LOCAL || operating_mode == MODE_LOG) */
 #endif
 		start_client ();
+
+	plugin_shutdown_all ();
 
 #if COLLECT_DEBUG
 	if (logfile != NULL)

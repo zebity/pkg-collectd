@@ -39,6 +39,12 @@ Features
     - Disk utilization
       (Sectors read/written, number of read/write actions, time spent doing IO)
 
+    - DNS traffic
+      (query types, response codes, opcodes and traffic)
+
+    - Email statistics
+      (count, traffic, spam scores and checks)
+
     - Harddisk temperatures
       (Uhm, yeah, temperature of harddisks that is ;)
 
@@ -65,7 +71,7 @@ Features
       (Number of running, sleeping, zombie, ... processes)
 
     - Sensors
-      (System temperatured and fan rotation speeds)
+      (lm_sensors voltages, temperatures and fan rotation speeds)
 
     - Serial
       (RX and TX of serial interfaces)

@@ -1,3 +1,6 @@
+#ifndef PLUGIN_H
+#define PLUGIN_H
+
 /**
  * collectd - src/plugin.h
  * Copyright (C) 2005,2006  Florian octo Forster
@@ -20,8 +23,14 @@
  *   Florian octo Forster <octo at verplant.org>
  **/
 
-#ifndef PLUGIN_H
-#define PLUGIN_H
+/*
+ *
+ */
+typedef struct complain_s
+{
+	unsigned int interval; /* how long we wait for reporting this error again */
+	unsigned int delay;    /* how many more iterations we still need to wait */
+} complain_t;
 
 /*
  * NAME
@@ -90,12 +99,16 @@ int  plugin_load (const char *type);
 
 int  plugin_load_all (char *dir);
 void plugin_init_all (void);
-void plugin_read_all (void);
+void plugin_read_all (const int *loop);
+
+void plugin_shutdown_all (void);
 
 void plugin_register (char *type,
 		void (*init) (void),
 		void (*read) (void),
 		void (*write) (char *, char *, char *));
+
+int plugin_register_shutdown (char *, void (*) (void));
 
 /*
  * NAME
@@ -116,5 +129,9 @@ void plugin_register (char *type,
 void plugin_write    (char *host, char *type, char *inst, char *val);
 
 void plugin_submit   (char *type, char *inst, char *val);
+
+
+void plugin_complain (int level, complain_t *c, const char *format, ...);
+void plugin_relief (int level, complain_t *c, const char *format, ...);
 
 #endif /* PLUGIN_H */

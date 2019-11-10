@@ -34,6 +34,7 @@ typedef struct plugin
 	void (*init) (void);
 	void (*read) (void);
 	void (*write) (char *host, char *inst, char *val);
+	void (*shutdown) (void);
 	struct plugin *next;
 } plugin_t;
 
@@ -276,13 +277,26 @@ void plugin_init_all (void)
 /*
  * Call `read' on all plugins (if given)
  */
-void plugin_read_all (void)
+void plugin_read_all (const int *loop)
 {
 	plugin_t *p;
 
-	for (p = first_plugin; p != NULL; p = p->next)
+	for (p = first_plugin; (*loop == 0) && (p != NULL); p = p->next)
 		if (p->read != NULL)
 			(*p->read) ();
+}
+
+/*
+ * Call `shutdown' on all plugins (if given)
+ */
+void plugin_shutdown_all (void)
+{
+	plugin_t *p;
+
+	for (p = first_plugin; NULL != p; p = p->next)
+		if (NULL != p->shutdown)
+			(*p->shutdown) ();
+	return;
 }
 
 /*
@@ -317,8 +331,24 @@ void plugin_register (char *type,
 	p->read  = read;
 	p->write = write;
 
+	p->shutdown = NULL;
+
 	p->next = first_plugin;
 	first_plugin = p;
+}
+
+/*
+ * Register the shutdown function (optional).
+ */
+int plugin_register_shutdown (char *type, void (*shutdown) (void))
+{
+	plugin_t *p = plugin_search (type);
+
+	if (NULL == p)
+		return -1;
+
+	p->shutdown = shutdown;
+	return 0;
 }
 
 /*
@@ -349,4 +379,55 @@ void plugin_submit (char *type, char *inst, char *val)
 		network_send (type, inst, val);
 	else
 		plugin_write (NULL, type, inst, val);
+}
+
+void plugin_complain (int level, complain_t *c, const char *format, ...)
+{
+	char message[512];
+	va_list ap;
+	int step;
+
+	if (c->delay > 0)
+	{
+		c->delay--;
+		return;
+	}
+
+	step = atoi (COLLECTD_STEP);
+	assert (step > 0);
+
+	if (c->interval < step)
+		c->interval = step;
+	else
+		c->interval *= 2;
+
+	if (c->interval > 86400)
+		c->interval = 86400;
+
+	c->delay = c->interval / step;
+
+	va_start (ap, format);
+	vsnprintf (message, 512, format, ap);
+	message[511] = '\0';
+	va_end (ap);
+
+	syslog (level, message);
+}
+
+void plugin_relief (int level, complain_t *c, const char *format, ...)
+{
+	char message[512];
+	va_list ap;
+
+	if (c->interval == 0)
+		return;
+
+	c->interval = 0;
+
+	va_start (ap, format);
+	vsnprintf (message, 512, format, ap);
+	message[511] = '\0';
+	va_end (ap);
+
+	syslog (level, message);
 }

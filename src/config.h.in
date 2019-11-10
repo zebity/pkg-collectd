@@ -36,6 +36,12 @@
 /* wether or not to enable module disk/partition statistics */
 #undef COLLECT_DISK
 
+/* wether or not to enable module dns statistics */
+#undef COLLECT_DNS
+
+/* wether or not to enable module email statistics */
+#undef COLLECT_EMAIL
+
 /* wether or not to enable feature getifaddrs under Linux */
 #undef COLLECT_GETIFADDRS
 
@@ -51,6 +57,9 @@
 /* Wether or not to use mysql library */
 #undef COLLECT_LIBMYSQL
 
+/* Wether or not to use the pcap library */
+#undef COLLECT_LIBPCAP
+
 /* Wether or not to use statgrab library */
 #undef COLLECT_LIBSTATGRAB
 
@@ -60,8 +69,14 @@
 /* wether or not to enable module system load statistics */
 #undef COLLECT_LOAD
 
+/* wether or not to enable module motherboard monitor statistics */
+#undef COLLECT_MBMON
+
 /* wether or not to enable module memory statistics */
 #undef COLLECT_MEMORY
+
+/* wether or not to enable module multimeter statistics */
+#undef COLLECT_MULTIMETER
 
 /* wether or not to enable module mysql statistics */
 #undef COLLECT_MYSQL
@@ -110,6 +125,12 @@
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the <arpa/nameser_compat.h> header file. */
+#undef HAVE_ARPA_NAMESER_COMPAT_H
+
+/* Define to 1 if you have the <arpa/nameser.h> header file. */
+#undef HAVE_ARPA_NAMESER_H
 
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
@@ -237,6 +258,12 @@
 /* Define to 1 if you have the mysqlclient library (-lmysqlclient). */
 #undef HAVE_LIBMYSQLCLIENT
 
+/* Define to 1 if you have the pcap library (-lpcap). */
+#undef HAVE_LIBPCAP
+
+/* Wether or not to use pthread (POSIX threads) library */
+#undef HAVE_LIBPTHREAD
+
 /* Define to 1 if you have the 'resolv' library (-lresolv). */
 #undef HAVE_LIBRESOLV
 
@@ -249,6 +276,9 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
+/* Define to 1 if you have the <linux/config.h> header file. */
+#undef HAVE_LINUX_CONFIG_H
+
 /* Define to 1 if you have the <linux/if.h> header file. */
 #undef HAVE_LINUX_IF_H
 
@@ -257,6 +287,9 @@
 
 /* Define to 1 if you have the <linux/netdevice.h> header file. */
 #undef HAVE_LINUX_NETDEVICE_H
+
+/* Define to 1 if you have the <linux/un.h> header file. */
+#undef HAVE_LINUX_UN_H
 
 /* Define to 1 if you have the `listmntent' function. */
 #undef HAVE_LISTMNTENT
@@ -342,6 +375,9 @@
 /* Define to 1 if you have the <netinet/icmp6.h> header file. */
 #undef HAVE_NETINET_ICMP6_H
 
+/* Define to 1 if you have the <netinet/if_ether.h> header file. */
+#undef HAVE_NETINET_IF_ETHER_H
+
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
@@ -360,8 +396,17 @@
 /* Define to 1 if you have the <netinet/ip_var.h> header file. */
 #undef HAVE_NETINET_IP_VAR_H
 
+/* Define to 1 if you have the <netinet/udp.h> header file. */
+#undef HAVE_NETINET_UDP_H
+
+/* Define to 1 if you have the <net/if_arp.h> header file. */
+#undef HAVE_NET_IF_ARP_H
+
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
+
+/* Define to 1 if you have the <net/if_ppp.h> header file. */
+#undef HAVE_NET_IF_PPP_H
 
 /* Define if the function getmntent exists and takes one argument. */
 #undef HAVE_ONE_GETMNTENT
@@ -372,11 +417,32 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
+/* Define to 1 if you have the <pcap.h> header file. */
+#undef HAVE_PCAP_H
+
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
 /* Define to 1 if you have the `quotactl' function. */
 #undef HAVE_QUOTACTL
+
+/* Define to 1 if you have the `regcomp' function. */
+#undef HAVE_REGCOMP
+
+/* Define to 1 if you have the `regerror' function. */
+#undef HAVE_REGERROR
+
+/* Define to 1 if you have the `regexec' function. */
+#undef HAVE_REGEXEC
+
+/* Define to 1 if you have the <regex.h> header file. */
+#undef HAVE_REGEX_H
+
+/* Define to 1 if you have the `regfree' function. */
+#undef HAVE_REGFREE
 
 /* Define to 1 if you have the <rrd.h> header file. */
 #undef HAVE_RRD_H
@@ -557,6 +623,9 @@
 /* Define to 1 if you have the <sys/ucred.h> header file. */
 #undef HAVE_SYS_UCRED_H
 
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
 /* Define to 1 if you have the <sys/vfstab.h> header file. */
 #undef HAVE_SYS_VFSTAB_H
 
@@ -626,7 +695,7 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to `int' if <sys/types.h> doesn't define. */
