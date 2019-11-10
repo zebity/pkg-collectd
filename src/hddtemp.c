@@ -30,15 +30,18 @@
 #include "common.h"
 #include "plugin.h"
 #include "configfile.h"
-#include "utils_debug.h"
 
-#define MODULE_NAME "hddtemp"
-
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <libgen.h> /* for basename */
+#if HAVE_NETDB_H && HAVE_SYS_SOCKET_H && HAVE_NETINET_IN_H \
+	&& HAVE_NETINET_TCP_H && HAVE_LIBGEN_H
+# include <netdb.h>
+# include <sys/socket.h>
+# include <netinet/in.h>
+# include <netinet/tcp.h>
+# include <libgen.h> /* for basename */
+# define HDDTEMP_HAVE_READ 1
+#else
+# define HDDTEMP_HAVE_READ 0
+#endif
 
 #if HAVE_LINUX_MAJOR_H
 # include <linux/major.h>
@@ -47,20 +50,8 @@
 #define HDDTEMP_DEF_HOST "127.0.0.1"
 #define HDDTEMP_DEF_PORT "7634"
 
-/* BUFFER_SIZE
-   Size of the buffer we use to receive from the hddtemp daemon. */
-#define BUFFER_SIZE 1024
-
-static char *filename_format = "hddtemp-%s.rrd";
-
-static char *ds_def[] =
-{
-	"DS:value:GAUGE:"COLLECTD_HEARTBEAT":U:U",
-	NULL
-};
-static int ds_num = 1;
-
-static char *config_keys[] =
+#if HDDTEMP_HAVE_READ
+static const char *config_keys[] =
 {
 	"Host",
 	"Port",
@@ -78,7 +69,7 @@ typedef struct hddname
 
 static hddname_t *first_hddname = NULL;
 static char *hddtemp_host = NULL;
-static char *hddtemp_port = NULL;
+static char hddtemp_port[16];
 
 /*
  * NAME
@@ -127,14 +118,17 @@ static int hddtemp_query_daemon (char *buffer, int buffer_size)
 		host = HDDTEMP_DEF_HOST;
 
 	port = hddtemp_port;
-	if (port == NULL)
+	if (strlen (port) == 0)
 		port = HDDTEMP_DEF_PORT;
 
 	if ((ai_return = getaddrinfo (host, port, &ai_hints, &ai_list)) != 0)
 	{
-		syslog (LOG_ERR, "hddtemp: getaddrinfo (%s, %s): %s",
+		char errbuf[1024];
+		ERROR ("hddtemp: getaddrinfo (%s, %s): %s",
 				host, port,
-				ai_return == EAI_SYSTEM ? strerror (errno) : gai_strerror (ai_return));
+				(ai_return == EAI_SYSTEM)
+				? sstrerror (errno, errbuf, sizeof (errbuf))
+				: gai_strerror (ai_return));
 		return (-1);
 	}
 
@@ -144,16 +138,18 @@ static int hddtemp_query_daemon (char *buffer, int buffer_size)
 		/* create our socket descriptor */
 		if ((fd = socket (ai_ptr->ai_family, ai_ptr->ai_socktype, ai_ptr->ai_protocol)) < 0)
 		{
-			syslog (LOG_ERR, "hddtemp: socket: %s",
-					strerror (errno));
+			char errbuf[1024];
+			ERROR ("hddtemp: socket: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
 			continue;
 		}
 
 		/* connect to the hddtemp daemon */
 		if (connect (fd, (struct sockaddr *) ai_ptr->ai_addr, ai_ptr->ai_addrlen))
 		{
-			DBG ("hddtemp: connect (%s, %s): %s", host, port,
-					strerror (errno));
+			char errbuf[1024];
+			DEBUG ("hddtemp: connect (%s, %s): %s", host, port,
+					sstrerror (errno, errbuf, sizeof (errbuf)));
 			close (fd);
 			fd = -1;
 			continue;
@@ -168,7 +164,7 @@ static int hddtemp_query_daemon (char *buffer, int buffer_size)
 
 	if (fd < 0)
 	{
-		syslog (LOG_ERR, "hddtemp: Could not connect to daemon.");
+		ERROR ("hddtemp: Could not connect to daemon.");
 		return (-1);
 	}
 
@@ -180,11 +176,13 @@ static int hddtemp_query_daemon (char *buffer, int buffer_size)
 	{
 		if (status == -1)
 		{
+			char errbuf[1024];
+
 			if ((errno == EAGAIN) || (errno == EINTR))
 				continue;
 
-			syslog (LOG_ERR, "hddtemp: Error reading from socket: %s",
-						strerror (errno));
+			ERROR ("hddtemp: Error reading from socket: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
 			close (fd);
 			return (-1);
 		}
@@ -197,11 +195,11 @@ static int hddtemp_query_daemon (char *buffer, int buffer_size)
 	if (buffer_fill >= buffer_size)
 	{
 		buffer[buffer_size - 1] = '\0';
-		syslog (LOG_WARNING, "hddtemp: Message from hddtemp has been truncated.");
+		WARNING ("hddtemp: Message from hddtemp has been truncated.");
 	}
 	else if (buffer_fill == 0)
 	{
-		syslog (LOG_WARNING, "hddtemp: Peer has unexpectedly shut down the socket. "
+		WARNING ("hddtemp: Peer has unexpectedly shut down the socket. "
 				"Buffer: `%s'", buffer);
 		close (fd);
 		return (-1);
@@ -211,19 +209,23 @@ static int hddtemp_query_daemon (char *buffer, int buffer_size)
 	return (0);
 }
 
-static int hddtemp_config (char *key, char *value)
+static int hddtemp_config (const char *key, const char *value)
 {
-	if (strcasecmp (key, "host") == 0)
+	if (strcasecmp (key, "Host") == 0)
 	{
 		if (hddtemp_host != NULL)
 			free (hddtemp_host);
 		hddtemp_host = strdup (value);
 	}
-	else if (strcasecmp (key, "port") == 0)
+	else if (strcasecmp (key, "Port") == 0)
 	{
-		if (hddtemp_port != NULL)
-			free (hddtemp_port);
-		hddtemp_port = strdup (value);
+		int port = (int) (atof (value));
+		if ((port > 0) && (port <= 65535))
+			snprintf (hddtemp_port, sizeof (hddtemp_port),
+					"%i", port);
+		else
+			strncpy (hddtemp_port, value, sizeof (hddtemp_port));
+		hddtemp_port[sizeof (hddtemp_port) - 1] = '\0';
 	}
 	else
 	{
@@ -236,11 +238,11 @@ static int hddtemp_config (char *key, char *value)
 /* In the init-function we initialize the `hddname_t' list used to translate
  * disk-names. Under Linux that's done using `/proc/partitions'. Under other
  * operating-systems, it's not done at all. */
-static void hddtemp_init (void)
+static int hddtemp_init (void)
 {
 #if KERNEL_LINUX
 	FILE *fh;
-	char buf[BUFFER_SIZE];
+	char buf[1024];
 	int buflen;
 
 	char *fields[16];
@@ -265,9 +267,9 @@ static void hddtemp_init (void)
 
 	if ((fh = fopen ("/proc/partitions", "r")) != NULL)
 	{
-		DBG ("Looking at /proc/partitions...");
+		DEBUG ("Looking at /proc/partitions...");
 
-		while (fgets (buf, BUFFER_SIZE, fh) != NULL)
+		while (fgets (buf, sizeof (buf), fh) != NULL)
 		{
 			/* Delete trailing newlines */
 			buflen = strlen (buf);
@@ -339,25 +341,25 @@ static void hddtemp_init (void)
 
 				/* Skip all other majors. */
 				default:
-					DBG ("Skipping unknown major %i", major);
+					DEBUG ("Skipping unknown major %i", major);
 					continue;
 			} /* switch (major) */
 
 			if ((name = strdup (fields[3])) == NULL)
 			{
-				syslog (LOG_ERR, "hddtemp: strdup(%s) == NULL", fields[3]);
+				ERROR ("hddtemp: strdup(%s) == NULL", fields[3]);
 				continue;
 			}
 
 			if ((entry = (hddname_t *) malloc (sizeof (hddname_t))) == NULL)
 			{
-				syslog (LOG_ERR, "hddtemp: malloc (%u) == NULL",
+				ERROR ("hddtemp: malloc (%u) == NULL",
 						(unsigned int) sizeof (hddname_t));
 				free (name);
 				continue;
 			}
 
-			DBG ("Found disk: %s (%u:%u).", name, major, minor);
+			DEBUG ("Found disk: %s (%u:%u).", name, major, minor);
 
 			entry->major = major;
 			entry->minor = minor;
@@ -376,26 +378,18 @@ static void hddtemp_init (void)
 		}
 		fclose (fh);
 	}
+#if COLLECT_DEBUG
 	else
-		DBG ("Could not open /proc/partitions: %s",
-				strerror (errno));
+	{
+		char errbuf[1024];
+		DEBUG ("Could not open /proc/partitions: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+	}
+#endif /* COLLECT_DEBUG */
 #endif /* KERNEL_LINUX */
-}
 
-static void hddtemp_write (char *host, char *inst, char *val)
-{
-	char filename[BUFFER_SIZE];
-	int status;
-
-	/* construct filename */
-	status = snprintf (filename, BUFFER_SIZE, filename_format, inst);
-	if (status < 1)
-		return;
-	else if (status >= BUFFER_SIZE)
-		return;
-
-	rrd_update_file (host, filename, val, ds_def, ds_num);
-}
+	return (0);
+} /* int hddtemp_init */
 
 /*
  * hddtemp_get_name
@@ -416,7 +410,7 @@ static char *hddtemp_get_name (char *drive)
 
 	if (list == NULL)
 	{
-		DBG ("Don't know %s, keeping name as-is.", drive);
+		DEBUG ("Don't know %s, keeping name as-is.", drive);
 		return (strdup (drive));
 	}
 
@@ -432,60 +426,42 @@ static char *hddtemp_get_name (char *drive)
 	return (ret);
 }
 
-static void hddtemp_submit (char *inst, double temperature)
+static void hddtemp_submit (char *type_instance, double value)
 {
-	char buf[BUFFER_SIZE];
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	if (snprintf (buf, BUFFER_SIZE, "%u:%.3f", (unsigned int) curtime, temperature)
-            >= BUFFER_SIZE)
-		return;
+	values[0].gauge = value;
 
-	plugin_submit (MODULE_NAME, inst, buf);
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "hddtemp");
+	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+
+	plugin_dispatch_values ("temperature", &vl);
 }
 
-static void hddtemp_read (void)
+static int hddtemp_read (void)
 {
-	char buf[BUFFER_SIZE];
+	char buf[1024];
 	char *fields[128];
 	char *ptr;
+	char *saveptr;
 	int num_fields;
 	int num_disks;
 	int i;
 
-	static int wait_time = 1;
-	static int wait_left = 0;
-
-	if (wait_left >= 10)
-	{
-		wait_left -= 10;
-		return;
-	}
-
 	/* get data from daemon */
-	if (hddtemp_query_daemon (buf, BUFFER_SIZE) < 0)
-	{
-		/* This limit is reached in log2(86400) =~ 17 steps. Since
-		 * there is a 2^n seconds wait between each step it will need
-		 * roughly one day to reach this limit. -octo */
-		
-		wait_time *= 2;
-		if (wait_time > 86400)
-			wait_time = 86400;
+	if (hddtemp_query_daemon (buf, sizeof (buf)) < 0)
+		return (-1);
 
-		wait_left = wait_time;
-
-		return;
-	}
-	else
-	{
-		wait_time = 1;
-		wait_left = 0;
-	}
-
-	/* NB: strtok will eat up "||" and leading "|"'s */
+	/* NB: strtok_r will eat up "||" and leading "|"'s */
 	num_fields = 0;
 	ptr = buf;
-	while ((fields[num_fields] = strtok (ptr, "|")) != NULL)
+	saveptr = NULL;
+	while ((fields[num_fields] = strtok_r (ptr, "|", &saveptr)) != NULL)
 	{
 		ptr = NULL;
 		num_fields++;
@@ -525,14 +501,19 @@ static void hddtemp_read (void)
 			hddtemp_submit (name, temperature);
 		}
 	}
-}
+	
+	return (0);
+} /* int hddtemp_read */
+#endif /* HDDTEMP_HAVE_READ */
 
 /* module_register
    Register collectd plugin. */
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, hddtemp_init, hddtemp_read, hddtemp_write);
-	cf_register (MODULE_NAME, hddtemp_config, config_keys, config_keys_num);
+#if HDDTEMP_HAVE_READ
+	plugin_register_config ("hddtemp", hddtemp_config,
+			config_keys, config_keys_num);
+	plugin_register_init ("hddtemp", hddtemp_init);
+	plugin_register_read ("hddtemp", hddtemp_read);
+#endif /* HDDTEMP_HAVE_READ */
 }
-
-#undef MODULE_NAME

@@ -1,11 +1,10 @@
 /**
  * collectd - src/cpu.c
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,9 +22,6 @@
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
-#include "utils_debug.h"
-
-#define MODULE_NAME "cpu"
 
 #ifdef HAVE_MACH_KERN_RETURN_H
 # include <mach/kern_return.h>
@@ -78,6 +74,7 @@
 # define CPU_HAVE_READ 0
 #endif
 
+#if CPU_HAVE_READ
 #ifdef PROCESSOR_CPU_LOAD_INFO
 static mach_port_t port_host;
 static processor_port_array_t cpu_list;
@@ -106,42 +103,25 @@ static int numcpu;
 static int numcpu;
 #endif /* HAVE_SYSCTLBYNAME */
 
-static char *cpu_filename = "cpu-%s.rrd";
-
-static char *ds_def[] =
-{
-	"DS:user:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:nice:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:syst:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:idle:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wait:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int ds_num = 5;
-
-static void cpu_init (void)
+static int init (void)
 {
 #if PROCESSOR_CPU_LOAD_INFO || PROCESSOR_TEMPERATURE
 	kern_return_t status;
-	int collectd_step;
 
 	port_host = mach_host_self ();
 
 	/* FIXME: Free `cpu_list' if it's not NULL */
 	if ((status = host_processors (port_host, &cpu_list, &cpu_list_len)) != KERN_SUCCESS)
 	{
-		syslog (LOG_ERR, "cpu-plugin: host_processors returned %i\n", (int) status);
+		ERROR ("cpu plugin: host_processors returned %i", (int) status);
 		cpu_list_len = 0;
-		return;
+		return (-1);
 	}
 
-	DBG ("host_processors returned %i %s", (int) cpu_list_len, cpu_list_len == 1 ? "processor" : "processors");
-	syslog (LOG_INFO, "cpu-plugin: Found %i processor%s.", (int) cpu_list_len, cpu_list_len == 1 ? "" : "s");
+	DEBUG ("host_processors returned %i %s", (int) cpu_list_len, cpu_list_len == 1 ? "processor" : "processors");
+	INFO ("cpu plugin: Found %i processor%s.", (int) cpu_list_len, cpu_list_len == 1 ? "" : "s");
 
-	collectd_step = atoi (COLLECTD_STEP);
-	if ((collectd_step > 0) && (collectd_step <= 86400))
-		cpu_temp_retry_max = 86400 / collectd_step;
-		
+	cpu_temp_retry_max = 86400 / interval_g;
 /* #endif PROCESSOR_CPU_LOAD_INFO */
 
 #elif defined(HAVE_LIBKSTAT)
@@ -150,7 +130,7 @@ static void cpu_init (void)
 	numcpu = 0;
 
 	if (kc == NULL)
-		return;
+		return (-1);
 
 	/* Solaris doesn't count linear.. *sigh* */
 	for (numcpu = 0, ksp_chain = kc->kc_chain;
@@ -167,50 +147,40 @@ static void cpu_init (void)
 
 	if (sysctlbyname ("hw.ncpu", &numcpu, &numcpu_size, NULL, 0) < 0)
 	{
-		syslog (LOG_WARNING, "cpu: sysctlbyname: %s", strerror (errno));
-		return;
+		char errbuf[1024];
+		WARNING ("cpu plugin: sysctlbyname: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
 	}
 
 	if (numcpu != 1)
-		syslog (LOG_NOTICE, "cpu: Only one processor supported when using `sysctlbyname' (found %i)", numcpu);
+		NOTICE ("cpu: Only one processor supported when using `sysctlbyname' (found %i)", numcpu);
 #endif
 
-	return;
-}
+	return (0);
+} /* int init */
 
-static void cpu_write (char *host, char *inst, char *val)
+static void submit (int cpu_num, const char *type_instance, counter_t value)
 {
-	char file[512];
-	int status;
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	status = snprintf (file, 512, cpu_filename, inst);
-	if (status < 1)
-		return;
-	else if (status >= 512)
-		return;
+	values[0].counter = value;
 
-	rrd_update_file (host, file, val, ds_def, ds_num);
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "cpu");
+	snprintf (vl.plugin_instance, sizeof (vl.type_instance),
+			"%i", cpu_num);
+	vl.plugin_instance[DATA_MAX_NAME_LEN - 1] = '\0';
+	strcpy (vl.type_instance, type_instance);
+
+	plugin_dispatch_values ("cpu", &vl);
 }
 
-#if CPU_HAVE_READ
-#define BUFSIZE 512
-static void cpu_submit (int cpu_num, unsigned long long user,
-		unsigned long long nice, unsigned long long syst,
-		unsigned long long idle, unsigned long long wait)
-{
-	char buf[BUFSIZE];
-	char cpu[16];
-
-	if (snprintf (buf, BUFSIZE, "%u:%llu:%llu:%llu:%llu:%llu", (unsigned int) curtime,
-				user, nice, syst, idle, wait) >= BUFSIZE)
-		return;
-	snprintf (cpu, 16, "%i", cpu_num);
-
-	plugin_submit (MODULE_NAME, cpu, buf);
-}
-#undef BUFSIZE
-
-static void cpu_read (void)
+static int cpu_read (void)
 {
 #if PROCESSOR_CPU_LOAD_INFO || PROCESSOR_TEMPERATURE
 	int cpu;
@@ -238,21 +208,20 @@ static void cpu_read (void)
 						PROCESSOR_CPU_LOAD_INFO, &cpu_host,
 						(processor_info_t) &cpu_info, &cpu_info_len)) != KERN_SUCCESS)
 		{
-			syslog (LOG_ERR, "cpu-plugin: processor_info failed with status %i\n", (int) status);
+			ERROR ("cpu plugin: processor_info failed with status %i", (int) status);
 			continue;
 		}
 
 		if (cpu_info_len < CPU_STATE_MAX)
 		{
-			syslog (LOG_ERR, "cpu-plugin: processor_info returned only %i elements..\n", cpu_info_len);
+			ERROR ("cpu plugin: processor_info returned only %i elements..", cpu_info_len);
 			continue;
 		}
 
-		cpu_submit (cpu, cpu_info.cpu_ticks[CPU_STATE_USER],
-				cpu_info.cpu_ticks[CPU_STATE_NICE],
-				cpu_info.cpu_ticks[CPU_STATE_SYSTEM],
-				cpu_info.cpu_ticks[CPU_STATE_IDLE],
-				0ULL);
+		submit (cpu, "user", (counter_t) cpu_info.cpu_ticks[CPU_STATE_USER]);
+		submit (cpu, "nice", (counter_t) cpu_info.cpu_ticks[CPU_STATE_USER]);
+		submit (cpu, "system", (counter_t) cpu_info.cpu_ticks[CPU_STATE_USER]);
+		submit (cpu, "idle", (counter_t) cpu_info.cpu_ticks[CPU_STATE_USER]);
 #endif /* PROCESSOR_CPU_LOAD_INFO */
 #if PROCESSOR_TEMPERATURE
 		/*
@@ -275,7 +244,7 @@ static void cpu_read (void)
 				cpu_temp, &cpu_temp_len);
 		if (status != KERN_SUCCESS)
 		{
-			syslog (LOG_ERR, "cpu-plugin: processor_info failed: %s",
+			ERROR ("cpu plugin: processor_info failed: %s",
 					mach_error_string (status));
 
 			cpu_temp_retry_counter = cpu_temp_retry_step;
@@ -288,7 +257,7 @@ static void cpu_read (void)
 
 		if (cpu_temp_len != 1)
 		{
-			DBG ("processor_info (PROCESSOR_TEMPERATURE) returned %i elements..?",
+			DEBUG ("processor_info (PROCESSOR_TEMPERATURE) returned %i elements..?",
 				       	(int) cpu_temp_len);
 			continue;
 		}
@@ -296,18 +265,17 @@ static void cpu_read (void)
 		cpu_temp_retry_counter = 0;
 		cpu_temp_retry_step    = 1;
 
-		DBG ("cpu_temp = %i", (int) cpu_temp);
+		DEBUG ("cpu_temp = %i", (int) cpu_temp);
 #endif /* PROCESSOR_TEMPERATURE */
 	}
 /* #endif PROCESSOR_CPU_LOAD_INFO */
 
 #elif defined(KERNEL_LINUX)
-# define BUFSIZE 1024
 	int cpu;
-	unsigned long long user, nice, syst, idle;
-	unsigned long long wait, intr, sitr; /* sitr == soft interrupt */
+	counter_t user, nice, syst, idle;
+	counter_t wait, intr, sitr; /* sitr == soft interrupt */
 	FILE *fh;
-	char buf[BUFSIZE];
+	char buf[1024];
 
 	char *fields[9];
 	int numfields;
@@ -316,16 +284,17 @@ static void cpu_read (void)
 
 	if ((fh = fopen ("/proc/stat", "r")) == NULL)
 	{
+		char errbuf[1024];
 		plugin_complain (LOG_ERR, &complain_obj, "cpu plugin: "
 				"fopen (/proc/stat) failed: %s",
-				strerror (errno));
-		return;
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
 	}
 
 	plugin_relief (LOG_NOTICE, &complain_obj, "cpu plugin: "
 			"fopen (/proc/stat) succeeded.");
 
-	while (fgets (buf, BUFSIZE, fh) != NULL)
+	while (fgets (buf, 1024, fh) != NULL)
 	{
 		if (strncmp (buf, "cpu", 3))
 			continue;
@@ -342,31 +311,32 @@ static void cpu_read (void)
 		syst = atoll (fields[3]);
 		idle = atoll (fields[4]);
 
+		submit (cpu, "user", user);
+		submit (cpu, "nice", nice);
+		submit (cpu, "system", syst);
+		submit (cpu, "idle", idle);
+
 		if (numfields >= 8)
 		{
 			wait = atoll (fields[5]);
 			intr = atoll (fields[6]);
 			sitr = atoll (fields[7]);
 
-			/* I doubt anyone cares about the time spent in
-			 * interrupt handlers.. */
-			syst += intr + sitr;
-		}
-		else
-		{
-			wait = 0LL;
-		}
+			submit (cpu, "wait", wait);
+			submit (cpu, "interrupt", intr);
+			submit (cpu, "softirq", sitr);
 
-		cpu_submit (cpu, user, nice, syst, idle, wait);
+			if (numfields >= 9)
+				submit (cpu, "steal", atoll (fields[8]));
+		}
 	}
 
 	fclose (fh);
-#undef BUFSIZE
 /* #endif defined(KERNEL_LINUX) */
 
 #elif defined(HAVE_LIBKSTAT)
 	int cpu;
-	unsigned long long user, syst, idle, wait;
+	counter_t user, syst, idle, wait;
 	static cpu_stat_t cs;
 
 	if (kc == NULL)
@@ -377,13 +347,15 @@ static void cpu_read (void)
 		if (kstat_read (kc, ksp[cpu], &cs) == -1)
 			continue; /* error message? */
 
-		idle = (unsigned long long) cs.cpu_sysinfo.cpu[CPU_IDLE];
-		user = (unsigned long long) cs.cpu_sysinfo.cpu[CPU_USER];
-		syst = (unsigned long long) cs.cpu_sysinfo.cpu[CPU_KERNEL];
-		wait = (unsigned long long) cs.cpu_sysinfo.cpu[CPU_WAIT];
+		idle = (counter_t) cs.cpu_sysinfo.cpu[CPU_IDLE];
+		user = (counter_t) cs.cpu_sysinfo.cpu[CPU_USER];
+		syst = (counter_t) cs.cpu_sysinfo.cpu[CPU_KERNEL];
+		wait = (counter_t) cs.cpu_sysinfo.cpu[CPU_WAIT];
 
-		cpu_submit (ksp[cpu]->ks_instance,
-				user, 0LL, syst, idle, wait);
+		submit (ksp[cpu]->ks_instance, "user", user);
+		submit (ksp[cpu]->ks_instance, "system", syst);
+		submit (ksp[cpu]->ks_instance, "idle", idle);
+		submit (ksp[cpu]->ks_instance, "wait", wait);
 	}
 /* #endif defined(HAVE_LIBKSTAT) */
 
@@ -397,10 +369,11 @@ static void cpu_read (void)
 
 	if (sysctlbyname("kern.cp_time", &cpuinfo, &cpuinfo_size, NULL, 0) < 0)
 	{
+		char errbuf[1024];
 		plugin_complain (LOG_ERR, &complain_obj, "cpu plugin: "
 				"sysctlbyname failed: %s.",
-				strerror (errno));
-		return;
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
 	}
 
 	plugin_relief (LOG_NOTICE, &complain_obj, "cpu plugin: "
@@ -408,19 +381,20 @@ static void cpu_read (void)
 
 	cpuinfo[CP_SYS] += cpuinfo[CP_INTR];
 
-	/* FIXME: Instance is always `0' */
-	cpu_submit (0, cpuinfo[CP_USER], cpuinfo[CP_NICE], cpuinfo[CP_SYS], cpuinfo[CP_IDLE], 0LL);
+	submit (0, "user", cpuinfo[CP_USER]);
+	submit (0, "nice", cpuinfo[CP_NICE]);
+	submit (0, "system", cpuinfo[CP_SYS]);
+	submit (0, "idle", cpuinfo[CP_IDLE]);
 #endif
 
-	return;
+	return (0);
 }
-#else
-# define cpu_read NULL
 #endif /* CPU_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, cpu_init, cpu_read, cpu_write);
-}
-
-#undef MODULE_NAME
+#if CPU_HAVE_READ
+	plugin_register_init ("cpu", init);
+	plugin_register_read ("cpu", cpu_read);
+#endif /* CPU_HAVE_READ */
+} /* void module_register */

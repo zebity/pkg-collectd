@@ -1,11 +1,10 @@
 /**
  * collectd - src/collectd.c
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,23 +22,21 @@
 
 #include "collectd.h"
 #include "common.h"
-#include "utils_debug.h"
 
-#include "network.h"
 #include "plugin.h"
 #include "configfile.h"
+#include "types_list.h"
 
-static int loop = 0;
-
+/*
+ * Global variables
+ */
+char hostname_g[DATA_MAX_NAME_LEN];
+int  interval_g;
 #if HAVE_LIBKSTAT
 kstat_ctl_t *kc;
 #endif /* HAVE_LIBKSTAT */
 
-/*
- * exported variables
- */
-time_t curtime;
-int    operating_mode;
+static int loop = 0;
 
 static void sigIntHandler (int signal)
 {
@@ -51,34 +48,92 @@ static void sigTermHandler (int signal)
 	loop++;
 }
 
-static int change_basedir (char *dir)
+static int init_global_variables (void)
 {
-	int dirlen = strlen (dir);
+	const char *str;
+
+	str = global_option_get ("Hostname");
+	if (str != NULL)
+	{
+		strncpy (hostname_g, str, sizeof (hostname_g));
+	}
+	else
+	{
+		if (gethostname (hostname_g, sizeof (hostname_g)) != 0)
+		{
+			fprintf (stderr, "`gethostname' failed and no "
+					"hostname was configured.\n");
+			return (-1);
+		}
+	}
+	DEBUG ("hostname_g = %s;", hostname_g);
+
+	str = global_option_get ("Interval");
+	if (str == NULL)
+		str = "10";
+	interval_g = atoi (str);
+	if (interval_g <= 0)
+	{
+		fprintf (stderr, "Cannot set the interval to a correct value.\n"
+				"Please check your settings.\n");
+		return (-1);
+	}
+	DEBUG ("interval_g = %i;", interval_g);
+
+	return (0);
+} /* int init_global_variables */
+
+static int change_basedir (const char *orig_dir)
+{
+	char *dir = strdup (orig_dir);
+	int dirlen;
+	int status;
+
+	if (dir == NULL)
+	{
+		char errbuf[1024];
+		ERROR ("strdup failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
+	}
 	
+	dirlen = strlen (dir);
 	while ((dirlen > 0) && (dir[dirlen - 1] == '/'))
 		dir[--dirlen] = '\0';
 
 	if (dirlen <= 0)
 		return (-1);
 
-	if (chdir (dir) == -1)
+	status = chdir (dir);
+	free (dir);
+
+	if (status != 0)
 	{
 		if (errno == ENOENT)
 		{
-			if (mkdir (dir, 0755) == -1)
+			if (mkdir (orig_dir, 0755) == -1)
 			{
-				syslog (LOG_ERR, "mkdir (%s): %s", dir, strerror (errno));
+				char errbuf[1024];
+				ERROR ("mkdir (%s): %s", orig_dir,
+						sstrerror (errno, errbuf,
+							sizeof (errbuf)));
 				return (-1);
 			}
-			else if (chdir (dir) == -1)
+			else if (chdir (orig_dir) == -1)
 			{
-				syslog (LOG_ERR, "chdir (%s): %s", dir, strerror (errno));
+				char errbuf[1024];
+				ERROR ("chdir (%s): %s", orig_dir,
+						sstrerror (errno, errbuf,
+							sizeof (errbuf)));
 				return (-1);
 			}
 		}
 		else
 		{
-			syslog (LOG_ERR, "chdir: %s", strerror (errno));
+			char errbuf[1024];
+			ERROR ("chdir (%s): %s", orig_dir,
+					sstrerror (errno, errbuf,
+						sizeof (errbuf)));
 			return (-1);
 		}
 	}
@@ -92,7 +147,7 @@ static void update_kstat (void)
 	if (kc == NULL)
 	{
 		if ((kc = kstat_open ()) == NULL)
-			syslog (LOG_ERR, "Unable to open kstat control structure");
+			ERROR ("Unable to open kstat control structure");
 	}
 	else
 	{
@@ -100,11 +155,11 @@ static void update_kstat (void)
 		kid = kstat_chain_update (kc);
 		if (kid > 0)
 		{
-			syslog (LOG_INFO, "kstat chain has been updated");
+			INFO ("kstat chain has been updated");
 			plugin_init_all ();
 		}
 		else if (kid < 0)
-			syslog (LOG_ERR, "kstat chain update failed");
+			ERROR ("kstat chain update failed");
 		/* else: everything works as expected */
 	}
 
@@ -132,29 +187,14 @@ static void exit_usage (char *name)
 			"  Config-File       "CONFIGFILE"\n"
 			"  PID-File          "PIDFILE"\n"
 			"  Data-Directory    "PKGLOCALSTATEDIR"\n"
-#if COLLECT_DEBUG
-			"  Log-File          "LOGFILE"\n"
-#endif
-			"  Step              "COLLECTD_STEP" seconds\n"
-			"  Heartbeat         "COLLECTD_HEARTBEAT" seconds\n"
 			"\n"PACKAGE" "VERSION", http://collectd.org/\n"
 			"by Florian octo Forster <octo@verplant.org>\n"
 			"for contributions see `AUTHORS'\n");
 	exit (0);
 } /* static void exit_usage (char *name) */
 
-static int start_client (void)
+static int do_init (void)
 {
-	int step;
-
-	struct timeval tv_now;
-	struct timeval tv_next;
-	struct timespec ts_wait;
-
-	step = atoi (COLLECTD_STEP);
-	if (step <= 0)
-		step = 10;
-
 #if HAVE_LIBKSTAT
 	kc = NULL;
 	update_kstat ();
@@ -163,47 +203,63 @@ static int start_client (void)
 #if HAVE_LIBSTATGRAB
 	if (sg_init ())
 	{
-		syslog (LOG_ERR, "sg_init: %s", sg_str_error (sg_get_error ()));
+		ERROR ("sg_init: %s", sg_str_error (sg_get_error ()));
 		return (-1);
 	}
 
 	if (sg_drop_privileges ())
 	{
-		syslog (LOG_ERR, "sg_drop_privileges: %s", sg_str_error (sg_get_error ()));
+		ERROR ("sg_drop_privileges: %s", sg_str_error (sg_get_error ()));
 		return (-1);
 	}
 #endif
 
+	read_types_list ();
 	plugin_init_all ();
+
+	return (0);
+} /* int do_init () */
+
+
+static int do_loop (void)
+{
+	struct timeval tv_now;
+	struct timeval tv_next;
+	struct timespec ts_wait;
 
 	while (loop == 0)
 	{
 		if (gettimeofday (&tv_next, NULL) < 0)
 		{
-			syslog (LOG_ERR, "gettimeofday failed: %s", strerror (errno));
+			char errbuf[1024];
+			ERROR ("gettimeofday failed: %s",
+					sstrerror (errno, errbuf,
+						sizeof (errbuf)));
 			return (-1);
 		}
-		tv_next.tv_sec += step;
+		tv_next.tv_sec += interval_g;
 
 #if HAVE_LIBKSTAT
 		update_kstat ();
 #endif
-		/* `curtime' is used by many (all?) plugins as the
-		 * data-sample-time passed to RRDTool */
-		curtime = time (NULL);
 
 		/* Issue all plugins */
 		plugin_read_all (&loop);
 
 		if (gettimeofday (&tv_now, NULL) < 0)
 		{
-			syslog (LOG_ERR, "gettimeofday failed: %s", strerror (errno));
+			char errbuf[1024];
+			ERROR ("gettimeofday failed: %s",
+					sstrerror (errno, errbuf,
+						sizeof (errbuf)));
 			return (-1);
 		}
 
 		if (timeval_sub_timespec (&tv_next, &tv_now, &ts_wait) != 0)
 		{
-			syslog (LOG_WARNING, "Not sleeping because `timeval_sub_timespec' returned non-zero!");
+			WARNING ("Not sleeping because "
+					"`timeval_sub_timespec' returned "
+					"non-zero!");
 			continue;
 		}
 
@@ -211,61 +267,36 @@ static int start_client (void)
 		{
 			if (errno != EINTR)
 			{
-				syslog (LOG_ERR, "nanosleep failed: %s", strerror (errno));
-				break;
+				char errbuf[1024];
+				ERROR ("nanosleep failed: %s",
+						sstrerror (errno, errbuf,
+							sizeof (errbuf)));
+				return (-1);
 			}
 		}
-	}
+	} /* while (loop == 0) */
 
+	DEBUG ("return (0);");
 	return (0);
-} /* static int start_client (void) */
+} /* int do_loop */
 
-#if HAVE_LIBRRD
-static int start_server (void)
+static int do_shutdown (void)
 {
-	char *host;
-	char *type;
-	char *instance;
-	char *values;
-
-	int  error_counter = 0;
-	int  status;
-
-	while ((loop == 0) && (error_counter < 3))
-	{
-		status = network_receive (&host, &type, &instance, &values);
-
-		if (status != 0)
-		{
-			if (status < 0)
-				error_counter++;
-			continue;
-		}
-		error_counter = 0;
-
-		plugin_write (host, type, instance, values);
-
-		if (host     != NULL) free (host);     host     = NULL;
-		if (type     != NULL) free (type);     type     = NULL;
-		if (instance != NULL) free (instance); instance = NULL;
-		if (values   != NULL) free (values);   values   = NULL;
-	}
-	
+	plugin_shutdown_all ();
 	return (0);
-} /* static int start_server (void) */
-#endif /* HAVE_LIBRRD */
+} /* int do_shutdown */
 
 #if COLLECT_DAEMON
-static int pidfile_create (const char *file)
+static int pidfile_create (void)
 {
 	FILE *fh;
-
-	if (file == NULL)
-		file = PIDFILE;
+	const char *file = global_option_get ("PIDFile");
 
 	if ((fh = fopen (file, "w")) == NULL)
 	{
-		syslog (LOG_ERR, "fopen (%s): %s", file, strerror (errno));
+		char errbuf[1024];
+		ERROR ("fopen (%s): %s", file,
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		return (1);
 	}
 
@@ -274,14 +305,12 @@ static int pidfile_create (const char *file)
 
 	return (0);
 } /* static int pidfile_create (const char *file) */
-#endif /* COLLECT_DAEMON */
 
-#if COLLECT_DAEMON
-static int pidfile_remove (const char *file)
+static int pidfile_remove (void)
 {
-	if (file == NULL) {
-		file = PIDFILE;
-	}
+	const char *file = global_option_get ("PIDFile");
+
+	DEBUG ("unlink (%s)", (file != NULL) ? file : "<null>");
 	return (unlink (file));
 } /* static int pidfile_remove (const char *file) */
 #endif /* COLLECT_DAEMON */
@@ -290,33 +319,21 @@ int main (int argc, char **argv)
 {
 	struct sigaction sigIntAction;
 	struct sigaction sigTermAction;
-	char *datadir    = PKGLOCALSTATEDIR;
 	char *configfile = CONFIGFILE;
+	int test_config  = 0;
+	const char *basedir;
 #if COLLECT_DAEMON
 	struct sigaction sigChldAction;
-	char *pidfile    = NULL;
 	pid_t pid;
 	int daemonize    = 1;
 #endif
-#if COLLECT_DEBUG
-	char *logfile    = LOGFILE;
-#endif
-
-#if HAVE_LIBRRD
-	operating_mode = MODE_LOCAL;
-#else
-	operating_mode = MODE_CLIENT;
-#endif
-
-	/* open syslog */
-	openlog (PACKAGE, LOG_CONS | LOG_PID, LOG_DAEMON);
 
 	/* read options */
 	while (1)
 	{
 		int c;
 
-		c = getopt (argc, argv, "hC:"
+		c = getopt (argc, argv, "htC:"
 #if COLLECT_DAEMON
 				"fP:"
 #endif
@@ -330,9 +347,12 @@ int main (int argc, char **argv)
 			case 'C':
 				configfile = optarg;
 				break;
+			case 't':
+				test_config = 1;
+				break;
 #if COLLECT_DAEMON
 			case 'P':
-				pidfile = optarg;
+				global_option_set ("PIDFile", optarg);
 				break;
 			case 'f':
 				daemonize = 0;
@@ -343,11 +363,6 @@ int main (int argc, char **argv)
 				exit_usage (argv[0]);
 		} /* switch (c) */
 	} /* while (1) */
-
-#if COLLECT_DEBUG
-	if ((logfile = cf_get_option ("LogFile", LOGFILE)) != NULL)
-		DBG_STARTFILE (logfile, "Debug file opened.");
-#endif
 
 	/*
 	 * Read options from the config file, the environment and the command
@@ -366,37 +381,46 @@ int main (int argc, char **argv)
 	 * Change directory. We do this _after_ reading the config and loading
 	 * modules to relative paths work as expected.
 	 */
-	if ((datadir = cf_get_option ("DataDir", PKGLOCALSTATEDIR)) == NULL)
+	if ((basedir = global_option_get ("BaseDir")) == NULL)
 	{
-		fprintf (stderr, "Don't have a datadir to use. This should not happen. Ever.");
+		fprintf (stderr, "Don't have a basedir to use. This should not happen. Ever.");
 		return (1);
 	}
-	if (change_basedir (datadir))
+	else if (change_basedir (basedir))
 	{
-		fprintf (stderr, "Error: Unable to change to directory `%s'.\n", datadir);
+		fprintf (stderr, "Error: Unable to change to directory `%s'.\n", basedir);
 		return (1);
 	}
+
+	/*
+	 * Set global variables or, if that failes, exit. We cannot run with
+	 * them being uninitialized. If nothing is configured, then defaults
+	 * are being used. So this means that the user has actually done
+	 * something wrong.
+	 */
+	if (init_global_variables () != 0)
+		return (1);
+
+	if (test_config)
+		return (0);
 
 #if COLLECT_DAEMON
 	/*
 	 * fork off child
 	 */
+	memset (&sigChldAction, '\0', sizeof (sigChldAction));
 	sigChldAction.sa_handler = SIG_IGN;
 	sigaction (SIGCHLD, &sigChldAction, NULL);
-
-	if ((pidfile == NULL)
-			&& ((pidfile = cf_get_option ("PIDFile", PIDFILE)) == NULL))
-	{
-		fprintf (stderr, "Cannot obtain pidfile. This shoud not happen. Ever.");
-		return (1);
-	}
 
 	if (daemonize)
 	{
 		if ((pid = fork ()) == -1)
 		{
 			/* error */
-			fprintf (stderr, "fork: %s", strerror (errno));
+			char errbuf[1024];
+			fprintf (stderr, "fork: %s",
+					sstrerror (errno, errbuf,
+						sizeof (errbuf)));
 			return (1);
 		}
 		else if (pid != 0)
@@ -410,7 +434,7 @@ int main (int argc, char **argv)
 		setsid ();
 
 		/* Write pidfile */
-		if (pidfile_create (pidfile))
+		if (pidfile_create ())
 			exit (2);
 
 		/* close standard descriptors */
@@ -420,17 +444,17 @@ int main (int argc, char **argv)
 
 		if (open ("/dev/null", O_RDWR) != 0)
 		{
-			syslog (LOG_ERR, "Error: Could not connect `STDIN' to `/dev/null'");
+			ERROR ("Error: Could not connect `STDIN' to `/dev/null'");
 			return (1);
 		}
 		if (dup (0) != 1)
 		{
-			syslog (LOG_ERR, "Error: Could not connect `STDOUT' to `/dev/null'");
+			ERROR ("Error: Could not connect `STDOUT' to `/dev/null'");
 			return (1);
 		}
 		if (dup (0) != 2)
 		{
-			syslog (LOG_ERR, "Error: Could not connect `STDERR' to `/dev/null'");
+			ERROR ("Error: Could not connect `STDERR' to `/dev/null'");
 			return (1);
 		}
 	} /* if (daemonize) */
@@ -439,37 +463,29 @@ int main (int argc, char **argv)
 	/*
 	 * install signal handlers
 	 */
+	memset (&sigIntAction, '\0', sizeof (sigIntAction));
 	sigIntAction.sa_handler = sigIntHandler;
 	sigaction (SIGINT, &sigIntAction, NULL);
 
+	memset (&sigTermAction, '\0', sizeof (sigTermAction));
 	sigTermAction.sa_handler = sigTermHandler;
 	sigaction (SIGTERM, &sigTermAction, NULL);
 
 	/*
 	 * run the actual loops
 	 */
-#if HAVE_LIBRRD
-	if (operating_mode == MODE_SERVER)
-		start_server ();
-	else /* if (operating_mode == MODE_CLIENT || operating_mode == MODE_LOCAL || operating_mode == MODE_LOG) */
-#endif
-		start_client ();
-
-	plugin_shutdown_all ();
-
-#if COLLECT_DEBUG
-	if (logfile != NULL)
-		DBG_STOPFILE("debug file closed.");
-#endif
+	do_init ();
+	do_loop ();
 
 	/* close syslog */
-	syslog (LOG_INFO, "Exiting normally");
-	closelog ();
+	INFO ("Exiting normally");
+
+	do_shutdown ();
 
 #if COLLECT_DAEMON
 	if (daemonize)
-		pidfile_remove (pidfile);
+		pidfile_remove ();
 #endif /* COLLECT_DAEMON */
 
 	return (0);
-} /* int main (int argc, char **argv) */
+} /* int main */

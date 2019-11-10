@@ -1,11 +1,10 @@
 /**
  * collectd - src/sensors.c
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -34,10 +33,6 @@
 #include "plugin.h"
 #include "configfile.h"
 #include "utils_ignorelist.h"
-#include "utils_debug.h"
-
-#define MODULE_NAME "sensors"
-#define MODULE_NAME_VOLTAGE MODULE_NAME"_voltage"
 
 #if defined(HAVE_SENSORS_SENSORS_H)
 # include <sensors/sensors.h>
@@ -51,57 +46,31 @@
 # define SENSORS_HAVE_READ 0
 #endif
 
-#define BUFSIZE 512
-
-/* temperature and fan sensors */
-static char *ds_def[] =
-{
-	"DS:value:GAUGE:"COLLECTD_HEARTBEAT":U:U",
-	NULL
-};
-static int ds_num = 1;
-
-/* voltage sensors */
-static char *sensor_voltage_ds_def[] = 
-{
-	"DS:voltage:GAUGE:"COLLECTD_HEARTBEAT":U:U",
-	NULL
-};
-static int sensor_voltage_ds_num = 1;
-
-/* old naming */
-static char *old_filename_format = "sensors-%s.rrd";
-/* end old naming */
-
-/* new naming <chip-bus-address/type-feature */
-static char *extended_filename_format = "lm_sensors-%s.rrd";
-
-#define SENSOR_TYPE_UNKNOWN 0
-#define SENSOR_TYPE_VOLTAGE 1
-#define SENSOR_TYPE_FANSPEED 2
-#define SENSOR_TYPE_TEMPERATURE 3
-
 #if SENSORS_HAVE_READ
-static char *sensor_type_prefix[] =
+#define SENSOR_TYPE_VOLTAGE     0
+#define SENSOR_TYPE_FANSPEED    1
+#define SENSOR_TYPE_TEMPERATURE 2
+#define SENSOR_TYPE_UNKNOWN     3
+
+static char *sensor_to_type[] =
 {
-	"unknown",
 	"voltage",
 	"fanspeed",
 	"temperature",
 	NULL
 };
-#endif
 
-typedef struct sensors_labeltypes {
+struct sensors_labeltypes_s
+{
 	char *label;
 	int type;
-} sensors_labeltypes;
+};
+typedef struct sensors_labeltypes_s sensors_labeltypes_t;
 
 /*
  * finite list of known labels extracted from lm_sensors
  */
-#if SENSORS_HAVE_READ
-static sensors_labeltypes known_features[] = 
+static sensors_labeltypes_t known_features[] = 
 {
 	{ "fan1", SENSOR_TYPE_FANSPEED },
 	{ "fan2", SENSOR_TYPE_FANSPEED },
@@ -154,34 +123,24 @@ static sensors_labeltypes known_features[] =
 	{ "3.3V", SENSOR_TYPE_VOLTAGE },
 	{ "2.5V", SENSOR_TYPE_VOLTAGE },
 	{ "2.0V", SENSOR_TYPE_VOLTAGE },
-	{ "12V", SENSOR_TYPE_VOLTAGE },
-	{ 0, -1 }
+	{ "12V", SENSOR_TYPE_VOLTAGE }
 };
-#endif
+static int known_features_num = STATIC_ARRAY_SIZE (known_features);
 /* end new naming */
 
-static char *config_keys[] =
+static const char *config_keys[] =
 {
 	"Sensor",
 	"IgnoreSelected",
-	"ExtendedSensorNaming",
 	NULL
 };
-static int config_keys_num = 3;
+static int config_keys_num = 2;
 
 static ignorelist_t *sensor_list;
 
-/* 
- * sensor_extended_naming:
- * 0 => default is to create chip-feature
- * 1 => use new naming scheme chip-bus-address/type-feature
- */
-static int sensor_extended_naming = 0;
-
-#if SENSORS_HAVE_READ
-#  ifndef SENSORS_CONF_PATH
-#    define SENSORS_CONF_PATH "/etc/sensors.conf"
-#  endif
+#ifndef SENSORS_CONF_PATH
+# define SENSORS_CONF_PATH "/etc/sensors.conf"
+#endif
 
 static const char *conffile = SENSORS_CONF_PATH;
 /* SENSORS_CONF_PATH */
@@ -200,9 +159,8 @@ typedef struct featurelist
 } featurelist_t;
 
 featurelist_t *first_feature = NULL;
-#endif /* if SENSORS_HAVE_READ */
 
-static int sensors_config (char *key, char *value)
+static int sensors_config (const char *key, const char *value)
 {
 	if (sensor_list == NULL)
 		sensor_list = ignorelist_create (1);
@@ -211,7 +169,8 @@ static int sensors_config (char *key, char *value)
 	{
 		if (ignorelist_add (sensor_list, value))
 		{
-			syslog (LOG_EMERG, MODULE_NAME": Cannot add value to ignorelist.");
+			ERROR ("sensors plugin: "
+					"Cannot add value to ignorelist.");
 			return (1);
 		}
 	}
@@ -223,15 +182,6 @@ static int sensors_config (char *key, char *value)
 				|| (strcasecmp (value, "On") == 0))
 			ignorelist_set_invert (sensor_list, 0);
 	}
-	else if (strcasecmp (key, "ExtendedSensorNaming") == 0)
-	{
-		if ((strcasecmp (value, "True") == 0)
-				|| (strcasecmp (value, "Yes") == 0)
-				|| (strcasecmp (value, "On") == 0))
-			sensor_extended_naming = 1;
-		else
-			sensor_extended_naming = 0;
-	}
 	else
 	{
 		return (-1);
@@ -240,7 +190,6 @@ static int sensors_config (char *key, char *value)
 	return (0);
 }
 
-#if SENSORS_HAVE_READ
 void sensors_free_features (void)
 {
 	featurelist_t *thisft;
@@ -259,7 +208,7 @@ void sensors_free_features (void)
 	first_feature = NULL;
 }
 
-static void sensors_load_conf (void)
+static int sensors_load_conf (void)
 {
 	FILE *fh;
 	featurelist_t *last_feature = NULL;
@@ -277,18 +226,19 @@ static void sensors_load_conf (void)
 	status = stat (conffile, &statbuf);
 	if (status != 0)
 	{
-		syslog (LOG_ERR, MODULE_NAME": stat(%s) failed: %s",
-				conffile, strerror (errno));
+		char errbuf[1024];
+		ERROR ("sensors plugin: stat (%s) failed: %s", conffile,
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		sensors_config_mtime = 0;
 	}
 
 	if ((sensors_config_mtime != 0)
 			&& (sensors_config_mtime == statbuf.st_mtime))
-		return;
+		return (0);
 
 	if (sensors_config_mtime != 0)
 	{
-		syslog (LOG_NOTICE, MODULE_NAME": Reloading config from %s",
+		NOTICE ("sensors plugin: Reloading config from %s",
 				conffile);
 		sensors_free_features ();
 		sensors_config_mtime = 0;
@@ -297,18 +247,19 @@ static void sensors_load_conf (void)
 	fh = fopen (conffile, "r");
 	if (fh == NULL)
 	{
-		syslog (LOG_ERR, MODULE_NAME": fopen(%s) failed: %s",
-				conffile, strerror(errno));
-		return;
+		char errbuf[1024];
+		ERROR ("sensors plugin: fopen(%s) failed: %s", conffile,
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
 	}
 
 	status = sensors_init (fh);
 	fclose (fh);
 	if (status != 0)
 	{
-		syslog (LOG_ERR, MODULE_NAME": Cannot initialize sensors. "
+		ERROR ("sensors plugin: Cannot initialize sensors. "
 				"Data will not be collected.");
-		return;
+		return (-1);
 	}
 
 	sensors_config_mtime = statbuf.st_mtime;
@@ -329,7 +280,7 @@ static void sensors_load_conf (void)
 				continue;
 
 			/* Only known features */
-			for (i = 0; known_features[i].type >= 0; i++)
+			for (i = 0; i < known_features_num; i++)
 			{
 				if (strcmp (data->name, known_features[i].label) != 0)
 					continue;
@@ -338,16 +289,16 @@ static void sensors_load_conf (void)
 				if (sensors_get_ignored (*chip, data->number) == 0)
 					break;
 
-				DBG ("Adding feature: %s-%s-%s",
+				DEBUG ("Adding feature: %s-%s-%s",
 						chip->prefix,
-						sensor_type_prefix[known_features[i].type],
+						sensor_to_type[known_features[i].type],
 						data->name);
 
 				if ((new_feature = (featurelist_t *) malloc (sizeof (featurelist_t))) == NULL)
 				{
-					DBG ("malloc: %s", strerror (errno));
-					syslog (LOG_ERR, MODULE_NAME":  malloc: %s",
-							strerror (errno));
+					char errbuf[1024];
+					ERROR ("sensors plugin: malloc: %s",
+							sstrerror (errno, errbuf, sizeof (errbuf)));
 					break;
 				}
 
@@ -376,171 +327,108 @@ static void sensors_load_conf (void)
 	if (first_feature == NULL)
 	{
 		sensors_cleanup ();
-		syslog (LOG_INFO, MODULE_NAME": lm_sensors reports no features. "
-			"Data will not be collected.");
+		INFO ("sensors plugin: lm_sensors reports no "
+				"features. Data will not be collected.");
+		return (-1);
 	}
-} /* void sensors_load_conf */
-#endif /* if SENSORS_HAVE_READ */
 
-static void collectd_sensors_init (void)
-{
-	return;
-}
+	return (0);
+} /* int sensors_load_conf */
 
-static void sensors_shutdown (void)
+static int sensors_shutdown (void)
 {
-#if SENSORS_HAVE_READ
 	sensors_free_features ();
-#endif /* if SENSORS_HAVE_READ */
+	ignorelist_free (sensor_list);
 
-	if (NULL != sensor_list)
-		ignorelist_free (sensor_list);
-}
+	return (0);
+} /* int sensors_shutdown */
 
-static void sensors_voltage_write (char *host, char *inst, char *val)
+static void sensors_submit (const char *plugin_instance,
+		const char *type, const char *type_instance,
+		double val)
 {
-	char file[BUFSIZE];
-	int status;
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	/* skip ignored in our config */
-	if ((NULL != sensor_list) && ignorelist_match (sensor_list, inst))
+	if ((sensor_list != NULL)
+			&& (ignorelist_match (sensor_list, type_instance)))
 		return;
 
-	/* extended sensor naming */
-	if(sensor_extended_naming)
-		status = snprintf (file, BUFSIZE, extended_filename_format, inst);
-	else
-		status = snprintf (file, BUFSIZE, old_filename_format, inst);
+	values[0].gauge = val;
 
-	if ((status < 1) || (status >= BUFSIZE))
-		return;
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "sensors");
+	strcpy (vl.plugin_instance, plugin_instance);
+	strcpy (vl.type_instance, type_instance);
 
-	rrd_update_file (host, file, val, sensor_voltage_ds_def, sensor_voltage_ds_num);
-}
+	plugin_dispatch_values (type, &vl);
+} /* void sensors_submit */
 
-static void sensors_write (char *host, char *inst, char *val)
-{
-	char file[BUFSIZE];
-	int status;
-
-	/* skip ignored in our config */
-	if ((NULL != sensor_list) && ignorelist_match (sensor_list, inst))
-		return;
-
-	/* extended sensor naming */
-	if (sensor_extended_naming)
-		status = snprintf (file, BUFSIZE, extended_filename_format, inst);
-	else
-		status = snprintf (file, BUFSIZE, old_filename_format, inst);
-
-	if ((status < 1) || (status >= BUFSIZE))
-		return;
-
-	rrd_update_file (host, file, val, ds_def, ds_num);
-}
-
-#if SENSORS_HAVE_READ
-static void sensors_submit (const char *feat_name,
-		const char *chip_prefix, double value, int type)
-{
-	char buf[BUFSIZE];
-	char inst[BUFSIZE];
-
-	if (snprintf (inst, BUFSIZE, "%s-%s", chip_prefix, feat_name)
-			>= BUFSIZE)
-		return;
-
-	/* skip ignored in our config */
-	if ((NULL != sensor_list) && ignorelist_match (sensor_list, inst))
-		return;
-
-	if (snprintf (buf, BUFSIZE, "%u:%.3f", (unsigned int) curtime,
-				value) >= BUFSIZE)
-		return;
-
-	if (type == SENSOR_TYPE_VOLTAGE)
-	{
-		DBG ("%s: %s/%s, %s", MODULE_NAME_VOLTAGE,
-				sensor_type_prefix[type], inst, buf);
-		plugin_submit (MODULE_NAME_VOLTAGE, inst, buf);
-	}
-	else
-	{
-		DBG ("%s: %s/%s, %s", MODULE_NAME,
-				sensor_type_prefix[type], inst, buf);
-		plugin_submit (MODULE_NAME, inst, buf);
-	}
-}
-
-static void sensors_read (void)
+static int sensors_read (void)
 {
 	featurelist_t *feature;
 	double value;
-	char chip_fullprefix[BUFSIZE];
 
-	sensors_load_conf ();
+	char plugin_instance[DATA_MAX_NAME_LEN];
+	char type_instance[DATA_MAX_NAME_LEN];
+
+	if (sensors_load_conf () != 0)
+		return (-1);
 
 	for (feature = first_feature; feature != NULL; feature = feature->next)
 	{
 		if (sensors_get_feature (*feature->chip, feature->data->number, &value) < 0)
 			continue;
 
-		if (sensor_extended_naming)
+		/* full chip name logic borrowed from lm_sensors */
+		if (feature->chip->bus == SENSORS_CHIP_NAME_BUS_ISA)
 		{
-			/* full chip name logic borrowed from lm_sensors */
-			if (feature->chip->bus == SENSORS_CHIP_NAME_BUS_ISA)
-			{
-				if (snprintf (chip_fullprefix, BUFSIZE, "%s-isa-%04x/%s",
-							feature->chip->prefix,
-							feature->chip->addr,
-							sensor_type_prefix[feature->type])
-						>= BUFSIZE)
-					continue;
-			}
-			else if (feature->chip->bus == SENSORS_CHIP_NAME_BUS_DUMMY)
-			{
-				if (snprintf (chip_fullprefix, BUFSIZE, "%s-%s-%04x/%s",
-							feature->chip->prefix,
-							feature->chip->busname,
-							feature->chip->addr,
-							sensor_type_prefix[feature->type])
-						>= BUFSIZE)
-					continue;
-			}
-			else
-			{
-				if (snprintf (chip_fullprefix, BUFSIZE, "%s-i2c-%d-%02x/%s",
-							feature->chip->prefix,
-							feature->chip->bus,
-							feature->chip->addr,
-							sensor_type_prefix[feature->type])
-						>= BUFSIZE)
-					continue;
-			}
-
-			sensors_submit (feature->data->name,
-					chip_fullprefix,
-					value, feature->type);
+			if (snprintf (plugin_instance, DATA_MAX_NAME_LEN, "%s-isa-%04x",
+						feature->chip->prefix,
+						feature->chip->addr)
+					>= 512)
+				continue;
+		}
+		else if (feature->chip->bus == SENSORS_CHIP_NAME_BUS_DUMMY)
+		{
+			if (snprintf (plugin_instance, 512, "%s-%s-%04x",
+						feature->chip->prefix,
+						feature->chip->busname,
+						feature->chip->addr)
+					>= 512)
+				continue;
 		}
 		else
 		{
-			sensors_submit (feature->data->name,
-					feature->chip->prefix,
-					value, feature->type);
+			if (snprintf (plugin_instance, 512, "%s-i2c-%d-%02x",
+						feature->chip->prefix,
+						feature->chip->bus,
+						feature->chip->addr)
+					>= 512)
+				continue;
 		}
+
+		strncpy (type_instance, feature->data->name, DATA_MAX_NAME_LEN);
+
+		sensors_submit (plugin_instance,
+				sensor_to_type[feature->type],
+				type_instance,
+				value);
 	} /* for feature = first_feature .. NULL */
-} /* void sensors_read */
-#else
-# define sensors_read NULL
+
+	return (0);
+} /* int sensors_read */
 #endif /* SENSORS_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, collectd_sensors_init, sensors_read, sensors_write);
-	plugin_register (MODULE_NAME_VOLTAGE, NULL, NULL, sensors_voltage_write);
-	plugin_register_shutdown (MODULE_NAME, sensors_shutdown);
-	cf_register (MODULE_NAME, sensors_config, config_keys, config_keys_num);
-}
-
-#undef BUFSIZE
-#undef MODULE_NAME
+#if SENSORS_HAVE_READ
+	plugin_register_config ("sensors", sensors_config,
+			config_keys, config_keys_num);
+	plugin_register_read ("sensors", sensors_read);
+	plugin_register_shutdown ("sensors", sensors_shutdown);
+#endif
+} /* void module_register */

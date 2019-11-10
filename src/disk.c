@@ -1,11 +1,10 @@
 /**
  * collectd - src/disk.c
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,9 +22,6 @@
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
-#include "utils_debug.h"
-
-#define MODULE_NAME "disk"
 
 #if HAVE_MACH_MACH_TYPES_H
 #  include <mach/mach_types.h>
@@ -55,40 +51,20 @@
 #  include <IOKit/IOBSD.h>
 #endif
 
+#if HAVE_LIMITS_H
+# include <limits.h>
+#endif
+#ifndef UINT_MAX
+#  define UINT_MAX 4294967295U
+#endif
+
 #if HAVE_IOKIT_IOKITLIB_H || KERNEL_LINUX || HAVE_LIBKSTAT
 # define DISK_HAVE_READ 1
 #else
 # define DISK_HAVE_READ 0
 #endif
 
-static char *disk_filename_template = "disk-%s.rrd";
-static char *part_filename_template = "partition-%s.rrd";
-
-/* 104857600 == 100 MB */
-static char *disk_ds_def[] =
-{
-	"DS:rcount:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:rmerged:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:rbytes:COUNTER:"COLLECTD_HEARTBEAT":0:104857600",
-	"DS:rtime:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wcount:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wmerged:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wbytes:COUNTER:"COLLECTD_HEARTBEAT":0:104857600",
-	"DS:wtime:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int disk_ds_num = 8;
-
-static char *part_ds_def[] =
-{
-	"DS:rcount:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:rbytes:COUNTER:"COLLECTD_HEARTBEAT":0:104857600",
-	"DS:wcount:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wbytes:COUNTER:"COLLECTD_HEARTBEAT":0:104857600",
-	NULL
-};
-static int part_ds_num = 4;
-
+#if DISK_HAVE_READ
 #if HAVE_IOKIT_IOKITLIB_H
 static mach_port_t io_master_port = MACH_PORT_NULL;
 /* #endif HAVE_IOKIT_IOKITLIB_H */
@@ -98,20 +74,27 @@ typedef struct diskstats
 {
 	char *name;
 
-	/* This overflows in roughly 1361 year */
+	/* This overflows in roughly 1361 years */
 	unsigned int poll_count;
 
-	unsigned long long read_sectors;
-	unsigned long long write_sectors;
+	counter_t read_sectors;
+	counter_t write_sectors;
 
-	unsigned long long read_bytes;
-	unsigned long long write_bytes;
+	counter_t read_bytes;
+	counter_t write_bytes;
+
+	counter_t read_ops;
+	counter_t write_ops;
+	counter_t read_time;
+	counter_t write_time;
+
+	counter_t avg_read_time;
+	counter_t avg_write_time;
 
 	struct diskstats *next;
 } diskstats_t;
 
 static diskstats_t *disklist;
-static int min_poll_count;
 /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
@@ -121,7 +104,7 @@ static kstat_t *ksp[MAX_NUMDISK];
 static int numdisk = 0;
 #endif /* HAVE_LIBKSTAT */
 
-static void disk_init (void)
+static int disk_init (void)
 {
 #if HAVE_IOKIT_IOKITLIB_H
 	kern_return_t status;
@@ -136,25 +119,15 @@ static void disk_init (void)
 	status = IOMasterPort (MACH_PORT_NULL, &io_master_port);
 	if (status != kIOReturnSuccess)
 	{
-		syslog (LOG_ERR, "IOMasterPort failed: %s",
+		ERROR ("IOMasterPort failed: %s",
 				mach_error_string (status));
 		io_master_port = MACH_PORT_NULL;
-		return;
+		return (-1);
 	}
 /* #endif HAVE_IOKIT_IOKITLIB_H */
 
 #elif KERNEL_LINUX
-	int step;
-	int heartbeat;
-
-	step = atoi (COLLECTD_STEP);
-	heartbeat = atoi (COLLECTD_HEARTBEAT);
-
-	assert (step > 0);
-	assert (heartbeat >= step);
-
-	min_poll_count = 1 + (heartbeat / step);
-	DBG ("min_poll_count = %i;", min_poll_count);
+	/* do nothing */
 /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
@@ -163,7 +136,7 @@ static void disk_init (void)
 	numdisk = 0;
 
 	if (kc == NULL)
-		return;
+		return (-1);
 
 	for (numdisk = 0, ksp_chain = kc->kc_chain;
 			(numdisk < MAX_NUMDISK) && (ksp_chain != NULL);
@@ -178,83 +151,29 @@ static void disk_init (void)
 	}
 #endif /* HAVE_LIBKSTAT */
 
-	return;
-}
+	return (0);
+} /* int disk_init */
 
-static void disk_write (char *host, char *inst, char *val)
+static void disk_submit (const char *plugin_instance,
+		const char *type,
+		counter_t read, counter_t write)
 {
-	char file[512];
-	int status;
+	value_t values[2];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	status = snprintf (file, 512, disk_filename_template, inst);
-	if (status < 1)
-		return;
-	else if (status >= 512)
-		return;
+	values[0].counter = read;
+	values[1].counter = write;
 
-	rrd_update_file (host, file, val, disk_ds_def, disk_ds_num);
-}
+	vl.values = values;
+	vl.values_len = 2;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "disk");
+	strncpy (vl.plugin_instance, plugin_instance,
+			sizeof (vl.plugin_instance));
 
-static void partition_write (char *host, char *inst, char *val)
-{
-	char file[512];
-	int status;
-
-	status = snprintf (file, 512, part_filename_template, inst);
-	if (status < 1)
-		return;
-	else if (status >= 512)
-		return;
-
-	rrd_update_file (host, file, val, part_ds_def, part_ds_num);
-}
-
-#if DISK_HAVE_READ
-#define BUFSIZE 512
-static void disk_submit (char *disk_name,
-		unsigned long long read_count,
-		unsigned long long read_merged,
-		unsigned long long read_bytes,
-		unsigned long long read_time,
-		unsigned long long write_count,
-		unsigned long long write_merged,
-		unsigned long long write_bytes,
-		unsigned long long write_time)
-{
-	char buf[BUFSIZE];
-
-	if (snprintf (buf, BUFSIZE, "%u:%llu:%llu:%llu:%llu:%llu:%llu:%llu:%llu",
-				(unsigned int) curtime,
-				read_count, read_merged, read_bytes, read_time,
-				write_count, write_merged, write_bytes,
-				write_time) >= BUFSIZE)
-		return;
-
-	DBG ("disk_name = %s; buf = %s;",
-			disk_name, buf);
-
-	plugin_submit (MODULE_NAME, disk_name, buf);
-}
-
-#if KERNEL_LINUX || HAVE_LIBKSTAT
-static void partition_submit (char *part_name,
-		unsigned long long read_count,
-		unsigned long long read_bytes,
-		unsigned long long write_count,
-		unsigned long long write_bytes)
-{
-	char buf[BUFSIZE];
-
-	if (snprintf (buf, BUFSIZE, "%u:%llu:%llu:%llu:%llu",
-				(unsigned int) curtime,
-				read_count, read_bytes, write_count,
-				write_bytes) >= BUFSIZE)
-		return;
-
-	plugin_submit ("partition", part_name, buf);
-}
-#endif /* KERNEL_LINUX || HAVE_LIBKSTAT */
-#undef BUFSIZE
+	plugin_dispatch_values (type, &vl);
+} /* void disk_submit */
 
 #if HAVE_IOKIT_IOKITLIB_H
 static signed long long dict_get_value (CFDictionaryRef dict, const char *key)
@@ -268,7 +187,7 @@ static signed long long dict_get_value (CFDictionaryRef dict, const char *key)
 		       	kCFStringEncodingASCII);
 	if (key_obj == NULL)
 	{
-		DBG ("CFStringCreateWithCString (%s) failed.", key);
+		DEBUG ("CFStringCreateWithCString (%s) failed.", key);
 		return (-1LL);
 	}
 	
@@ -279,13 +198,13 @@ static signed long long dict_get_value (CFDictionaryRef dict, const char *key)
 
 	if (val_obj == NULL)
 	{
-		DBG ("CFDictionaryGetValue (%s) failed.", key);
+		DEBUG ("CFDictionaryGetValue (%s) failed.", key);
 		return (-1LL);
 	}
 
 	if (!CFNumberGetValue (val_obj, kCFNumberSInt64Type, &val_int))
 	{
-		DBG ("CFNumberGetValue (%s) failed.", key);
+		DEBUG ("CFNumberGetValue (%s) failed.", key);
 		return (-1LL);
 	}
 
@@ -293,7 +212,7 @@ static signed long long dict_get_value (CFDictionaryRef dict, const char *key)
 }
 #endif /* HAVE_IOKIT_IOKITLIB_H */
 
-static void disk_read (void)
+static int disk_read (void)
 {
 #if HAVE_IOKIT_IOKITLIB_H
 	io_registry_entry_t	disk;
@@ -324,7 +243,7 @@ static void disk_read (void)
 	{
 		plugin_complain (LOG_ERR, &complain_obj, "disk plugin: "
 				"IOServiceGetMatchingServices failed.");
-		return;
+		return (-1);
 	}
 	else if (complain_obj.interval != 0)
 	{
@@ -343,7 +262,7 @@ static void disk_read (void)
 			       	!= kIOReturnSuccess)
 		{
 			/* This fails for example for DVD/CD drives.. */
-			DBG ("IORegistryEntryGetChildEntry (disk) failed: 0x%08x", status);
+			DEBUG ("IORegistryEntryGetChildEntry (disk) failed: 0x%08x", status);
 			IOObjectRelease (disk);
 			continue;
 		}
@@ -355,7 +274,7 @@ static void disk_read (void)
 					kNilOptions)
 				!= kIOReturnSuccess)
 		{
-			syslog (LOG_ERR, "disk-plugin: IORegistryEntryCreateCFProperties failed.");
+			ERROR ("disk-plugin: IORegistryEntryCreateCFProperties failed.");
 			IOObjectRelease (disk_child);
 			IOObjectRelease (disk);
 			continue;
@@ -363,7 +282,7 @@ static void disk_read (void)
 
 		if (props_dict == NULL)
 		{
-			DBG ("IORegistryEntryCreateCFProperties (disk) failed.");
+			DEBUG ("IORegistryEntryCreateCFProperties (disk) failed.");
 			IOObjectRelease (disk_child);
 			IOObjectRelease (disk);
 			continue;
@@ -374,7 +293,7 @@ static void disk_read (void)
 
 		if (stats_dict == NULL)
 		{
-			DBG ("CFDictionaryGetValue (%s) failed.",
+			DEBUG ("CFDictionaryGetValue (%s) failed.",
 				       	kIOBlockStorageDriverStatisticsKey);
 			CFRelease (props_dict);
 			IOObjectRelease (disk_child);
@@ -388,13 +307,14 @@ static void disk_read (void)
 					kNilOptions)
 				!= kIOReturnSuccess)
 		{
-			DBG ("IORegistryEntryCreateCFProperties (disk_child) failed.");
+			DEBUG ("IORegistryEntryCreateCFProperties (disk_child) failed.");
 			IOObjectRelease (disk_child);
 			CFRelease (props_dict);
 			IOObjectRelease (disk);
 			continue;
 		}
 
+		/* kIOBSDNameKey */
 		disk_major = (int) dict_get_value (child_dict,
 			       	kIOBSDMajorKey);
 		disk_minor = (int) dict_get_value (child_dict,
@@ -409,29 +329,33 @@ static void disk_read (void)
 				kIOBlockStorageDriverStatisticsWritesKey);
 		write_byt = dict_get_value (stats_dict,
 				kIOBlockStorageDriverStatisticsBytesWrittenKey);
+		/* This property describes the number of nanoseconds spent
+		 * performing writes since the block storage driver was
+		 * instantiated. It is one of the statistic entries listed
+		 * under the top-level kIOBlockStorageDriverStatisticsKey
+		 * property table. It has an OSNumber value. */
 		write_tme = dict_get_value (stats_dict,
 				kIOBlockStorageDriverStatisticsTotalWriteTimeKey);
 
 		if (snprintf (disk_name, 64, "%i-%i", disk_major, disk_minor) >= 64)
 		{
-			DBG ("snprintf (major, minor) failed.");
+			DEBUG ("snprintf (major, minor) failed.");
 			CFRelease (child_dict);
 			IOObjectRelease (disk_child);
 			CFRelease (props_dict);
 			IOObjectRelease (disk);
 			continue;
 		}
-		DBG ("disk_name = %s", disk_name);
+		DEBUG ("disk_name = %s", disk_name);
 
-		if ((read_ops != -1LL)
-				|| (read_byt != -1LL)
-				|| (read_tme != -1LL)
-				|| (write_ops != -1LL)
-				|| (write_byt != -1LL)
-				|| (write_tme != -1LL))
-			disk_submit (disk_name,
-					read_ops, 0ULL, read_byt, read_tme,
-					write_ops, 0ULL, write_byt, write_tme);
+		if ((read_byt != -1LL) || (write_byt != -1LL))
+			disk_submit (disk_name, "disk_octets", read_byt, write_byt);
+		if ((read_ops != -1LL) || (write_ops != -1LL))
+			disk_submit (disk_name, "disk_ops", read_ops, write_ops);
+		if ((read_tme != -1LL) || (write_tme != -1LL))
+			disk_submit (disk_name, "disk_time",
+					read_tme / 1000,
+					write_tme / 1000);
 
 		CFRelease (child_dict);
 		IOObjectRelease (disk_child);
@@ -444,7 +368,6 @@ static void disk_read (void)
 #elif KERNEL_LINUX
 	FILE *fh;
 	char buffer[1024];
-	char disk_name[128];
 	
 	char *fields[32];
 	int numfields;
@@ -453,17 +376,15 @@ static void disk_read (void)
 	int major = 0;
 	int minor = 0;
 
-	unsigned long long read_sectors  = 0ULL;
-	unsigned long long write_sectors = 0ULL;
+	counter_t read_sectors  = 0;
+	counter_t write_sectors = 0;
 
-	unsigned long long read_count    = 0ULL;
-	unsigned long long read_merged   = 0ULL;
-	unsigned long long read_bytes    = 0ULL;
-	unsigned long long read_time     = 0ULL;
-	unsigned long long write_count   = 0ULL;
-	unsigned long long write_merged  = 0ULL;
-	unsigned long long write_bytes   = 0ULL;
-	unsigned long long write_time    = 0ULL;
+	counter_t read_ops      = 0;
+	counter_t read_merged   = 0;
+	counter_t read_time     = 0;
+	counter_t write_ops     = 0;
+	counter_t write_merged  = 0;
+	counter_t write_time    = 0;
 	int is_disk = 0;
 
 	diskstats_t *ds, *pre_ds;
@@ -474,18 +395,23 @@ static void disk_read (void)
 	{
 		if ((fh = fopen ("/proc/partitions", "r")) == NULL)
 		{
-			plugin_complain (LOG_ERR, &complain_obj, "disk plugin: Failed to open /proc/{diskstats,partitions}.");
-			return;
+			plugin_complain (LOG_ERR, &complain_obj,
+					"disk plugin: Failed to open /proc/"
+					"{diskstats,partitions}.");
+			return (-1);
 		}
 
 		/* Kernel is 2.4.* */
 		fieldshift = 1;
 	}
 
-	plugin_relief (LOG_NOTICE, &complain_obj, "disk plugin: Succeeded to open /proc/{diskstats,partitions}.");
+	plugin_relief (LOG_NOTICE, &complain_obj, "disk plugin: "
+			"Succeeded to open /proc/{diskstats,partitions}.");
 
-	while (fgets (buffer, 1024, fh) != NULL)
+	while (fgets (buffer, sizeof (buffer), fh) != NULL)
 	{
+		char *disk_name;
+
 		numfields = strsplit (buffer, fields, 32);
 
 		if ((numfields != (14 + fieldshift)) && (numfields != 7))
@@ -494,9 +420,7 @@ static void disk_read (void)
 		major = atoll (fields[0]);
 		minor = atoll (fields[1]);
 
-		if (snprintf (disk_name, 128, "%i-%i", major, minor) < 1)
-			continue;
-		disk_name[127] = '\0';
+		disk_name = fields[2];
 
 		for (ds = disklist, pre_ds = disklist; ds != NULL; pre_ds = ds, ds = ds->next)
 			if (strcmp (disk_name, ds->name) == 0)
@@ -523,15 +447,15 @@ static void disk_read (void)
 		if (numfields == 7)
 		{
 			/* Kernel 2.6, Partition */
-			read_count    = atoll (fields[3]);
+			read_ops      = atoll (fields[3]);
 			read_sectors  = atoll (fields[4]);
-			write_count   = atoll (fields[5]);
+			write_ops     = atoll (fields[5]);
 			write_sectors = atoll (fields[6]);
 		}
 		else if (numfields == (14 + fieldshift))
 		{
-			read_count  =  atoll (fields[3 + fieldshift]);
-			write_count =  atoll (fields[7 + fieldshift]);
+			read_ops  =  atoll (fields[3 + fieldshift]);
+			write_ops =  atoll (fields[7 + fieldshift]);
 
 			read_sectors  = atoll (fields[5 + fieldshift]);
 			write_sectors = atoll (fields[9 + fieldshift]);
@@ -547,57 +471,146 @@ static void disk_read (void)
 		}
 		else
 		{
-			DBG ("numfields = %i; => unknown file format.", numfields);
+			DEBUG ("numfields = %i; => unknown file format.", numfields);
 			continue;
 		}
 
+		{
+			counter_t diff_read_sectors;
+			counter_t diff_write_sectors;
+
 		/* If the counter wraps around, it's only 32 bits.. */
-		if (read_sectors < ds->read_sectors)
-			ds->read_bytes += 512 * ((0xFFFFFFFF - ds->read_sectors) + read_sectors);
-		else
-			ds->read_bytes += 512 * (read_sectors - ds->read_sectors);
+			if (read_sectors < ds->read_sectors)
+				diff_read_sectors = 1 + read_sectors
+					+ (UINT_MAX - ds->read_sectors);
+			else
+				diff_read_sectors = read_sectors - ds->read_sectors;
+			if (write_sectors < ds->write_sectors)
+				diff_write_sectors = 1 + write_sectors
+					+ (UINT_MAX - ds->write_sectors);
+			else
+				diff_write_sectors = write_sectors - ds->write_sectors;
 
-		if (write_sectors < ds->write_sectors)
-			ds->write_bytes += 512 * ((0xFFFFFFFF - ds->write_sectors) + write_sectors);
-		else
-			ds->write_bytes += 512 * (write_sectors - ds->write_sectors);
+			ds->read_bytes += 512 * diff_read_sectors;
+			ds->write_bytes += 512 * diff_write_sectors;
+			ds->read_sectors = read_sectors;
+			ds->write_sectors = write_sectors;
+		}
 
-		ds->read_sectors  = read_sectors;
-		ds->write_sectors = write_sectors;
-		read_bytes  = ds->read_bytes;
-		write_bytes = ds->write_bytes;
+		/* Calculate the average time an io-op needs to complete */
+		if (is_disk)
+		{
+			counter_t diff_read_ops;
+			counter_t diff_write_ops;
+			counter_t diff_read_time;
+			counter_t diff_write_time;
+
+			if (read_ops < ds->read_ops)
+				diff_read_ops = 1 + read_ops
+					+ (UINT_MAX - ds->read_ops);
+			else
+				diff_read_ops = read_ops - ds->read_ops;
+			DEBUG ("disk plugin: disk_name = %s; read_ops = %llu; "
+					"ds->read_ops = %llu; diff_read_ops = %llu;",
+					disk_name,
+					read_ops, ds->read_ops, diff_read_ops);
+
+			if (write_ops < ds->write_ops)
+				diff_write_ops = 1 + write_ops
+					+ (UINT_MAX - ds->write_ops);
+			else
+				diff_write_ops = write_ops - ds->write_ops;
+
+			if (read_time < ds->read_time)
+				diff_read_time = 1 + read_time
+					+ (UINT_MAX - ds->read_time);
+			else
+				diff_read_time = read_time - ds->read_time;
+
+			if (write_time < ds->write_time)
+				diff_write_time = 1 + write_time
+					+ (UINT_MAX - ds->write_time);
+			else
+				diff_write_time = write_time - ds->write_time;
+
+			if (diff_read_ops != 0)
+				ds->avg_read_time += (diff_read_time
+						+ (diff_read_ops / 2))
+					/ diff_read_ops;
+			if (diff_write_ops != 0)
+				ds->avg_write_time += (diff_write_time
+						+ (diff_write_ops / 2))
+					/ diff_write_ops;
+
+			ds->read_ops = read_ops;
+			ds->read_time = read_time;
+			ds->write_ops = write_ops;
+			ds->write_time = write_time;
+		} /* if (is_disk) */
 
 		/* Don't write to the RRDs if we've just started.. */
 		ds->poll_count++;
-		if (ds->poll_count <= min_poll_count)
+		if (ds->poll_count <= 2)
 		{
-			DBG ("(ds->poll_count = %i) <= (min_poll_count = %i); => Not writing.",
-					ds->poll_count, min_poll_count);
+			DEBUG ("disk plugin: (ds->poll_count = %i) <= "
+					"(min_poll_count = 2); => Not writing.",
+					ds->poll_count);
 			continue;
 		}
 
-		if ((read_count == 0) && (write_count == 0))
+		if ((read_ops == 0) && (write_ops == 0))
 		{
-			DBG ("((read_count == 0) && (write_count == 0)); => Not writing.");
+			DEBUG ("disk plugin: ((read_ops == 0) && "
+					"(write_ops == 0)); => Not writing.");
 			continue;
 		}
+
+		if ((ds->read_bytes != 0) || (ds->write_bytes != 0))
+			disk_submit (disk_name, "disk_octets",
+					ds->read_bytes, ds->write_bytes);
+
+		if ((ds->read_ops != 0) || (ds->write_ops != 0))
+			disk_submit (disk_name, "disk_ops",
+					read_ops, write_ops);
+
+		if ((ds->avg_read_time != 0) || (ds->avg_write_time != 0))
+			disk_submit (disk_name, "disk_time",
+					ds->avg_read_time, ds->avg_write_time);
 
 		if (is_disk)
-			disk_submit (disk_name, read_count, read_merged, read_bytes, read_time,
-					write_count, write_merged, write_bytes, write_time);
-		else
-			partition_submit (disk_name, read_count, read_bytes, write_count, write_bytes);
-	}
+		{
+			if ((read_merged != -1LL) || (write_merged != -1LL))
+				disk_submit (disk_name, "disk_merged",
+						read_merged, write_merged);
+		} /* if (is_disk) */
+	} /* while (fgets (buffer, sizeof (buffer), fh) != NULL) */
 
 	fclose (fh);
 /* #endif defined(KERNEL_LINUX) */
 
 #elif HAVE_LIBKSTAT
+# if HAVE_KSTAT_IO_T_WRITES && HAVE_KSTAT_IO_T_NWRITES && HAVE_KSTAT_IO_T_WTIME
+#  define KIO_ROCTETS reads
+#  define KIO_WOCTETS writes
+#  define KIO_ROPS    nreads
+#  define KIO_WOPS    nwrites
+#  define KIO_RTIME   rtime
+#  define KIO_WTIME   wtime
+# elif HAVE_KSTAT_IO_T_NWRITTEN && HAVE_KSTAT_IO_T_WRITES && HAVE_KSTAT_IO_T_WTIME
+#  define KIO_ROCTETS nread
+#  define KIO_WOCTETS nwritten
+#  define KIO_ROPS    reads
+#  define KIO_WOPS    writes
+#  define KIO_RTIME   rtime
+#  define KIO_WTIME   wtime
+# else
+#  error "kstat_io_t does not have the required members"
+# endif
 	static kstat_io_t kio;
 	int i;
 
 	if (kc == NULL)
-		return;
+		return (-1);
 
 	for (i = 0; i < numdisk; i++)
 	{
@@ -605,24 +618,33 @@ static void disk_read (void)
 			continue;
 
 		if (strncmp (ksp[i]->ks_class, "disk", 4) == 0)
-			disk_submit (ksp[i]->ks_name,
-					kio.reads,  0LL, kio.nread,    kio.rtime,
-					kio.writes, 0LL, kio.nwritten, kio.wtime);
+		{
+			disk_submit (ksp[i]->ks_name, "disk_octets",
+					kio.KIO_ROCTETS, kio.KIO_WOCTETS);
+			disk_submit (ksp[i]->ks_name, "disk_ops",
+					kio.KIO_ROPS, kio.KIO_WOPS);
+			/* FIXME: Convert this to microseconds if necessary */
+			disk_submit (ksp[i]->ks_name, "disk_time",
+					kio.KIO_RTIME, kio.KIO_WTIME);
+		}
 		else if (strncmp (ksp[i]->ks_class, "partition", 9) == 0)
-			partition_submit (ksp[i]->ks_name,
-					kio.reads, kio.nread,
-					kio.writes,kio.nwritten);
+		{
+			disk_submit (ksp[i]->ks_name, "disk_octets",
+					kio.KIO_ROCTETS, kio.KIO_WOCTETS);
+			disk_submit (ksp[i]->ks_name, "disk_ops",
+					kio.KIO_ROPS, kio.KIO_WOPS);
+		}
 	}
 #endif /* defined(HAVE_LIBKSTAT) */
-} /* static void disk_read (void) */
-#else
-# define disk_read NULL
+
+	return (0);
+} /* int disk_read */
 #endif /* DISK_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register ("partition", NULL, NULL, partition_write);
-	plugin_register (MODULE_NAME, disk_init, disk_read, disk_write);
-}
-
-#undef MODULE_NAME
+#if DISK_HAVE_READ
+	plugin_register_init ("disk", disk_init);
+	plugin_register_read ("disk", disk_read);
+#endif /* DISK_HAVE_READ */
+} /* void module_register */

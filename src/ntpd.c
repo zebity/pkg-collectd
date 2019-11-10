@@ -1,6 +1,6 @@
 /**
  * collectd - src/ntpd.c
- * Copyright (C) 2006  Florian octo Forster
+ * Copyright (C) 2006-2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,9 +23,6 @@
 #include "common.h"
 #include "plugin.h"
 #include "configfile.h"
-#include "utils_debug.h"
-
-#define MODULE_NAME "ntpd"
 
 #if HAVE_SYS_SOCKET_H
 # define NTPD_HAVE_READ 1
@@ -51,11 +48,11 @@
 #if HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
 #endif
-#if HAVE_SYS_POLL_H
-# include <sys/poll.h>
+#if HAVE_POLL_H
+# include <poll.h>
 #endif
 
-static char *config_keys[] =
+static const char *config_keys[] =
 {
 	"Host",
 	"Port",
@@ -63,34 +60,12 @@ static char *config_keys[] =
 };
 static int config_keys_num = 2;
 
-/* drift */
-static char *time_offset_file     = "ntpd/time_offset-%s.rrd";
-static char *time_dispersion_file = "ntpd/time_dispersion-%s.rrd";
-static char *time_delay_file      = "ntpd/delay-%s.rrd";
-
-/* used for `time_offset', `time_dispersion', and `delay' */
-static char *sec_ds_def[] =
-{
-	"DS:seconds:GAUGE:"COLLECTD_HEARTBEAT":-1000000:1000000",
-	NULL
-};
-static int sec_ds_num = 1;
-
-static char *frequency_offset_file = "ntpd/frequency_offset-%s.rrd";
-static char *frequency_offset_ds_def[] =
-{
-	"DS:ppm:GAUGE:"COLLECTD_HEARTBEAT":-1000000:1000000",
-	NULL
-};
-static int frequency_offset_ds_num = 1;
-
 #if NTPD_HAVE_READ
 # define NTPD_DEFAULT_HOST "localhost"
 # define NTPD_DEFAULT_PORT "123"
 static int   sock_descr = -1;
 static char *ntpd_host = NULL;
-static char *ntpd_port = NULL;
-#endif
+static char  ntpd_port[16];
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * The following definitions were copied from the NTPd distribution  *
@@ -286,21 +261,24 @@ static int refclock_names_num = 45;
  * End of the copied stuff..                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static int ntpd_config (char *key, char *value)
+static int ntpd_config (const char *key, const char *value)
 {
-	if (strcasecmp (key, "host") == 0)
+	if (strcasecmp (key, "Host") == 0)
 	{
 		if (ntpd_host != NULL)
 			free (ntpd_host);
 		if ((ntpd_host = strdup (value)) == NULL)
 			return (1);
 	}
-	else if (strcasecmp (key, "port") == 0)
+	else if (strcasecmp (key, "Port") == 0)
 	{
-		if (ntpd_port != NULL)
-			free (ntpd_port);
-		if ((ntpd_port = strdup (value)) == NULL)
-			return (1);
+		int port = (int) (atof (value));
+		if ((port > 0) && (port <= 65535))
+			snprintf (ntpd_port, sizeof (ntpd_port),
+					"%i", port);
+		else
+			strncpy (ntpd_port, value, sizeof (ntpd_port));
+		ntpd_port[sizeof (ntpd_port) - 1] = '\0';
 	}
 	else
 	{
@@ -310,64 +288,22 @@ static int ntpd_config (char *key, char *value)
 	return (0);
 }
 
-static void ntpd_init (void)
+static void ntpd_submit (char *type, char *type_inst, double value)
 {
-	return;
-}
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-static void ntpd_write_sec (char *host, char *inst, char *val, char *file)
-{
-	char buf[256];
-	int  status;
+	values[0].gauge = value;
 
-	status = snprintf (buf, 256, file, inst);
-	if ((status < 1) || (status >= 256))
-		return;
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "ntpd");
+	strcpy (vl.plugin_instance, "");
+	strncpy (vl.type_instance, type_inst, sizeof (vl.type_instance));
 
-	rrd_update_file (host, buf, val,
-			sec_ds_def, sec_ds_num);
-}
-
-static void ntpd_write_time_offset (char *host, char *inst, char *val)
-{
-	ntpd_write_sec (host, inst, val, time_offset_file);
-}
-
-static void ntpd_write_time_dispersion (char *host, char *inst, char *val)
-{
-	ntpd_write_sec (host, inst, val, time_dispersion_file);
-}
-
-static void ntpd_write_delay (char *host, char *inst, char *val)
-{
-	ntpd_write_sec (host, inst, val, time_delay_file);
-}
-
-static void ntpd_write_frequency_offset (char *host, char *inst, char *val)
-{
-	char buf[256];
-	int  status;
-
-	status = snprintf (buf, 256, frequency_offset_file, inst);
-	if ((status < 1) || (status >= 256))
-		return;
-
-	rrd_update_file (host, buf, val,
-			frequency_offset_ds_def, frequency_offset_ds_num);
-}
-
-#if NTPD_HAVE_READ
-static void ntpd_submit (char *type, char *inst, double value)
-{
-	char buf[256];
-
-	if (snprintf (buf, 256, "%u:%.8f", (unsigned int) curtime, value) >= 256)
-		return;
-
-	DBG ("type = %s; inst = %s; value = %s;",
-			type, inst, buf);
-
-	plugin_submit (type, inst, buf);
+	plugin_dispatch_values (type, &vl);
 }
 
 /* returns `tv0 - tv1' in milliseconds or 0 if `tv1 > tv0' */
@@ -408,14 +344,14 @@ static int ntpd_connect (void)
 	if (sock_descr >= 0)
 		return (sock_descr);
 
-	DBG ("Opening a new socket");
+	DEBUG ("Opening a new socket");
 
 	host = ntpd_host;
 	if (host == NULL)
 		host = NTPD_DEFAULT_HOST;
 
 	port = ntpd_port;
-	if (port == NULL)
+	if (strlen (port) == 0)
 		port = NTPD_DEFAULT_PORT;
 
 	memset (&ai_hints, '\0', sizeof (ai_hints));
@@ -426,12 +362,12 @@ static int ntpd_connect (void)
 
 	if ((status = getaddrinfo (host, port, &ai_hints, &ai_list)) != 0)
 	{
-		DBG ("getaddrinfo (%s, %s): %s",
+		char errbuf[1024];
+		ERROR ("ntpd plugin: getaddrinfo (%s, %s): %s",
 				host, port,
-				status == EAI_SYSTEM ? strerror (errno) : gai_strerror (status));
-		syslog (LOG_ERR, "ntpd plugin: getaddrinfo (%s, %s): %s",
-				host, port,
-				status == EAI_SYSTEM ? strerror (errno) : gai_strerror (status));
+				(status == EAI_SYSTEM)
+				? sstrerror (errno, errbuf, sizeof (errbuf))
+				: gai_strerror (status));
 		return (-1);
 	}
 
@@ -458,8 +394,8 @@ static int ntpd_connect (void)
 
 	if (sock_descr < 0)
 	{
-		DBG ("Unable to connect to server.");
-		syslog (LOG_ERR, "ntpd plugin: Unable to connect to server.");
+		DEBUG ("Unable to connect to server.");
+		ERROR ("ntpd plugin: Unable to connect to server.");
 	}
 
 	return (sock_descr);
@@ -507,8 +443,9 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 
 	if (gettimeofday (&time_end, NULL) < 0)
 	{
-		syslog (LOG_ERR, "ntpd plugin: gettimeofday failed: %s",
-				strerror (errno));
+		char errbuf[1024];
+		ERROR ("ntpd plugin: gettimeofday failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		return (-1);
 	}
 	time_end.tv_sec++; /* wait for a most one second */
@@ -518,8 +455,9 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 	{
 		if (gettimeofday (&time_now, NULL) < 0)
 		{
-			syslog (LOG_ERR, "ntpd plugin: gettimeofday failed: %s",
-					strerror (errno));
+			char errbuf[1024];
+			ERROR ("ntpd plugin: gettimeofday failed: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
 			return (-1);
 		}
 
@@ -531,7 +469,7 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 		poll_s.events  = POLLIN | POLLPRI;
 		poll_s.revents = 0;
 		
-		DBG ("Polling for %ims", timeout);
+		DEBUG ("Polling for %ims", timeout);
 		status = poll (&poll_s, 1, timeout);
 
 		if ((status < 0) && ((errno == EAGAIN) || (errno == EINTR)))
@@ -539,15 +477,15 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 
 		if (status < 0)
 		{
-			DBG ("poll failed: %s", strerror (errno));
-			syslog (LOG_ERR, "ntpd plugin: poll failed: %s",
-					strerror (errno));
+			char errbuf[1024];
+			ERROR ("ntpd plugin: poll failed: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
 			return (-1);
 		}
 
 		if (status == 0) /* timeout */
 		{
-			DBG ("timeout reached.");
+			DEBUG ("timeout reached.");
 			break;
 		}
 
@@ -559,50 +497,52 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 
 		if (status < 0)
 		{
-			DBG ("recv(2) failed: %s", strerror (errno));
-			DBG ("Closing socket #%i", sd);
+			char errbuf[1024];
+			DEBUG ("recv(2) failed: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+			DEBUG ("Closing socket #%i", sd);
 			close (sd);
 			sock_descr = sd = -1;
 			return (-1);
 		}
 
-		DBG ("recv'd %i bytes", status);
+		DEBUG ("recv'd %i bytes", status);
 
 		/* 
 		 * Do some sanity checks first
 		 */
 		if (status < RESP_HEADER_SIZE)
 		{
-			syslog (LOG_WARNING, "ntpd plugin: Short (%i bytes) packet received",
+			WARNING ("ntpd plugin: Short (%i bytes) packet received",
 					(int) status);
 			continue;
 		}
 		if (INFO_MODE (res.rm_vn_mode) != MODE_PRIVATE)
 		{
-			syslog (LOG_NOTICE, "ntpd plugin: Packet received with mode %i",
+			NOTICE ("ntpd plugin: Packet received with mode %i",
 					INFO_MODE (res.rm_vn_mode));
 			continue;
 		}
 		if (INFO_IS_AUTH (res.auth_seq))
 		{
-			syslog (LOG_NOTICE, "ntpd plugin: Encrypted packet received");
+			NOTICE ("ntpd plugin: Encrypted packet received");
 			continue;
 		}
 		if (!ISRESPONSE (res.rm_vn_mode))
 		{
-			syslog (LOG_NOTICE, "ntpd plugin: Received request packet, "
+			NOTICE ("ntpd plugin: Received request packet, "
 					"wanted response");
 			continue;
 		}
 		if (INFO_MBZ (res.mbz_itemsize))
 		{
-			syslog (LOG_WARNING, "ntpd plugin: Received packet with nonzero "
+			WARNING ("ntpd plugin: Received packet with nonzero "
 					"MBZ field!");
 			continue;
 		}
 		if (res.implementation != IMPL_XNTPD)
 		{
-			syslog (LOG_WARNING, "ntpd plugin: Asked for request of type %i, "
+			WARNING ("ntpd plugin: Asked for request of type %i, "
 					"got %i", (int) IMPL_XNTPD, (int) res.implementation);
 			continue;
 		}
@@ -610,7 +550,7 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 		/* Check for error code */
 		if (INFO_ERR (res.err_nitems) != 0)
 		{
-			syslog (LOG_ERR, "ntpd plugin: Received error code %i",
+			ERROR ("ntpd plugin: Received error code %i",
 					(int) INFO_ERR(res.err_nitems));
 			return ((int) INFO_ERR (res.err_nitems));
 		}
@@ -618,16 +558,24 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 		/* extract number of items in this packet and the size of these items */
 		pkt_item_num = INFO_NITEMS (res.err_nitems);
 		pkt_item_len = INFO_ITEMSIZE (res.mbz_itemsize);
-		DBG ("pkt_item_num = %i; pkt_item_len = %i;",
+		DEBUG ("pkt_item_num = %i; pkt_item_len = %i;",
 				pkt_item_num, pkt_item_len);
 
 		/* Check if the reported items fit in the packet */
 		if ((pkt_item_num * pkt_item_len) > (status - RESP_HEADER_SIZE))
 		{
-			syslog (LOG_ERR, "ntpd plugin: %i items * %i bytes > "
+			ERROR ("ntpd plugin: %i items * %i bytes > "
 					"%i bytes - %i bytes header",
 					(int) pkt_item_num, (int) pkt_item_len,
 					(int) status, (int) RESP_HEADER_SIZE);
+			continue;
+		}
+
+		if (pkt_item_len > res_item_size)
+		{
+			ERROR ("ntpd plugin: (pkt_item_len = %i) "
+					">= (res_item_size = %i)",
+					pkt_item_len, res_item_size);
 			continue;
 		}
 
@@ -636,29 +584,36 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 		 * items have the same size. Discard invalid packets. */
 		if (items_num == 0) /* first packet */
 		{
-			DBG ("*res_size = %i", pkt_item_len);
+			DEBUG ("*res_size = %i", pkt_item_len);
 			*res_size = pkt_item_len;
 		}
 		else if (*res_size != pkt_item_len)
 		{
-			DBG ("Error: *res_size = %i; pkt_item_len = %i;",
+			DEBUG ("Error: *res_size = %i; pkt_item_len = %i;",
 					*res_size, pkt_item_len);
-			syslog (LOG_ERR, "Item sizes differ.");
+			ERROR ("Item sizes differ.");
 			continue;
 		}
 
+		/*
+		 * Because the items in the packet may be smaller than the
+		 * items requested, the following holds true:
+		 */
+		assert ((*res_size == pkt_item_len)
+				&& (pkt_item_len <= res_item_size));
+
 		/* Calculate the padding. No idea why there might be any padding.. */
 		pkt_padding = 0;
-		if (res_item_size > pkt_item_len)
+		if (pkt_item_len < res_item_size)
 			pkt_padding = res_item_size - pkt_item_len;
-		DBG ("res_item_size = %i; pkt_padding = %i;",
+		DEBUG ("res_item_size = %i; pkt_padding = %i;",
 				res_item_size, pkt_padding);
 
 		/* Extract the sequence number */
 		pkt_sequence = INFO_SEQ (res.auth_seq);
 		if ((pkt_sequence < 0) || (pkt_sequence > MAXSEQ))
 		{
-			syslog (LOG_ERR, "ntpd plugin: Received packet with sequence %i",
+			ERROR ("ntpd plugin: Received packet with sequence %i",
 					pkt_sequence);
 			continue;
 		}
@@ -666,7 +621,7 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 		/* Check if this sequence has been received before. If so, discard it. */
 		if (pkt_recvd[pkt_sequence] != '\0')
 		{
-			syslog (LOG_NOTICE, "ntpd plugin: Sequence %i received twice",
+			NOTICE ("ntpd plugin: Sequence %i received twice",
 					pkt_sequence);
 			continue;
 		}
@@ -677,35 +632,43 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 		{
 			if (pkt_lastseq != -1)
 			{
-				syslog (LOG_ERR, "ntpd plugin: Two packets which both "
+				ERROR ("ntpd plugin: Two packets which both "
 						"claim to be the last one in the "
 						"sequence have been received.");
 				continue;
 			}
 			pkt_lastseq = pkt_sequence;
-			DBG ("Last sequence = %i;", pkt_lastseq);
+			DEBUG ("Last sequence = %i;", pkt_lastseq);
 		}
 
 		/*
 		 * Enough with the checks. Copy the data now.
 		 * We start by allocating some more memory.
 		 */
-		DBG ("realloc (%p, %i)", (void *) *res_data,
+		DEBUG ("realloc (%p, %i)", (void *) *res_data,
 				(items_num + pkt_item_num) * res_item_size);
 		items = realloc ((void *) *res_data,
 				(items_num + pkt_item_num) * res_item_size);
-		items_num += pkt_item_num;
 		if (items == NULL)
 		{
 			items = *res_data;
-			syslog (LOG_ERR, "ntpd plugin: realloc failed.");
+			ERROR ("ntpd plugin: realloc failed.");
 			continue;
 		}
+		items_num += pkt_item_num;
 		*res_data = items;
 
 		for (i = 0; i < pkt_item_num; i++)
 		{
+			/* dst: There are already `*res_items' items with
+			 *      res_item_size bytes each in in `*res_data'. Set
+			 *      dst to the first byte after that. */
 			void *dst = (void *) (*res_data + ((*res_items) * res_item_size));
+			/* src: We use `pkt_item_len' to calculate the offset
+			 *      from the beginning of the packet, because the
+			 *      items in the packet may be smaller than the
+			 *      items that were requested. We skip `i' such
+			 *      items. */
 			void *src = (void *) (((char *) res.data) + (i * pkt_item_len));
 
 			/* Set the padding to zeros */
@@ -713,8 +676,10 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 				memset (dst, '\0', res_item_size);
 			memcpy (dst, src, (size_t) pkt_item_len);
 
+			/* Increment `*res_items' by one, so `dst' will end up
+			 * one further in the next round. */
 			(*res_items)++;
-		}
+		} /* for (pkt_item_num) */
 
 		pkt_recvd[pkt_sequence] = (char) 1;
 		pkt_recvd_num++;
@@ -724,7 +689,7 @@ static int ntpd_receive_response (int req_code, int *res_items, int *res_size,
 	} /* while (done == 0) */
 
 	return (0);
-}
+} /* int ntpd_receive_response */
 
 /* For a description of the arguments see `ntpd_do_query' below. */
 static int ntpd_send_request (int req_code, int req_items, int req_size, char *req_data)
@@ -757,13 +722,13 @@ static int ntpd_send_request (int req_code, int req_items, int req_size, char *r
 	if (req_data != NULL)
 		memcpy ((void *) req.data, (const void *) req_data, req_data_len);
 
-	DBG ("req_items = %i; req_size = %i; req_data = %p;",
+	DEBUG ("req_items = %i; req_size = %i; req_data = %p;",
 			req_items, req_size, (void *) req_data);
 
 	status = swrite (sd, (const char *) &req, REQ_LEN_NOMAC);
 	if (status < 0)
 	{
-		DBG ("`swrite' failed. Closing socket #%i", sd);
+		DEBUG ("`swrite' failed. Closing socket #%i", sd);
 		close (sd);
 		sock_descr = sd = -1;
 		return (status);
@@ -810,7 +775,7 @@ static double ntpd_read_fp (int32_t val_int)
 	return (val_double);
 }
 
-static void ntpd_read (void)
+static int ntpd_read (void)
 {
 	struct info_kernel *ik;
 	int                 ik_num;
@@ -834,19 +799,19 @@ static void ntpd_read (void)
 
 	if (status != 0)
 	{
-		DBG ("ntpd_do_query failed with status %i", status);
-		return;
+		DEBUG ("ntpd_do_query failed with status %i", status);
+		return (-1);
 	}
 	if ((ik == NULL) || (ik_num == 0) || (ik_size == 0))
 	{
-		DBG ("ntpd_do_query returned: ik = %p; ik_num = %i; ik_size = %i;",
+		DEBUG ("ntpd_do_query returned: ik = %p; ik_num = %i; ik_size = %i;",
 				(void *) ik, ik_num, ik_size);
-		return;
+		return (-1);
 	}
 
 	/* kerninfo -> estimated error */
 
-	DBG ("info_kernel:\n"
+	DEBUG ("info_kernel:\n"
 			"  pll offset    = %.8f\n"
 			"  pll frequency = %.8f\n" /* drift compensation */
 			"  est error     = %.8f\n",
@@ -854,9 +819,9 @@ static void ntpd_read (void)
 			ntpd_read_fp (ik->freq),
 			ntpd_read_fp (ik->esterror));
 
-	ntpd_submit ("ntpd_frequency_offset", "loop",  ntpd_read_fp (ik->freq));
-	ntpd_submit ("ntpd_time_offset",      "loop",  ntpd_read_fp (ik->offset));
-	ntpd_submit ("ntpd_time_offset",      "error", ntpd_read_fp (ik->esterror));
+	ntpd_submit ("frequency_offset", "loop",  ntpd_read_fp (ik->freq));
+	ntpd_submit ("time_offset",      "loop",  ntpd_read_fp (ik->offset));
+	ntpd_submit ("time_offset",      "error", ntpd_read_fp (ik->esterror));
 
 	free (ik);
 	ik = NULL;
@@ -867,14 +832,14 @@ static void ntpd_read (void)
 			sizeof (struct info_peer_summary));
 	if (status != 0)
 	{
-		DBG ("ntpd_do_query failed with status %i", status);
-		return;
+		DEBUG ("ntpd_do_query failed with status %i", status);
+		return (-1);
 	}
 	if ((ps == NULL) || (ps_num == 0) || (ps_size == 0))
 	{
-		DBG ("ntpd_do_query returned: ps = %p; ps_num = %i; ps_size = %i;",
+		DEBUG ("ntpd_do_query returned: ps = %p; ps_num = %i; ps_size = %i;",
 				(void *) ps, ps_num, ps_size);
-		return;
+		return (-1);
 	}
 
 	for (i = 0; i < ps_num; i++)
@@ -911,9 +876,10 @@ static void ntpd_read (void)
 					NULL, 0, 0 /* no flags */);
 			if (status != 0)
 			{
-				syslog (LOG_ERR, "ntpd plugin: getnameinfo failed: %s",
-						status == EAI_SYSTEM
-						? strerror (errno)
+				char errbuf[1024];
+				ERROR ("ntpd plugin: getnameinfo failed: %s",
+						(status == EAI_SYSTEM)
+						? sstrerror (errno, errbuf, sizeof (errbuf))
 						: gai_strerror (status));
 				continue;
 			}
@@ -961,7 +927,7 @@ static void ntpd_read (void)
 			}
 		}
 
-		DBG ("peer %i:\n"
+		DEBUG ("peer %i:\n"
 				"  peername   = %s\n"
 				"  srcadr     = 0x%08x\n"
 				"  delay      = %f\n"
@@ -979,29 +945,24 @@ static void ntpd_read (void)
 				ntpd_read_fp (ptr->dispersion));
 
 		if (refclock_id != 1) /* not the system clock (offset will always be zero.. */
-			ntpd_submit ("ntpd_time_offset", peername, offset);
-		ntpd_submit ("ntpd_time_dispersion", peername, ntpd_read_fp (ptr->dispersion));
+			ntpd_submit ("time_offset", peername, offset);
+		ntpd_submit ("time_dispersion", peername, ntpd_read_fp (ptr->dispersion));
 		if (refclock_id == 0) /* not a reference clock */
-			ntpd_submit ("ntpd_delay", peername, ntpd_read_fp (ptr->delay));
+			ntpd_submit ("delay", peername, ntpd_read_fp (ptr->delay));
 	}
 
 	free (ps);
 	ps = NULL;
 
-	return;
-}
-#else
-# define ntpd_read NULL
+	return (0);
+} /* int ntpd_read */
 #endif /* NTPD_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, ntpd_init, ntpd_read, NULL);
-	plugin_register ("ntpd_time_offset", NULL, NULL, ntpd_write_time_offset);
-	plugin_register ("ntpd_time_dispersion", NULL, NULL, ntpd_write_time_dispersion);
-	plugin_register ("ntpd_delay", NULL, NULL, ntpd_write_delay);
-	plugin_register ("ntpd_frequency_offset", NULL, NULL, ntpd_write_frequency_offset);
-	cf_register (MODULE_NAME, ntpd_config, config_keys, config_keys_num);
-}
-
-#undef MODULE_NAME
+#if NTPD_HAVE_READ
+	plugin_register_config ("ntpd", ntpd_config,
+			config_keys, config_keys_num);
+	plugin_register_read ("ntpd", ntpd_read);
+#endif /* NTPD_HAVE_READ */
+} /* void module_register */

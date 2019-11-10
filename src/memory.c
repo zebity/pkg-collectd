@@ -1,11 +1,10 @@
 /**
  * collectd - src/memory.c
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,7 +22,6 @@
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
-#include "utils_debug.h"
 
 #ifdef HAVE_SYS_SYSCTL_H
 # include <sys/sysctl.h>
@@ -51,21 +49,6 @@
 # define MEMORY_HAVE_READ 0
 #endif
 
-#define MODULE_NAME "memory"
-
-static char *memory_file = "memory.rrd";
-
-/* 9223372036854775807 == LLONG_MAX */
-static char *ds_def[] =
-{
-	"DS:used:GAUGE:"COLLECTD_HEARTBEAT":0:9223372036854775807",
-	"DS:free:GAUGE:"COLLECTD_HEARTBEAT":0:9223372036854775807",
-	"DS:buffers:GAUGE:"COLLECTD_HEARTBEAT":0:9223372036854775807",
-	"DS:cached:GAUGE:"COLLECTD_HEARTBEAT":0:9223372036854775807",
-	NULL
-};
-static int ds_num = 4;
-
 /* vm_statistics_data_t */
 #if defined(HOST_VM_INFO)
 static mach_port_t port_host;
@@ -85,7 +68,8 @@ static int pagesize;
 static kstat_t *ksp;
 #endif /* HAVE_LIBKSTAT */
 
-static void memory_init (void)
+#if MEMORY_HAVE_READ
+static int memory_init (void)
 {
 #if defined(HOST_VM_INFO)
 	port_host = mach_host_self ();
@@ -107,31 +91,28 @@ static void memory_init (void)
 		ksp = NULL;
 #endif /* HAVE_LIBKSTAT */
 
-	return;
-}
+	return (0);
+} /* int memory_init */
 
-static void memory_write (char *host, char *inst, char *val)
+static void memory_submit (const char *type_instance, gauge_t value)
 {
-	rrd_update_file (host, memory_file, val, ds_def, ds_num);
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
+
+	values[0].gauge = value;
+
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "memory");
+	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+	vl.type_instance[sizeof (vl.type_instance) - 1] = '\0';
+
+	plugin_dispatch_values ("memory", &vl);
 }
 
-#if MEMORY_HAVE_READ
-#define BUFSIZE 512
-static void memory_submit (long long mem_used, long long mem_buffered,
-		long long mem_cached, long long mem_free)
-{
-	char buf[BUFSIZE];
-
-	if (snprintf (buf, BUFSIZE, "%u:%lli:%lli:%lli:%lli",
-				(unsigned int) curtime, mem_used, mem_free,
-				mem_buffered, mem_cached) >= BUFSIZE)
-		return;
-
-	plugin_submit (MODULE_NAME, "-", buf);
-}
-#undef BUFSIZE
-
-static void memory_read (void)
+static int memory_read (void)
 {
 #if defined(HOST_VM_INFO)
 	kern_return_t status;
@@ -144,15 +125,15 @@ static void memory_read (void)
 	long long free;
 
 	if (!port_host || !pagesize)
-		return;
+		return (-1);
 
 	vm_data_len = sizeof (vm_data) / sizeof (natural_t);
 	if ((status = host_statistics (port_host, HOST_VM_INFO,
 					(host_info_t) &vm_data,
 					&vm_data_len)) != KERN_SUCCESS)
 	{
-		syslog (LOG_ERR, "memory-plugin: host_statistics failed and returned the value %i", (int) status);
-		return;
+		ERROR ("memory-plugin: host_statistics failed and returned the value %i", (int) status);
+		return (-1);
 	}
 
 	/*
@@ -180,7 +161,10 @@ static void memory_read (void)
 	inactive = vm_data.inactive_count * pagesize;
 	free     = vm_data.free_count     * pagesize;
 
-	memory_submit (wired + active, -1, inactive, free);
+	memory_submit ("wired",    wired);
+	memory_submit ("active",   active);
+	memory_submit ("inactive", inactive);
+	memory_submit ("free",     free);
 /* #endif HOST_VM_INFO */
 
 #elif HAVE_SYSCTLBYNAME
@@ -204,34 +188,37 @@ static void memory_read (void)
 		"vm.stats.vm.v_cache_count",
 		NULL
 	};
-	int sysctl_vals[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+	double sysctl_vals[8];
 
-	size_t len;
 	int    i;
-	int    status;
 
 	for (i = 0; sysctl_keys[i] != NULL; i++)
 	{
-		len = sizeof (int);
-		if ((status = sysctlbyname (sysctl_keys[i],
-						(void *) &sysctl_vals[i], &len,
-						NULL, 0)) < 0)
+		int value;
+		size_t value_len = sizeof (value);
+
+		if (sysctlbyname (sysctl_keys[i], (void *) &value, &value_len,
+					NULL, 0) == 0)
 		{
-			syslog (LOG_ERR, "memory plugin: sysctlbyname (%s): %s",
-					sysctl_keys[i], strerror (errno));
-			return;
+			sysctl_vals[i] = value;
+			DEBUG ("memory plugin: %26s: %6i", sysctl_keys[i], sysctl_vals[i]);
 		}
-		DBG ("%26s: %6i", sysctl_keys[i], sysctl_vals[i]);
-	} /* for i */
+		else
+		{
+			sysctl_vals[i] = NAN;
+		}
+	} /* for (sysctl_keys) */
 
 	/* multiply all all page counts with the pagesize */
 	for (i = 1; sysctl_keys[i] != NULL; i++)
-		sysctl_vals[i] = sysctl_vals[i] * sysctl_vals[0];
+		if (!isnan (sysctl_vals[i]))
+			sysctl_vals[i] *= sysctl_vals[0];
 
-	memory_submit (sysctl_vals[3] + sysctl_vals[4], /* wired + active */
-			sysctl_vals[6],                 /* cache */
-			sysctl_vals[5],                 /* inactive */
-			sysctl_vals[2]);                /* free */
+	memory_submit ("free",     sysctl_vals[2]);
+	memory_submit ("wired",    sysctl_vals[3]);
+	memory_submit ("active",   sysctl_vals[4]);
+	memory_submit ("inactive", sysctl_vals[5]);
+	memory_submit ("cache",    sysctl_vals[6]);
 /* #endif HAVE_SYSCTLBYNAME */
 
 #elif defined(KERNEL_LINUX)
@@ -248,8 +235,10 @@ static void memory_read (void)
 
 	if ((fh = fopen ("/proc/meminfo", "r")) == NULL)
 	{
-		syslog (LOG_WARNING, "memory: fopen: %s", strerror (errno));
-		return;
+		char errbuf[1024];
+		WARNING ("memory: fopen: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
 	}
 
 	while (fgets (buffer, 1024, fh) != NULL)
@@ -276,12 +265,19 @@ static void memory_read (void)
 	}
 
 	if (fclose (fh))
-		syslog (LOG_WARNING, "memory: fclose: %s", strerror (errno));
+	{
+		char errbuf[1024];
+		WARNING ("memory: fclose: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+	}
 
 	if (mem_used >= (mem_free + mem_buffered + mem_cached))
 	{
 		mem_used -= mem_free + mem_buffered + mem_cached;
-		memory_submit (mem_used, mem_buffered, mem_cached, mem_free);
+		memory_submit ("used",     mem_used);
+		memory_submit ("buffered", mem_buffered);
+		memory_submit ("cached",   mem_cached);
+		memory_submit ("free",     mem_free);
 	}
 /* #endif defined(KERNEL_LINUX) */
 
@@ -291,39 +287,46 @@ static void memory_read (void)
 	long long mem_lock;
 
 	if (ksp == NULL)
-		return;
+		return (-1);
 
 	mem_used = get_kstat_value (ksp, "pagestotal");
 	mem_free = get_kstat_value (ksp, "pagesfree");
 	mem_lock = get_kstat_value (ksp, "pageslocked");
 
 	if ((mem_used < 0LL) || (mem_free < 0LL) || (mem_lock < 0LL))
-		return;
+		return (-1);
 	if (mem_used < (mem_free + mem_lock))
-		return;
+		return (-1);
 
 	mem_used -= mem_free + mem_lock;
 	mem_used *= pagesize; /* If this overflows you have some serious */
 	mem_free *= pagesize; /* memory.. Why not call me up and give me */
 	mem_lock *= pagesize; /* some? ;) */
 
-	memory_submit (mem_used, mem_lock, 0LL, mem_free);
+	memory_submit ("used",   mem_used);
+	memory_submit ("free",   mem_free);
+	memory_submit ("locked", mem_locked);
 /* #endif defined(HAVE_LIBKSTAT) */
 
 #elif defined(HAVE_LIBSTATGRAB)
 	sg_mem_stats *ios;
 
 	if ((ios = sg_get_mem_stats ()) != NULL)
-		memory_submit (ios->used, 0LL, ios->cache, ios->free);
+	{
+		memory_submit ("used",   ios->used);
+		memory_submit ("cached", ios->cached);
+		memory_submit ("free",   ios->free);
+	}
 #endif /* HAVE_LIBSTATGRAB */
+
+	return (0);
 }
-#else
-# define memory_read NULL
 #endif /* MEMORY_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, memory_init, memory_read, memory_write);
-}
-
-#undef MODULE_NAME
+#if MEMORY_HAVE_READ
+	plugin_register_init ("memory", memory_init);
+	plugin_register_read ("memory", memory_read);
+#endif /* MEMORY_HAVE_READ */
+} /* void module_register */

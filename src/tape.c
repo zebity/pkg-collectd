@@ -24,31 +24,13 @@
 #include "common.h"
 #include "plugin.h"
 
-#define MODULE_NAME "tape"
-
 #if defined(HAVE_LIBKSTAT)
 # define TAPE_HAVE_READ 1
 #else
 # define TAPE_HAVE_READ 0
 #endif
 
-static char *tape_filename_template = "tape-%s.rrd";
-
-/* 104857600 == 100 MB */
-static char *tape_ds_def[] =
-{
-	"DS:rcount:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:rmerged:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:rbytes:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:rtime:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wcount:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wmerged:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wbytes:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:wtime:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int tape_ds_num = 8;
-
+#if TAPE_HAVE_READ
 #if defined(HAVE_LIBKSTAT)
 #define MAX_NUMTAPE 256
 extern kstat_ctl_t *kc;
@@ -56,7 +38,7 @@ static kstat_t *ksp[MAX_NUMTAPE];
 static int numtape = 0;
 #endif /* HAVE_LIBKSTAT */
 
-static void tape_init (void)
+static int tape_init (void)
 {
 #ifdef HAVE_LIBKSTAT
 	kstat_t *ksp_chain;
@@ -64,7 +46,7 @@ static void tape_init (void)
 	numtape = 0;
 
 	if (kc == NULL)
-		return;
+		return (-1);
 
 	for (numtape = 0, ksp_chain = kc->kc_chain;
 			(numtape < MAX_NUMTAPE) && (ksp_chain != NULL);
@@ -78,60 +60,59 @@ static void tape_init (void)
 	}
 #endif
 
-	return;
+	return (0);
 }
 
-static void tape_write (char *host, char *inst, char *val)
+static void tape_submit (const char *plugin_instance,
+		const char *type,
+		counter_t read, counter_t write)
 {
-	char file[512];
-	int status;
+	value_t values[2];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	status = snprintf (file, 512, tape_filename_template, inst);
-	if (status < 1)
-		return;
-	else if (status >= 512)
-		return;
+	values[0].counter = read;
+	values[1].counter = write;
 
-	rrd_update_file (host, file, val, tape_ds_def, tape_ds_num);
-}
+	vl.values = values;
+	vl.values_len = 2;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "tape");
+	strncpy (vl.plugin_instance, plugin_instance,
+			sizeof (vl.plugin_instance));
 
+	plugin_dispatch_values (type, &vl);
+} /* void tape_submit */
 
-#if TAPE_HAVE_READ
-#define BUFSIZE 512
-static void tape_submit (char *tape_name,
-		unsigned long long read_count,
-		unsigned long long read_merged,
-		unsigned long long read_bytes,
-		unsigned long long read_time,
-		unsigned long long write_count,
-		unsigned long long write_merged,
-		unsigned long long write_bytes,
-		unsigned long long write_time)
-
-{
-	char buf[BUFSIZE];
-
-	if (snprintf (buf, BUFSIZE, "%u:%llu:%llu:%llu:%llu:%llu:%llu:%llu:%llu",
-				(unsigned int) curtime,
-				read_count, read_merged, read_bytes, read_time,
-				write_count, write_merged, write_bytes,
-				write_time) >= BUFSIZE)
-		return;
-
-	plugin_submit (MODULE_NAME, tape_name, buf);
-}
-
-#undef BUFSIZE
-
-static void tape_read (void)
+static int tape_read (void)
 {
 
 #if defined(HAVE_LIBKSTAT)
+# if HAVE_KSTAT_IO_T_WRITES && HAVE_KSTAT_IO_T_NWRITES && HAVE_KSTAT_IO_T_WTIME
+#  define KIO_ROCTETS reads
+#  define KIO_WOCTETS writes
+#  define KIO_ROPS    nreads
+#  define KIO_WOPS    nwrites
+#  define KIO_RTIME   rtime
+#  define KIO_WTIME   wtime
+# elif HAVE_KSTAT_IO_T_NWRITTEN && HAVE_KSTAT_IO_T_WRITES && HAVE_KSTAT_IO_T_WTIME
+#  define KIO_ROCTETS nread
+#  define KIO_WOCTETS nwritten
+#  define KIO_ROPS    reads
+#  define KIO_WOPS    writes
+#  define KIO_RTIME   rtime
+#  define KIO_WTIME   wtime
+# else
+#  error "kstat_io_t does not have the required members"
+# endif
 	static kstat_io_t kio;
 	int i;
 
 	if (kc == NULL)
-		return;
+		return (-1);
+
+	if (numtape <= 0)
+		return (-1);
 
 	for (i = 0; i < numtape; i++)
 	{
@@ -139,19 +120,26 @@ static void tape_read (void)
 			continue;
 
 		if (strncmp (ksp[i]->ks_class, "tape", 4) == 0)
-			tape_submit (ksp[i]->ks_name,
-					kio.reads,  0LL, kio.nread,    kio.rtime,
-					kio.writes, 0LL, kio.nwritten, kio.wtime);
+		{
+			tape_submit (ksp[i]->ks_name, "tape_octets",
+					kio.KIO_ROCTETS, kio.KIO_WOCTETS);
+			tape_submit (ksp[i]->ks_name, "tape_ops",
+					kio.KIO_ROPS, kio.KIO_WOPS);
+			/* FIXME: Convert this to microseconds if necessary */
+			tape_submit (ksp[i]->ks_name, "tape_time",
+					kio.KIO_RTIME, kio.KIO_WTIME);
+		}
 	}
 #endif /* defined(HAVE_LIBKSTAT) */
+
+	return (0);
 }
-#else
-# define tape_read NULL
 #endif /* TAPE_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, tape_init, tape_read, tape_write);
+#if TAPE_HAVE_READ
+	plugin_register_init ("tape", tape_init);
+	plugin_register_read ("tape", tape_read);
+#endif /* TAPE_HAVE_READ */
 }
-
-#undef MODULE_NAME

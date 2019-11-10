@@ -37,153 +37,189 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@BUILD_WITH_OWN_LIBOPING_TRUE@am__append_1 = liboping
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_1 = liboconfig
+@BUILD_WITH_OWN_LIBOPING_TRUE@am__append_2 = liboping
 sbin_PROGRAMS = collectd$(EXEEXT)
-@BUILD_FEATURE_DAEMON_TRUE@am__append_2 = -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
-@BUILD_FEATURE_DEBUG_TRUE@am__append_3 = -DLOGFILE='"${localstatedir}/log/${PACKAGE_NAME}/collectd.log"'
-@BUILD_WITH_RRDTOOL_TRUE@am__append_4 = -lm -lrrd
-@BUILD_WITH_LIBRT_TRUE@am__append_5 = -lrt
-@BUILD_WITH_LIBSOCKET_TRUE@am__append_6 = -lsocket
-@BUILD_WITH_LIBRESOLV_TRUE@am__append_7 = -lresolv
+bin_PROGRAMS = collectd-nagios$(EXEEXT)
+@BUILD_FEATURE_DAEMON_TRUE@am__append_3 = -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
+@BUILD_WITH_LIBRT_TRUE@am__append_4 = -lrt
+@BUILD_WITH_LIBSOCKET_TRUE@am__append_5 = -lsocket
+@BUILD_WITH_LIBRESOLV_TRUE@am__append_6 = -lresolv
+@BUILD_WITH_LIBPTHREAD_TRUE@am__append_7 = -lpthread
 @BUILD_WITH_LIBKSTAT_TRUE@am__append_8 = -lkstat
 @BUILD_WITH_LIBDEVINFO_TRUE@am__append_9 = -ldevinfo
 @BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_10 = -lkvm
 @BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_11 = -ldevstat
 @BUILD_WITH_LIBSTATGRAB_TRUE@am__append_12 = -lstatgrab
-@BUILD_MODULE_APACHE_TRUE@am__append_13 = apache.la
-@BUILD_MODULE_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_14 = $(BUILD_WITH_LIBCURL_LIBS)
-@BUILD_MODULE_APACHE_TRUE@am__append_15 = "-dlopen" apache.la
-@BUILD_MODULE_APACHE_TRUE@am__append_16 = apache.la
-@BUILD_MODULE_APCUPS_TRUE@am__append_17 = apcups.la
-@BUILD_MODULE_APCUPS_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_18 = -lsocket
-@BUILD_MODULE_APCUPS_TRUE@am__append_19 = "-dlopen" apcups.la
-@BUILD_MODULE_APCUPS_TRUE@am__append_20 = apcups.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_21 = apple_sensors.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_22 = -lIOKit
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_23 = "-dlopen" apple_sensors.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_24 = apple_sensors.la
-@BUILD_MODULE_BATTERY_TRUE@am__append_25 = battery.la
-@BUILD_MODULE_BATTERY_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_26 = -lIOKit
-@BUILD_MODULE_BATTERY_TRUE@am__append_27 = "-dlopen" battery.la
-@BUILD_MODULE_BATTERY_TRUE@am__append_28 = battery.la
-@BUILD_MODULE_CPU_TRUE@am__append_29 = cpu.la
-@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_30 = -lkstat
-@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_31 = -ldevinfo
-@BUILD_MODULE_CPU_TRUE@am__append_32 = "-dlopen" cpu.la
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_13 = $(LIBLTDL) liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__append_14 = $(LIBLTDL) liboconfig/liboconfig.la
+@BUILD_WITH_OWN_LIBOCONFIG_FALSE@am__append_15 = -loconfig
+@BUILD_WITH_LIBSOCKET_TRUE@am__append_16 = -lsocket
+@BUILD_MODULE_APACHE_TRUE@am__append_17 = apache.la
+@BUILD_MODULE_APACHE_TRUE@@BUILD_WITH_LIBCURL_TRUE@am__append_18 = $(BUILD_WITH_LIBCURL_LIBS)
+@BUILD_MODULE_APACHE_TRUE@am__append_19 = "-dlopen" apache.la
+@BUILD_MODULE_APACHE_TRUE@am__append_20 = apache.la
+@BUILD_MODULE_APCUPS_TRUE@am__append_21 = apcups.la
+@BUILD_MODULE_APCUPS_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_22 = -lsocket
+@BUILD_MODULE_APCUPS_TRUE@am__append_23 = "-dlopen" apcups.la
+@BUILD_MODULE_APCUPS_TRUE@am__append_24 = apcups.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_25 = apple_sensors.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_26 = -lIOKit
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_27 = "-dlopen" apple_sensors.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__append_28 = apple_sensors.la
+@BUILD_MODULE_BATTERY_TRUE@am__append_29 = battery.la
+@BUILD_MODULE_BATTERY_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_30 = -lIOKit
+@BUILD_MODULE_BATTERY_TRUE@am__append_31 = "-dlopen" battery.la
+@BUILD_MODULE_BATTERY_TRUE@am__append_32 = battery.la
 @BUILD_MODULE_CPU_TRUE@am__append_33 = cpu.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__append_34 = cpufreq.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__append_35 = "-dlopen" cpufreq.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__append_36 = cpufreq.la
-@BUILD_MODULE_DF_TRUE@am__append_37 = df.la
-@BUILD_MODULE_DF_TRUE@am__append_38 = "-dlopen" df.la
-@BUILD_MODULE_DF_TRUE@am__append_39 = df.la
-@BUILD_MODULE_DISK_TRUE@am__append_40 = disk.la
-@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_41 = -lkstat
-@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_42 = -ldevinfo
-@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_43 = -lIOKit
-@BUILD_MODULE_DISK_TRUE@am__append_44 = "-dlopen" disk.la
-@BUILD_MODULE_DISK_TRUE@am__append_45 = disk.la
-@BUILD_MODULE_DNS_TRUE@am__append_46 = dns.la
-@BUILD_MODULE_DNS_TRUE@@BUILD_WITH_LIBPCAP_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_47 = utils_dns.c utils_dns.h
-@BUILD_MODULE_DNS_TRUE@@BUILD_WITH_LIBPCAP_TRUE@am__append_48 = -lpcap
-@BUILD_MODULE_DNS_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_49 = -lpthread
-@BUILD_MODULE_DNS_TRUE@am__append_50 = "-dlopen" dns.la
-@BUILD_MODULE_DNS_TRUE@am__append_51 = dns.la
-@BUILD_MODULE_EMAIL_TRUE@am__append_52 = email.la
-@BUILD_MODULE_EMAIL_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_53 = -lpthread
-@BUILD_MODULE_EMAIL_TRUE@am__append_54 = "-dlopen" email.la
-@BUILD_MODULE_EMAIL_TRUE@am__append_55 = email.la
-
-#if BUILD_MODULE_QUOTA
-#pkglib_LTLIBRARIES += quota.la
-#quota_la_SOURCES = quota_plugin.c quota_plugin.h
-#quota_la_SOURCES += quota_fs.c quota_fs.h
-#quota_la_SOURCES += quota_mnt.c quota_mnt.h
-#quota_la_LDFLAGS = -module -avoid-version
-#quota_la_CFLAGS = -Werror
-#collectd_LDADD += "-dlopen" quota.la
-#collectd_DEPENDENCIES += quota.la
-#endif
-@BUILD_MODULE_HDDTEMP_TRUE@am__append_56 = hddtemp.la
-@BUILD_MODULE_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_57 = -lsocket
-@BUILD_MODULE_HDDTEMP_TRUE@am__append_58 = "-dlopen" hddtemp.la
-@BUILD_MODULE_HDDTEMP_TRUE@am__append_59 = hddtemp.la
-@BUILD_MODULE_LOAD_TRUE@am__append_60 = load.la
-@BUILD_MODULE_LOAD_TRUE@am__append_61 = "-dlopen" load.la
-@BUILD_MODULE_LOAD_TRUE@am__append_62 = load.la
-@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_63 = -lkvm
-@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_64 = -ldevstat
-@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_65 = -lstatgrab
-@BUILD_MODULE_MBMON_TRUE@am__append_66 = mbmon.la
-@BUILD_MODULE_MBMON_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_67 = -lsocket
-@BUILD_MODULE_MBMON_TRUE@am__append_68 = "-dlopen" mbmon.la
-@BUILD_MODULE_MBMON_TRUE@am__append_69 = mbmon.la
-@BUILD_MODULE_MEMORY_TRUE@am__append_70 = memory.la
-@BUILD_MODULE_MEMORY_TRUE@am__append_71 = "-dlopen" memory.la
-@BUILD_MODULE_MEMORY_TRUE@am__append_72 = memory.la
-@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_73 = -lkstat
-@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_74 = -ldevinfo
-@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_75 = -lkvm
-@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_76 = -ldevstat
-@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_77 = -lstatgrab
-@BUILD_MODULE_MULTIMETER_TRUE@am__append_78 = multimeter.la
-@BUILD_MODULE_MULTIMETER_TRUE@am__append_79 = "-dlopen" multimeter.la
-@BUILD_MODULE_MULTIMETER_TRUE@am__append_80 = multimeter.la
-@BUILD_MODULE_MYSQL_TRUE@am__append_81 = mysql.la
-@BUILD_MODULE_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_82 = -lmysqlclient
-@BUILD_MODULE_MYSQL_TRUE@am__append_83 = "-dlopen" mysql.la
-@BUILD_MODULE_MYSQL_TRUE@am__append_84 = mysql.la
-@BUILD_MODULE_NFS_TRUE@am__append_85 = nfs.la
-@BUILD_MODULE_NFS_TRUE@am__append_86 = "-dlopen" nfs.la
-@BUILD_MODULE_NFS_TRUE@am__append_87 = nfs.la
-@BUILD_MODULE_NTPD_TRUE@am__append_88 = ntpd.la
-@BUILD_MODULE_NTPD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_89 = -lsocket
-@BUILD_MODULE_NTPD_TRUE@am__append_90 = "-dlopen" ntpd.la
-@BUILD_MODULE_NTPD_TRUE@am__append_91 = ntpd.la
-@BUILD_MODULE_PING_TRUE@am__append_92 = ping.la
-@BUILD_MODULE_PING_TRUE@@BUILD_WITH_LIBOPING_TRUE@@BUILD_WITH_OWN_LIBOPING_FALSE@am__append_93 = -loping
-@BUILD_MODULE_PING_TRUE@am__append_94 = "-dlopen" ping.la
-@BUILD_MODULE_PING_TRUE@am__append_95 = ping.la
-@BUILD_MODULE_PROCESSES_TRUE@am__append_96 = processes.la
-@BUILD_MODULE_PROCESSES_TRUE@am__append_97 = "-dlopen" processes.la
-@BUILD_MODULE_PROCESSES_TRUE@am__append_98 = processes.la
-@BUILD_MODULE_SENSORS_TRUE@am__append_99 = sensors.la
-@BUILD_MODULE_SENSORS_TRUE@@BUILD_WITH_LM_SENSORS_TRUE@am__append_100 = -lsensors
-@BUILD_MODULE_SENSORS_TRUE@am__append_101 = "-dlopen" sensors.la
-@BUILD_MODULE_SENSORS_TRUE@am__append_102 = sensors.la
-@BUILD_MODULE_SERIAL_TRUE@am__append_103 = serial.la
-@BUILD_MODULE_SERIAL_TRUE@am__append_104 = "-dlopen" serial.la
-@BUILD_MODULE_SERIAL_TRUE@am__append_105 = serial.la
-@BUILD_MODULE_SWAP_TRUE@am__append_106 = swap.la
-@BUILD_MODULE_SWAP_TRUE@am__append_107 = "-dlopen" swap.la
-@BUILD_MODULE_SWAP_TRUE@am__append_108 = swap.la
-@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_109 = -lkstat
-@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_110 = -ldevinfo
-@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBKVM_TRUE@am__append_111 = -lkvm
-@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_112 = -ldevstat
-@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_113 = -lstatgrab
-@BUILD_MODULE_TAPE_TRUE@am__append_114 = tape.la
-@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_115 = -lkstat
-@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_116 = -ldevinfo
-@BUILD_MODULE_TAPE_TRUE@am__append_117 = "-dlopen" tape.la
-@BUILD_MODULE_TAPE_TRUE@am__append_118 = tape.la
-@BUILD_MODULE_TRAFFIC_TRUE@am__append_119 = traffic.la
-@BUILD_MODULE_TRAFFIC_TRUE@am__append_120 = "-dlopen" traffic.la
-@BUILD_MODULE_TRAFFIC_TRUE@am__append_121 = traffic.la
-@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_122 = -lkstat
-@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_123 = -ldevinfo
-@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_124 = -lkvm
-@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_125 = -ldevstat
-@BUILD_MODULE_TRAFFIC_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_126 = -lstatgrab
-@BUILD_MODULE_USERS_TRUE@am__append_127 = users.la
-@BUILD_MODULE_USERS_TRUE@am__append_128 = "-dlopen" users.la
-@BUILD_MODULE_USERS_TRUE@am__append_129 = users.la
-@BUILD_MODULE_VSERVER_TRUE@am__append_130 = vserver.la
-@BUILD_MODULE_VSERVER_TRUE@am__append_131 = "-dlopen" vserver.la
-@BUILD_MODULE_VSERVER_TRUE@am__append_132 = vserver.la
-@BUILD_MODULE_WIRELESS_TRUE@am__append_133 = wireless.la
-@BUILD_MODULE_WIRELESS_TRUE@am__append_134 = "-dlopen" wireless.la
-@BUILD_MODULE_WIRELESS_TRUE@am__append_135 = wireless.la
+@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_34 = -lkstat
+@BUILD_MODULE_CPU_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_35 = -ldevinfo
+@BUILD_MODULE_CPU_TRUE@am__append_36 = "-dlopen" cpu.la
+@BUILD_MODULE_CPU_TRUE@am__append_37 = cpu.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__append_38 = cpufreq.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__append_39 = "-dlopen" cpufreq.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__append_40 = cpufreq.la
+@BUILD_MODULE_CSV_TRUE@am__append_41 = csv.la
+@BUILD_MODULE_CSV_TRUE@am__append_42 = "-dlopen" csv.la
+@BUILD_MODULE_CSV_TRUE@am__append_43 = csv.la
+@BUILD_MODULE_DF_TRUE@am__append_44 = df.la
+@BUILD_MODULE_DF_TRUE@am__append_45 = "-dlopen" df.la
+@BUILD_MODULE_DF_TRUE@am__append_46 = df.la
+@BUILD_MODULE_DISK_TRUE@am__append_47 = disk.la
+@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_48 = -lkstat
+@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_49 = -ldevinfo
+@BUILD_MODULE_DISK_TRUE@@BUILD_WITH_LIBIOKIT_TRUE@am__append_50 = -lIOKit
+@BUILD_MODULE_DISK_TRUE@am__append_51 = "-dlopen" disk.la
+@BUILD_MODULE_DISK_TRUE@am__append_52 = disk.la
+@BUILD_MODULE_DNS_TRUE@am__append_53 = dns.la
+@BUILD_MODULE_DNS_TRUE@@BUILD_WITH_LIBPCAP_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_54 = utils_dns.c utils_dns.h
+@BUILD_MODULE_DNS_TRUE@@BUILD_WITH_LIBPCAP_TRUE@am__append_55 = -lpcap
+@BUILD_MODULE_DNS_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_56 = -lpthread
+@BUILD_MODULE_DNS_TRUE@am__append_57 = "-dlopen" dns.la
+@BUILD_MODULE_DNS_TRUE@am__append_58 = dns.la
+@BUILD_MODULE_EMAIL_TRUE@am__append_59 = email.la
+@BUILD_MODULE_EMAIL_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_60 = -lpthread
+@BUILD_MODULE_EMAIL_TRUE@am__append_61 = "-dlopen" email.la
+@BUILD_MODULE_EMAIL_TRUE@am__append_62 = email.la
+@BUILD_MODULE_ENTROPY_TRUE@am__append_63 = entropy.la
+@BUILD_MODULE_ENTROPY_TRUE@am__append_64 = "-dlopen" entropy.la
+@BUILD_MODULE_ENTROPY_TRUE@am__append_65 = entropy.la
+@BUILD_MODULE_EXEC_TRUE@am__append_66 = exec.la
+@BUILD_MODULE_EXEC_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_67 = -lpthread
+@BUILD_MODULE_EXEC_TRUE@am__append_68 = "-dlopen" exec.la
+@BUILD_MODULE_EXEC_TRUE@am__append_69 = exec.la
+@BUILD_MODULE_HDDTEMP_TRUE@am__append_70 = hddtemp.la
+@BUILD_MODULE_HDDTEMP_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_71 = -lsocket
+@BUILD_MODULE_HDDTEMP_TRUE@am__append_72 = "-dlopen" hddtemp.la
+@BUILD_MODULE_HDDTEMP_TRUE@am__append_73 = hddtemp.la
+@BUILD_MODULE_INTERFACE_TRUE@am__append_74 = interface.la
+@BUILD_MODULE_INTERFACE_TRUE@am__append_75 = "-dlopen" interface.la
+@BUILD_MODULE_INTERFACE_TRUE@am__append_76 = interface.la
+@BUILD_MODULE_INTERFACE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_77 = -lkstat
+@BUILD_MODULE_INTERFACE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_78 = -ldevinfo
+@BUILD_MODULE_INTERFACE_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_79 = -lkvm
+@BUILD_MODULE_INTERFACE_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_80 = -ldevstat
+@BUILD_MODULE_INTERFACE_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_81 = -lstatgrab
+@BUILD_MODULE_IPTABLES_TRUE@am__append_82 = iptables.la
+@BUILD_MODULE_IPTABLES_TRUE@@BUILD_WITH_LIBIPTC_TRUE@am__append_83 = -liptc
+@BUILD_MODULE_IPTABLES_TRUE@am__append_84 = "-dlopen" iptables.la
+@BUILD_MODULE_IPTABLES_TRUE@am__append_85 = iptables.la
+@BUILD_MODULE_IRQ_TRUE@am__append_86 = irq.la
+@BUILD_MODULE_IRQ_TRUE@am__append_87 = "-dlopen" irq.la
+@BUILD_MODULE_IRQ_TRUE@am__append_88 = irq.la
+@BUILD_MODULE_LOAD_TRUE@am__append_89 = load.la
+@BUILD_MODULE_LOAD_TRUE@am__append_90 = "-dlopen" load.la
+@BUILD_MODULE_LOAD_TRUE@am__append_91 = load.la
+@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_92 = -lkvm
+@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_93 = -ldevstat
+@BUILD_MODULE_LOAD_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_94 = -lstatgrab
+@BUILD_MODULE_LOGFILE_TRUE@am__append_95 = logfile.la
+@BUILD_MODULE_LOGFILE_TRUE@am__append_96 = "-dlopen" logfile.la
+@BUILD_MODULE_LOGFILE_TRUE@am__append_97 = logfile.la
+@BUILD_MODULE_MBMON_TRUE@am__append_98 = mbmon.la
+@BUILD_MODULE_MBMON_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_99 = -lsocket
+@BUILD_MODULE_MBMON_TRUE@am__append_100 = "-dlopen" mbmon.la
+@BUILD_MODULE_MBMON_TRUE@am__append_101 = mbmon.la
+@BUILD_MODULE_MEMORY_TRUE@am__append_102 = memory.la
+@BUILD_MODULE_MEMORY_TRUE@am__append_103 = "-dlopen" memory.la
+@BUILD_MODULE_MEMORY_TRUE@am__append_104 = memory.la
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_105 = -lkstat
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_106 = -ldevinfo
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBKVM_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_107 = -lkvm
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_108 = -ldevstat
+@BUILD_MODULE_MEMORY_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_109 = -lstatgrab
+@BUILD_MODULE_MULTIMETER_TRUE@am__append_110 = multimeter.la
+@BUILD_MODULE_MULTIMETER_TRUE@am__append_111 = "-dlopen" multimeter.la
+@BUILD_MODULE_MULTIMETER_TRUE@am__append_112 = multimeter.la
+@BUILD_MODULE_MYSQL_TRUE@am__append_113 = mysql.la
+@BUILD_MODULE_MYSQL_TRUE@@BUILD_WITH_LIBMYSQL_TRUE@am__append_114 = -lmysqlclient
+@BUILD_MODULE_MYSQL_TRUE@am__append_115 = "-dlopen" mysql.la
+@BUILD_MODULE_MYSQL_TRUE@am__append_116 = mysql.la
+@BUILD_MODULE_NETWORK_TRUE@am__append_117 = network.la
+@BUILD_MODULE_NETWORK_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_118 = -lsocket
+@BUILD_MODULE_NETWORK_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@am__append_119 = -lpthread
+@BUILD_MODULE_NETWORK_TRUE@am__append_120 = "-dlopen" network.la
+@BUILD_MODULE_NETWORK_TRUE@am__append_121 = network.la
+@BUILD_MODULE_NFS_TRUE@am__append_122 = nfs.la
+@BUILD_MODULE_NFS_TRUE@am__append_123 = "-dlopen" nfs.la
+@BUILD_MODULE_NFS_TRUE@am__append_124 = nfs.la
+@BUILD_MODULE_NTPD_TRUE@am__append_125 = ntpd.la
+@BUILD_MODULE_NTPD_TRUE@@BUILD_WITH_LIBSOCKET_TRUE@am__append_126 = -lsocket
+@BUILD_MODULE_NTPD_TRUE@am__append_127 = "-dlopen" ntpd.la
+@BUILD_MODULE_NTPD_TRUE@am__append_128 = ntpd.la
+@BUILD_MODULE_NUT_TRUE@am__append_129 = nut.la
+@BUILD_MODULE_NUT_TRUE@@BUILD_WITH_LIBUPSCLIENT_TRUE@am__append_130 = -lupsclient
+@BUILD_MODULE_NUT_TRUE@@BUILD_WITH_LIBPTHREAD_TRUE@@BUILD_WITH_LIBUPSCLIENT_TRUE@am__append_131 = -lpthread
+@BUILD_MODULE_NUT_TRUE@am__append_132 = "-dlopen" nut.la
+@BUILD_MODULE_NUT_TRUE@am__append_133 = nut.la
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@am__append_134 = perl.la
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@am__append_135 = "-dlopen" perl.la
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@am__append_136 = perl.la
+@BUILD_MODULE_PING_TRUE@am__append_137 = ping.la
+@BUILD_MODULE_PING_TRUE@@BUILD_WITH_LIBOPING_TRUE@@BUILD_WITH_OWN_LIBOPING_FALSE@am__append_138 = -loping
+@BUILD_MODULE_PING_TRUE@am__append_139 = "-dlopen" ping.la
+@BUILD_MODULE_PING_TRUE@am__append_140 = ping.la
+@BUILD_MODULE_PROCESSES_TRUE@am__append_141 = processes.la
+@BUILD_MODULE_PROCESSES_TRUE@am__append_142 = "-dlopen" processes.la
+@BUILD_MODULE_PROCESSES_TRUE@am__append_143 = processes.la
+@BUILD_WITH_RRDTOOL_TRUE@am__append_144 = rrdtool.la
+@BUILD_WITH_RRDTOOL_TRUE@am__append_145 = "-dlopen" rrdtool.la
+@BUILD_WITH_RRDTOOL_TRUE@am__append_146 = rrdtool.la
+@BUILD_MODULE_SENSORS_TRUE@am__append_147 = sensors.la
+@BUILD_MODULE_SENSORS_TRUE@@BUILD_WITH_LM_SENSORS_TRUE@am__append_148 = -lsensors
+@BUILD_MODULE_SENSORS_TRUE@am__append_149 = "-dlopen" sensors.la
+@BUILD_MODULE_SENSORS_TRUE@am__append_150 = sensors.la
+@BUILD_MODULE_SERIAL_TRUE@am__append_151 = serial.la
+@BUILD_MODULE_SERIAL_TRUE@am__append_152 = "-dlopen" serial.la
+@BUILD_MODULE_SERIAL_TRUE@am__append_153 = serial.la
+@BUILD_MODULE_SWAP_TRUE@am__append_154 = swap.la
+@BUILD_MODULE_SWAP_TRUE@am__append_155 = "-dlopen" swap.la
+@BUILD_MODULE_SWAP_TRUE@am__append_156 = swap.la
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_157 = -lkstat
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_158 = -ldevinfo
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBKVM_TRUE@am__append_159 = -lkvm
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBDEVSTAT_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_160 = -ldevstat
+@BUILD_MODULE_SWAP_TRUE@@BUILD_WITH_LIBSTATGRAB_TRUE@am__append_161 = -lstatgrab
+@BUILD_MODULE_SYSLOG_TRUE@am__append_162 = syslog.la
+@BUILD_MODULE_SYSLOG_TRUE@am__append_163 = "-dlopen" syslog.la
+@BUILD_MODULE_SYSLOG_TRUE@am__append_164 = syslog.la
+@BUILD_MODULE_TAPE_TRUE@am__append_165 = tape.la
+@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBKSTAT_TRUE@am__append_166 = -lkstat
+@BUILD_MODULE_TAPE_TRUE@@BUILD_WITH_LIBDEVINFO_TRUE@am__append_167 = -ldevinfo
+@BUILD_MODULE_TAPE_TRUE@am__append_168 = "-dlopen" tape.la
+@BUILD_MODULE_TAPE_TRUE@am__append_169 = tape.la
+@BUILD_MODULE_UNIXSOCK_TRUE@am__append_170 = unixsock.la
+@BUILD_MODULE_UNIXSOCK_TRUE@am__append_171 = "-dlopen" unixsock.la
+@BUILD_MODULE_UNIXSOCK_TRUE@am__append_172 = unixsock.la
+@BUILD_MODULE_USERS_TRUE@am__append_173 = users.la
+@BUILD_MODULE_USERS_TRUE@am__append_174 = "-dlopen" users.la
+@BUILD_MODULE_USERS_TRUE@am__append_175 = users.la
+@BUILD_MODULE_VSERVER_TRUE@am__append_176 = vserver.la
+@BUILD_MODULE_VSERVER_TRUE@am__append_177 = "-dlopen" vserver.la
+@BUILD_MODULE_VSERVER_TRUE@am__append_178 = vserver.la
+@BUILD_MODULE_WIRELESS_TRUE@am__append_179 = wireless.la
+@BUILD_MODULE_WIRELESS_TRUE@am__append_180 = "-dlopen" wireless.la
+@BUILD_MODULE_WIRELESS_TRUE@am__append_181 = wireless.la
 subdir = src
 DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/collectd.conf.in \
@@ -201,8 +237,9 @@ am__vpath_adj = case $$p in \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(pkglibdir)" "$(DESTDIR)$(sbindir)" \
-	"$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)"
+am__installdirs = "$(DESTDIR)$(pkglibdir)" "$(DESTDIR)$(bindir)" \
+	"$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man1dir)" \
+	"$(DESTDIR)$(man5dir)"
 pkglibLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 apache_la_LIBADD =
@@ -237,6 +274,11 @@ am__cpufreq_la_SOURCES_DIST = cpufreq.c
 @BUILD_MODULE_CPUFREQ_TRUE@am_cpufreq_la_OBJECTS = cpufreq.lo
 cpufreq_la_OBJECTS = $(am_cpufreq_la_OBJECTS)
 @BUILD_MODULE_CPUFREQ_TRUE@am_cpufreq_la_rpath = -rpath $(pkglibdir)
+csv_la_LIBADD =
+am__csv_la_SOURCES_DIST = csv.c
+@BUILD_MODULE_CSV_TRUE@am_csv_la_OBJECTS = csv.lo
+csv_la_OBJECTS = $(am_csv_la_OBJECTS)
+@BUILD_MODULE_CSV_TRUE@am_csv_la_rpath = -rpath $(pkglibdir)
 df_la_LIBADD =
 am__df_la_SOURCES_DIST = df.c
 @BUILD_MODULE_DF_TRUE@am_df_la_OBJECTS = df.lo
@@ -258,16 +300,47 @@ am__email_la_SOURCES_DIST = email.c
 @BUILD_MODULE_EMAIL_TRUE@am_email_la_OBJECTS = email.lo
 email_la_OBJECTS = $(am_email_la_OBJECTS)
 @BUILD_MODULE_EMAIL_TRUE@am_email_la_rpath = -rpath $(pkglibdir)
+entropy_la_LIBADD =
+am__entropy_la_SOURCES_DIST = entropy.c
+@BUILD_MODULE_ENTROPY_TRUE@am_entropy_la_OBJECTS = entropy.lo
+entropy_la_OBJECTS = $(am_entropy_la_OBJECTS)
+@BUILD_MODULE_ENTROPY_TRUE@am_entropy_la_rpath = -rpath $(pkglibdir)
+exec_la_LIBADD =
+am__exec_la_SOURCES_DIST = exec.c
+@BUILD_MODULE_EXEC_TRUE@am_exec_la_OBJECTS = exec.lo
+exec_la_OBJECTS = $(am_exec_la_OBJECTS)
+@BUILD_MODULE_EXEC_TRUE@am_exec_la_rpath = -rpath $(pkglibdir)
 hddtemp_la_LIBADD =
 am__hddtemp_la_SOURCES_DIST = hddtemp.c
 @BUILD_MODULE_HDDTEMP_TRUE@am_hddtemp_la_OBJECTS = hddtemp.lo
 hddtemp_la_OBJECTS = $(am_hddtemp_la_OBJECTS)
 @BUILD_MODULE_HDDTEMP_TRUE@am_hddtemp_la_rpath = -rpath $(pkglibdir)
+interface_la_LIBADD =
+am__interface_la_SOURCES_DIST = interface.c
+@BUILD_MODULE_INTERFACE_TRUE@am_interface_la_OBJECTS = interface.lo
+interface_la_OBJECTS = $(am_interface_la_OBJECTS)
+@BUILD_MODULE_INTERFACE_TRUE@am_interface_la_rpath = -rpath \
+@BUILD_MODULE_INTERFACE_TRUE@	$(pkglibdir)
+iptables_la_LIBADD =
+am__iptables_la_SOURCES_DIST = iptables.c
+@BUILD_MODULE_IPTABLES_TRUE@am_iptables_la_OBJECTS = iptables.lo
+iptables_la_OBJECTS = $(am_iptables_la_OBJECTS)
+@BUILD_MODULE_IPTABLES_TRUE@am_iptables_la_rpath = -rpath $(pkglibdir)
+irq_la_LIBADD =
+am__irq_la_SOURCES_DIST = irq.c
+@BUILD_MODULE_IRQ_TRUE@am_irq_la_OBJECTS = irq.lo
+irq_la_OBJECTS = $(am_irq_la_OBJECTS)
+@BUILD_MODULE_IRQ_TRUE@am_irq_la_rpath = -rpath $(pkglibdir)
 load_la_LIBADD =
 am__load_la_SOURCES_DIST = load.c
 @BUILD_MODULE_LOAD_TRUE@am_load_la_OBJECTS = load.lo
 load_la_OBJECTS = $(am_load_la_OBJECTS)
 @BUILD_MODULE_LOAD_TRUE@am_load_la_rpath = -rpath $(pkglibdir)
+logfile_la_LIBADD =
+am__logfile_la_SOURCES_DIST = logfile.c
+@BUILD_MODULE_LOGFILE_TRUE@am_logfile_la_OBJECTS = logfile.lo
+logfile_la_OBJECTS = $(am_logfile_la_OBJECTS)
+@BUILD_MODULE_LOGFILE_TRUE@am_logfile_la_rpath = -rpath $(pkglibdir)
 mbmon_la_LIBADD =
 am__mbmon_la_SOURCES_DIST = mbmon.c
 @BUILD_MODULE_MBMON_TRUE@am_mbmon_la_OBJECTS = mbmon.lo
@@ -290,6 +363,11 @@ am__mysql_la_SOURCES_DIST = mysql.c
 @BUILD_MODULE_MYSQL_TRUE@am_mysql_la_OBJECTS = mysql.lo
 mysql_la_OBJECTS = $(am_mysql_la_OBJECTS)
 @BUILD_MODULE_MYSQL_TRUE@am_mysql_la_rpath = -rpath $(pkglibdir)
+network_la_LIBADD =
+am__network_la_SOURCES_DIST = network.c network.h
+@BUILD_MODULE_NETWORK_TRUE@am_network_la_OBJECTS = network.lo
+network_la_OBJECTS = $(am_network_la_OBJECTS)
+@BUILD_MODULE_NETWORK_TRUE@am_network_la_rpath = -rpath $(pkglibdir)
 nfs_la_LIBADD =
 am__nfs_la_SOURCES_DIST = nfs.c
 @BUILD_MODULE_NFS_TRUE@am_nfs_la_OBJECTS = nfs.lo
@@ -300,6 +378,18 @@ am__ntpd_la_SOURCES_DIST = ntpd.c
 @BUILD_MODULE_NTPD_TRUE@am_ntpd_la_OBJECTS = ntpd.lo
 ntpd_la_OBJECTS = $(am_ntpd_la_OBJECTS)
 @BUILD_MODULE_NTPD_TRUE@am_ntpd_la_rpath = -rpath $(pkglibdir)
+nut_la_LIBADD =
+am__nut_la_SOURCES_DIST = nut.c
+@BUILD_MODULE_NUT_TRUE@am_nut_la_OBJECTS = nut.lo
+nut_la_OBJECTS = $(am_nut_la_OBJECTS)
+@BUILD_MODULE_NUT_TRUE@am_nut_la_rpath = -rpath $(pkglibdir)
+perl_la_LIBADD =
+am__perl_la_SOURCES_DIST = perl.c
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@am_perl_la_OBJECTS = perl_la-perl.lo
+perl_la_OBJECTS = $(am_perl_la_OBJECTS)
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@am_perl_la_rpath =  \
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@	-rpath \
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@	$(pkglibdir)
 am__ping_la_SOURCES_DIST = ping.c
 @BUILD_MODULE_PING_TRUE@am_ping_la_OBJECTS = ping.lo
 ping_la_OBJECTS = $(am_ping_la_OBJECTS)
@@ -310,6 +400,11 @@ am__processes_la_SOURCES_DIST = processes.c
 processes_la_OBJECTS = $(am_processes_la_OBJECTS)
 @BUILD_MODULE_PROCESSES_TRUE@am_processes_la_rpath = -rpath \
 @BUILD_MODULE_PROCESSES_TRUE@	$(pkglibdir)
+rrdtool_la_LIBADD =
+am__rrdtool_la_SOURCES_DIST = rrdtool.c
+@BUILD_WITH_RRDTOOL_TRUE@am_rrdtool_la_OBJECTS = rrdtool.lo
+rrdtool_la_OBJECTS = $(am_rrdtool_la_OBJECTS)
+@BUILD_WITH_RRDTOOL_TRUE@am_rrdtool_la_rpath = -rpath $(pkglibdir)
 sensors_la_LIBADD =
 am__sensors_la_SOURCES_DIST = sensors.c
 @BUILD_MODULE_SENSORS_TRUE@am_sensors_la_OBJECTS = sensors.lo
@@ -325,16 +420,22 @@ am__swap_la_SOURCES_DIST = swap.c
 @BUILD_MODULE_SWAP_TRUE@am_swap_la_OBJECTS = swap.lo
 swap_la_OBJECTS = $(am_swap_la_OBJECTS)
 @BUILD_MODULE_SWAP_TRUE@am_swap_la_rpath = -rpath $(pkglibdir)
+syslog_la_LIBADD =
+am__syslog_la_SOURCES_DIST = syslog.c
+@BUILD_MODULE_SYSLOG_TRUE@am_syslog_la_OBJECTS = syslog.lo
+syslog_la_OBJECTS = $(am_syslog_la_OBJECTS)
+@BUILD_MODULE_SYSLOG_TRUE@am_syslog_la_rpath = -rpath $(pkglibdir)
 tape_la_LIBADD =
 am__tape_la_SOURCES_DIST = tape.c
 @BUILD_MODULE_TAPE_TRUE@am_tape_la_OBJECTS = tape.lo
 tape_la_OBJECTS = $(am_tape_la_OBJECTS)
 @BUILD_MODULE_TAPE_TRUE@am_tape_la_rpath = -rpath $(pkglibdir)
-traffic_la_LIBADD =
-am__traffic_la_SOURCES_DIST = traffic.c
-@BUILD_MODULE_TRAFFIC_TRUE@am_traffic_la_OBJECTS = traffic.lo
-traffic_la_OBJECTS = $(am_traffic_la_OBJECTS)
-@BUILD_MODULE_TRAFFIC_TRUE@am_traffic_la_rpath = -rpath $(pkglibdir)
+unixsock_la_LIBADD =
+am__unixsock_la_SOURCES_DIST = unixsock.c
+@BUILD_MODULE_UNIXSOCK_TRUE@am_unixsock_la_OBJECTS =  \
+@BUILD_MODULE_UNIXSOCK_TRUE@	unixsock_la-unixsock.lo
+unixsock_la_OBJECTS = $(am_unixsock_la_OBJECTS)
+@BUILD_MODULE_UNIXSOCK_TRUE@am_unixsock_la_rpath = -rpath $(pkglibdir)
 users_la_LIBADD =
 am__users_la_SOURCES_DIST = users.c
 @BUILD_MODULE_USERS_TRUE@am_users_la_OBJECTS = users.lo
@@ -350,47 +451,72 @@ am__wireless_la_SOURCES_DIST = wireless.c
 @BUILD_MODULE_WIRELESS_TRUE@am_wireless_la_OBJECTS = wireless.lo
 wireless_la_OBJECTS = $(am_wireless_la_OBJECTS)
 @BUILD_MODULE_WIRELESS_TRUE@am_wireless_la_rpath = -rpath $(pkglibdir)
+binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(sbin_PROGRAMS)
+PROGRAMS = $(bin_PROGRAMS) $(sbin_PROGRAMS)
 am_collectd_OBJECTS = collectd-collectd.$(OBJEXT) \
-	collectd-utils_debug.$(OBJEXT) collectd-utils_mount.$(OBJEXT) \
+	collectd-utils_avltree.$(OBJEXT) \
+	collectd-utils_mount.$(OBJEXT) collectd-utils_llist.$(OBJEXT) \
 	collectd-utils_ignorelist.$(OBJEXT) collectd-common.$(OBJEXT) \
-	collectd-network.$(OBJEXT) collectd-plugin.$(OBJEXT) \
-	collectd-configfile.$(OBJEXT)
+	collectd-plugin.$(OBJEXT) collectd-configfile.$(OBJEXT) \
+	collectd-types_list.$(OBJEXT)
 collectd_OBJECTS = $(am_collectd_OBJECTS)
 am__DEPENDENCIES_1 =
-@BUILD_MODULE_APACHE_TRUE@am__DEPENDENCIES_2 = "-dlopen" apache.la
-@BUILD_MODULE_APCUPS_TRUE@am__DEPENDENCIES_3 = "-dlopen" apcups.la
-@BUILD_MODULE_APPLE_SENSORS_TRUE@am__DEPENDENCIES_4 = "-dlopen" \
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@am__DEPENDENCIES_2 =  \
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@	$(am__DEPENDENCIES_1) \
+@BUILD_WITH_OWN_LIBOCONFIG_TRUE@	liboconfig/liboconfig.la
+@BUILD_MODULE_APACHE_TRUE@am__DEPENDENCIES_3 = "-dlopen" apache.la
+@BUILD_MODULE_APCUPS_TRUE@am__DEPENDENCIES_4 = "-dlopen" apcups.la
+@BUILD_MODULE_APPLE_SENSORS_TRUE@am__DEPENDENCIES_5 = "-dlopen" \
 @BUILD_MODULE_APPLE_SENSORS_TRUE@	apple_sensors.la
-@BUILD_MODULE_BATTERY_TRUE@am__DEPENDENCIES_5 = "-dlopen" battery.la
-@BUILD_MODULE_CPU_TRUE@am__DEPENDENCIES_6 = "-dlopen" cpu.la
-@BUILD_MODULE_CPUFREQ_TRUE@am__DEPENDENCIES_7 = "-dlopen" cpufreq.la
-@BUILD_MODULE_DF_TRUE@am__DEPENDENCIES_8 = "-dlopen" df.la
-@BUILD_MODULE_DISK_TRUE@am__DEPENDENCIES_9 = "-dlopen" disk.la
-@BUILD_MODULE_DNS_TRUE@am__DEPENDENCIES_10 = "-dlopen" dns.la
-@BUILD_MODULE_EMAIL_TRUE@am__DEPENDENCIES_11 = "-dlopen" email.la
-@BUILD_MODULE_HDDTEMP_TRUE@am__DEPENDENCIES_12 = "-dlopen" hddtemp.la
-@BUILD_MODULE_LOAD_TRUE@am__DEPENDENCIES_13 = "-dlopen" load.la
-@BUILD_MODULE_MBMON_TRUE@am__DEPENDENCIES_14 = "-dlopen" mbmon.la
-@BUILD_MODULE_MEMORY_TRUE@am__DEPENDENCIES_15 = "-dlopen" memory.la
-@BUILD_MODULE_MULTIMETER_TRUE@am__DEPENDENCIES_16 = "-dlopen" \
+@BUILD_MODULE_BATTERY_TRUE@am__DEPENDENCIES_6 = "-dlopen" battery.la
+@BUILD_MODULE_CPU_TRUE@am__DEPENDENCIES_7 = "-dlopen" cpu.la
+@BUILD_MODULE_CPUFREQ_TRUE@am__DEPENDENCIES_8 = "-dlopen" cpufreq.la
+@BUILD_MODULE_CSV_TRUE@am__DEPENDENCIES_9 = "-dlopen" csv.la
+@BUILD_MODULE_DF_TRUE@am__DEPENDENCIES_10 = "-dlopen" df.la
+@BUILD_MODULE_DISK_TRUE@am__DEPENDENCIES_11 = "-dlopen" disk.la
+@BUILD_MODULE_DNS_TRUE@am__DEPENDENCIES_12 = "-dlopen" dns.la
+@BUILD_MODULE_EMAIL_TRUE@am__DEPENDENCIES_13 = "-dlopen" email.la
+@BUILD_MODULE_ENTROPY_TRUE@am__DEPENDENCIES_14 = "-dlopen" entropy.la
+@BUILD_MODULE_EXEC_TRUE@am__DEPENDENCIES_15 = "-dlopen" exec.la
+@BUILD_MODULE_HDDTEMP_TRUE@am__DEPENDENCIES_16 = "-dlopen" hddtemp.la
+@BUILD_MODULE_INTERFACE_TRUE@am__DEPENDENCIES_17 = "-dlopen" \
+@BUILD_MODULE_INTERFACE_TRUE@	interface.la
+@BUILD_MODULE_IPTABLES_TRUE@am__DEPENDENCIES_18 = "-dlopen" \
+@BUILD_MODULE_IPTABLES_TRUE@	iptables.la
+@BUILD_MODULE_IRQ_TRUE@am__DEPENDENCIES_19 = "-dlopen" irq.la
+@BUILD_MODULE_LOAD_TRUE@am__DEPENDENCIES_20 = "-dlopen" load.la
+@BUILD_MODULE_LOGFILE_TRUE@am__DEPENDENCIES_21 = "-dlopen" logfile.la
+@BUILD_MODULE_MBMON_TRUE@am__DEPENDENCIES_22 = "-dlopen" mbmon.la
+@BUILD_MODULE_MEMORY_TRUE@am__DEPENDENCIES_23 = "-dlopen" memory.la
+@BUILD_MODULE_MULTIMETER_TRUE@am__DEPENDENCIES_24 = "-dlopen" \
 @BUILD_MODULE_MULTIMETER_TRUE@	multimeter.la
-@BUILD_MODULE_MYSQL_TRUE@am__DEPENDENCIES_17 = "-dlopen" mysql.la
-@BUILD_MODULE_NFS_TRUE@am__DEPENDENCIES_18 = "-dlopen" nfs.la
-@BUILD_MODULE_NTPD_TRUE@am__DEPENDENCIES_19 = "-dlopen" ntpd.la
-@BUILD_MODULE_PING_TRUE@am__DEPENDENCIES_20 = "-dlopen" ping.la
-@BUILD_MODULE_PROCESSES_TRUE@am__DEPENDENCIES_21 = "-dlopen" \
+@BUILD_MODULE_MYSQL_TRUE@am__DEPENDENCIES_25 = "-dlopen" mysql.la
+@BUILD_MODULE_NETWORK_TRUE@am__DEPENDENCIES_26 = "-dlopen" network.la
+@BUILD_MODULE_NFS_TRUE@am__DEPENDENCIES_27 = "-dlopen" nfs.la
+@BUILD_MODULE_NTPD_TRUE@am__DEPENDENCIES_28 = "-dlopen" ntpd.la
+@BUILD_MODULE_NUT_TRUE@am__DEPENDENCIES_29 = "-dlopen" nut.la
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@am__DEPENDENCIES_30 =  \
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@	"-dlopen" \
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@	perl.la
+@BUILD_MODULE_PING_TRUE@am__DEPENDENCIES_31 = "-dlopen" ping.la
+@BUILD_MODULE_PROCESSES_TRUE@am__DEPENDENCIES_32 = "-dlopen" \
 @BUILD_MODULE_PROCESSES_TRUE@	processes.la
-@BUILD_MODULE_SENSORS_TRUE@am__DEPENDENCIES_22 = "-dlopen" sensors.la
-@BUILD_MODULE_SERIAL_TRUE@am__DEPENDENCIES_23 = "-dlopen" serial.la
-@BUILD_MODULE_SWAP_TRUE@am__DEPENDENCIES_24 = "-dlopen" swap.la
-@BUILD_MODULE_TAPE_TRUE@am__DEPENDENCIES_25 = "-dlopen" tape.la
-@BUILD_MODULE_TRAFFIC_TRUE@am__DEPENDENCIES_26 = "-dlopen" traffic.la
-@BUILD_MODULE_USERS_TRUE@am__DEPENDENCIES_27 = "-dlopen" users.la
-@BUILD_MODULE_VSERVER_TRUE@am__DEPENDENCIES_28 = "-dlopen" vserver.la
-@BUILD_MODULE_WIRELESS_TRUE@am__DEPENDENCIES_29 = "-dlopen" \
+@BUILD_WITH_RRDTOOL_TRUE@am__DEPENDENCIES_33 = "-dlopen" rrdtool.la
+@BUILD_MODULE_SENSORS_TRUE@am__DEPENDENCIES_34 = "-dlopen" sensors.la
+@BUILD_MODULE_SERIAL_TRUE@am__DEPENDENCIES_35 = "-dlopen" serial.la
+@BUILD_MODULE_SWAP_TRUE@am__DEPENDENCIES_36 = "-dlopen" swap.la
+@BUILD_MODULE_SYSLOG_TRUE@am__DEPENDENCIES_37 = "-dlopen" syslog.la
+@BUILD_MODULE_TAPE_TRUE@am__DEPENDENCIES_38 = "-dlopen" tape.la
+@BUILD_MODULE_UNIXSOCK_TRUE@am__DEPENDENCIES_39 = "-dlopen" \
+@BUILD_MODULE_UNIXSOCK_TRUE@	unixsock.la
+@BUILD_MODULE_USERS_TRUE@am__DEPENDENCIES_40 = "-dlopen" users.la
+@BUILD_MODULE_VSERVER_TRUE@am__DEPENDENCIES_41 = "-dlopen" vserver.la
+@BUILD_MODULE_WIRELESS_TRUE@am__DEPENDENCIES_42 = "-dlopen" \
 @BUILD_MODULE_WIRELESS_TRUE@	wireless.la
+am_collectd_nagios_OBJECTS = collectd-nagios.$(OBJEXT)
+collectd_nagios_OBJECTS = $(am_collectd_nagios_OBJECTS)
+collectd_nagios_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -404,33 +530,45 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(apache_la_SOURCES) $(apcups_la_SOURCES) \
 	$(apple_sensors_la_SOURCES) $(battery_la_SOURCES) \
-	$(cpu_la_SOURCES) $(cpufreq_la_SOURCES) $(df_la_SOURCES) \
-	$(disk_la_SOURCES) $(dns_la_SOURCES) $(email_la_SOURCES) \
-	$(hddtemp_la_SOURCES) $(load_la_SOURCES) $(mbmon_la_SOURCES) \
-	$(memory_la_SOURCES) $(multimeter_la_SOURCES) \
-	$(mysql_la_SOURCES) $(nfs_la_SOURCES) $(ntpd_la_SOURCES) \
-	$(ping_la_SOURCES) $(processes_la_SOURCES) \
+	$(cpu_la_SOURCES) $(cpufreq_la_SOURCES) $(csv_la_SOURCES) \
+	$(df_la_SOURCES) $(disk_la_SOURCES) $(dns_la_SOURCES) \
+	$(email_la_SOURCES) $(entropy_la_SOURCES) $(exec_la_SOURCES) \
+	$(hddtemp_la_SOURCES) $(interface_la_SOURCES) \
+	$(iptables_la_SOURCES) $(irq_la_SOURCES) $(load_la_SOURCES) \
+	$(logfile_la_SOURCES) $(mbmon_la_SOURCES) $(memory_la_SOURCES) \
+	$(multimeter_la_SOURCES) $(mysql_la_SOURCES) \
+	$(network_la_SOURCES) $(nfs_la_SOURCES) $(ntpd_la_SOURCES) \
+	$(nut_la_SOURCES) $(perl_la_SOURCES) $(ping_la_SOURCES) \
+	$(processes_la_SOURCES) $(rrdtool_la_SOURCES) \
 	$(sensors_la_SOURCES) $(serial_la_SOURCES) $(swap_la_SOURCES) \
-	$(tape_la_SOURCES) $(traffic_la_SOURCES) $(users_la_SOURCES) \
-	$(vserver_la_SOURCES) $(wireless_la_SOURCES) \
-	$(collectd_SOURCES)
+	$(syslog_la_SOURCES) $(tape_la_SOURCES) $(unixsock_la_SOURCES) \
+	$(users_la_SOURCES) $(vserver_la_SOURCES) \
+	$(wireless_la_SOURCES) $(collectd_SOURCES) \
+	$(collectd_nagios_SOURCES)
 DIST_SOURCES = $(am__apache_la_SOURCES_DIST) \
 	$(am__apcups_la_SOURCES_DIST) \
 	$(am__apple_sensors_la_SOURCES_DIST) \
 	$(am__battery_la_SOURCES_DIST) $(am__cpu_la_SOURCES_DIST) \
-	$(am__cpufreq_la_SOURCES_DIST) $(am__df_la_SOURCES_DIST) \
-	$(am__disk_la_SOURCES_DIST) $(am__dns_la_SOURCES_DIST) \
-	$(am__email_la_SOURCES_DIST) $(am__hddtemp_la_SOURCES_DIST) \
-	$(am__load_la_SOURCES_DIST) $(am__mbmon_la_SOURCES_DIST) \
-	$(am__memory_la_SOURCES_DIST) \
+	$(am__cpufreq_la_SOURCES_DIST) $(am__csv_la_SOURCES_DIST) \
+	$(am__df_la_SOURCES_DIST) $(am__disk_la_SOURCES_DIST) \
+	$(am__dns_la_SOURCES_DIST) $(am__email_la_SOURCES_DIST) \
+	$(am__entropy_la_SOURCES_DIST) $(am__exec_la_SOURCES_DIST) \
+	$(am__hddtemp_la_SOURCES_DIST) \
+	$(am__interface_la_SOURCES_DIST) \
+	$(am__iptables_la_SOURCES_DIST) $(am__irq_la_SOURCES_DIST) \
+	$(am__load_la_SOURCES_DIST) $(am__logfile_la_SOURCES_DIST) \
+	$(am__mbmon_la_SOURCES_DIST) $(am__memory_la_SOURCES_DIST) \
 	$(am__multimeter_la_SOURCES_DIST) $(am__mysql_la_SOURCES_DIST) \
-	$(am__nfs_la_SOURCES_DIST) $(am__ntpd_la_SOURCES_DIST) \
-	$(am__ping_la_SOURCES_DIST) $(am__processes_la_SOURCES_DIST) \
-	$(am__sensors_la_SOURCES_DIST) $(am__serial_la_SOURCES_DIST) \
-	$(am__swap_la_SOURCES_DIST) $(am__tape_la_SOURCES_DIST) \
-	$(am__traffic_la_SOURCES_DIST) $(am__users_la_SOURCES_DIST) \
+	$(am__network_la_SOURCES_DIST) $(am__nfs_la_SOURCES_DIST) \
+	$(am__ntpd_la_SOURCES_DIST) $(am__nut_la_SOURCES_DIST) \
+	$(am__perl_la_SOURCES_DIST) $(am__ping_la_SOURCES_DIST) \
+	$(am__processes_la_SOURCES_DIST) \
+	$(am__rrdtool_la_SOURCES_DIST) $(am__sensors_la_SOURCES_DIST) \
+	$(am__serial_la_SOURCES_DIST) $(am__swap_la_SOURCES_DIST) \
+	$(am__syslog_la_SOURCES_DIST) $(am__tape_la_SOURCES_DIST) \
+	$(am__unixsock_la_SOURCES_DIST) $(am__users_la_SOURCES_DIST) \
 	$(am__vserver_la_SOURCES_DIST) $(am__wireless_la_SOURCES_DIST) \
-	$(collectd_SOURCES)
+	$(collectd_SOURCES) $(collectd_nagios_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -443,7 +581,7 @@ NROFF = nroff
 MANS = $(dist_man_MANS)
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = libconfig liboping
+DIST_SUBDIRS = liboconfig liboping
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -472,6 +610,8 @@ BUILD_MODULE_CPUFREQ_FALSE = @BUILD_MODULE_CPUFREQ_FALSE@
 BUILD_MODULE_CPUFREQ_TRUE = @BUILD_MODULE_CPUFREQ_TRUE@
 BUILD_MODULE_CPU_FALSE = @BUILD_MODULE_CPU_FALSE@
 BUILD_MODULE_CPU_TRUE = @BUILD_MODULE_CPU_TRUE@
+BUILD_MODULE_CSV_FALSE = @BUILD_MODULE_CSV_FALSE@
+BUILD_MODULE_CSV_TRUE = @BUILD_MODULE_CSV_TRUE@
 BUILD_MODULE_DF_FALSE = @BUILD_MODULE_DF_FALSE@
 BUILD_MODULE_DF_TRUE = @BUILD_MODULE_DF_TRUE@
 BUILD_MODULE_DISK_FALSE = @BUILD_MODULE_DISK_FALSE@
@@ -480,10 +620,22 @@ BUILD_MODULE_DNS_FALSE = @BUILD_MODULE_DNS_FALSE@
 BUILD_MODULE_DNS_TRUE = @BUILD_MODULE_DNS_TRUE@
 BUILD_MODULE_EMAIL_FALSE = @BUILD_MODULE_EMAIL_FALSE@
 BUILD_MODULE_EMAIL_TRUE = @BUILD_MODULE_EMAIL_TRUE@
+BUILD_MODULE_ENTROPY_FALSE = @BUILD_MODULE_ENTROPY_FALSE@
+BUILD_MODULE_ENTROPY_TRUE = @BUILD_MODULE_ENTROPY_TRUE@
+BUILD_MODULE_EXEC_FALSE = @BUILD_MODULE_EXEC_FALSE@
+BUILD_MODULE_EXEC_TRUE = @BUILD_MODULE_EXEC_TRUE@
 BUILD_MODULE_HDDTEMP_FALSE = @BUILD_MODULE_HDDTEMP_FALSE@
 BUILD_MODULE_HDDTEMP_TRUE = @BUILD_MODULE_HDDTEMP_TRUE@
+BUILD_MODULE_INTERFACE_FALSE = @BUILD_MODULE_INTERFACE_FALSE@
+BUILD_MODULE_INTERFACE_TRUE = @BUILD_MODULE_INTERFACE_TRUE@
+BUILD_MODULE_IPTABLES_FALSE = @BUILD_MODULE_IPTABLES_FALSE@
+BUILD_MODULE_IPTABLES_TRUE = @BUILD_MODULE_IPTABLES_TRUE@
+BUILD_MODULE_IRQ_FALSE = @BUILD_MODULE_IRQ_FALSE@
+BUILD_MODULE_IRQ_TRUE = @BUILD_MODULE_IRQ_TRUE@
 BUILD_MODULE_LOAD_FALSE = @BUILD_MODULE_LOAD_FALSE@
 BUILD_MODULE_LOAD_TRUE = @BUILD_MODULE_LOAD_TRUE@
+BUILD_MODULE_LOGFILE_FALSE = @BUILD_MODULE_LOGFILE_FALSE@
+BUILD_MODULE_LOGFILE_TRUE = @BUILD_MODULE_LOGFILE_TRUE@
 BUILD_MODULE_MBMON_FALSE = @BUILD_MODULE_MBMON_FALSE@
 BUILD_MODULE_MBMON_TRUE = @BUILD_MODULE_MBMON_TRUE@
 BUILD_MODULE_MEMORY_FALSE = @BUILD_MODULE_MEMORY_FALSE@
@@ -492,26 +644,32 @@ BUILD_MODULE_MULTIMETER_FALSE = @BUILD_MODULE_MULTIMETER_FALSE@
 BUILD_MODULE_MULTIMETER_TRUE = @BUILD_MODULE_MULTIMETER_TRUE@
 BUILD_MODULE_MYSQL_FALSE = @BUILD_MODULE_MYSQL_FALSE@
 BUILD_MODULE_MYSQL_TRUE = @BUILD_MODULE_MYSQL_TRUE@
+BUILD_MODULE_NETWORK_FALSE = @BUILD_MODULE_NETWORK_FALSE@
+BUILD_MODULE_NETWORK_TRUE = @BUILD_MODULE_NETWORK_TRUE@
 BUILD_MODULE_NFS_FALSE = @BUILD_MODULE_NFS_FALSE@
 BUILD_MODULE_NFS_TRUE = @BUILD_MODULE_NFS_TRUE@
 BUILD_MODULE_NTPD_FALSE = @BUILD_MODULE_NTPD_FALSE@
 BUILD_MODULE_NTPD_TRUE = @BUILD_MODULE_NTPD_TRUE@
+BUILD_MODULE_NUT_FALSE = @BUILD_MODULE_NUT_FALSE@
+BUILD_MODULE_NUT_TRUE = @BUILD_MODULE_NUT_TRUE@
+BUILD_MODULE_PERL_FALSE = @BUILD_MODULE_PERL_FALSE@
+BUILD_MODULE_PERL_TRUE = @BUILD_MODULE_PERL_TRUE@
 BUILD_MODULE_PING_FALSE = @BUILD_MODULE_PING_FALSE@
 BUILD_MODULE_PING_TRUE = @BUILD_MODULE_PING_TRUE@
 BUILD_MODULE_PROCESSES_FALSE = @BUILD_MODULE_PROCESSES_FALSE@
 BUILD_MODULE_PROCESSES_TRUE = @BUILD_MODULE_PROCESSES_TRUE@
-BUILD_MODULE_QUOTA_FALSE = @BUILD_MODULE_QUOTA_FALSE@
-BUILD_MODULE_QUOTA_TRUE = @BUILD_MODULE_QUOTA_TRUE@
 BUILD_MODULE_SENSORS_FALSE = @BUILD_MODULE_SENSORS_FALSE@
 BUILD_MODULE_SENSORS_TRUE = @BUILD_MODULE_SENSORS_TRUE@
 BUILD_MODULE_SERIAL_FALSE = @BUILD_MODULE_SERIAL_FALSE@
 BUILD_MODULE_SERIAL_TRUE = @BUILD_MODULE_SERIAL_TRUE@
 BUILD_MODULE_SWAP_FALSE = @BUILD_MODULE_SWAP_FALSE@
 BUILD_MODULE_SWAP_TRUE = @BUILD_MODULE_SWAP_TRUE@
+BUILD_MODULE_SYSLOG_FALSE = @BUILD_MODULE_SYSLOG_FALSE@
+BUILD_MODULE_SYSLOG_TRUE = @BUILD_MODULE_SYSLOG_TRUE@
 BUILD_MODULE_TAPE_FALSE = @BUILD_MODULE_TAPE_FALSE@
 BUILD_MODULE_TAPE_TRUE = @BUILD_MODULE_TAPE_TRUE@
-BUILD_MODULE_TRAFFIC_FALSE = @BUILD_MODULE_TRAFFIC_FALSE@
-BUILD_MODULE_TRAFFIC_TRUE = @BUILD_MODULE_TRAFFIC_TRUE@
+BUILD_MODULE_UNIXSOCK_FALSE = @BUILD_MODULE_UNIXSOCK_FALSE@
+BUILD_MODULE_UNIXSOCK_TRUE = @BUILD_MODULE_UNIXSOCK_TRUE@
 BUILD_MODULE_USERS_FALSE = @BUILD_MODULE_USERS_FALSE@
 BUILD_MODULE_USERS_TRUE = @BUILD_MODULE_USERS_TRUE@
 BUILD_MODULE_VSERVER_FALSE = @BUILD_MODULE_VSERVER_FALSE@
@@ -527,6 +685,8 @@ BUILD_WITH_LIBDEVSTAT_FALSE = @BUILD_WITH_LIBDEVSTAT_FALSE@
 BUILD_WITH_LIBDEVSTAT_TRUE = @BUILD_WITH_LIBDEVSTAT_TRUE@
 BUILD_WITH_LIBIOKIT_FALSE = @BUILD_WITH_LIBIOKIT_FALSE@
 BUILD_WITH_LIBIOKIT_TRUE = @BUILD_WITH_LIBIOKIT_TRUE@
+BUILD_WITH_LIBIPTC_FALSE = @BUILD_WITH_LIBIPTC_FALSE@
+BUILD_WITH_LIBIPTC_TRUE = @BUILD_WITH_LIBIPTC_TRUE@
 BUILD_WITH_LIBKSTAT_FALSE = @BUILD_WITH_LIBKSTAT_FALSE@
 BUILD_WITH_LIBKSTAT_TRUE = @BUILD_WITH_LIBKSTAT_TRUE@
 BUILD_WITH_LIBKVM_FALSE = @BUILD_WITH_LIBKVM_FALSE@
@@ -537,6 +697,8 @@ BUILD_WITH_LIBOPING_FALSE = @BUILD_WITH_LIBOPING_FALSE@
 BUILD_WITH_LIBOPING_TRUE = @BUILD_WITH_LIBOPING_TRUE@
 BUILD_WITH_LIBPCAP_FALSE = @BUILD_WITH_LIBPCAP_FALSE@
 BUILD_WITH_LIBPCAP_TRUE = @BUILD_WITH_LIBPCAP_TRUE@
+BUILD_WITH_LIBPERL_FALSE = @BUILD_WITH_LIBPERL_FALSE@
+BUILD_WITH_LIBPERL_TRUE = @BUILD_WITH_LIBPERL_TRUE@
 BUILD_WITH_LIBPTHREAD_FALSE = @BUILD_WITH_LIBPTHREAD_FALSE@
 BUILD_WITH_LIBPTHREAD_TRUE = @BUILD_WITH_LIBPTHREAD_TRUE@
 BUILD_WITH_LIBRESOLV_FALSE = @BUILD_WITH_LIBRESOLV_FALSE@
@@ -547,8 +709,12 @@ BUILD_WITH_LIBSOCKET_FALSE = @BUILD_WITH_LIBSOCKET_FALSE@
 BUILD_WITH_LIBSOCKET_TRUE = @BUILD_WITH_LIBSOCKET_TRUE@
 BUILD_WITH_LIBSTATGRAB_FALSE = @BUILD_WITH_LIBSTATGRAB_FALSE@
 BUILD_WITH_LIBSTATGRAB_TRUE = @BUILD_WITH_LIBSTATGRAB_TRUE@
+BUILD_WITH_LIBUPSCLIENT_FALSE = @BUILD_WITH_LIBUPSCLIENT_FALSE@
+BUILD_WITH_LIBUPSCLIENT_TRUE = @BUILD_WITH_LIBUPSCLIENT_TRUE@
 BUILD_WITH_LM_SENSORS_FALSE = @BUILD_WITH_LM_SENSORS_FALSE@
 BUILD_WITH_LM_SENSORS_TRUE = @BUILD_WITH_LM_SENSORS_TRUE@
+BUILD_WITH_OWN_LIBOCONFIG_FALSE = @BUILD_WITH_OWN_LIBOCONFIG_FALSE@
+BUILD_WITH_OWN_LIBOCONFIG_TRUE = @BUILD_WITH_OWN_LIBOCONFIG_TRUE@
 BUILD_WITH_OWN_LIBOPING_FALSE = @BUILD_WITH_OWN_LIBOPING_FALSE@
 BUILD_WITH_OWN_LIBOPING_TRUE = @BUILD_WITH_OWN_LIBOPING_TRUE@
 BUILD_WITH_RRDTOOL_FALSE = @BUILD_WITH_RRDTOOL_FALSE@
@@ -581,6 +747,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+LEXLIB = @LEXLIB@
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBLTDL = @LIBLTDL@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -597,11 +766,15 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PERL_CFLAGS = @PERL_CFLAGS@
+PERL_LDFLAGS = @PERL_LDFLAGS@
 RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
@@ -650,146 +823,200 @@ sharedstatedir = @sharedstatedir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = libconfig $(am__append_1)
+SUBDIRS = $(am__append_1) $(am__append_2)
 @COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
 collectd_SOURCES = collectd.c collectd.h \
-		   utils_debug.c utils_debug.h \
+		   utils_avltree.c utils_avltree.h \
 		   utils_mount.c utils_mount.h \
+		   utils_llist.c utils_llist.h \
 		   utils_ignorelist.c utils_ignorelist.h \
 		   common.c common.h \
-		   network.c network.h \
 		   plugin.c plugin.h \
-		   configfile.c configfile.h
+		   configfile.c configfile.h \
+		   types_list.c types_list.h
 
-collectd_CPPFLAGS = $(LTDLINCL) \
+collectd_CPPFLAGS = $(LTDLINCL) -DPREFIX='"${prefix}"' \
 	-DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"' \
 	-DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"' \
-	$(am__append_2) -DPLUGINDIR='"${pkglibdir}"' $(am__append_3)
+	$(am__append_3) -DPLUGINDIR='"${pkglibdir}"'
 
 # Link to these libraries..
 collectd_LDFLAGS = -export-dynamic $(am__append_4) $(am__append_5) \
 	$(am__append_6) $(am__append_7) $(am__append_8) \
 	$(am__append_9) $(am__append_10) $(am__append_11) \
-	$(am__append_12)
-collectd_LDADD = $(LIBLTDL) libconfig/libconfig.la "-dlopen" self \
-	$(am__append_15) $(am__append_19) $(am__append_23) \
-	$(am__append_27) $(am__append_32) $(am__append_35) \
-	$(am__append_38) $(am__append_44) $(am__append_50) \
-	$(am__append_54) $(am__append_58) $(am__append_61) \
-	$(am__append_68) $(am__append_71) $(am__append_79) \
-	$(am__append_83) $(am__append_86) $(am__append_90) \
-	$(am__append_94) $(am__append_97) $(am__append_101) \
-	$(am__append_104) $(am__append_107) $(am__append_117) \
-	$(am__append_120) $(am__append_128) $(am__append_131) \
-	$(am__append_134)
-collectd_DEPENDENCIES = $(LIBLTDL) libconfig/libconfig.la \
-	$(am__append_16) $(am__append_20) $(am__append_24) \
-	$(am__append_28) $(am__append_33) $(am__append_36) \
-	$(am__append_39) $(am__append_45) $(am__append_51) \
-	$(am__append_55) $(am__append_59) $(am__append_62) \
-	$(am__append_69) $(am__append_72) $(am__append_80) \
-	$(am__append_84) $(am__append_87) $(am__append_91) \
-	$(am__append_95) $(am__append_98) $(am__append_102) \
-	$(am__append_105) $(am__append_108) $(am__append_118) \
-	$(am__append_121) $(am__append_129) $(am__append_132) \
-	$(am__append_135)
-pkglib_LTLIBRARIES = $(am__append_13) $(am__append_17) \
-	$(am__append_21) $(am__append_25) $(am__append_29) \
-	$(am__append_34) $(am__append_37) $(am__append_40) \
-	$(am__append_46) $(am__append_52) $(am__append_56) \
-	$(am__append_60) $(am__append_66) $(am__append_70) \
-	$(am__append_78) $(am__append_81) $(am__append_85) \
-	$(am__append_88) $(am__append_92) $(am__append_96) \
-	$(am__append_99) $(am__append_103) $(am__append_106) \
-	$(am__append_114) $(am__append_119) $(am__append_127) \
-	$(am__append_130) $(am__append_133)
+	$(am__append_12) $(am__append_15)
+collectd_LDADD = $(am__append_13) $(am__append_19) $(am__append_23) \
+	$(am__append_27) $(am__append_31) $(am__append_36) \
+	$(am__append_39) $(am__append_42) $(am__append_45) \
+	$(am__append_51) $(am__append_57) $(am__append_61) \
+	$(am__append_64) $(am__append_68) $(am__append_72) \
+	$(am__append_75) $(am__append_84) $(am__append_87) \
+	$(am__append_90) $(am__append_96) $(am__append_100) \
+	$(am__append_103) $(am__append_111) $(am__append_115) \
+	$(am__append_120) $(am__append_123) $(am__append_127) \
+	$(am__append_132) $(am__append_135) $(am__append_139) \
+	$(am__append_142) $(am__append_145) $(am__append_149) \
+	$(am__append_152) $(am__append_155) $(am__append_163) \
+	$(am__append_168) $(am__append_171) $(am__append_174) \
+	$(am__append_177) $(am__append_180)
+collectd_DEPENDENCIES = $(am__append_14) $(am__append_20) \
+	$(am__append_24) $(am__append_28) $(am__append_32) \
+	$(am__append_37) $(am__append_40) $(am__append_43) \
+	$(am__append_46) $(am__append_52) $(am__append_58) \
+	$(am__append_62) $(am__append_65) $(am__append_69) \
+	$(am__append_73) $(am__append_76) $(am__append_85) \
+	$(am__append_88) $(am__append_91) $(am__append_97) \
+	$(am__append_101) $(am__append_104) $(am__append_112) \
+	$(am__append_116) $(am__append_121) $(am__append_124) \
+	$(am__append_128) $(am__append_133) $(am__append_136) \
+	$(am__append_140) $(am__append_143) $(am__append_146) \
+	$(am__append_150) $(am__append_153) $(am__append_156) \
+	$(am__append_164) $(am__append_169) $(am__append_172) \
+	$(am__append_175) $(am__append_178) $(am__append_181)
+collectd_nagios_SOURCES = collectd-nagios.c
+collectd_nagios_LDFLAGS = $(am__append_16)
+pkglib_LTLIBRARIES = $(am__append_17) $(am__append_21) \
+	$(am__append_25) $(am__append_29) $(am__append_33) \
+	$(am__append_38) $(am__append_41) $(am__append_44) \
+	$(am__append_47) $(am__append_53) $(am__append_59) \
+	$(am__append_63) $(am__append_66) $(am__append_70) \
+	$(am__append_74) $(am__append_82) $(am__append_86) \
+	$(am__append_89) $(am__append_95) $(am__append_98) \
+	$(am__append_102) $(am__append_110) $(am__append_113) \
+	$(am__append_117) $(am__append_122) $(am__append_125) \
+	$(am__append_129) $(am__append_134) $(am__append_137) \
+	$(am__append_141) $(am__append_144) $(am__append_147) \
+	$(am__append_151) $(am__append_154) $(am__append_162) \
+	$(am__append_165) $(am__append_170) $(am__append_173) \
+	$(am__append_176) $(am__append_179)
 @BUILD_MODULE_APACHE_TRUE@apache_la_SOURCES = apache.c
 @BUILD_MODULE_APACHE_TRUE@apache_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_APACHE_TRUE@	$(am__append_14)
+@BUILD_MODULE_APACHE_TRUE@	$(am__append_18)
 @BUILD_MODULE_APCUPS_TRUE@apcups_la_SOURCES = apcups.c
 @BUILD_MODULE_APCUPS_TRUE@apcups_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_APCUPS_TRUE@	$(am__append_18)
+@BUILD_MODULE_APCUPS_TRUE@	$(am__append_22)
 @BUILD_MODULE_APPLE_SENSORS_TRUE@apple_sensors_la_SOURCES = apple_sensors.c
 @BUILD_MODULE_APPLE_SENSORS_TRUE@apple_sensors_la_LDFLAGS = -module \
 @BUILD_MODULE_APPLE_SENSORS_TRUE@	-avoid-version \
-@BUILD_MODULE_APPLE_SENSORS_TRUE@	$(am__append_22)
+@BUILD_MODULE_APPLE_SENSORS_TRUE@	$(am__append_26)
 @BUILD_MODULE_BATTERY_TRUE@battery_la_SOURCES = battery.c
 @BUILD_MODULE_BATTERY_TRUE@battery_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_BATTERY_TRUE@	$(am__append_26)
+@BUILD_MODULE_BATTERY_TRUE@	$(am__append_30)
 @BUILD_MODULE_CPU_TRUE@cpu_la_SOURCES = cpu.c
 @BUILD_MODULE_CPU_TRUE@cpu_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_CPU_TRUE@	$(am__append_30) $(am__append_31)
+@BUILD_MODULE_CPU_TRUE@	$(am__append_34) $(am__append_35)
 @BUILD_MODULE_CPUFREQ_TRUE@cpufreq_la_SOURCES = cpufreq.c
 @BUILD_MODULE_CPUFREQ_TRUE@cpufreq_la_LDFLAGS = -module -avoid-version
+@BUILD_MODULE_CSV_TRUE@csv_la_SOURCES = csv.c
+@BUILD_MODULE_CSV_TRUE@csv_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_DF_TRUE@df_la_SOURCES = df.c
 @BUILD_MODULE_DF_TRUE@df_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_DISK_TRUE@disk_la_SOURCES = disk.c
 @BUILD_MODULE_DISK_TRUE@disk_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_DISK_TRUE@	$(am__append_41) $(am__append_42) \
-@BUILD_MODULE_DISK_TRUE@	$(am__append_43)
-@BUILD_MODULE_DNS_TRUE@dns_la_SOURCES = dns.c $(am__append_47)
+@BUILD_MODULE_DISK_TRUE@	$(am__append_48) $(am__append_49) \
+@BUILD_MODULE_DISK_TRUE@	$(am__append_50)
+@BUILD_MODULE_DNS_TRUE@dns_la_SOURCES = dns.c $(am__append_54)
 @BUILD_MODULE_DNS_TRUE@dns_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_DNS_TRUE@	$(am__append_48) $(am__append_49)
+@BUILD_MODULE_DNS_TRUE@	$(am__append_55) $(am__append_56)
 @BUILD_MODULE_EMAIL_TRUE@email_la_SOURCES = email.c
 @BUILD_MODULE_EMAIL_TRUE@email_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_EMAIL_TRUE@	$(am__append_53)
+@BUILD_MODULE_EMAIL_TRUE@	$(am__append_60)
+@BUILD_MODULE_ENTROPY_TRUE@entropy_la_SOURCES = entropy.c
+@BUILD_MODULE_ENTROPY_TRUE@entropy_la_LDFLAGS = -module -avoid-version
+@BUILD_MODULE_EXEC_TRUE@exec_la_SOURCES = exec.c
+@BUILD_MODULE_EXEC_TRUE@exec_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_EXEC_TRUE@	$(am__append_67)
 @BUILD_MODULE_HDDTEMP_TRUE@hddtemp_la_SOURCES = hddtemp.c
 @BUILD_MODULE_HDDTEMP_TRUE@hddtemp_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_HDDTEMP_TRUE@	$(am__append_57)
+@BUILD_MODULE_HDDTEMP_TRUE@	$(am__append_71)
+@BUILD_MODULE_INTERFACE_TRUE@interface_la_SOURCES = interface.c
+@BUILD_MODULE_INTERFACE_TRUE@interface_la_LDFLAGS = -module \
+@BUILD_MODULE_INTERFACE_TRUE@	-avoid-version $(am__append_77) \
+@BUILD_MODULE_INTERFACE_TRUE@	$(am__append_78) $(am__append_79) \
+@BUILD_MODULE_INTERFACE_TRUE@	$(am__append_80) $(am__append_81)
+@BUILD_MODULE_IPTABLES_TRUE@iptables_la_SOURCES = iptables.c
+@BUILD_MODULE_IPTABLES_TRUE@iptables_la_LDFLAGS = -module \
+@BUILD_MODULE_IPTABLES_TRUE@	-avoid-version $(am__append_83)
+@BUILD_MODULE_IRQ_TRUE@irq_la_SOURCES = irq.c
+@BUILD_MODULE_IRQ_TRUE@irq_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_LOAD_TRUE@load_la_SOURCES = load.c
 @BUILD_MODULE_LOAD_TRUE@load_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_LOAD_TRUE@	$(am__append_63) $(am__append_64) \
-@BUILD_MODULE_LOAD_TRUE@	$(am__append_65)
+@BUILD_MODULE_LOAD_TRUE@	$(am__append_92) $(am__append_93) \
+@BUILD_MODULE_LOAD_TRUE@	$(am__append_94)
+@BUILD_MODULE_LOGFILE_TRUE@logfile_la_SOURCES = logfile.c
+@BUILD_MODULE_LOGFILE_TRUE@logfile_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_MBMON_TRUE@mbmon_la_SOURCES = mbmon.c
 @BUILD_MODULE_MBMON_TRUE@mbmon_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_MBMON_TRUE@	$(am__append_67)
+@BUILD_MODULE_MBMON_TRUE@	$(am__append_99)
 @BUILD_MODULE_MEMORY_TRUE@memory_la_SOURCES = memory.c
 @BUILD_MODULE_MEMORY_TRUE@memory_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_MEMORY_TRUE@	$(am__append_73) $(am__append_74) \
-@BUILD_MODULE_MEMORY_TRUE@	$(am__append_75) $(am__append_76) \
-@BUILD_MODULE_MEMORY_TRUE@	$(am__append_77)
+@BUILD_MODULE_MEMORY_TRUE@	$(am__append_105) $(am__append_106) \
+@BUILD_MODULE_MEMORY_TRUE@	$(am__append_107) $(am__append_108) \
+@BUILD_MODULE_MEMORY_TRUE@	$(am__append_109)
 @BUILD_MODULE_MULTIMETER_TRUE@multimeter_la_SOURCES = multimeter.c
 @BUILD_MODULE_MULTIMETER_TRUE@multimeter_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_MYSQL_TRUE@mysql_la_SOURCES = mysql.c
 @BUILD_MODULE_MYSQL_TRUE@mysql_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_MYSQL_TRUE@	$(am__append_82)
+@BUILD_MODULE_MYSQL_TRUE@	$(am__append_114)
+@BUILD_MODULE_NETWORK_TRUE@network_la_SOURCES = network.c network.h
+@BUILD_MODULE_NETWORK_TRUE@network_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_NETWORK_TRUE@	$(am__append_118) $(am__append_119)
 @BUILD_MODULE_NFS_TRUE@nfs_la_SOURCES = nfs.c
 @BUILD_MODULE_NFS_TRUE@nfs_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_NTPD_TRUE@ntpd_la_SOURCES = ntpd.c
 @BUILD_MODULE_NTPD_TRUE@ntpd_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_NTPD_TRUE@	$(am__append_89)
+@BUILD_MODULE_NTPD_TRUE@	$(am__append_126)
+@BUILD_MODULE_NUT_TRUE@nut_la_SOURCES = nut.c
+@BUILD_MODULE_NUT_TRUE@nut_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_NUT_TRUE@	$(am__append_130) $(am__append_131)
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@perl_la_SOURCES = perl.c
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@perl_la_CFLAGS = $(AM_CFLAGS) \
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@		  $(PERL_CFLAGS) \
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@		  -DXS_VERSION=\"$(VERSION)\" -DVERSION=\"$(VERSION)\"
+
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@perl_la_LDFLAGS = -module -avoid-version \
+@BUILD_MODULE_PERL_TRUE@@BUILD_WITH_LIBPERL_TRUE@		  $(PERL_LDFLAGS)
+
 @BUILD_MODULE_PING_TRUE@ping_la_SOURCES = ping.c
 @BUILD_MODULE_PING_TRUE@ping_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_PING_TRUE@	$(am__append_93)
+@BUILD_MODULE_PING_TRUE@	$(am__append_138)
 @BUILD_MODULE_PING_TRUE@@BUILD_WITH_LIBOPING_TRUE@@BUILD_WITH_OWN_LIBOPING_TRUE@ping_la_LIBADD = liboping/liboping.la
 @BUILD_MODULE_PING_TRUE@@BUILD_WITH_LIBOPING_TRUE@@BUILD_WITH_OWN_LIBOPING_TRUE@ping_la_DEPENDENCIES = liboping/liboping.la
 @BUILD_MODULE_PROCESSES_TRUE@processes_la_SOURCES = processes.c
 @BUILD_MODULE_PROCESSES_TRUE@processes_la_LDFLAGS = -module -avoid-version
+@BUILD_WITH_RRDTOOL_TRUE@rrdtool_la_SOURCES = rrdtool.c
+@BUILD_WITH_RRDTOOL_TRUE@rrdtool_la_LDFLAGS = -module -avoid-version -lrrd
 @BUILD_MODULE_SENSORS_TRUE@sensors_la_SOURCES = sensors.c
 @BUILD_MODULE_SENSORS_TRUE@sensors_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_SENSORS_TRUE@	$(am__append_100)
+@BUILD_MODULE_SENSORS_TRUE@	$(am__append_148)
 @BUILD_MODULE_SERIAL_TRUE@serial_la_SOURCES = serial.c
 @BUILD_MODULE_SERIAL_TRUE@serial_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_SWAP_TRUE@swap_la_SOURCES = swap.c
 @BUILD_MODULE_SWAP_TRUE@swap_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_SWAP_TRUE@	$(am__append_109) $(am__append_110) \
-@BUILD_MODULE_SWAP_TRUE@	$(am__append_111) $(am__append_112) \
-@BUILD_MODULE_SWAP_TRUE@	$(am__append_113)
+@BUILD_MODULE_SWAP_TRUE@	$(am__append_157) $(am__append_158) \
+@BUILD_MODULE_SWAP_TRUE@	$(am__append_159) $(am__append_160) \
+@BUILD_MODULE_SWAP_TRUE@	$(am__append_161)
+@BUILD_MODULE_SYSLOG_TRUE@syslog_la_SOURCES = syslog.c
+@BUILD_MODULE_SYSLOG_TRUE@syslog_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_TAPE_TRUE@tape_la_SOURCES = tape.c
 @BUILD_MODULE_TAPE_TRUE@tape_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_TAPE_TRUE@	$(am__append_115) $(am__append_116)
-@BUILD_MODULE_TRAFFIC_TRUE@traffic_la_SOURCES = traffic.c
-@BUILD_MODULE_TRAFFIC_TRUE@traffic_la_LDFLAGS = -module -avoid-version \
-@BUILD_MODULE_TRAFFIC_TRUE@	$(am__append_122) $(am__append_123) \
-@BUILD_MODULE_TRAFFIC_TRUE@	$(am__append_124) $(am__append_125) \
-@BUILD_MODULE_TRAFFIC_TRUE@	$(am__append_126)
+@BUILD_MODULE_TAPE_TRUE@	$(am__append_166) $(am__append_167)
+@BUILD_MODULE_UNIXSOCK_TRUE@unixsock_la_SOURCES = unixsock.c
+@BUILD_MODULE_UNIXSOCK_TRUE@unixsock_la_CPPFLAGS = -DPREFIX='"${prefix}"'
+@BUILD_MODULE_UNIXSOCK_TRUE@unixsock_la_LDFLAGS = -module -avoid-version -lpthread
 @BUILD_MODULE_USERS_TRUE@users_la_SOURCES = users.c
 @BUILD_MODULE_USERS_TRUE@users_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_VSERVER_TRUE@vserver_la_SOURCES = vserver.c
 @BUILD_MODULE_VSERVER_TRUE@vserver_la_LDFLAGS = -module -avoid-version
 @BUILD_MODULE_WIRELESS_TRUE@wireless_la_SOURCES = wireless.c
 @BUILD_MODULE_WIRELESS_TRUE@wireless_la_LDFLAGS = -module -avoid-version
-dist_man_MANS = collectd.1 collectd.conf.5
+dist_man_MANS = collectd.1 collectd-nagios.1 collectd.conf.5 \
+		collectd-email.5 collectd-exec.5 collectd-perl.5 \
+		collectd-unixsock.5
+
+
+#collectd_1_SOURCES = collectd.pod
+EXTRA_DIST = types.db
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -882,6 +1109,8 @@ cpu.la: $(cpu_la_OBJECTS) $(cpu_la_DEPENDENCIES)
 	$(LINK) $(am_cpu_la_rpath) $(cpu_la_LDFLAGS) $(cpu_la_OBJECTS) $(cpu_la_LIBADD) $(LIBS)
 cpufreq.la: $(cpufreq_la_OBJECTS) $(cpufreq_la_DEPENDENCIES) 
 	$(LINK) $(am_cpufreq_la_rpath) $(cpufreq_la_LDFLAGS) $(cpufreq_la_OBJECTS) $(cpufreq_la_LIBADD) $(LIBS)
+csv.la: $(csv_la_OBJECTS) $(csv_la_DEPENDENCIES) 
+	$(LINK) $(am_csv_la_rpath) $(csv_la_LDFLAGS) $(csv_la_OBJECTS) $(csv_la_LIBADD) $(LIBS)
 df.la: $(df_la_OBJECTS) $(df_la_DEPENDENCIES) 
 	$(LINK) $(am_df_la_rpath) $(df_la_LDFLAGS) $(df_la_OBJECTS) $(df_la_LIBADD) $(LIBS)
 disk.la: $(disk_la_OBJECTS) $(disk_la_DEPENDENCIES) 
@@ -890,10 +1119,22 @@ dns.la: $(dns_la_OBJECTS) $(dns_la_DEPENDENCIES)
 	$(LINK) $(am_dns_la_rpath) $(dns_la_LDFLAGS) $(dns_la_OBJECTS) $(dns_la_LIBADD) $(LIBS)
 email.la: $(email_la_OBJECTS) $(email_la_DEPENDENCIES) 
 	$(LINK) $(am_email_la_rpath) $(email_la_LDFLAGS) $(email_la_OBJECTS) $(email_la_LIBADD) $(LIBS)
+entropy.la: $(entropy_la_OBJECTS) $(entropy_la_DEPENDENCIES) 
+	$(LINK) $(am_entropy_la_rpath) $(entropy_la_LDFLAGS) $(entropy_la_OBJECTS) $(entropy_la_LIBADD) $(LIBS)
+exec.la: $(exec_la_OBJECTS) $(exec_la_DEPENDENCIES) 
+	$(LINK) $(am_exec_la_rpath) $(exec_la_LDFLAGS) $(exec_la_OBJECTS) $(exec_la_LIBADD) $(LIBS)
 hddtemp.la: $(hddtemp_la_OBJECTS) $(hddtemp_la_DEPENDENCIES) 
 	$(LINK) $(am_hddtemp_la_rpath) $(hddtemp_la_LDFLAGS) $(hddtemp_la_OBJECTS) $(hddtemp_la_LIBADD) $(LIBS)
+interface.la: $(interface_la_OBJECTS) $(interface_la_DEPENDENCIES) 
+	$(LINK) $(am_interface_la_rpath) $(interface_la_LDFLAGS) $(interface_la_OBJECTS) $(interface_la_LIBADD) $(LIBS)
+iptables.la: $(iptables_la_OBJECTS) $(iptables_la_DEPENDENCIES) 
+	$(LINK) $(am_iptables_la_rpath) $(iptables_la_LDFLAGS) $(iptables_la_OBJECTS) $(iptables_la_LIBADD) $(LIBS)
+irq.la: $(irq_la_OBJECTS) $(irq_la_DEPENDENCIES) 
+	$(LINK) $(am_irq_la_rpath) $(irq_la_LDFLAGS) $(irq_la_OBJECTS) $(irq_la_LIBADD) $(LIBS)
 load.la: $(load_la_OBJECTS) $(load_la_DEPENDENCIES) 
 	$(LINK) $(am_load_la_rpath) $(load_la_LDFLAGS) $(load_la_OBJECTS) $(load_la_LIBADD) $(LIBS)
+logfile.la: $(logfile_la_OBJECTS) $(logfile_la_DEPENDENCIES) 
+	$(LINK) $(am_logfile_la_rpath) $(logfile_la_LDFLAGS) $(logfile_la_OBJECTS) $(logfile_la_LIBADD) $(LIBS)
 mbmon.la: $(mbmon_la_OBJECTS) $(mbmon_la_DEPENDENCIES) 
 	$(LINK) $(am_mbmon_la_rpath) $(mbmon_la_LDFLAGS) $(mbmon_la_OBJECTS) $(mbmon_la_LIBADD) $(LIBS)
 memory.la: $(memory_la_OBJECTS) $(memory_la_DEPENDENCIES) 
@@ -902,30 +1143,68 @@ multimeter.la: $(multimeter_la_OBJECTS) $(multimeter_la_DEPENDENCIES)
 	$(LINK) $(am_multimeter_la_rpath) $(multimeter_la_LDFLAGS) $(multimeter_la_OBJECTS) $(multimeter_la_LIBADD) $(LIBS)
 mysql.la: $(mysql_la_OBJECTS) $(mysql_la_DEPENDENCIES) 
 	$(LINK) $(am_mysql_la_rpath) $(mysql_la_LDFLAGS) $(mysql_la_OBJECTS) $(mysql_la_LIBADD) $(LIBS)
+network.la: $(network_la_OBJECTS) $(network_la_DEPENDENCIES) 
+	$(LINK) $(am_network_la_rpath) $(network_la_LDFLAGS) $(network_la_OBJECTS) $(network_la_LIBADD) $(LIBS)
 nfs.la: $(nfs_la_OBJECTS) $(nfs_la_DEPENDENCIES) 
 	$(LINK) $(am_nfs_la_rpath) $(nfs_la_LDFLAGS) $(nfs_la_OBJECTS) $(nfs_la_LIBADD) $(LIBS)
 ntpd.la: $(ntpd_la_OBJECTS) $(ntpd_la_DEPENDENCIES) 
 	$(LINK) $(am_ntpd_la_rpath) $(ntpd_la_LDFLAGS) $(ntpd_la_OBJECTS) $(ntpd_la_LIBADD) $(LIBS)
+nut.la: $(nut_la_OBJECTS) $(nut_la_DEPENDENCIES) 
+	$(LINK) $(am_nut_la_rpath) $(nut_la_LDFLAGS) $(nut_la_OBJECTS) $(nut_la_LIBADD) $(LIBS)
+perl.la: $(perl_la_OBJECTS) $(perl_la_DEPENDENCIES) 
+	$(LINK) $(am_perl_la_rpath) $(perl_la_LDFLAGS) $(perl_la_OBJECTS) $(perl_la_LIBADD) $(LIBS)
 ping.la: $(ping_la_OBJECTS) $(ping_la_DEPENDENCIES) 
 	$(LINK) $(am_ping_la_rpath) $(ping_la_LDFLAGS) $(ping_la_OBJECTS) $(ping_la_LIBADD) $(LIBS)
 processes.la: $(processes_la_OBJECTS) $(processes_la_DEPENDENCIES) 
 	$(LINK) $(am_processes_la_rpath) $(processes_la_LDFLAGS) $(processes_la_OBJECTS) $(processes_la_LIBADD) $(LIBS)
+rrdtool.la: $(rrdtool_la_OBJECTS) $(rrdtool_la_DEPENDENCIES) 
+	$(LINK) $(am_rrdtool_la_rpath) $(rrdtool_la_LDFLAGS) $(rrdtool_la_OBJECTS) $(rrdtool_la_LIBADD) $(LIBS)
 sensors.la: $(sensors_la_OBJECTS) $(sensors_la_DEPENDENCIES) 
 	$(LINK) $(am_sensors_la_rpath) $(sensors_la_LDFLAGS) $(sensors_la_OBJECTS) $(sensors_la_LIBADD) $(LIBS)
 serial.la: $(serial_la_OBJECTS) $(serial_la_DEPENDENCIES) 
 	$(LINK) $(am_serial_la_rpath) $(serial_la_LDFLAGS) $(serial_la_OBJECTS) $(serial_la_LIBADD) $(LIBS)
 swap.la: $(swap_la_OBJECTS) $(swap_la_DEPENDENCIES) 
 	$(LINK) $(am_swap_la_rpath) $(swap_la_LDFLAGS) $(swap_la_OBJECTS) $(swap_la_LIBADD) $(LIBS)
+syslog.la: $(syslog_la_OBJECTS) $(syslog_la_DEPENDENCIES) 
+	$(LINK) $(am_syslog_la_rpath) $(syslog_la_LDFLAGS) $(syslog_la_OBJECTS) $(syslog_la_LIBADD) $(LIBS)
 tape.la: $(tape_la_OBJECTS) $(tape_la_DEPENDENCIES) 
 	$(LINK) $(am_tape_la_rpath) $(tape_la_LDFLAGS) $(tape_la_OBJECTS) $(tape_la_LIBADD) $(LIBS)
-traffic.la: $(traffic_la_OBJECTS) $(traffic_la_DEPENDENCIES) 
-	$(LINK) $(am_traffic_la_rpath) $(traffic_la_LDFLAGS) $(traffic_la_OBJECTS) $(traffic_la_LIBADD) $(LIBS)
+unixsock.la: $(unixsock_la_OBJECTS) $(unixsock_la_DEPENDENCIES) 
+	$(LINK) $(am_unixsock_la_rpath) $(unixsock_la_LDFLAGS) $(unixsock_la_OBJECTS) $(unixsock_la_LIBADD) $(LIBS)
 users.la: $(users_la_OBJECTS) $(users_la_DEPENDENCIES) 
 	$(LINK) $(am_users_la_rpath) $(users_la_LDFLAGS) $(users_la_OBJECTS) $(users_la_LIBADD) $(LIBS)
 vserver.la: $(vserver_la_OBJECTS) $(vserver_la_DEPENDENCIES) 
 	$(LINK) $(am_vserver_la_rpath) $(vserver_la_LDFLAGS) $(vserver_la_OBJECTS) $(vserver_la_LIBADD) $(LIBS)
 wireless.la: $(wireless_la_OBJECTS) $(wireless_la_DEPENDENCIES) 
 	$(LINK) $(am_wireless_la_rpath) $(wireless_la_LDFLAGS) $(wireless_la_OBJECTS) $(wireless_la_LIBADD) $(LIBS)
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+	     || test -f $$p1 \
+	  ; then \
+	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	  else :; fi; \
+	done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	done
+
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(sbindir)" || $(mkdir_p) "$(DESTDIR)$(sbindir)"
@@ -957,6 +1236,9 @@ clean-sbinPROGRAMS:
 collectd$(EXEEXT): $(collectd_OBJECTS) $(collectd_DEPENDENCIES) 
 	@rm -f collectd$(EXEEXT)
 	$(LINK) $(collectd_LDFLAGS) $(collectd_OBJECTS) $(collectd_LDADD) $(LIBS)
+collectd-nagios$(EXEEXT): $(collectd_nagios_OBJECTS) $(collectd_nagios_DEPENDENCIES) 
+	@rm -f collectd-nagios$(EXEEXT)
+	$(LINK) $(collectd_nagios_LDFLAGS) $(collectd_nagios_OBJECTS) $(collectd_nagios_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -971,32 +1253,46 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-collectd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-configfile.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-network.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-nagios.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-plugin.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_debug.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-types_list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_avltree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_ignorelist.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_llist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectd-utils_mount.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpufreq.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/csv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/disk.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/email.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/entropy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hddtemp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interface.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iptables.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irq.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/load.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logfile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbmon.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multimeter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mysql.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nfs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nut.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/perl_la-perl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ping.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/processes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rrdtool.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sensors.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/serial.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/swap.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/syslog.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tape.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/traffic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unixsock_la-unixsock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/users.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils_dns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vserver.Plo@am__quote@
@@ -1023,6 +1319,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
+perl_la-perl.lo: perl.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(perl_la_CFLAGS) $(CFLAGS) -MT perl_la-perl.lo -MD -MP -MF "$(DEPDIR)/perl_la-perl.Tpo" -c -o perl_la-perl.lo `test -f 'perl.c' || echo '$(srcdir)/'`perl.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/perl_la-perl.Tpo" "$(DEPDIR)/perl_la-perl.Plo"; else rm -f "$(DEPDIR)/perl_la-perl.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='perl.c' object='perl_la-perl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(perl_la_CFLAGS) $(CFLAGS) -c -o perl_la-perl.lo `test -f 'perl.c' || echo '$(srcdir)/'`perl.c
+
+unixsock_la-unixsock.lo: unixsock.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(unixsock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT unixsock_la-unixsock.lo -MD -MP -MF "$(DEPDIR)/unixsock_la-unixsock.Tpo" -c -o unixsock_la-unixsock.lo `test -f 'unixsock.c' || echo '$(srcdir)/'`unixsock.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/unixsock_la-unixsock.Tpo" "$(DEPDIR)/unixsock_la-unixsock.Plo"; else rm -f "$(DEPDIR)/unixsock_la-unixsock.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='unixsock.c' object='unixsock_la-unixsock.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(unixsock_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o unixsock_la-unixsock.lo `test -f 'unixsock.c' || echo '$(srcdir)/'`unixsock.c
+
 collectd-collectd.o: collectd.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-collectd.o -MD -MP -MF "$(DEPDIR)/collectd-collectd.Tpo" -c -o collectd-collectd.o `test -f 'collectd.c' || echo '$(srcdir)/'`collectd.c; \
 @am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-collectd.Tpo" "$(DEPDIR)/collectd-collectd.Po"; else rm -f "$(DEPDIR)/collectd-collectd.Tpo"; exit 1; fi
@@ -1037,19 +1347,19 @@ collectd-collectd.obj: collectd.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-collectd.obj `if test -f 'collectd.c'; then $(CYGPATH_W) 'collectd.c'; else $(CYGPATH_W) '$(srcdir)/collectd.c'; fi`
 
-collectd-utils_debug.o: utils_debug.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_debug.o -MD -MP -MF "$(DEPDIR)/collectd-utils_debug.Tpo" -c -o collectd-utils_debug.o `test -f 'utils_debug.c' || echo '$(srcdir)/'`utils_debug.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-utils_debug.Tpo" "$(DEPDIR)/collectd-utils_debug.Po"; else rm -f "$(DEPDIR)/collectd-utils_debug.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_debug.c' object='collectd-utils_debug.o' libtool=no @AMDEPBACKSLASH@
+collectd-utils_avltree.o: utils_avltree.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_avltree.o -MD -MP -MF "$(DEPDIR)/collectd-utils_avltree.Tpo" -c -o collectd-utils_avltree.o `test -f 'utils_avltree.c' || echo '$(srcdir)/'`utils_avltree.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-utils_avltree.Tpo" "$(DEPDIR)/collectd-utils_avltree.Po"; else rm -f "$(DEPDIR)/collectd-utils_avltree.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_avltree.c' object='collectd-utils_avltree.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-utils_debug.o `test -f 'utils_debug.c' || echo '$(srcdir)/'`utils_debug.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-utils_avltree.o `test -f 'utils_avltree.c' || echo '$(srcdir)/'`utils_avltree.c
 
-collectd-utils_debug.obj: utils_debug.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_debug.obj -MD -MP -MF "$(DEPDIR)/collectd-utils_debug.Tpo" -c -o collectd-utils_debug.obj `if test -f 'utils_debug.c'; then $(CYGPATH_W) 'utils_debug.c'; else $(CYGPATH_W) '$(srcdir)/utils_debug.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-utils_debug.Tpo" "$(DEPDIR)/collectd-utils_debug.Po"; else rm -f "$(DEPDIR)/collectd-utils_debug.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_debug.c' object='collectd-utils_debug.obj' libtool=no @AMDEPBACKSLASH@
+collectd-utils_avltree.obj: utils_avltree.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_avltree.obj -MD -MP -MF "$(DEPDIR)/collectd-utils_avltree.Tpo" -c -o collectd-utils_avltree.obj `if test -f 'utils_avltree.c'; then $(CYGPATH_W) 'utils_avltree.c'; else $(CYGPATH_W) '$(srcdir)/utils_avltree.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-utils_avltree.Tpo" "$(DEPDIR)/collectd-utils_avltree.Po"; else rm -f "$(DEPDIR)/collectd-utils_avltree.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_avltree.c' object='collectd-utils_avltree.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-utils_debug.obj `if test -f 'utils_debug.c'; then $(CYGPATH_W) 'utils_debug.c'; else $(CYGPATH_W) '$(srcdir)/utils_debug.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-utils_avltree.obj `if test -f 'utils_avltree.c'; then $(CYGPATH_W) 'utils_avltree.c'; else $(CYGPATH_W) '$(srcdir)/utils_avltree.c'; fi`
 
 collectd-utils_mount.o: utils_mount.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_mount.o -MD -MP -MF "$(DEPDIR)/collectd-utils_mount.Tpo" -c -o collectd-utils_mount.o `test -f 'utils_mount.c' || echo '$(srcdir)/'`utils_mount.c; \
@@ -1064,6 +1374,20 @@ collectd-utils_mount.obj: utils_mount.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_mount.c' object='collectd-utils_mount.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-utils_mount.obj `if test -f 'utils_mount.c'; then $(CYGPATH_W) 'utils_mount.c'; else $(CYGPATH_W) '$(srcdir)/utils_mount.c'; fi`
+
+collectd-utils_llist.o: utils_llist.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_llist.o -MD -MP -MF "$(DEPDIR)/collectd-utils_llist.Tpo" -c -o collectd-utils_llist.o `test -f 'utils_llist.c' || echo '$(srcdir)/'`utils_llist.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-utils_llist.Tpo" "$(DEPDIR)/collectd-utils_llist.Po"; else rm -f "$(DEPDIR)/collectd-utils_llist.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_llist.c' object='collectd-utils_llist.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-utils_llist.o `test -f 'utils_llist.c' || echo '$(srcdir)/'`utils_llist.c
+
+collectd-utils_llist.obj: utils_llist.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_llist.obj -MD -MP -MF "$(DEPDIR)/collectd-utils_llist.Tpo" -c -o collectd-utils_llist.obj `if test -f 'utils_llist.c'; then $(CYGPATH_W) 'utils_llist.c'; else $(CYGPATH_W) '$(srcdir)/utils_llist.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-utils_llist.Tpo" "$(DEPDIR)/collectd-utils_llist.Po"; else rm -f "$(DEPDIR)/collectd-utils_llist.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils_llist.c' object='collectd-utils_llist.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-utils_llist.obj `if test -f 'utils_llist.c'; then $(CYGPATH_W) 'utils_llist.c'; else $(CYGPATH_W) '$(srcdir)/utils_llist.c'; fi`
 
 collectd-utils_ignorelist.o: utils_ignorelist.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-utils_ignorelist.o -MD -MP -MF "$(DEPDIR)/collectd-utils_ignorelist.Tpo" -c -o collectd-utils_ignorelist.o `test -f 'utils_ignorelist.c' || echo '$(srcdir)/'`utils_ignorelist.c; \
@@ -1093,20 +1417,6 @@ collectd-common.obj: common.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-common.obj `if test -f 'common.c'; then $(CYGPATH_W) 'common.c'; else $(CYGPATH_W) '$(srcdir)/common.c'; fi`
 
-collectd-network.o: network.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-network.o -MD -MP -MF "$(DEPDIR)/collectd-network.Tpo" -c -o collectd-network.o `test -f 'network.c' || echo '$(srcdir)/'`network.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-network.Tpo" "$(DEPDIR)/collectd-network.Po"; else rm -f "$(DEPDIR)/collectd-network.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='network.c' object='collectd-network.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-network.o `test -f 'network.c' || echo '$(srcdir)/'`network.c
-
-collectd-network.obj: network.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-network.obj -MD -MP -MF "$(DEPDIR)/collectd-network.Tpo" -c -o collectd-network.obj `if test -f 'network.c'; then $(CYGPATH_W) 'network.c'; else $(CYGPATH_W) '$(srcdir)/network.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-network.Tpo" "$(DEPDIR)/collectd-network.Po"; else rm -f "$(DEPDIR)/collectd-network.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='network.c' object='collectd-network.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-network.obj `if test -f 'network.c'; then $(CYGPATH_W) 'network.c'; else $(CYGPATH_W) '$(srcdir)/network.c'; fi`
-
 collectd-plugin.o: plugin.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-plugin.o -MD -MP -MF "$(DEPDIR)/collectd-plugin.Tpo" -c -o collectd-plugin.o `test -f 'plugin.c' || echo '$(srcdir)/'`plugin.c; \
 @am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-plugin.Tpo" "$(DEPDIR)/collectd-plugin.Po"; else rm -f "$(DEPDIR)/collectd-plugin.Tpo"; exit 1; fi
@@ -1134,6 +1444,20 @@ collectd-configfile.obj: configfile.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='configfile.c' object='collectd-configfile.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-configfile.obj `if test -f 'configfile.c'; then $(CYGPATH_W) 'configfile.c'; else $(CYGPATH_W) '$(srcdir)/configfile.c'; fi`
+
+collectd-types_list.o: types_list.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-types_list.o -MD -MP -MF "$(DEPDIR)/collectd-types_list.Tpo" -c -o collectd-types_list.o `test -f 'types_list.c' || echo '$(srcdir)/'`types_list.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-types_list.Tpo" "$(DEPDIR)/collectd-types_list.Po"; else rm -f "$(DEPDIR)/collectd-types_list.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='types_list.c' object='collectd-types_list.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-types_list.o `test -f 'types_list.c' || echo '$(srcdir)/'`types_list.c
+
+collectd-types_list.obj: types_list.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT collectd-types_list.obj -MD -MP -MF "$(DEPDIR)/collectd-types_list.Tpo" -c -o collectd-types_list.obj `if test -f 'types_list.c'; then $(CYGPATH_W) 'types_list.c'; else $(CYGPATH_W) '$(srcdir)/types_list.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collectd-types_list.Tpo" "$(DEPDIR)/collectd-types_list.Po"; else rm -f "$(DEPDIR)/collectd-types_list.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='types_list.c' object='collectd-types_list.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(collectd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o collectd-types_list.obj `if test -f 'types_list.c'; then $(CYGPATH_W) 'types_list.c'; else $(CYGPATH_W) '$(srcdir)/types_list.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1414,7 +1738,7 @@ check: check-recursive
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(MANS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(pkglibdir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)"; do \
+	for dir in "$(DESTDIR)$(pkglibdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man5dir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-recursive
@@ -1443,8 +1767,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-generic clean-libtool clean-pkglibLTLIBRARIES \
-	clean-sbinPROGRAMS mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool \
+	clean-pkglibLTLIBRARIES clean-sbinPROGRAMS mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -rf ./$(DEPDIR)
@@ -1464,7 +1788,8 @@ info-am:
 
 install-data-am: install-man
 
-install-exec-am: install-pkglibLTLIBRARIES install-sbinPROGRAMS
+install-exec-am: install-binPROGRAMS install-pkglibLTLIBRARIES \
+	install-sbinPROGRAMS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 
@@ -1492,7 +1817,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-man \
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am uninstall-man \
 	uninstall-pkglibLTLIBRARIES uninstall-sbinPROGRAMS
 
 uninstall-info: uninstall-info-recursive
@@ -1500,11 +1825,12 @@ uninstall-info: uninstall-info-recursive
 uninstall-man: uninstall-man1 uninstall-man5
 
 .PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am check check-am \
-	clean clean-generic clean-libtool clean-pkglibLTLIBRARIES \
-	clean-recursive clean-sbinPROGRAMS ctags ctags-recursive \
-	distclean distclean-compile distclean-generic distclean-hdr \
-	distclean-libtool distclean-recursive distclean-tags distdir \
-	dvi dvi-am html html-am info info-am install install-am \
+	clean clean-binPROGRAMS clean-generic clean-libtool \
+	clean-pkglibLTLIBRARIES clean-recursive clean-sbinPROGRAMS \
+	ctags ctags-recursive distclean distclean-compile \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-recursive distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
 	install-data install-data-am install-exec install-exec-am \
 	install-exec-hook install-info install-info-am install-man \
 	install-man1 install-man5 install-pkglibLTLIBRARIES \
@@ -1513,13 +1839,11 @@ uninstall-man: uninstall-man1 uninstall-man5
 	maintainer-clean-generic maintainer-clean-recursive \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am uninstall-info-am \
-	uninstall-man uninstall-man1 uninstall-man5 \
-	uninstall-pkglibLTLIBRARIES uninstall-sbinPROGRAMS
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am uninstall-man \
+	uninstall-man1 uninstall-man5 uninstall-pkglibLTLIBRARIES \
+	uninstall-sbinPROGRAMS
 
-#collectd_1_SOURCES = collectd.pod
-
-#EXTRA_DIST = $(man_MANS)
 
 .pod.1:
 	pod2man --release=$(VERSION) --center=$(PACKAGE) $< >$@
@@ -1534,7 +1858,8 @@ install-exec-hook:
 		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.pkg-orig; \
 	else \
 		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
-	fi
+	fi; \
+	cp -f types.db $(DESTDIR)$(pkglibdir)/;
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

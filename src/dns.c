@@ -1,11 +1,10 @@
 /**
  * collectd - src/dns.c
- * Copyright (C) 2006  Florian octo Forster
+ * Copyright (C) 2006,2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,15 +23,12 @@
 #include "common.h"
 #include "plugin.h"
 #include "configfile.h"
-#include "utils_debug.h"
-
-#define MODULE_NAME "dns"
 
 #if HAVE_LIBPCAP && HAVE_LIBPTHREAD
 # include "utils_dns.h"
 # include <pthread.h>
 # include <pcap.h>
-# include <sys/poll.h>
+# include <poll.h>
 # define DNS_HAVE_READ 1
 #else
 # define DNS_HAVE_READ 0
@@ -54,43 +50,8 @@ typedef struct counter_list_s counter_list_t;
 /*
  * Private variables
  */
-static char *traffic_file   = "dns/dns_traffic.rrd";
-static char *qtype_file   = "dns/qtype-%s.rrd";
-static char *opcode_file  = "dns/opcode-%s.rrd";
-static char *rcode_file   = "dns/rcode-%s.rrd";
-
-static char *traffic_ds_def[] =
-{
-	/* Limit to 1GBit/s */
-	"DS:queries:COUNTER:"COLLECTD_HEARTBEAT":0:125000000",
-	"DS:responses:COUNTER:"COLLECTD_HEARTBEAT":0:125000000",
-	NULL
-};
-static int traffic_ds_num = 2;
-
-static char *qtype_ds_def[] =
-{
-	"DS:value:COUNTER:"COLLECTD_HEARTBEAT":0:65535",
-	NULL
-};
-static int qtype_ds_num = 1;
-
-static char *opcode_ds_def[] =
-{
-	"DS:value:COUNTER:"COLLECTD_HEARTBEAT":0:65535",
-	NULL
-};
-static int opcode_ds_num = 1;
-
-static char *rcode_ds_def[] =
-{
-	"DS:value:COUNTER:"COLLECTD_HEARTBEAT":0:65535",
-	NULL
-};
-static int rcode_ds_num = 1;
-
 #if DNS_HAVE_READ
-static char *config_keys[] =
+static const char *config_keys[] =
 {
 	"Interface",
 	"IgnoreSource",
@@ -101,8 +62,8 @@ static int config_keys_num = 2;
 #define PCAP_SNAPLEN 1460
 static char   *pcap_device = NULL;
 
-static unsigned int    tr_queries;
-static unsigned int    tr_responses;
+static counter_t       tr_queries;
+static counter_t       tr_responses;
 static counter_list_t *qtype_list;
 static counter_list_t *opcode_list;
 static counter_list_t *rcode_list;
@@ -124,14 +85,14 @@ static counter_list_t *counter_list_search (counter_list_t **list, unsigned int 
 {
 	counter_list_t *entry;
 
-	DBG ("counter_list_search (list = %p, key = %u)",
+	DEBUG ("counter_list_search (list = %p, key = %u)",
 			(void *) *list, key);
 
 	for (entry = *list; entry != NULL; entry = entry->next)
 		if (entry->key == key)
 			break;
 
-	DBG ("return (%p)", (void *) entry);
+	DEBUG ("return (%p)", (void *) entry);
 	return (entry);
 }
 
@@ -140,7 +101,7 @@ static counter_list_t *counter_list_create (counter_list_t **list,
 {
 	counter_list_t *entry;
 
-	DBG ("counter_list_create (list = %p, key = %u, value = %u)",
+	DEBUG ("counter_list_create (list = %p, key = %u, value = %u)",
 			(void *) *list, key, value);
 
 	entry = (counter_list_t *) malloc (sizeof (counter_list_t));
@@ -166,7 +127,7 @@ static counter_list_t *counter_list_create (counter_list_t **list,
 		last->next = entry;
 	}
 
-	DBG ("return (%p)", (void *) entry);
+	DEBUG ("return (%p)", (void *) entry);
 	return (entry);
 }
 
@@ -175,7 +136,7 @@ static void counter_list_add (counter_list_t **list,
 {
 	counter_list_t *entry;
 
-	DBG ("counter_list_add (list = %p, key = %u, increment = %u)",
+	DEBUG ("counter_list_add (list = %p, key = %u, increment = %u)",
 			(void *) *list, key, increment);
 
 	entry = counter_list_search (list, key);
@@ -188,10 +149,10 @@ static void counter_list_add (counter_list_t **list,
 	{
 		counter_list_create (list, key, increment);
 	}
-	DBG ("return ()");
+	DEBUG ("return ()");
 }
 
-static int dns_config (char *key, char *value)
+static int dns_config (const char *key, const char *value)
 {
 	if (strcasecmp (key, "Interface") == 0)
 	{
@@ -260,15 +221,15 @@ static void *dns_child_loop (void *dummy)
 	}
 
 	/* Passing `pcap_device == NULL' is okay and the same as passign "any" */
-	DBG ("Creating PCAP object..");
+	DEBUG ("Creating PCAP object..");
 	pcap_obj = pcap_open_live (pcap_device,
 			PCAP_SNAPLEN,
 			0 /* Not promiscuous */,
-			atoi (COLLECTD_STEP),
+			interval_g,
 			pcap_error);
 	if (pcap_obj == NULL)
 	{
-		syslog (LOG_ERR, "dns plugin: Opening interface `%s' "
+		ERROR ("dns plugin: Opening interface `%s' "
 				"failed: %s",
 				(pcap_device != NULL) ? pcap_device : "any",
 				pcap_error);
@@ -278,18 +239,18 @@ static void *dns_child_loop (void *dummy)
 	memset (&fp, 0, sizeof (fp));
 	if (pcap_compile (pcap_obj, &fp, "udp port 53", 1, 0) < 0)
 	{
-		DBG ("pcap_compile failed");
-		syslog (LOG_ERR, "dns plugin: pcap_compile failed");
+		DEBUG ("pcap_compile failed");
+		ERROR ("dns plugin: pcap_compile failed");
 		return (NULL);
 	}
 	if (pcap_setfilter (pcap_obj, &fp) < 0)
 	{
-		DBG ("pcap_setfilter failed");
-		syslog (LOG_ERR, "dns plugin: pcap_setfilter failed");
+		DEBUG ("pcap_setfilter failed");
+		ERROR ("dns plugin: pcap_setfilter failed");
 		return (NULL);
 	}
 
-	DBG ("PCAP object created.");
+	DEBUG ("PCAP object created.");
 
 	dnstop_set_pcap_obj (pcap_obj);
 	dnstop_set_callback (dns_child_callback);
@@ -299,10 +260,10 @@ static void *dns_child_loop (void *dummy)
 			handle_pcap /* callback */,
 			NULL /* Whatever this means.. */);
 	if (status < 0)
-		syslog (LOG_ERR, "dns plugin: Listener thread is exiting "
+		ERROR ("dns plugin: Listener thread is exiting "
 				"abnormally: %s", pcap_geterr (pcap_obj));
 
-	DBG ("child is exiting");
+	DEBUG ("child is exiting");
 
 	pcap_close (pcap_obj);
 	listen_thread_init = 0;
@@ -310,11 +271,9 @@ static void *dns_child_loop (void *dummy)
 
 	return (NULL);
 } /* static void dns_child_loop (void) */
-#endif /* DNS_HAVE_READ */
 
-static void dns_init (void)
+static int dns_init (void)
 {
-#if DNS_HAVE_READ
 	/* clean up an old thread */
 	int status;
 
@@ -324,131 +283,59 @@ static void dns_init (void)
 	pthread_mutex_unlock (&traffic_mutex);
 
 	if (listen_thread_init != 0)
-		return;
+		return (-1);
 
 	status = pthread_create (&listen_thread, NULL, dns_child_loop,
 			(void *) 0);
 	if (status != 0)
 	{
-		syslog (LOG_ERR, "dns plugin: pthread_create failed: %s",
-				strerror (status));
-		return;
+		char errbuf[1024];
+		ERROR ("dns plugin: pthread_create failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
 	}
 
 	listen_thread_init = 1;
-#endif /* DNS_HAVE_READ */
-}
 
-static void traffic_write (char *host, char *inst, char *val)
+	return (0);
+} /* int dns_init */
+
+static void submit_counter (const char *type, const char *type_instance,
+		counter_t value)
 {
-	rrd_update_file (host, traffic_file, val,
-			traffic_ds_def, traffic_ds_num);
-}
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-static void qtype_write (char *host, char *inst, char *val)
+	values[0].counter = value;
+
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "dns");
+	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
+
+	plugin_dispatch_values (type, &vl);
+} /* void submit_counter */
+
+static void submit_octets (counter_t queries, counter_t responses)
 {
-	char file[512];
-	int status;
+	value_t values[2];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	status = snprintf (file, 512, qtype_file, inst);
-	if (status < 1)
-		return;
-	else if (status >= 512)
-		return;
+	values[0].counter = queries;
+	values[1].counter = responses;
 
-	rrd_update_file (host, file, val, qtype_ds_def, qtype_ds_num);
-}
+	vl.values = values;
+	vl.values_len = 2;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "dns");
 
-static void rcode_write (char *host, char *inst, char *val)
-{
-	char file[512];
-	int status;
+	plugin_dispatch_values ("dns_octets", &vl);
+} /* void submit_counter */
 
-	status = snprintf (file, 512, rcode_file, inst);
-	if (status < 1)
-		return;
-	else if (status >= 512)
-		return;
-
-	rrd_update_file (host, file, val, rcode_ds_def, rcode_ds_num);
-}
-
-static void opcode_write (char *host, char *inst, char *val)
-{
-	char file[512];
-	int status;
-
-	status = snprintf (file, 512, opcode_file, inst);
-	if (status < 1)
-		return;
-	else if (status >= 512)
-		return;
-
-	rrd_update_file (host, file, val, opcode_ds_def, opcode_ds_num);
-}
-
-#if DNS_HAVE_READ
-static void traffic_submit (unsigned int queries, unsigned int replies)
-{
-	char buffer[64];
-	int  status;
-
-	status = snprintf (buffer, 64, "N:%u:%u", queries, replies);
-	if ((status < 1) || (status >= 64))
-		return;
-
-	plugin_submit ("dns_traffic", "-", buffer);
-}
-
-static void qtype_submit (int qtype, unsigned int counter)
-{
-	char inst[32];
-	char buffer[32];
-	int  status;
-
-	strncpy (inst, qtype_str (qtype), 32);
-	inst[31] = '\0';
-
-	status = snprintf (buffer, 32, "N:%u", counter);
-	if ((status < 1) || (status >= 32))
-		return;
-
-	plugin_submit ("dns_qtype", inst, buffer);
-}
-
-static void rcode_submit (int rcode, unsigned int counter)
-{
-	char inst[32];
-	char buffer[32];
-	int  status;
-
-	strncpy (inst, rcode_str (rcode), 32);
-	inst[31] = '\0';
-
-	status = snprintf (buffer, 32, "N:%u", counter);
-	if ((status < 1) || (status >= 32))
-		return;
-
-	plugin_submit ("dns_rcode", inst, buffer);
-}
-
-static void opcode_submit (int opcode, unsigned int counter)
-{
-	char inst[32];
-	char buffer[32];
-	int  status;
-
-	strncpy (inst, opcode_str (opcode), 32);
-	inst[31] = '\0';
-
-	status = snprintf (buffer, 32, "N:%u", counter);
-	if ((status < 1) || (status >= 32))
-		return;
-
-	plugin_submit ("dns_opcode", inst, buffer);
-}
-
-static void dns_read (void)
+static int dns_read (void)
 {
 	unsigned int keys[T_MAX];
 	unsigned int values[T_MAX];
@@ -461,7 +348,9 @@ static void dns_read (void)
 	values[0] = tr_queries;
 	values[1] = tr_responses;
 	pthread_mutex_unlock (&traffic_mutex);
-	traffic_submit (values[0], values[1]);
+
+	if ((values[0] != 0) || (values[1] != 0))
+		submit_octets (values[0], values[1]);
 
 	pthread_mutex_lock (&qtype_mutex);
 	for (ptr = qtype_list, len = 0;
@@ -475,8 +364,8 @@ static void dns_read (void)
 
 	for (i = 0; i < len; i++)
 	{
-		DBG ("qtype = %u; counter = %u;", keys[i], values[i]);
-		qtype_submit (keys[i], values[i]);
+		DEBUG ("qtype = %u; counter = %u;", keys[i], values[i]);
+		submit_counter ("dns_qtype", qtype_str (keys[i]), values[i]);
 	}
 
 	pthread_mutex_lock (&opcode_mutex);
@@ -491,8 +380,8 @@ static void dns_read (void)
 
 	for (i = 0; i < len; i++)
 	{
-		DBG ("opcode = %u; counter = %u;", keys[i], values[i]);
-		opcode_submit (keys[i], values[i]);
+		DEBUG ("opcode = %u; counter = %u;", keys[i], values[i]);
+		submit_counter ("dns_opcode", opcode_str (keys[i]), values[i]);
 	}
 
 	pthread_mutex_lock (&rcode_mutex);
@@ -507,24 +396,19 @@ static void dns_read (void)
 
 	for (i = 0; i < len; i++)
 	{
-		DBG ("rcode = %u; counter = %u;", keys[i], values[i]);
-		rcode_submit (keys[i], values[i]);
+		DEBUG ("rcode = %u; counter = %u;", keys[i], values[i]);
+		submit_counter ("dns_rcode", rcode_str (keys[i]), values[i]);
 	}
-}
-#else /* if !DNS_HAVE_READ */
-# define dns_read NULL
+
+	return (0);
+} /* int dns_read */
 #endif
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, dns_init, dns_read, NULL);
-	plugin_register ("dns_traffic", NULL, NULL, traffic_write);
-	plugin_register ("dns_qtype", NULL, NULL, qtype_write);
-	plugin_register ("dns_rcode", NULL, NULL, rcode_write);
-	plugin_register ("dns_opcode", NULL, NULL, opcode_write);
 #if DNS_HAVE_READ
-	cf_register (MODULE_NAME, dns_config, config_keys, config_keys_num);
+	plugin_register_config ("dns", dns_config, config_keys, config_keys_num);
+	plugin_register_init ("dns", dns_init);
+	plugin_register_read ("dns", dns_read);
 #endif
-}
-
-#undef MODULE_NAME
+} /* void module_register */

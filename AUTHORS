@@ -4,17 +4,23 @@ This package was written by:
 apcups plugin by:
   Anthony Gialluca <tonyabg at charter.net>
 
-cpufreq and multimeter module by:
+cpufreq, multimeter and irq module by:
   Peter Holik <peter at holik.at>
 
 hddtemp module by:
   Vincent Stehlé <vincent.stehle at free.fr>
+
+iptables module by:
+  Sjoerd van der Berg <harekiet at gmail.com>
 
 mbmon plugin by:
   Flavio Stanchina <flavio at stanchina.net>
 
 nfs module by:
   Jason Pepas <cell at ices.utexas.edu>
+
+perl module by:
+  Sebastian Harl <sh at tokkee.org>
 
 processes module by:
   Lyonel Vincent <lyonel at ezix.org>

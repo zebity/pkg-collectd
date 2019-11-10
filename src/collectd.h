@@ -4,8 +4,7 @@
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,7 +23,7 @@
 #define COLLECTD_H
 
 #if HAVE_CONFIG_H
-# include <config.h>
+# include "config.h"
 #endif
 
 #include <stdio.h>
@@ -78,9 +77,6 @@
 #if HAVE_ERRNO_H
 # include <errno.h>
 #endif
-#if HAVE_SYSLOG_H
-# include <syslog.h>
-#endif
 #if HAVE_LIMITS_H
 # include <limits.h>
 #endif
@@ -100,6 +96,31 @@
 #else
 # define assert(...) /* nop */
 #endif
+
+#if NAN_STATIC_DEFAULT
+# include <math.h>
+/* #endif NAN_STATIC_DEFAULT*/
+#elif NAN_STATIC_ISOC
+# ifndef __USE_ISOC99
+#  define DISABLE_ISOC99 1
+#  define __USE_ISOC99 1
+# endif /* !defined(__USE_ISOC99) */
+# include <math.h>
+# if DISABLE_ISOC99
+#  undef DISABLE_ISOC99
+#  undef __USE_ISOC99
+# endif /* DISABLE_ISOC99 */
+/* #endif NAN_STATIC_ISOC */
+#elif NAN_ZERO_ZERO
+# include <math.h>
+# ifdef NAN
+#  undef NAN
+# endif
+# define NAN (0.0 / 0.0)
+# ifndef isnan
+#  define isnan(f) ((f) != (f))
+# endif /* !defined(isnan) */
+#endif /* NAN_ZERO_ZERO */
 
 #if HAVE_DIRENT_H
 # include <dirent.h>
@@ -126,12 +147,6 @@
 #endif
 #if HAVE_SYS_PARAM_H
 # include <sys/param.h>
-#endif
-
-#if !HAVE_SYSLOG
-# define syslog(...) /**/
-# define openlog(...) /**/
-# define closelog(...) /**/
 #endif
 
 #if HAVE_KSTAT_H
@@ -175,10 +190,6 @@
 #define PIDFILE PREFIX "/var/run/" PACKAGE_NAME ".pid"
 #endif
 
-#ifndef LOGFILE
-#define LOGFILE PREFIX"/var/log/"PACKAGE_NAME"/"PACKAGE_NAME".log"
-#endif
-
 #ifndef PLUGINDIR
 #define PLUGINDIR PREFIX "/lib/" PACKAGE_NAME
 #endif
@@ -192,28 +203,9 @@
 # define COLLECTD_GRP_NAME "collectd"
 #endif
 
-#ifndef COLLECTD_STEP
-#  define COLLECTD_STEP "10"
-#endif
+#define STATIC_ARRAY_LEN(array) (sizeof (array) / sizeof ((array)[0]))
 
-#ifndef COLLECTD_HEARTBEAT
-#  define COLLECTD_HEARTBEAT "25"
-#endif
-
-#ifndef COLLECTD_ROWS
-#  define COLLECTD_ROWS "1200"
-#endif
-
-#ifndef COLLECTD_XFF
-#  define COLLECTD_XFF 0.1
-#endif
-
-extern time_t curtime;
-
-#ifdef HAVE_LIBRRD
-extern int operating_mode;
-#endif
-
-/* int main (int argc, char **argv); */
+extern char hostname_g[];
+extern int  interval_g;
 
 #endif /* COLLECTD_H */

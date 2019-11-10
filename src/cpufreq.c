@@ -1,6 +1,6 @@
 /**
  * collectd - src/cpufreq.c
- * Copyright (C) 2005,2006  Peter Holik
+ * Copyright (C) 2005-2007  Peter Holik
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -32,103 +32,106 @@
 # define CPUFREQ_HAVE_READ 0
 #endif
 
-static char *cpufreq_file = "cpufreq-%s.rrd";
-
-static char *ds_def[] =
-{
-	"DS:value:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int ds_num = 1;
-
+#if CPUFREQ_HAVE_READ
 #ifdef KERNEL_LINUX
 static int num_cpu = 0;
 #endif
 
-#define BUFSIZE 256
-
-static void cpufreq_init (void)
+static int cpufreq_init (void)
 {
 #ifdef KERNEL_LINUX
         int status;
-	char filename[BUFSIZE];
+	char filename[256];
 
 	num_cpu = 0;
 
 	while (1)
 	{
-		status = snprintf (filename, BUFSIZE, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", num_cpu);
-    		if (status < 1 || status >= BUFSIZE)
+		status = snprintf (filename, sizeof (filename),
+				"/sys/devices/system/cpu/cpu%d/cpufreq/"
+				"scaling_cur_freq", num_cpu);
+    		if (status < 1 || status >= sizeof (filename))
 			break;
 
-		if (access(filename, R_OK))
+		if (access (filename, R_OK))
 			break;
 
 		num_cpu++;
 	}
 
-	syslog (LOG_INFO, MODULE_NAME" found %d cpu(s)", num_cpu);
+	INFO ("cpufreq plugin: Found %d CPU%s", num_cpu,
+			(num_cpu == 1) ? "" : "s");
+
+	if (num_cpu == 0)
+		plugin_unregister_read ("cpufreq");
 #endif /* defined(KERNEL_LINUX) */
 
-	return;
-}
+	return (0);
+} /* int cpufreq_init */
 
-static void cpufreq_write (char *host, char *inst, char *val)
+static void cpufreq_submit (int cpu_num, double value)
 {
-        int status;
-        char file[BUFSIZE];
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-        status = snprintf (file, BUFSIZE, cpufreq_file, inst);
-        if (status < 1 || status >= BUFSIZE)
-                return;
+	values[0].gauge = value;
 
-	rrd_update_file (host, file, val, ds_def, ds_num);
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "cpufreq");
+	snprintf (vl.type_instance, sizeof (vl.type_instance),
+			"%i", cpu_num);
+
+	plugin_dispatch_values ("cpufreq", &vl);
 }
 
-#if CPUFREQ_HAVE_READ
-static void cpufreq_submit (int cpu_num, unsigned long long val)
-{
-	char buf[BUFSIZE];
-	char cpu[16];
-
-	if (snprintf (buf, BUFSIZE, "%u:%llu", (unsigned int) curtime, val) >= BUFSIZE)
-		return;
-        snprintf (cpu, 16, "%i", cpu_num);
-
-	plugin_submit (MODULE_NAME, cpu, buf);
-}
-
-static void cpufreq_read (void)
+static int cpufreq_read (void)
 {
 #ifdef KERNEL_LINUX
         int status;
 	unsigned long long val;
 	int i = 0;
 	FILE *fp;
-	char filename[BUFSIZE];
+	char filename[256];
 	char buffer[16];
 
 	for (i = 0; i < num_cpu; i++)
 	{
-		status = snprintf (filename, BUFSIZE, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
-    		if (status < 1 || status >= BUFSIZE)
-			return;
+		status = snprintf (filename, sizeof (filename),
+				"/sys/devices/system/cpu/cpu%d/cpufreq/"
+				"scaling_cur_freq", i);
+    		if (status < 1 || status >= sizeof (filename))
+			return (-1);
 
 		if ((fp = fopen (filename, "r")) == NULL)
 		{
-			syslog (LOG_WARNING, "cpufreq: fopen: %s", strerror (errno));
-			return;
+			char errbuf[1024];
+			WARNING ("cpufreq: fopen (%s): %s", filename,
+					sstrerror (errno, errbuf,
+						sizeof (errbuf)));
+			return (-1);
 		}
 
 		if (fgets (buffer, 16, fp) == NULL)
 		{
-			syslog (LOG_WARNING, "cpufreq: fgets: %s", strerror (errno));
+			char errbuf[1024];
+			WARNING ("cpufreq: fgets: %s",
+					sstrerror (errno, errbuf,
+						sizeof (errbuf)));
 			fclose (fp);
-			return;
+			return (-1);
 		}
 
 		if (fclose (fp))
-			syslog (LOG_WARNING, "cpufreq: fclose: %s", strerror (errno));
+		{
+			char errbuf[1024];
+			WARNING ("cpufreq: fclose: %s",
+					sstrerror (errno, errbuf,
+						sizeof (errbuf)));
+		}
+
 
 		/* You're seeing correctly: The file is reporting kHz values.. */
 		val = atoll (buffer) * 1000;
@@ -137,16 +140,15 @@ static void cpufreq_read (void)
 	}
 #endif /* defined(KERNEL_LINUX) */
 
-	return;
-}
-#else
-#define cpufreq_read NULL
-#endif
+	return (0);
+} /* int cpufreq_read */
+#endif /* CPUFREQ_HAVE_READ */
 #undef BUFSIZE
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, cpufreq_init, cpufreq_read, cpufreq_write);
+#if CPUFREQ_HAVE_READ
+	plugin_register_init ("cpufreq", cpufreq_init);
+	plugin_register_read ("cpufreq", cpufreq_read);
+#endif /* CPUFREQ_HAVE_READ */
 }
-
-#undef MODULE_NAME

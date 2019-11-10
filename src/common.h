@@ -1,21 +1,19 @@
 /**
  * collectd - src/common.h
- * Copyright (C) 2005,2006  Florian octo Forster
+ * Copyright (C) 2005-2007  Florian octo Forster
  *
- * This program is free software; you can redistribute it and/
- * or modify it under the terms of the GNU General Public Li-
- * cence as published by the Free Software Foundation; either
- * version 2 of the Licence, or any later version.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
- * This program is distributed in the hope that it will be use-
- * ful, but WITHOUT ANY WARRANTY; without even the implied war-
- * ranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public Licence for more details.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
- * Licence along with this program; if not, write to the Free
- * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
- * USA.
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Authors:
  *   Florian octo Forster <octo at verplant.org>
@@ -26,6 +24,7 @@
 #define COMMON_H
 
 #include "collectd.h"
+#include "plugin.h"
 
 #define sfree(ptr) \
 	if((ptr) != NULL) { \
@@ -33,9 +32,12 @@
 	} \
 	(ptr) = NULL
 
+#define STATIC_ARRAY_SIZE(a) (sizeof (a) / sizeof (*(a)))
+
 void sstrncpy(char *d, const char *s, int len);
 char *sstrdup(const char *s);
 void *smalloc(size_t size);
+char *sstrerror (int errnum, char *buf, size_t buflen);
 
 /*
  * NAME
@@ -142,15 +144,32 @@ int strjoin (char *dst, size_t dst_len, char **fields, size_t fields_num, const 
  */
 int escape_slashes (char *buf, int buf_len);
 
+int strsubstitute (char *str, char c_from, char c_to);
+
 /* FIXME: `timeval_sub_timespec' needs a description */
 int timeval_sub_timespec (struct timeval *tv0, struct timeval *tv1, struct timespec *ret);
 
-int rrd_update_file (char *host, char *file, char *values,
-		char **ds_def, int ds_num);
+int check_create_dir (const char *file_orig);
 
 #ifdef HAVE_LIBKSTAT
 int get_kstat (kstat_t **ksp_ptr, char *module, int instance, char *name);
 long long get_kstat_value (kstat_t *ksp, char *name);
 #endif
+
+unsigned long long ntohll (unsigned long long n);
+unsigned long long htonll (unsigned long long n);
+
+int format_name (char *ret, int ret_len,
+		const char *hostname,
+		const char *plugin, const char *plugin_instance,
+		const char *type, const char *type_instance);
+#define FORMAT_VL(ret, ret_len, vl, ds) \
+	format_name (ret, ret_len, (vl)->host, (vl)->plugin, (vl)->plugin_instance, \
+			(ds)->type, (vl)->type_instance)
+
+int parse_identifier (char *str, char **ret_host,
+		char **ret_plugin, char **ret_plugin_instance,
+		char **ret_type, char **ret_type_instance);
+int parse_values (char *buffer, value_list_t *vl, const data_set_t *ds);
 
 #endif /* COMMON_H */

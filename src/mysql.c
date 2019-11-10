@@ -1,11 +1,10 @@
 /**
  * collectd - src/mysql.c
- * Copyright (C) 2006  Florian octo Forster
+ * Copyright (C) 2006,2007  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,75 +28,16 @@
 #include <mysql/mysql.h>
 #endif
 
-#define MODULE_NAME "mysql"
-
 #if COLLECT_LIBMYSQL
 # define MYSQL_HAVE_READ 1
 #else
 # define MYSQL_HAVE_READ 0
 #endif
 
-#define BUFSIZE 512
+/* TODO: Understand `Select_*' and possibly do that stuff as well.. */
 
-static char *host = "localhost";
-static char *user;
-static char *pass;
-static char *db = NULL;
-
-/* TODO
- * understand `Select_*' and possibly do that stuff as well..
- */
-
-static char *commands_file = "mysql/mysql_commands-%s.rrd";
-static char *handler_file  = "mysql/mysql_handler-%s.rrd";
-static char *qcache_file   = "mysql/mysql_qcache.rrd";
-static char *threads_file  = "mysql/mysql_threads.rrd";
-static char *traffic_file  = "traffic-mysql.rrd";
-
-static char *commands_ds_def[] =
-{
-	"DS:value:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int commands_ds_num = 1;
-
-static char *handler_ds_def[] =
-{
-	"DS:value:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int handler_ds_num = 1;
-
-static char *qcache_ds_def[] =
-{
-	"DS:hits:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:inserts:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:not_cached:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:lowmem_prunes:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:queries_in_cache:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int qcache_ds_num = 5;
-
-static char *threads_ds_def[] =
-{
-	"DS:running:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	"DS:connected:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	"DS:cached:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	"DS:created:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int threads_ds_num = 4;
-
-static char *traffic_ds_def[] =
-{
-	"DS:incoming:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	"DS:outgoing:COUNTER:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int traffic_ds_num = 2;
-
-static char *config_keys[] =
+#if MYSQL_HAVE_READ
+static const char *config_keys[] =
 {
 	"Host",
 	"User",
@@ -107,7 +47,11 @@ static char *config_keys[] =
 };
 static int config_keys_num = 4;
 
-#if MYSQL_HAVE_READ
+static char *host = "localhost";
+static char *user;
+static char *pass;
+static char *db = NULL;
+
 static MYSQL *getconnection (void)
 {
 	static MYSQL *con;
@@ -116,14 +60,12 @@ static MYSQL *getconnection (void)
 	static int wait_for = 0;
 	static int wait_increase = 60;
 
-	int step;
-
 	if (state != 0)
 	{
 		int err;
 		if ((err = mysql_ping (con)) != 0)
 		{
-			syslog (LOG_WARNING, "mysql_ping failed: %s", mysql_error (con));
+			WARNING ("mysql_ping failed: %s", mysql_error (con));
 			state = 0;
 		}
 		else
@@ -133,11 +75,9 @@ static MYSQL *getconnection (void)
 		}
 	}
 
-	step = atoi (COLLECTD_STEP);
-
 	if (wait_for > 0)
 	{
-		wait_for -= step;
+		wait_for -= interval_g;
 		return (NULL);
 	}
 
@@ -148,14 +88,14 @@ static MYSQL *getconnection (void)
 
 	if ((con = mysql_init (con)) == NULL)
 	{
-		syslog (LOG_ERR, "mysql_init failed: %s", mysql_error (con));
+		ERROR ("mysql_init failed: %s", mysql_error (con));
 		state = 0;
 		return (NULL);
 	}
 
 	if (mysql_real_connect (con, host, user, pass, db, 0, NULL, 0) == NULL)
 	{
-		syslog (LOG_ERR, "mysql_real_connect failed: %s", mysql_error (con));
+		ERROR ("mysql_real_connect failed: %s", mysql_error (con));
 		state = 0;
 		return (NULL);
 	}
@@ -167,14 +107,8 @@ static MYSQL *getconnection (void)
 		return (con);
 	}
 } /* static MYSQL *getconnection (void) */
-#endif /* MYSQL_HAVE_READ */
 
-static void init (void)
-{
-	return;
-}
-
-static int config (char *key, char *value)
+static int config (const char *key, const char *value)
 {
 	if (strcasecmp (key, "host") == 0)
 		return ((host = strdup (value)) == NULL ? 1 : 0);
@@ -188,160 +122,84 @@ static int config (char *key, char *value)
 		return (-1);
 }
 
-static void commands_write (char *host, char *inst, char *val)
+static void counter_submit (const char *type, const char *type_instance,
+		counter_t value)
 {
-	char buf[BUFSIZE];
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	if (snprintf (buf, BUFSIZE, commands_file, inst) >= BUFSIZE)
-		return;
+	values[0].counter = value;
 
-	rrd_update_file (host, buf, val, commands_ds_def, commands_ds_num);
-}
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "mysql");
+	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-static void handler_write (char *host, char *inst, char *val)
+	plugin_dispatch_values (type, &vl);
+} /* void counter_submit */
+
+static void qcache_submit (counter_t hits, counter_t inserts,
+		counter_t not_cached, counter_t lowmem_prunes,
+		gauge_t queries_in_cache)
 {
-	char buf[BUFSIZE];
+	value_t values[5];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	if (snprintf (buf, BUFSIZE, handler_file, inst) >= BUFSIZE)
-		return;
+	values[0].counter = hits;
+	values[1].counter = inserts;
+	values[2].counter = not_cached;
+	values[3].counter = lowmem_prunes;
+	values[4].gauge   = queries_in_cache;
 
-	rrd_update_file (host, buf, val, handler_ds_def, handler_ds_num);
-}
+	vl.values = values;
+	vl.values_len = 5;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "mysql");
 
-static void qcache_write (char *host, char *inst, char *val)
+	plugin_dispatch_values ("mysql_qcache", &vl);
+} /* void qcache_submit */
+
+static void threads_submit (gauge_t running, gauge_t connected, gauge_t cached,
+		counter_t created)
 {
-	rrd_update_file (host, qcache_file, val,
-			qcache_ds_def, qcache_ds_num);
-}
+	value_t values[4];
+	value_list_t vl = VALUE_LIST_INIT;
 
-static void threads_write (char *host, char *inst, char *val)
+	values[0].gauge   = running;
+	values[1].gauge   = connected;
+	values[2].gauge   = cached;
+	values[3].counter = created;
+
+	vl.values = values;
+	vl.values_len = 4;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "mysql");
+
+	plugin_dispatch_values ("mysql_threads", &vl);
+} /* void threads_submit */
+
+static void traffic_submit (counter_t rx, counter_t tx)
 {
-	rrd_update_file (host, threads_file, val,
-			threads_ds_def, threads_ds_num);
-}
+	value_t values[2];
+	value_list_t vl = VALUE_LIST_INIT;
 
-static void traffic_write (char *host, char *inst, char *val)
-{
-	rrd_update_file (host, traffic_file, val,
-			traffic_ds_def, traffic_ds_num);
-}
+	values[0].counter = rx;
+	values[1].counter = tx;
 
-#if MYSQL_HAVE_READ
-static void commands_submit (char *inst, unsigned long long value)
-{
-	char buf[BUFSIZE];
-	int  status;
+	vl.values = values;
+	vl.values_len = 2;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "mysql");
 
-	status = snprintf (buf, BUFSIZE, "%u:%llu", (unsigned int) curtime, value);
+	plugin_dispatch_values ("mysql_octets", &vl);
+} /* void traffic_submit */
 
-	if (status < 0)
-	{
-		syslog (LOG_ERR, "snprintf failed");
-		return;
-	}
-	else if (status >= BUFSIZE)
-	{
-		syslog (LOG_WARNING, "snprintf was truncated");
-		return;
-	}
-
-	plugin_submit ("mysql_commands", inst, buf);
-}
-
-static void handler_submit (char *inst, unsigned long long value)
-{
-	char buf[BUFSIZE];
-	int  status;
-
-	status = snprintf (buf, BUFSIZE, "%u:%llu", (unsigned int) curtime, value);
-
-	if (status < 0)
-	{
-		syslog (LOG_ERR, "snprintf failed");
-		return;
-	}
-	else if (status >= BUFSIZE)
-	{
-		syslog (LOG_WARNING, "snprintf was truncated");
-		return;
-	}
-
-	plugin_submit ("mysql_handler", inst, buf);
-}
-
-static void qcache_submit (unsigned long long hits, unsigned long long inserts,
-		unsigned long long not_cached, unsigned long long lowmem_prunes,
-		int queries_in_cache)
-{
-	char buf[BUFSIZE];
-	int  status;
-
-	status = snprintf (buf, BUFSIZE, "%u:%llu:%llu:%llu:%llu:%i",
-			(unsigned int) curtime, hits, inserts, not_cached,
-			lowmem_prunes, queries_in_cache);
-
-	if (status < 0)
-	{
-		syslog (LOG_ERR, "snprintf failed");
-		return;
-	}
-	else if (status >= BUFSIZE)
-	{
-		syslog (LOG_WARNING, "snprintf was truncated");
-		return;
-	}
-
-	plugin_submit ("mysql_qcache", "-", buf);
-}
-
-static void threads_submit (int running, int connected, int cached,
-		unsigned long long created)
-{
-	char buf[BUFSIZE];
-	int  status;
-
-	status = snprintf (buf, BUFSIZE, "%u:%i:%i:%i:%llu",
-			(unsigned int) curtime,
-			running, connected, cached, created);
-
-	if (status < 0)
-	{
-		syslog (LOG_ERR, "snprintf failed");
-		return;
-	}
-	else if (status >= BUFSIZE)
-	{
-		syslog (LOG_WARNING, "snprintf was truncated");
-		return;
-	}
-
-	plugin_submit ("mysql_threads", "-", buf);
-}
-
-static void traffic_submit (unsigned long long incoming,
-		unsigned long long outgoing)
-{
-	char buf[BUFSIZE];
-	int  status;
-
-	status = snprintf (buf, BUFSIZE, "%u:%llu:%llu", (unsigned int) curtime,
-			incoming, outgoing);
-
-	if (status < 0)
-	{
-		syslog (LOG_ERR, "snprintf failed");
-		return;
-	}
-	else if (status >= BUFSIZE)
-	{
-		syslog (LOG_WARNING, "snprintf was truncated");
-		return;
-	}
-
-	plugin_submit ("mysql_traffic", "-", buf);
-}
-
-static void mysql_read (void)
+static int mysql_read (void)
 {
 	MYSQL     *con;
 	MYSQL_RES *res;
@@ -366,7 +224,7 @@ static void mysql_read (void)
 
 	/* An error message will have been printed in this case */
 	if ((con = getconnection ()) == NULL)
-		return;
+		return (-1);
 
 	query = "SHOW STATUS";
 	if (mysql_get_server_version (con) >= 50002)
@@ -376,16 +234,16 @@ static void mysql_read (void)
 
 	if (mysql_real_query (con, query, query_len))
 	{
-		syslog (LOG_ERR, "mysql_real_query failed: %s\n",
+		ERROR ("mysql_real_query failed: %s\n",
 				mysql_error (con));
-		return;
+		return (-1);
 	}
 
 	if ((res = mysql_store_result (con)) == NULL)
 	{
-		syslog (LOG_ERR, "mysql_store_result failed: %s\n",
+		ERROR ("mysql_store_result failed: %s\n",
 				mysql_error (con));
-		return;
+		return (-1);
 	}
 
 	field_num = mysql_num_fields (res);
@@ -404,14 +262,14 @@ static void mysql_read (void)
 
 			/* Ignore `prepared statements' */
 			if (strncmp (key, "Com_stmt_", 9) != 0)
-				commands_submit (key + 4, val);
+				counter_submit ("mysql_commands", key + 4, val);
 		}
 		else if (strncmp (key, "Handler_", 8) == 0)
 		{
 			if (val == 0ULL)
 				continue;
 
-			handler_submit (key + 8, val);
+			counter_submit ("mysql_handler", key + 8, val);
 		}
 		else if (strncmp (key, "Qcache_", 7) == 0)
 		{
@@ -462,22 +320,14 @@ static void mysql_read (void)
 
 	/* mysql_close (con); */
 
-	return;
-}
-#else
-# define mysql_read NULL
+	return (0);
+} /* int mysql_read */
 #endif /* MYSQL_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, init, mysql_read, NULL);
-	plugin_register ("mysql_commands", NULL, NULL, commands_write);
-	plugin_register ("mysql_handler",  NULL, NULL, handler_write);
-	plugin_register ("mysql_qcache",   NULL, NULL, qcache_write);
-	plugin_register ("mysql_threads",  NULL, NULL, threads_write);
-	plugin_register ("mysql_traffic",  NULL, NULL, traffic_write);
-	cf_register (MODULE_NAME, config, config_keys, config_keys_num);
-}
-
-#undef BUFSIZE
-#undef MODULE_NAME
+#if MYSQL_HAVE_READ
+	plugin_register_config ("mysql", config, config_keys, config_keys_num);
+	plugin_register_read ("mysql", mysql_read);
+#endif /* MYSQL_HAVE_READ */
+} /* void module_register */

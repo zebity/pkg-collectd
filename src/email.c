@@ -1,11 +1,10 @@
 /**
  * collectd - src/email.c
- * Copyright (C) 2006  Sebastian Harl
+ * Copyright (C) 2006,2007  Sebastian Harl
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -42,25 +41,11 @@
 
 #if HAVE_LIBPTHREAD
 # include <pthread.h>
-# define EMAIL_HAVE_READ 1
-#else
-# define EMAIL_HAVE_READ 0
 #endif
 
-#if HAVE_SYS_SELECT_H
-#	include <sys/select.h>
-#endif /* HAVE_SYS_SELECT_H */
-
-#if HAVE_SYS_SOCKET_H
-#	include <sys/socket.h>
-#endif /* HAVE_SYS_SOCKET_H */
-
-/* *sigh* glibc does not define UNIX_PATH_MAX in sys/un.h ... */
-#if HAVE_LINUX_UN_H
-#	include <linux/un.h>
-#elif HAVE_SYS_UN_H
-#	include <sys/un.h>
-#endif /* HAVE_LINUX_UN_H | HAVE_SYS_UN_H */
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/select.h>
 
 /* some systems (e.g. Darwin) seem to not define UNIX_PATH_MAX at all */
 #ifndef UNIX_PATH_MAX
@@ -84,13 +69,12 @@
 #define MAX_CONNS 5
 #define MAX_CONNS_LIMIT 16384
 
-#define log_err(...) syslog (LOG_ERR, MODULE_NAME": "__VA_ARGS__)
-#define log_warn(...) syslog (LOG_WARNING, MODULE_NAME": "__VA_ARGS__)
+#define log_err(...) ERROR (MODULE_NAME": "__VA_ARGS__)
+#define log_warn(...) WARNING (MODULE_NAME": "__VA_ARGS__)
 
 /*
  * Private data structures
  */
-#if EMAIL_HAVE_READ
 /* linked list of email and check types */
 typedef struct type {
 	char        *name;
@@ -128,21 +112,18 @@ typedef struct {
 	conn_t *head;
 	conn_t *tail;
 } conn_list_t;
-#endif /* EMAIL_HAVE_READ */
 
 /*
  * Private variables
  */
-#if EMAIL_HAVE_READ
 /* valid configuration file keys */
-static char *config_keys[] =
+static const char *config_keys[] =
 {
 	"SocketGroup",
 	"SocketPerms",
-	"MaxConns",
-	NULL
+	"MaxConns"
 };
-static int config_keys_num = 3;
+static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 
 /* socket configuration */
 static char *sock_group = COLLECTD_GRP_NAME;
@@ -153,8 +134,8 @@ static int  max_conns   = MAX_CONNS;
 static int disabled = 0;
 
 /* thread managing "client" connections */
-static pthread_t connector;
-static int connector_socket;
+static pthread_t connector = (pthread_t) 0;
+static int connector_socket = -1;
 
 /* tell the collector threads that a new connection is available */
 static pthread_cond_t conn_available = PTHREAD_COND_INITIALIZER;
@@ -167,7 +148,7 @@ static conn_list_t conns;
 static pthread_cond_t collector_available = PTHREAD_COND_INITIALIZER;
 
 /* collector threads */
-static collector_t **collectors;
+static collector_t **collectors = NULL;
 
 static pthread_mutex_t available_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int available_collectors;
@@ -184,42 +165,11 @@ static int score_count;
 
 static pthread_mutex_t check_mutex = PTHREAD_MUTEX_INITIALIZER;
 static type_list_t check;
-#endif /* EMAIL_HAVE_READ */
 
-#define COUNT_FILE "email/email-%s.rrd"
-static char *count_ds_def[] =
-{
-	"DS:count:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int count_ds_num = 1;
-
-#define SIZE_FILE  "email/email_size-%s.rrd"
-static char *size_ds_def[] =
-{
-	"DS:size:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int size_ds_num = 1;
-
-#define SCORE_FILE "email/spam_score.rrd"
-static char *score_ds_def[] =
-{
-	"DS:score:GAUGE:"COLLECTD_HEARTBEAT":U:U",
-	NULL
-};
-static int score_ds_num = 1;
-
-#define CHECK_FILE "email/spam_check-%s.rrd"
-static char *check_ds_def[] =
-{
-	"DS:hits:GAUGE:"COLLECTD_HEARTBEAT":0:U",
-	NULL
-};
-static int check_ds_num = 1;
-
-#if EMAIL_HAVE_READ
-static int email_config (char *key, char *value)
+/*
+ * Private functions
+ */
+static int email_config (const char *key, const char *value)
 {
 	if (0 == strcasecmp (key, "SocketGroup")) {
 		sock_group = sstrdup (value);
@@ -300,7 +250,9 @@ static char read_char (conn_t *src)
 	FD_SET (src->socket, &fdset);
 
 	if (-1 == select (src->socket + 1, &fdset, NULL, NULL, NULL)) {
-		log_err ("select() failed: %s", strerror (errno));
+		char errbuf[1024];
+		log_err ("select() failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		return '\0';
 	}
 
@@ -312,7 +264,9 @@ static char read_char (conn_t *src)
 		errno = 0;
 		if (0 > (len = read (src->socket, (void *)&ret, 1))) {
 			if (EINTR != errno) {
-				log_err ("read() failed: %s", strerror (errno));
+				char errbuf[1024];
+				log_err ("read() failed: %s",
+						sstrerror (errno, errbuf, sizeof (errbuf)));
 				return '\0';
 			}
 		}
@@ -361,7 +315,9 @@ static char *read_line (conn_t *src)
 		FD_SET (src->socket, &fdset);
 
 		if (-1 == select (src->socket + 1, &fdset, NULL, NULL, NULL)) {
-			log_err ("select() failed: %s", strerror (errno));
+			char errbuf[1024];
+			log_err ("select() failed: %s",
+					sstrerror (errno, errbuf, sizeof (errbuf)));
 			return NULL;
 		}
 
@@ -373,7 +329,9 @@ static char *read_line (conn_t *src)
 							(void *)(src->buffer + src->idx),
 							BUFSIZE - src->idx))) {
 				if (EINTR != errno) {
-					log_err ("read() failed: %s", strerror (errno));
+					char errbuf[1024];
+					log_err ("read() failed: %s",
+							sstrerror (errno, errbuf, sizeof (errbuf)));
 					return NULL;
 				}
 			}
@@ -445,13 +403,17 @@ static void *collect (void *arg)
 
 			errno = 0;
 			if (-1 == fcntl (connection->socket, F_GETFL, &flags)) {
-				log_err ("fcntl() failed: %s", strerror (errno));
+				char errbuf[1024];
+				log_err ("fcntl() failed: %s",
+						sstrerror (errno, errbuf, sizeof (errbuf)));
 				loop = 0;
 			}
 
 			errno = 0;
 			if (-1 == fcntl (connection->socket, F_SETFL, flags | O_NONBLOCK)) {
-				log_err ("fcntl() failed: %s", strerror (errno));
+				char errbuf[1024];
+				log_err ("fcntl() failed: %s",
+						sstrerror (errno, errbuf, sizeof (errbuf)));
 				loop = 0;
 			}
 		}
@@ -515,8 +477,9 @@ static void *collect (void *arg)
 		} /* while (loop) */
 
 		close (connection->socket);
-
 		free (connection);
+
+		this->socket = -1;
 
 		pthread_mutex_lock (&available_mutex);
 		++available_collectors;
@@ -536,8 +499,10 @@ static void *open_connection (void *arg)
 	/* create UNIX socket */
 	errno = 0;
 	if (-1 == (connector_socket = socket (PF_UNIX, SOCK_STREAM, 0))) {
+		char errbuf[1024];
 		disabled = 1;
-		log_err ("socket() failed: %s", strerror (errno));
+		log_err ("socket() failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		pthread_exit ((void *)1);
 	}
 
@@ -551,39 +516,65 @@ static void *open_connection (void *arg)
 	if (-1 == bind (connector_socket, (struct sockaddr *)&addr,
 				offsetof (struct sockaddr_un, sun_path)
 					+ strlen(addr.sun_path))) {
+		char errbuf[1024];
 		disabled = 1;
-		log_err ("bind() failed: %s", strerror (errno));
+		connector_socket = -1; /* TODO: close? */
+		log_err ("bind() failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		pthread_exit ((void *)1);
 	}
 
 	errno = 0;
 	if (-1 == listen (connector_socket, 5)) {
+		char errbuf[1024];
 		disabled = 1;
-		log_err ("listen() failed: %s", strerror (errno));
+		connector_socket = -1; /* TODO: close? */
+		log_err ("listen() failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		pthread_exit ((void *)1);
 	}
 
-	if ((uid_t)0 == geteuid ()) {
+	if ((uid_t) 0 == geteuid ())
+	{
+		struct group sg;
 		struct group *grp;
+		char grbuf[2048];
+		int status;
 
-		errno = 0;
-		if (NULL != (grp = getgrnam (sock_group))) {
-			errno = 0;
-			if (0 != chown (SOCK_PATH, (uid_t)-1, grp->gr_gid)) {
-				log_warn ("chown() failed: %s", strerror (errno));
+		grp = NULL;
+		status = getgrnam_r (sock_group, &sg, grbuf, sizeof (grbuf), &grp);
+		if (status != 0)
+		{
+			char errbuf[1024];
+			log_warn ("getgrnam_r (%s) failed: %s", sock_group,
+					sstrerror (errno, errbuf, sizeof (errbuf)));
+		}
+		else if (grp == NULL)
+		{
+			log_warn ("No such group: `%s'", sock_group);
+		}
+		else
+		{
+			status = chown (SOCK_PATH, (uid_t) -1, grp->gr_gid);
+			if (status != 0)
+			{
+				char errbuf[1024];
+				log_warn ("chown (%s, -1, %i) failed: %s",
+						SOCK_PATH, (int) grp->gr_gid,
+						sstrerror (errno, errbuf, sizeof (errbuf)));
 			}
 		}
-		else {
-			log_warn ("getgrnam() failed: %s", strerror (errno));
-		}
 	}
-	else {
+	else /* geteuid != 0 */
+	{
 		log_warn ("not running as root");
 	}
 
 	errno = 0;
 	if (0 != chmod (SOCK_PATH, sock_perms)) {
-		log_warn ("chmod() failed: %s", strerror (errno));
+		char errbuf[1024];
+		log_warn ("chmod() failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 	}
 
 	{ /* initialize collector threads */
@@ -605,11 +596,14 @@ static void *open_connection (void *arg)
 
 		for (i = 0; i < max_conns; ++i) {
 			collectors[i] = (collector_t *)smalloc (sizeof (collector_t));
-			collectors[i]->socket = 0;
+			collectors[i]->socket = -1;
 
 			if (0 != (err = pthread_create (&collectors[i]->thread, &ptattr,
 							collect, collectors[i]))) {
-				log_err ("pthread_create() failed: %s", strerror (err));
+				char errbuf[1024];
+				log_err ("pthread_create() failed: %s",
+						sstrerror (errno, errbuf, sizeof (errbuf)));
+				collectors[i]->thread = (pthread_t) 0;
 			}
 		}
 
@@ -635,8 +629,11 @@ static void *open_connection (void *arg)
 			errno = 0;
 			if (-1 == (remote = accept (connector_socket, NULL, NULL))) {
 				if (EINTR != errno) {
+					char errbuf[1024];
 					disabled = 1;
-					log_err ("accept() failed: %s", strerror (errno));
+					connector_socket = -1; /* TODO: close? */
+					log_err ("accept() failed: %s",
+							sstrerror (errno, errbuf, sizeof (errbuf)));
 					pthread_exit ((void *)1);
 				}
 			}
@@ -664,120 +661,81 @@ static void *open_connection (void *arg)
 	}
 	pthread_exit ((void *)0);
 } /* static void *open_connection (void *) */
-#endif /* EMAIL_HAVE_READ */
 
-static void email_init (void)
+static int email_init (void)
 {
-#if EMAIL_HAVE_READ
 	int err = 0;
 
 	if (0 != (err = pthread_create (&connector, NULL,
 				open_connection, NULL))) {
+		char errbuf[1024];
 		disabled = 1;
-		log_err ("pthread_create() failed: %s", strerror (err));
-		return;
+		log_err ("pthread_create() failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+		return (-1);
 	}
-#endif /* EMAIL_HAVE_READ */
-	return;
-} /* static void email_init (void) */
 
-#if EMAIL_HAVE_READ
-static void email_shutdown (void)
+	return (0);
+} /* int email_init */
+
+static int email_shutdown (void)
 {
 	int i = 0;
 
-	if (disabled)
-		return;
+	if (connector != ((pthread_t) 0)) {
+		pthread_kill (connector, SIGTERM);
+		connector = (pthread_t) 0;
+	}
 
-	pthread_kill (connector, SIGTERM);
-	close (connector_socket);
+	if (connector_socket >= 0) {
+		close (connector_socket);
+		connector_socket = -1;
+	}
 
 	/* don't allow any more connections to be processed */
 	pthread_mutex_lock (&conns_mutex);
 
-	for (i = 0; i < max_conns; ++i) {
-		pthread_kill (collectors[i]->thread, SIGTERM);
-		close (collectors[i]->socket);
-	}
+	if (collectors != NULL) {
+		for (i = 0; i < max_conns; ++i) {
+			if (collectors[i] == NULL)
+				continue;
+
+			if (collectors[i]->thread != ((pthread_t) 0)) {
+				pthread_kill (collectors[i]->thread, SIGTERM);
+				collectors[i]->thread = (pthread_t) 0;
+			}
+
+			if (collectors[i]->socket >= 0) {
+				close (collectors[i]->socket);
+				collectors[i]->socket = -1;
+			}
+		}
+	} /* if (collectors != NULL) */
 
 	pthread_mutex_unlock (&conns_mutex);
 
 	unlink (SOCK_PATH);
-	return;
+	errno = 0;
+
+	return (0);
 } /* static void email_shutdown (void) */
-#endif /* EMAIL_HAVE_READ */
 
-static void count_write (char *host, char *inst, char *val)
+static void email_submit (const char *type, const char *type_instance, gauge_t value)
 {
-	char file[BUFSIZE] = "";
-	int  len           = 0;
+	value_t values[1];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	len = snprintf (file, BUFSIZE, COUNT_FILE, inst);
-	if ((len < 0) || (len >= BUFSIZE))
-		return;
+	values[0].gauge = value;
 
-	rrd_update_file (host, file, val, count_ds_def, count_ds_num);
-	return;
-} /* static void email_write (char *host, char *inst, char *val) */
+	vl.values = values;
+	vl.values_len = 1;
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "email");
+	strncpy (vl.type_instance, type_instance, sizeof (vl.type_instance));
 
-static void size_write (char *host, char *inst, char *val)
-{
-	char file[BUFSIZE] = "";
-	int  len           = 0;
-
-	len = snprintf (file, BUFSIZE, SIZE_FILE, inst);
-	if ((len < 0) || (len >= BUFSIZE))
-		return;
-
-	rrd_update_file (host, file, val, size_ds_def, size_ds_num);
-	return;
-} /* static void size_write (char *host, char *inst, char *val) */
-
-static void score_write (char *host, char *inst, char *val)
-{
-	rrd_update_file (host, SCORE_FILE, val, score_ds_def, score_ds_num);
-	return;
-} /* static void score_write (char *host, char *inst, char *val) */
-
-static void check_write (char *host, char *inst, char *val)
-{
-	char file[BUFSIZE] = "";
-	int  len           = 0;
-
-	len = snprintf (file, BUFSIZE, CHECK_FILE, inst);
-	if ((len < 0) || (len >= BUFSIZE))
-		return;
-
-	rrd_update_file (host, file, val, check_ds_def, check_ds_num);
-	return;
-} /* static void check_write (char *host, char *inst, char *val) */
-
-#if EMAIL_HAVE_READ
-static void type_submit (char *plugin, char *inst, int value)
-{
-	char buf[BUFSIZE] = "";
-	int  len          = 0;
-
-	len = snprintf (buf, BUFSIZE, "%u:%i", (unsigned int)curtime, value);
-	if ((len < 0) || (len >= BUFSIZE))
-		return;
-
-	plugin_submit (plugin, inst, buf);
-	return;
-} /* static void type_submit (char *, char *, int) */
-
-static void score_submit (double value)
-{
-	char buf[BUFSIZE] = "";
-	int  len          = 0;
-
-	len = snprintf (buf, BUFSIZE, "%u:%.2f", (unsigned int)curtime, value);
-	if ((len < 0) || (len >= BUFSIZE))
-		return;
-
-	plugin_submit ("email_spam_score", "-", buf);
-	return;
-} /* static void score_submit (double) */
+	plugin_dispatch_values (type, &vl);
+} /* void email_submit */
 
 /* Copy list l1 to list l2. l2 may partly exist already, but it is assumed
  * that neither the order nor the name of any element of either list is
@@ -817,18 +775,19 @@ static void copy_type_list (type_list_t *l1, type_list_t *l2)
 	return;
 }
 
-static void email_read (void)
+static int email_read (void)
 {
 	type_t *ptr;
 
-	double sc;
+	double score_old;
+	int score_count_old;
 
 	static type_list_t *cnt;
 	static type_list_t *sz;
 	static type_list_t *chk;
 
 	if (disabled)
-		return;
+		return (-1);
 
 	if (NULL == cnt) {
 		cnt = (type_list_t *)smalloc (sizeof (type_list_t));
@@ -853,7 +812,7 @@ static void email_read (void)
 	pthread_mutex_unlock (&count_mutex);
 
 	for (ptr = cnt->head; NULL != ptr; ptr = ptr->next) {
-		type_submit ("email_count", ptr->name, ptr->value);
+		email_submit ("email_count", ptr->name, ptr->value);
 	}
 
 	/* email size */
@@ -864,19 +823,21 @@ static void email_read (void)
 	pthread_mutex_unlock (&size_mutex);
 
 	for (ptr = sz->head; NULL != ptr; ptr = ptr->next) {
-		type_submit ("email_size", ptr->name, ptr->value);
+		email_submit ("email_size", ptr->name, ptr->value);
 	}
 
 	/* spam score */
 	pthread_mutex_lock (&score_mutex);
 
-	sc = score;
+	score_old = score;
+	score_count_old = score_count;
 	score = 0.0;
 	score_count = 0;
 
 	pthread_mutex_unlock (&score_mutex);
 
-	score_submit (sc);
+	if (score_count_old > 0)
+		email_submit ("spam_score", "", score_old);
 
 	/* spam checks */
 	pthread_mutex_lock (&check_mutex);
@@ -885,28 +846,18 @@ static void email_read (void)
 
 	pthread_mutex_unlock (&check_mutex);
 
-	for (ptr = chk->head; NULL != ptr; ptr = ptr->next) {
-		type_submit ("email_spam_check", ptr->name, ptr->value);
-	}
-	return;
-} /* static void read (void) */
-#else /* if !EMAIL_HAVE_READ */
-# define email_read NULL
-#endif
+	for (ptr = chk->head; NULL != ptr; ptr = ptr->next)
+		email_submit ("spam_check", ptr->name, ptr->value);
+
+	return (0);
+} /* int email_read */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, email_init, email_read, NULL);
-	plugin_register ("email_count", NULL, NULL, count_write);
-	plugin_register ("email_size", NULL, NULL, size_write);
-	plugin_register ("email_spam_score", NULL, NULL, score_write);
-	plugin_register ("email_spam_check", NULL, NULL, check_write);
-#if EMAIL_HAVE_READ
-	plugin_register_shutdown (MODULE_NAME, email_shutdown);
-	cf_register (MODULE_NAME, email_config, config_keys, config_keys_num);
-#endif /* EMAIL_HAVE_READ */
-	return;
-} /* void module_register (void) */
+	plugin_register_config ("email", email_config, config_keys, config_keys_num);
+	plugin_register_init ("email", email_init);
+	plugin_register_read ("email", email_read);
+	plugin_register_shutdown ("email", email_shutdown);
+} /* void module_register */
 
 /* vim: set sw=4 ts=4 tw=78 noexpandtab : */
-

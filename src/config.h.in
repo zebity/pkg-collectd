@@ -1,11 +1,5 @@
 /* src/config.h.in.  Generated from configure.in by autoheader.  */
 
-/* Interval in which plugins are queried. */
-#undef COLLECTD_HEARTBEAT
-
-/* Interval in which plugins are queried. */
-#undef COLLECTD_STEP
-
 /* wether or not to enable module Apache httpd statistics */
 #undef COLLECT_APACHE
 
@@ -23,6 +17,9 @@
 
 /* wether or not to enable module system cpu frequency statistics */
 #undef COLLECT_CPUFREQ
+
+/* wether or not to enable module csv output plugin */
+#undef COLLECT_CSV
 
 /* wether or not to enable feature daemon mode */
 #undef COLLECT_DAEMON
@@ -42,14 +39,26 @@
 /* wether or not to enable module email statistics */
 #undef COLLECT_EMAIL
 
+/* wether or not to enable module entropy statistics */
+#undef COLLECT_ENTROPY
+
+/* wether or not to enable module exec of external programs */
+#undef COLLECT_EXEC
+
 /* wether or not to enable feature getifaddrs under Linux */
 #undef COLLECT_GETIFADDRS
 
 /* wether or not to enable module hdd temperature statistics */
 #undef COLLECT_HDDTEMP
 
-/* Wether or not to use kstat library (Solaris) */
-#undef COLLECT_KSTAT
+/* wether or not to enable module interface statistics */
+#undef COLLECT_INTERFACE
+
+/* wether or not to enable module IPtables statistics */
+#undef COLLECT_IPTABLES
+
+/* wether or not to enable module irq statistics */
+#undef COLLECT_IRQ
 
 /* Wether or not to use the IOKit library */
 #undef COLLECT_LIBIOKIT
@@ -69,6 +78,9 @@
 /* wether or not to enable module system load statistics */
 #undef COLLECT_LOAD
 
+/* wether or not to enable module logfile log facility */
+#undef COLLECT_LOGFILE
+
 /* wether or not to enable module motherboard monitor statistics */
 #undef COLLECT_MBMON
 
@@ -81,20 +93,26 @@
 /* wether or not to enable module mysql statistics */
 #undef COLLECT_MYSQL
 
+/* wether or not to enable module network functionality */
+#undef COLLECT_NETWORK
+
 /* wether or not to enable module nfs statistics */
 #undef COLLECT_NFS
 
-/* wether or not to enable module nfs statistics */
+/* wether or not to enable module ntpd statistics */
 #undef COLLECT_NTPD
+
+/* wether or not to enable module network UPS tools statistics */
+#undef COLLECT_NUT
+
+/* wether or not to enable module embedded perl interpreter */
+#undef COLLECT_PERL
 
 /* wether or not to enable module ping statistics */
 #undef COLLECT_PING
 
 /* wether or not to enable module processes statistics */
 #undef COLLECT_PROCESSES
-
-/* wether or not to enable module quota statistics (experimental) */
-#undef COLLECT_QUOTA
 
 /* Wether or not to use rrdtool library */
 #undef COLLECT_RRDTOOL
@@ -108,11 +126,14 @@
 /* wether or not to enable module swap statistics */
 #undef COLLECT_SWAP
 
+/* wether or not to enable module syslog log facility */
+#undef COLLECT_SYSLOG
+
 /* wether or not to enable module tape statistics */
 #undef COLLECT_TAPE
 
-/* wether or not to enable module system traffic statistics */
-#undef COLLECT_TRAFFIC
+/* wether or not to enable module UNIX socket plugin */
+#undef COLLECT_UNIXSOCK
 
 /* wether or not to enable module user count statistics */
 #undef COLLECT_USERS
@@ -237,11 +258,35 @@
 /* Define to 1 if you have the <kstat.h> header file. */
 #undef HAVE_KSTAT_H
 
+/* Define to 1 if `nwrites' is member of `kstat_io_t'. */
+#undef HAVE_KSTAT_IO_T_NWRITES
+
+/* Define to 1 if `nwritten' is member of `kstat_io_t'. */
+#undef HAVE_KSTAT_IO_T_NWRITTEN
+
+/* Define to 1 if `writes' is member of `kstat_io_t'. */
+#undef HAVE_KSTAT_IO_T_WRITES
+
+/* Define to 1 if `wtime' is member of `kstat_io_t'. */
+#undef HAVE_KSTAT_IO_T_WTIME
+
 /* Define to 1 if you have the <kvm.h> header file. */
 #undef HAVE_KVM_H
 
 /* Define to 1 if you have the 'curl' library (-lcurl). */
 #undef HAVE_LIBCURL
+
+/* Define to 1 if you have the <libgen.h> header file. */
+#undef HAVE_LIBGEN_H
+
+/* Define to 1 if you have the iptc library (-liptc). */
+#undef HAVE_LIBIPTC
+
+/* Define to 1 if you have the <libiptc/libiptc.h> header file. */
+#undef HAVE_LIBIPTC_LIBIPTC_H
+
+/* Define to 1 if you have the 'kstat' library (-lkstat) */
+#undef HAVE_LIBKSTAT
 
 /* Define to 1 if you have the 'kvm' library (-lkvm) */
 #undef HAVE_LIBKVM
@@ -255,6 +300,9 @@
 /* Define to 1 if you have the pcap library (-lpcap). */
 #undef HAVE_LIBPCAP
 
+/* Define if libperl is present and usable. */
+#undef HAVE_LIBPERL
+
 /* Wether or not to use pthread (POSIX threads) library */
 #undef HAVE_LIBPTHREAD
 
@@ -266,6 +314,9 @@
 
 /* Define to 1 if you have the sensors library (-lsensors). */
 #undef HAVE_LIBSENSORS
+
+/* Define to 1 if you have the upsclient library (-lupsclient). */
+#undef HAVE_LIBUPSCLIENT
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -390,6 +441,9 @@
 /* Define to 1 if you have the <netinet/ip_var.h> header file. */
 #undef HAVE_NETINET_IP_VAR_H
 
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+#undef HAVE_NETINET_TCP_H
+
 /* Define to 1 if you have the <netinet/udp.h> header file. */
 #undef HAVE_NETINET_UDP_H
 
@@ -413,6 +467,9 @@
 
 /* Define to 1 if you have the <pcap.h> header file. */
 #undef HAVE_PCAP_H
+
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
@@ -574,6 +631,9 @@
 /* Define to 1 if you have the <sys/fs_types.h> header file. */
 #undef HAVE_SYS_FS_TYPES_H
 
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
 /* Define to 1 if you have the <sys/loadavg.h> header file. */
 #undef HAVE_SYS_LOADAVG_H
 
@@ -592,9 +652,6 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
-
-/* Define to 1 if you have the <sys/poll.h> header file. */
-#undef HAVE_SYS_POLL_H
 
 /* Define to 1 if you have the <sys/quota.h> header file. */
 #undef HAVE_SYS_QUOTA_H
@@ -641,6 +698,9 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
 /* Define to 1 if you have the `thread_info' function. */
 #undef HAVE_THREAD_INFO
 
@@ -649,6 +709,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <upsclient.h> header file. */
+#undef HAVE_UPSCLIENT_H
 
 /* Define to 1 if you have the <utmpx.h> header file. */
 #undef HAVE_UTMPX_H
@@ -664,6 +727,16 @@
 
 /* True if program is to be compiled for a Solaris kernel */
 #undef KERNEL_SOLARIS
+
+/* Define if NAN is defined by default and can initialize static variables. */
+#undef NAN_STATIC_DEFAULT
+
+/* Define if NAN is defined by __USE_ISOC99 and can initialize static
+   variables. */
+#undef NAN_STATIC_ISOC
+
+/* Define if NAN can be defined as (0.0 / 0.0) */
+#undef NAN_ZERO_ZERO
 
 /* Name of package */
 #undef PACKAGE
@@ -691,6 +764,16 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

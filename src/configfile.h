@@ -31,7 +31,7 @@
  *  `type'      Name of the plugin (must be the same as passed to
  *              `plugin_register'
  */
-void cf_unregister (char *type);
+void cf_unregister (const char *type);
 
 /*
  * DESCRIPTION
@@ -57,24 +57,9 @@ void cf_unregister (char *type);
  *  exists for each `type' at any time. This means that `cf_register' may be
  *  called multiple times, but only the last call will have an effect.
  */
-void cf_register (char *type,
-		int (*callback) (char *, char *),
-		char **keys, int keys_num);
-
-/*
- * DESCRIPTION
- *  `cf_get_option' returns various general options.
- *
- * PARAMETERS
- *  `key'       Name of the option to query.
- *  `def'       Pointer to return as default value.
- *
- * RETURN VALUE
- *  The pointer returned is part of an internal structure and may not be
- *  changed. If the option is not found for whatever reason (wrong key, option
- *  not allowed for currently selected mode, ...) `NULL' is returned.
- */
-char *cf_get_option (const char *key, char *def);
+void cf_register (const char *type,
+		int (*callback) (const char *, const char *),
+		const char **keys, int keys_num);
 
 /*
  * DESCRIPTION
@@ -92,5 +77,8 @@ char *cf_get_option (const char *key, char *def);
  *  been printed in this case.
  */
 int cf_read (char *filename);
+
+int global_option_set (const char *option, const char *value);
+const char *global_option_get (const char *option);
 
 #endif /* defined(CONFIGFILE_H) */

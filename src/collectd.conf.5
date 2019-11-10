@@ -129,17 +129,15 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2007-02-11" "3.11.2" "collectd"
+.TH COLLECTD.CONF 5 "2007-06-07" "4.0.0" "collectd"
 .SH "NAME"
 collectd.conf \- Configuration for the system statistics collection daemon \fBcollectd\fR
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-.Vb 5
-\&  Mode    Client
-\&  DataDir /path/to/data/
-\&  PIDFile /path/to/pidfile/collectd.pid
-\&  LogFile /path/to/logfile/collectd.log
-\&  Server  123.123.123.123 12345
+.Vb 3
+\&  BaseDir "/path/to/data/"
+\&  PIDFile "/path/to/pidfile/collectd.pid"
+\&  Server  "123.123.123.123" 12345
 .Ve
 .PP
 .Vb 3
@@ -150,84 +148,69 @@ collectd.conf \- Configuration for the system statistics collection daemon \fBco
 .PP
 .Vb 4
 \&  <Plugin ping>
-\&    Host example.org
-\&    Host provider.net
+\&    Host "example.org"
+\&    Host "provider.net"
 \&  </Plugin>
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This config file controls how the system statistics collection daemon
-\&\fBcollectd\fR behaves. The most significant options are \fBMode\fR, which controlls
-if the daemon will act as client, server or will be independent in local mode,
-and \fBLoadPlugin\fR which controls which plugins to load.
+\&\fBcollectd\fR behaves. The most significant option is \fBLoadPlugin\fR, which
+controls which plugins to load. These plugins ultimately define collectd's
+behavior.
 .PP
 The syntax of this config file is similar to the config file of the famos
 \&\fBApache Webserver\fR. Each line containes either a key-value-pair or a
 section-start or \-end. Empty lines and everything after the hash-symbol `#' is
-ignored.
+ignored. Values are either string, enclosed in double\-quotes,
+(floating\-point\-)numbers or a boolean extression, i.\ e. either \fBtrue\fR or
+\&\fBfalse\fR. String containing of only alphanumeric characters and underscores do
+not need to be quoted.
 .SH "GLOBAL OPTIONS"
 .IX Header "GLOBAL OPTIONS"
-.IP "\fBMode\fR (\fBLocal\fR|\fBClient\fR|\fBServer\fR|\fBLog\fR)" 4
-.IX Item "Mode (Local|Client|Server|Log)"
-Sets the operating mode. See the section \fB\s-1MODES\s0\fR in \fIcollectd\fR\|(1) for a
-description. This option determines which other options are allowed. Defaults
-to \fBLocal\fR.
+.IP "\fBBaseDir\fR \fIDirectory\fR" 4
+.IX Item "BaseDir Directory"
+Sets the base directory. This is the directory beneath all RRD-files are
+created. Possibly more subdirectories are created. This is also the working
+directory for the daemon.
 .IP "\fBLoadPlugin\fR \fIPlugin\fR" 4
 .IX Item "LoadPlugin Plugin"
 Loads the plugin \fIPlugin\fR. There must be at least one such line or \fBcollectd\fR
-will be mostly useless. The names of the plugins are listed in \fIcollectd\fR\|(1).
+will be mostly useless.
 .IP "\fBPIDFile\fR \fIFile\fR" 4
 .IX Item "PIDFile File"
 Sets where to write the \s-1PID\s0 file to. This file is overwritten when it exists
 and deleted when the program ist stopped. Some init-scripts might override this
-setting using the \fB\-P\fR commandline option. Available in \fBall modes\fR.
-.IP "\fBDataDir\fR \fIDirectory\fR" 4
-.IX Item "DataDir Directory"
-Sets the data directory. This is the directory beneath all RRD-files are
-created. Possibly more subdirectories are created. This is also the working
-directory for the daemon. Available in \fBall modes\fR, though the \fBClient\fR mode
-won't write to this directory.
-.IP "\fBLogFile\fR \fIFile\fR" 4
-.IX Item "LogFile File"
-Sets the file to write debugging output to. This is only used if compiled with
-debugging enabled. It's ignored otherwise. Available in \fBall modes\fR.
-.IP "\fBListen\fR \fIHost\fR [\fIPort\fR]" 4
-.IX Item "Listen Host [Port]"
-.PD 0
-.IP "\fBServer\fR \fIHost\fR [\fIPort\fR]" 4
-.IX Item "Server Host [Port]"
-.PD
-In \fBclient mode\fR the \fBServer\fR statement sets the server to send datagrams to.
-The statement may occur multiple times to send each datagram to multiple
-destinations.
-.Sp
-In \fBserver mode\fR the \fBListen\fR statement sets the interfaces to bind to. When
-multiple statements are found the daemon will bind to multiple interfaces.
-.Sp
-The argument \fIHost\fR may be a hostname, an IPv4 address or an IPv6 address. If
-the argument is a multicast address the daemon will join that multicast group.
-.Sp
-If no \fBListen\fR statement is found the server tries join both, the IPv6
-multicast group and the IPv4 multicast group. If no \fBServer\fR statement is
-found the client will try to send data to the IPv6 multicast group first. If
-that failes the client will try the IPv4 multicast group.
-.Sp
-The default IPv6 multicast group is \f(CW\*(C`ff18::efc0:4a42\*(C'\fR. The default IPv4
-multicast group is \f(CW239.192.74.66\fR.
-.Sp
-The optional \fIPort\fR argument sets the port to use. It can either be given
-using a numeric port number or a service name. If the argument is omited the
-default port \fB25826\fR is assumed.
-.IP "\fBTimeToLive\fR \fI1\-255\fR" 4
-.IX Item "TimeToLive 1-255"
-Set the time-to-live of sent packets. This applies to all, unicast and
-multicast, and IPv4 and IPv6 packets. The default is to not change this value.
-That means that multicast packets will be sent with a \s-1TTL\s0 of \f(CW1\fR (one) on most
-operating systems.
+setting using the \fB\-P\fR commandline option.
+.IP "\fBPluginDir\fR \fIDirectory\fR" 4
+.IX Item "PluginDir Directory"
+Path to the plugins (shared objects) of collectd.
+.IP "\fBTypesDB\fR \fIFile\fR" 4
+.IX Item "TypesDB File"
+Set the file that contains the data-set descriptions.
+.IP "\fBInterval\fR \fISeconds\fR" 4
+.IX Item "Interval Seconds"
+Configures the interval in which to query the read plugins. Obviously smaller
+values lead to a higher system load produces by collectd, while higher values
+lead to more coarse statistics.
+.IP "\fBReadThreads\fR \fINum\fR" 4
+.IX Item "ReadThreads Num"
+Number of threads to start for reading plugins. The default value if \fB5\fR, but
+you may want to increase this if you have more than five plugins that take a
+long time to read. Mostly those are plugin that do network\-IO. Setting this to
+a value higher than the number of plugins you've loaded is totally useless.
 .SH "PLUGIN OPTIONS"
 .IX Header "PLUGIN OPTIONS"
 Some Plugins may register own options. These options must be inclosed in a
-\&\f(CW\*(C`Plugin\*(C'\fR\-Section. Which options exist depends on the plugin used:
+\&\f(CW\*(C`Plugin\*(C'\fR\-Section. Which options exist depends on the plugin used. Some plugins
+require external configuration, too. The \f(CW\*(C`apache plugin\*(C'\fR, for example,
+required \f(CW\*(C`mod_status\*(C'\fR to be configured in the webserver you're going to
+collect data from. These plugins are listed below as well, even if they don't
+require any configuration within collectd's configfile.
+.PP
+A list of all plugins and a short summary for each plugin can be found in the
+\&\fI\s-1README\s0\fR file shipped with the sourcecode and hopefully binary packets as
+well.
 .ie n .Sh "Plugin ""apache"""
 .el .Sh "Plugin \f(CWapache\fP"
 .IX Subsection "Plugin apache"
@@ -244,6 +227,10 @@ the following snipped to base your Apache config upon:
 \&    </Location>
 \&  </IfModule>
 .Ve
+.PP
+Since its \f(CW\*(C`mod_status\*(C'\fR module is very similar to Apache's, \fBlighttpd\fR is
+also supported. It introduces a new field, called \f(CW\*(C`BusyServers\*(C'\fR, to count the
+number of currently connected clients. This field is also supported.
 .PP
 The following options are accepted by the \f(CW\*(C`apache\*(C'\fR\-plugin:
 .IP "\fB\s-1URL\s0\fR \fIhttp://host/mod_status?auto\fR" 4
@@ -273,6 +260,21 @@ that IPv6 support has been disabled unless someone can confirm or decline that
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB3551\fR.
+.ie n .Sh "Plugin ""cpufreq"""
+.el .Sh "Plugin \f(CWcpufreq\fP"
+.IX Subsection "Plugin cpufreq"
+This plugin doesn't have any options. It reads
+\&\fI/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq\fR (for the first \s-1CPU\s0
+installed) to get the current \s-1CPU\s0 frequency. If this file does not exist make
+sure \fBcpufreqd\fR (<http://cpufreqd.sourceforge.net/>) or a similar tool is
+installed and an \*(L"cpu governor\*(R" (that's a kernel module) is loaded.
+.ie n .Sh "Plugin ""csv"""
+.el .Sh "Plugin \f(CWcsv\fP"
+.IX Subsection "Plugin csv"
+.IP "\fBDataDir\fR \fIDirectory\fR" 4
+.IX Item "DataDir Directory"
+Set the directory to store RRD-files under. Per default RRD-files are generated
+beneath the daemon's working directory, i.\ e. the \fBBaseDir\fR.
 .ie n .Sh "Plugin ""df"""
 .el .Sh "Plugin \f(CWdf\fP"
 .IX Subsection "Plugin df"
@@ -321,36 +323,128 @@ Sets the maximum number of connections that can be handled in parallel. Since
 this many threads will be started immediately setting this to a very high
 value will waste valuable resources. Defaults to \fB5\fR and will be forced to be
 at most \fB16384\fR to prevent typos and dumb mistakes.
+.ie n .Sh "Plugin ""exec"""
+.el .Sh "Plugin \f(CWexec\fP"
+.IX Subsection "Plugin exec"
+Please make sure to read \fIcollectd\-exec\fR\|(5) before using this plugin. It
+contains valueable information on when the executable is executed and the
+output that is expected from it.
+.IP "\fBExec\fR \fIUser\fR \fIExecutable\fR" 4
+.IX Item "Exec User Executable"
+Execute the executable \fIExecutable\fR as user \fIUser\fR.
 .ie n .Sh "Plugin ""hddtemp"""
 .el .Sh "Plugin \f(CWhddtemp\fP"
 .IX Subsection "Plugin hddtemp"
+To get values from \fBhddtemp\fR collectd connects to \fBlocalhost\fR (127.0.0.1),
+port \fB7634/tcp\fR. The \fBHost\fR and \fBPort\fR options can be used to change these
+default values, see below. \f(CW\*(C`hddtemp\*(C'\fR has to be running to work correctly. If
+\&\f(CW\*(C`hddtemp\*(C'\fR is not running timeouts may appear which may interfere with other
+statistics..
+.PP
+The \fBhddtemp\fR homepage can be found at
+<http://www.guzu.net/linux/hddtemp.php>.
 .IP "\fBHost\fR \fIHostname\fR" 4
 .IX Item "Host Hostname"
 Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB7634\fR.
+.ie n .Sh "Plugin ""interface"""
+.el .Sh "Plugin \f(CWinterface\fP"
+.IX Subsection "Plugin interface"
+.IP "\fBInterface\fR \fIInterface\fR" 4
+.IX Item "Interface Interface"
+Select this interface. By default these interfaces will then be collected. For
+a more detailed description see \fBIgnoreSelected\fR below.
+.IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "IgnoreSelected true|false"
+If no configuration if given, the \fBtraffic\fR\-plugin will collect data from
+all interfaces. This may not be practical, especially for loopback\- and
+similar interfaces. Thus, you can use the \fBInterface\fR\-option to pick the
+interfaces you're interested in. Sometimes, however, it's easier/prefered
+to collect all interfaces \fIexcept\fR a few ones. This option enables you to
+do that: By setting \fBIgnoreSelected\fR to \fItrue\fR the effect of
+\&\fBInterface\fR is inversed: All selected interfaces are ignored and all
+other interfaces are collected.
+.ie n .Sh "Plugin ""iptables"""
+.el .Sh "Plugin \f(CWiptables\fP"
+.IX Subsection "Plugin iptables"
+.IP "\fBChain\fR \fITable\fR \fIChain\fR [\fIComment|Number\fR [\fIName\fR]]" 4
+.IX Item "Chain Table Chain [Comment|Number [Name]]"
+Select the rules to count. If only \fITable\fR and \fIChain\fR are given, this plugin
+will collect the counters of all rules which have a comment\-match. The comment
+is then used as type\-instance.
+.Sp
+If \fIComment\fR or \fINumber\fR is given, only the rule with the matching comment or
+the \fIn\fRth rule will be collected. Again, the comment (or the number) will be
+used as the type\-instance.
+.Sp
+If \fIName\fR is supplied, it will be used as the type-instance instead of the
+comment or the number.
+.ie n .Sh "Plugin ""irq"""
+.el .Sh "Plugin \f(CWirq\fP"
+.IX Subsection "Plugin irq"
+.IP "\fBIrq\fR \fIIrq\fR" 4
+.IX Item "Irq Irq"
+Select this irq. By default these irqs will then be collected. For a more
+detailed description see \fBIgnoreSelected\fR below.
+.IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
+.IX Item "IgnoreSelected true|false"
+If no configuration if given, the \fBirq\fR\-plugin will collect data from all
+irqs. This may not be practical, especially if no interrupts happen. Thus, you
+can use the \fBIrq\fR\-option to pick the interupt you're interested in.
+Sometimes, however, it's easier/prefered to collect all interupts \fIexcept\fR a
+few ones. This option enables you to do that: By setting \fBIgnoreSelected\fR to
+\&\fItrue\fR the effect of \fBIrq\fR is inversed: All selected interupts are ignored
+and all other interupts are collected.
+.ie n .Sh "Plugin ""logfile"""
+.el .Sh "Plugin \f(CWlogfile\fP"
+.IX Subsection "Plugin logfile"
+.IP "\fBLogLevel\fR \fBdebug|info|notice|warning|err\fR" 4
+.IX Item "LogLevel debug|info|notice|warning|err"
+Sets the log\-level. If, for example, set to \fBnotice\fR, then all events with
+severity \fBnotice\fR, \fBwarning\fR, or \fBerr\fR will be written to the logfile.
+.IP "\fBFile\fR \fIFile\fR" 4
+.IX Item "File File"
+Sets the file to write log messages to. The special strings \fBstdout\fR and
+\&\fBstderr\fR can be used to write to the standard output and standard error
+channels, respectively. This, of course, only makes much sense when collectd is
+running in foreground\- or non\-daemon\-mode.
 .ie n .Sh "Plugin ""mbmon"""
 .el .Sh "Plugin \f(CWmbmon\fP"
 .IX Subsection "Plugin mbmon"
+The \f(CW\*(C`mbmon plugin\*(C'\fR uses mbmon to retrieve temperature, voltage, etc.
+.PP
+Be default collectd connects to \fBlocalhost\fR (127.0.0.1), port \fB411/tcp\fR.  The
+\&\fBHost\fR and \fBPort\fR options can be used to change these values, see below.
+\&\f(CW\*(C`mbmon\*(C'\fR has to be running to work correctly. If \f(CW\*(C`mbmon\*(C'\fR is not running
+timeouts may appear which may interfere with other statistics..
+.PP
+\&\f(CW\*(C`mbmon\*(C'\fR must be run with the \-r option (\*(L"print \s-1TAG\s0 and Value format\*(R");
+Debian's \fI/etc/init.d/mbmon\fR script already does this, other people
+will need to ensure that this is the case.
 .IP "\fBHost\fR \fIHostname\fR" 4
 .IX Item "Host Hostname"
 Hostname to connect to. Defaults to \fB127.0.0.1\fR.
 .IP "\fBPort\fR \fIPort\fR" 4
 .IX Item "Port Port"
 TCP-Port to connect to. Defaults to \fB411\fR.
-.ie n .Sh "Plugin ""ntpd"""
-.el .Sh "Plugin \f(CWntpd\fP"
-.IX Subsection "Plugin ntpd"
-.IP "\fBHost\fR \fIHostname\fR" 4
-.IX Item "Host Hostname"
-Hostname of the host running \fBntpd\fR. Defaults to \fBlocalhost\fR.
-.IP "\fBPort\fR \fIPort\fR" 4
-.IX Item "Port Port"
-UDP-Port to connect to. Defaults to \fB123\fR.
 .ie n .Sh "Plugin ""mysql"""
 .el .Sh "Plugin \f(CWmysql\fP"
 .IX Subsection "Plugin mysql"
+The \f(CW\*(C`mysql plugin\*(C'\fR requires \fBmysqlclient\fR to be installed. It connects to the
+database when started and keeps the connection up as long as possible. When the
+connection is interrupted for whatever reason it will try to re\-connect. The
+plugin logs loud complaints in case anything goes wrong.
+.PP
+This plugin issues \f(CW\*(C`SHOW STATUS\*(C'\fR and evaluates \f(CW\*(C`Bytes_{received,sent}\*(C'\fR,
+\&\f(CW\*(C`Com_*\*(C'\fR and \f(CW\*(C`Handler_*\*(C'\fR which correspond to \fImysql_octets.rrd\fR,
+\&\fImysql_commands\-*.rrd\fR and \fImysql_handler\-*.rrd\fR. Also, the values of
+\&\f(CW\*(C`Qcache_*\*(C'\fR are put in \fImysql_qcache.rrd\fR and values of \f(CW\*(C`Threads_*\*(C'\fR are put
+in \fImysql_threads.rrd\fR. Please refer to the \fBMySQL reference manual\fR,
+\&\fI5.2.4. Server Status Variables\fR for an explanation of these values.
+.PP
+Use the following options to configure the plugin:
 .IP "\fBHost\fR \fIHostname\fR" 4
 .IX Item "Host Hostname"
 Hostname of the database server. Defaults to \fBlocalhost\fR.
@@ -364,6 +458,89 @@ Password needed to log into the database.
 .IX Item "Database Database"
 Select this database. Defaults to \fIno database\fR which is a perfecly reasonable
 option for what this plugin does.
+.ie n .Sh "Plugin ""network"""
+.el .Sh "Plugin \f(CWnetwork\fP"
+.IX Subsection "Plugin network"
+.IP "\fBListen\fR \fIHost\fR [\fIPort\fR]" 4
+.IX Item "Listen Host [Port]"
+.PD 0
+.IP "\fBServer\fR \fIHost\fR [\fIPort\fR]" 4
+.IX Item "Server Host [Port]"
+.PD
+The \fBServer\fR statement sets the server to send datagrams \fBto\fR.  The statement
+may occur multiple times to send each datagram to multiple destinations.
+.Sp
+The \fBListen\fR statement sets the interfaces to bind to. When multiple
+statements are found the daemon will bind to multiple interfaces.
+.Sp
+The argument \fIHost\fR may be a hostname, an IPv4 address or an IPv6 address. If
+the argument is a multicast address the daemon will join that multicast group.
+.Sp
+If no \fBListen\fR statement is found the server tries join both, the default IPv6
+multicast group and the default IPv4 multicast group. If no \fBServer\fR statement
+is found the client will try to send data to the IPv6 multicast group first. If
+that failes the client will try the IPv4 multicast group.
+.Sp
+The default IPv6 multicast group is \f(CW\*(C`ff18::efc0:4a42\*(C'\fR. The default IPv4
+multicast group is \f(CW239.192.74.66\fR.
+.Sp
+The optional \fIPort\fR argument sets the port to use. It can either be given
+using a numeric port number or a service name. If the argument is omited the
+default port \fB25826\fR is assumed.
+.IP "\fBTimeToLive\fR \fI1\-255\fR" 4
+.IX Item "TimeToLive 1-255"
+Set the time-to-live of sent packets. This applies to all, unicast and
+multicast, and IPv4 and IPv6 packets. The default is to not change this value.
+That means that multicast packets will be sent with a \s-1TTL\s0 of \f(CW1\fR (one) on most
+operating systems.
+.IP "\fBForward\fR \fItrue|false\fR" 4
+.IX Item "Forward true|false"
+If set to \fItrue\fR, write packets that were received via the network plugin to
+the sending sockets. This should only be activated when the \fBListen\fR\- and
+\&\fBServer\fR\-statements differ. Otherwise packets may be send multiple times to
+the same multicast group. While this results in more network traffic than
+neccessary it's not a huge problem since the plugin has a duplicate detection,
+so the values will not loop.
+.IP "\fBCacheFlush\fR \fISeconds\fR" 4
+.IX Item "CacheFlush Seconds"
+For each host/plugin/type combination the \f(CW\*(C`network plugin\*(C'\fR caches the time of
+the last value being sent or received. Every \fISeconds\fR seconds the plugin
+searches and removes all entries that are older than \fISeconds\fR seconds, thus
+freeing the unused memory again. Since this process is somewhat expensive and
+normally doesn't do much, this value should not be too small. The default is
+1800 seconds, but setting this to 86400 seconds (one day) will not do much harm
+either.
+.ie n .Sh "Plugin ""ntpd"""
+.el .Sh "Plugin \f(CWntpd\fP"
+.IX Subsection "Plugin ntpd"
+.IP "\fBHost\fR \fIHostname\fR" 4
+.IX Item "Host Hostname"
+Hostname of the host running \fBntpd\fR. Defaults to \fBlocalhost\fR.
+.IP "\fBPort\fR \fIPort\fR" 4
+.IX Item "Port Port"
+UDP-Port to connect to. Defaults to \fB123\fR.
+.ie n .Sh "Plugin ""nut"""
+.el .Sh "Plugin \f(CWnut\fP"
+.IX Subsection "Plugin nut"
+.IP "\fB\s-1UPS\s0\fR \fIupsname\fR\fB@\fR\fIhostname\fR[\fB:\fR\fIport\fR]" 4
+.IX Item "UPS upsname@hostname[:port]"
+Add a \s-1UPS\s0 to collect data from. The format is identical to the one accepted by
+\&\fIupsc\fR\|(8).
+.ie n .Sh "Plugin ""perl"""
+.el .Sh "Plugin \f(CWperl\fP"
+.IX Subsection "Plugin perl"
+.IP "\fBLoadPlugin\fR \fIPlugin\fR" 4
+.IX Item "LoadPlugin Plugin"
+Loads the Perl plugin \fIPlugin\fR. This does basically the same as \fBuse\fR would
+do in a Perl program.
+.IP "\fBBaseName\fR \fIName\fR" 4
+.IX Item "BaseName Name"
+Prepends \fIName\fR\fB::\fR to all plugin names loaded after this option. This is
+provided for convenience to keep plugin names short.
+.IP "\fBIncludeDir\fR \fIDir\fR" 4
+.IX Item "IncludeDir Dir"
+Adds \fIDir\fR to the \fB@INC\fR array. This is the same as using the \fB\-IDir\fR
+command line option or \fBuse lib Dir\fR in the source code.
 .ie n .Sh "Plugin ""ping"""
 .el .Sh "Plugin \f(CWping\fP"
 .IX Subsection "Plugin ping"
@@ -374,81 +551,147 @@ multiple hosts.
 .IP "\fB\s-1TTL\s0\fR \fI0\-255\fR" 4
 .IX Item "TTL 0-255"
 Sets the Time-To-Live of generated \s-1ICMP\s0 packets.
+.ie n .Sh "Plugin ""processes"""
+.el .Sh "Plugin \f(CWprocesses\fP"
+.IX Subsection "Plugin processes"
+.IP "\fBProcess\fR \fIName\fR" 4
+.IX Item "Process Name"
+Select more detailed statistics of processes matching this name. The statistics
+collected for these selected processes are size of the resident segment size
+(\s-1RSS\s0), user\- and system-time used, number of processes and number of threads,
+and minor and major pagefaults.
+.ie n .Sh "Plugin ""rrdtool"""
+.el .Sh "Plugin \f(CWrrdtool\fP"
+.IX Subsection "Plugin rrdtool"
+You can use the settings \fBStepSize\fR, \fBHeartBeat\fR, \fBRRARows\fR, and \fB\s-1XFF\s0\fR to
+finetune your RRD\-files. Please read \fIrrdcreate\fR\|(1) if you encounter problems
+using these settings. If you don't want to dive into the depths of RRDTool, you
+can savely ignore these settings.
+.IP "\fBDataDir\fR \fIDirectory\fR" 4
+.IX Item "DataDir Directory"
+Set the directory to store RRD-files under. Per default RRD-files are generated
+beneath the daemon's working directory, i.\ e. the \fBBaseDir\fR.
+.IP "\fBStepSize\fR \fISeconds\fR" 4
+.IX Item "StepSize Seconds"
+Sets the stepsize of newly created RRD\-files. Ideally (and per default) this
+setting is identical to the global \fBInterval\fR\-option and should not be
+smaller. If unsure, don't set this option.
+.IP "\fBHeartBeat\fR \fISeconds\fR" 4
+.IX Item "HeartBeat Seconds"
+Sets the heartbeat of newly created RRD\-files. Ideally this setting is bigger
+than the \fBInterval\fR\-setting, by default it's twice the \fBInterval\fR\-setting. If
+unsure, don't set this option.
+.IP "\fBRRARows\fR \fINumRows\fR" 4
+.IX Item "RRARows NumRows"
+The \f(CW\*(C`rrdtool plugin\*(C'\fR calculates the number of PDPs per \s-1CDP\s0 based on the
+\&\fBStepSize\fR, this setting and a timespan. This plugin creates RRD-files with
+three times five RRAs, i. e. five RRAs with the CFs \fB\s-1MIN\s0\fR, \fB\s-1AVERAGE\s0\fR, and
+\&\fB\s-1MAX\s0\fR. The five RRAs are optimized for graphs covering one hour, one day, one
+week, one month, and one year.
+.Sp
+So for each timespan, it calculates how many PDPs need to be consolidated into
+one \s-1CDP\s0 by calculating:
+  number of PDPs = timespan / (stepsize * rrarows)
+.Sp
+Bottom line is, set this no smaller than the width of you graphs in pixels. The
+default is 1200.
+.IP "\fBRRATimespan\fR \fISeconds\fR" 4
+.IX Item "RRATimespan Seconds"
+Adds an RRA\-timespan, given in seconds. Use this option mulitple times to have
+more then one \s-1RRA\s0. If this option is never used, the built-in default of (3600,
+86400, 604800, 2678400, 31622400) is used.
+.Sp
+For more information on how RRA-sizes are calculated see \fBRRARows\fR above.
+.IP "\fB\s-1XFF\s0\fR \fIFactor\fR" 4
+.IX Item "XFF Factor"
+Set the \*(L"XFiles Factor\*(R". The default is 0.1. If unsure, don't set this option.
+.IP "\fBCacheFlush\fR \fISeconds\fR" 4
+.IX Item "CacheFlush Seconds"
+When the \f(CW\*(C`rrdtool plugin\*(C'\fR uses a cache (by setting \fBCacheTimeout\fR, see below)
+it writes all values for a certain RRD-file if the oldest value is older than
+(or equal to) the number of seconds specified. If some RRD-file is not updated
+anymore for some reason (the computer was shut down, the network is broken,
+etc.) some values may still be in the cache. If \fBCacheFlush\fR is set, then the
+entire cache is searched for entries older than \fBCacheTimeout\fR seconds and
+written to disk every \fISeconds\fR seconds. Since this is kind of expensive and
+does nothing under normal circumstances, this value should not be too small.
+900 seconds might be a good value, though setting this to 7200 seconds doesn't
+normally do much harm either.
+.IP "\fBCacheTimeout\fR \fISeconds\fR" 4
+.IX Item "CacheTimeout Seconds"
+If this option is set to a value greater than zero, the \f(CW\*(C`rrdtool plugin\*(C'\fR will
+save values in a cache, as described above. Writing multiple values at once
+reduces IO-operations and thus lessens the load produced by updating the files.
+The tradeoff is that the graphs kind of \*(L"drag behind\*(R" and that more memory is
+used.
 .ie n .Sh "Plugin ""sensors"""
 .el .Sh "Plugin \f(CWsensors\fP"
 .IX Subsection "Plugin sensors"
-.IP "\fBExtendedSensorNaming\fR \fItrue\fR|\fIfalse\fR" 4
-.IX Item "ExtendedSensorNaming true|false"
-If set to \fItrue\fR this option switches on the extended sensors and RRD-files
-naming. This option exists to preserve backwards compatibility. It is
-recommended that you set this option to \fItrue\fR. The default is \fIfalse\fR to
-maintain compatibility only.
-.Sp
-Sensors get names like \fIchip\-bus\-address/type\-feature\fR (e.g.
-\&\fIit8712\-isa\-0290/voltage\-in1\fR) and \s-1RRD\s0 files are therefore stored in a
-standalone directory inside the \fBDataDir\fR directory and get names like
-\&\fIlm_sensors\-chip\-bus\-address/type\-feature.rrd\fR (e.g.
-\&\fIlm_sensors\-it8712\-isa\-0290/voltage\-in1.rrd\fR).
-.Sp
-The \fBExtendedSensorNaming\fR option breaks the compatibility with previous
-sensors and \s-1RRD\s0 files naming and the place where RRDs are stored. If you turn
-it on, the plugin will create new \s-1RRD\s0 files in a standalone directory inside
-the \fBDataDir\fR directory and without previous history. You can rename ``old''
-RRD-files to preserve already collected statistics, because the file layout
-hasn't changed. If you have two chips of the same type, you need to use
-\&\fBExtendedSensorNaming\fR in order to collect information from both chips.
-.Sp
-If not set or set to \fIfalse\fR, the extended naming is not active. Sensors get
-names like \fIchip-feature\fR (e.g. \fIit8712\-in1\fR) and \s-1RRD\s0 files are stored in the
-main \fBDataDir\fR directory and get names like \fIsensors\-chip\-feature.rrd\fR (e.g.
-\&\fIsensors\-it8712\-in1.rrd\fR).  You simply continue using the plugin the old way
-and additionally also getting data for newly added sensors in this mode.
-.IP "\fBSensor\fR \fIchip-feature\fR or \fBSensor\fR \fIchip\-bus\-address/type\-feature\fR" 4
-.IX Item "Sensor chip-feature or Sensor chip-bus-address/type-feature"
-Both option modes select the name of the sensor which you want to collect.
-The naming scheme is dependent on the state of the \fBExtendedSensorNaming\fR
-option (see previous option). Both option modes can also deselect the
-sensor according to the \fBIgnoreSelected\fR option (see below).
-.Sp
-For example the option "\fBSensor\fR \fIit8712\-in1\fR" will cause the collectd
-to gather data for the voltage sensor \fIin1\fR of the \fIit8712\fR chip in case
-of the \fBExtendedSensorNaming\fR option is set to \fIfalse\fR.
-.Sp
-And likewise the option "\fBSensor\fR \fIit8712\-isa\-0290/voltage\-in1\fR" will
-cause the collectd to gather data for the voltage sensor \fIin1\fR of the \fIit8712\fR
-on the isa bus at the address 0290 in case of the \fBExtendedSensorNaming\fR
-option set to \fItrue\fR.
+The \f(CW\*(C`sensors plugin\*(C'\fR uses \fBlm_sensors\fR to retrieve sensor\-values. This means
+that all the needed modules have to be loaded and lm_sensors has to be
+configured (most likely by editing \fI/etc/sensors.conf\fR. Read
+\&\fIsensors.conf\fR\|(5) for details.
+.PP
+The \fBlm_sensors\fR homepage can be found at
+<http://secure.netroedge.com/~lm78/>.
+.IP "\fBSensor\fR \fIchip\-bus\-address/type\-feature\fR" 4
+.IX Item "Sensor chip-bus-address/type-feature"
+Selects the name of the sensor which you want to collect or ignore, depending
+on the \fBIgnoreSelected\fR below. For example, the option "\fBSensor\fR
+\&\fIit8712\-isa\-0290/voltage\-in1\fR" will cause collectd to gather data for the
+voltage sensor \fIin1\fR of the \fIit8712\fR on the isa bus at the address 0290.
 .IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
 .IX Item "IgnoreSelected true|false"
-If no configuration if given, the \fBsensors\fR\-plugin will collect data from
-all sensors. This may not be practical, especially for uninteresting sensors.
-Thus, you can use the \fBSensor\fR\-option to pick the sensors you're
-interested in. Sometimes, however, it's easier/prefered to collect all
-sensors \fIexcept\fR a few ones. This option enables you to
-do that: By setting \fBIgnoreSelected\fR to \fItrue\fR the effect of
-\&\fBSensor\fR is inversed: All selected sensors are ignored and all
-other sensors are collected.
-.Sp
-back
-.ie n .Sh "Plugin ""traffic"""
-.el .Sh "Plugin \f(CWtraffic\fP"
-.IX Subsection "Plugin traffic"
-.IP "\fBInterface\fR \fIInterface\fR" 4
-.IX Item "Interface Interface"
-Select this interface. By default these interfaces will then be collected. For a more detailed description see \fBIgnoreSelected\fR below.
-.IP "\fBIgnoreSelected\fR \fItrue\fR|\fIfalse\fR" 4
-.IX Item "IgnoreSelected true|false"
-If no configuration if given, the \fBtraffic\fR\-plugin will collect data from
-all interfaces. This may not be practical, especially for loopback\- and
-similar interfaces. Thus, you can use the \fBInterface\fR\-option to pick the
-interfaces you're interested in. Sometimes, however, it's easier/prefered
-to collect all interfaces \fIexcept\fR a few ones. This option enables you to
-do that: By setting \fBIgnoreSelected\fR to \fItrue\fR the effect of
-\&\fBInterface\fR is inversed: All selected interfaces are ignored and all
-other interfaces are collected.
+If no configuration if given, the \fBsensors\fR\-plugin will collect data from all
+sensors. This may not be practical, especially for uninteresting sensors.
+Thus, you can use the \fBSensor\fR\-option to pick the sensors you're interested
+in. Sometimes, however, it's easier/prefered to collect all sensors \fIexcept\fR a
+few ones. This option enables you to do that: By setting \fBIgnoreSelected\fR to
+\&\fItrue\fR the effect of \fBSensor\fR is inversed: All selected sensors are ignored
+and all other sensors are collected.
+.ie n .Sh "Plugin ""syslog"""
+.el .Sh "Plugin \f(CWsyslog\fP"
+.IX Subsection "Plugin syslog"
+.IP "\fBLogLevel\fR \fBdebug|info|notice|warning|err\fR" 4
+.IX Item "LogLevel debug|info|notice|warning|err"
+Sets the log\-level. If, for example, set to \fBnotice\fR, then all events with
+severity \fBnotice\fR, \fBwarning\fR, or \fBerr\fR will be submitted to the
+syslog\-daemon.
+.ie n .Sh "Plugin ""unixsock"""
+.el .Sh "Plugin \f(CWunixsock\fP"
+.IX Subsection "Plugin unixsock"
+.IP "\fBSocketFile\fR \fIPath\fR" 4
+.IX Item "SocketFile Path"
+Sets the socket-file which is to be created.
+.IP "\fBSocketGroup\fR \fIGroup\fR" 4
+.IX Item "SocketGroup Group"
+If running as root change the group of the UNIX-socket after it has been 
+created. Defaults to \fBcollectd\fR.
+.IP "\fBSocketPerms\fR \fIPermissions\fR" 4
+.IX Item "SocketPerms Permissions"
+Change the file permissions of the UNIX-socket after it has been created. The
+permissions must be given as a numeric, octal value as you would pass to
+\&\fIchmod\fR\|(1). Defaults to \fB0770\fR.
+.ie n .Sh "Plugin ""vserver"""
+.el .Sh "Plugin \f(CWvserver\fP"
+.IX Subsection "Plugin vserver"
+This plugin doesn't have any options. \fBVServer\fR support is only available for
+Linux. It cannot yet be found in a vanilla kernel, though. To make use of this
+plugin you need a kernel that has \fBVServer\fR support built in, i.\ e. you
+need to apply the patches and compile your own kernel, which will then provide
+the \fI/proc/virtual\fR filesystem that is required by this plugin.
+.PP
+The \fBVServer\fR homepage can be found at <http://linux\-vserver.org/>.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\&\fIcollectd\fR\|(1)
+\&\fIcollectd\fR\|(1),
+\&\fIcollectd\-exec\fR\|(5),
+\&\fIcollectd\-unixsock\fR\|(5),
+\&\fIhddtemp\fR\|(8),
+kstat(3KSTAT),
+\&\fImbmon\fR\|(1),
+\&\fIrrdtool\fR\|(1),
+\&\fIsensors\fR\|(1)
 .SH "AUTHOR"
 .IX Header "AUTHOR"
 Florian Forster <octo@verplant.org>

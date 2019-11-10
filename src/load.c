@@ -4,8 +4,7 @@
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Free Software Foundation; only version 2 of the License is applicable.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,8 +22,6 @@
 #include "collectd.h"
 #include "common.h"
 #include "plugin.h"
-
-#define MODULE_NAME "load"
 
 #if defined(HAVE_GETLOADAVG) || defined(KERNEL_LINUX) || defined(HAVE_LIBSTATGRAB)
 # define LOAD_HAVE_READ 1
@@ -44,42 +41,26 @@
 #endif
 #endif /* defined(HAVE_GETLOADAVG) */
 
-static char *load_file = "load.rrd";
-
-static char *ds_def[] =
-{
-	"DS:shortterm:GAUGE:"COLLECTD_HEARTBEAT":0:100",
-	"DS:midterm:GAUGE:"COLLECTD_HEARTBEAT":0:100",
-	"DS:longterm:GAUGE:"COLLECTD_HEARTBEAT":0:100",
-	NULL
-};
-static int ds_num = 3;
-
-static void load_init (void)
-{
-	return;
-}
-
-static void load_write (char *host, char *inst, char *val)
-{
-	rrd_update_file (host, load_file, val, ds_def, ds_num);
-}
-
 #if LOAD_HAVE_READ
-#define BUFSIZE 256
-static void load_submit (double snum, double mnum, double lnum)
+static void load_submit (gauge_t snum, gauge_t mnum, gauge_t lnum)
 {
-	char buf[BUFSIZE];
+	value_t values[3];
+	value_list_t vl = VALUE_LIST_INIT;
 
-	if (snprintf (buf, BUFSIZE, "%u:%.2f:%.2f:%.2f", (unsigned int) curtime,
-				snum, mnum, lnum) >= BUFSIZE)
-		return;
+	values[0].gauge = snum;
+	values[1].gauge = mnum;
+	values[2].gauge = lnum;
 
-	plugin_submit (MODULE_NAME, "-", buf);
+	vl.values = values;
+	vl.values_len = STATIC_ARRAY_SIZE (values);
+	vl.time = time (NULL);
+	strcpy (vl.host, hostname_g);
+	strcpy (vl.plugin, "load");
+
+	plugin_dispatch_values ("load", &vl);
 }
-#undef BUFSIZE
 
-static void load_read (void)
+static int load_read (void)
 {
 #if defined(HAVE_GETLOADAVG)
 	double load[3];
@@ -87,11 +68,15 @@ static void load_read (void)
 	if (getloadavg (load, 3) == 3)
 		load_submit (load[LOADAVG_1MIN], load[LOADAVG_5MIN], load[LOADAVG_15MIN]);
 	else
-		syslog (LOG_WARNING, "load: getloadavg failed: %s", strerror (errno));
+	{
+		char errbuf[1024];
+		WARNING ("load: getloadavg failed: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+	}
 /* #endif HAVE_GETLOADAVG */
 
 #elif defined(KERNEL_LINUX)
-	double snum, mnum, lnum;
+	gauge_t snum, mnum, lnum;
 	FILE *loadavg;
 	char buffer[16];
 
@@ -100,19 +85,27 @@ static void load_read (void)
 	
 	if ((loadavg = fopen ("/proc/loadavg", "r")) == NULL)
 	{
-		syslog (LOG_WARNING, "load: fopen: %s", strerror (errno));
+		char errbuf[1024];
+		WARNING ("load: fopen: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		return;
 	}
 
 	if (fgets (buffer, 16, loadavg) == NULL)
 	{
-		syslog (LOG_WARNING, "load: fgets: %s", strerror (errno));
+		char errbuf[1024];
+		WARNING ("load: fgets: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
 		fclose (loadavg);
 		return;
 	}
 
 	if (fclose (loadavg))
-		syslog (LOG_WARNING, "load: fclose: %s", strerror (errno));
+	{
+		char errbuf[1024];
+		WARNING ("load: fclose: %s",
+				sstrerror (errno, errbuf, sizeof (errbuf)));
+	}
 
 	numfields = strsplit (buffer, fields, 8);
 
@@ -127,7 +120,7 @@ static void load_read (void)
 /* #endif KERNEL_LINUX */
 
 #elif defined(HAVE_LIBSTATGRAB)
-	double snum, mnum, lnum;
+	gauge_t snum, mnum, lnum;
 	sg_load_stats *ls;
 
 	if ((ls = sg_get_load_stats ()) == NULL)
@@ -139,14 +132,14 @@ static void load_read (void)
 
 	load_submit (snum, mnum, lnum);
 #endif /* HAVE_LIBSTATGRAB */
+
+	return (0);
 }
-#else
-# define load_read NULL
 #endif /* LOAD_HAVE_READ */
 
 void module_register (void)
 {
-	plugin_register (MODULE_NAME, load_init, load_read, load_write);
-}
-
-#undef MODULE_NAME
+#if LOAD_HAVE_READ
+	plugin_register_read ("load", load_read);
+#endif
+} /* void module_register */
