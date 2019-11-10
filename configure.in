@@ -1,0 +1,1108 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(collectd, 3.9.4)
+AC_CONFIG_SRCDIR(src/collectd.c)
+AC_CONFIG_HEADERS(src/config.h)
+AM_INIT_AUTOMAKE(dist-bzip2)
+AC_LANG(C)
+
+AC_PREFIX_DEFAULT("/opt/collectd")
+
+#
+# Checks for programs.
+#
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AM_CONDITIONAL(COMPILER_IS_GCC, test "x$GCC" = "xyes")
+
+dnl configure libtool
+AC_DISABLE_STATIC
+AC_LIBLTDL_CONVENIENCE
+AC_SUBST(LTDLINCL)
+AC_SUBST(LIBLTDL)
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+#AC_PROG_RANLIB
+AC_CONFIG_SUBDIRS(libltdl src/libconfig)
+
+#
+# Checks for header files.
+#
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_HEADER_DIRENT
+AC_CHECK_HEADERS(stdint.h)
+AC_CHECK_HEADERS(stdio.h)
+AC_CHECK_HEADERS(errno.h)
+AC_CHECK_HEADERS(math.h)
+AC_CHECK_HEADERS(syslog.h)
+AC_CHECK_HEADERS(fcntl.h)
+AC_CHECK_HEADERS(signal.h)
+AC_CHECK_HEADERS(assert.h)
+AC_CHECK_HEADERS(sys/types.h)
+AC_CHECK_HEADERS(sys/socket.h)
+AC_CHECK_HEADERS(sys/select.h)
+AC_CHECK_HEADERS(netdb.h)
+AC_CHECK_HEADERS(arpa/inet.h)
+AC_CHECK_HEADERS(sys/resource.h)
+AC_CHECK_HEADERS(sys/param.h)
+
+# For ping library
+AC_CHECK_HEADERS(netinet/in_systm.h, [], [],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+])
+AC_CHECK_HEADERS(netinet/in.h, [], [],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+])
+AC_CHECK_HEADERS(netinet/ip.h, [], [],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+])
+AC_CHECK_HEADERS(netinet/ip_icmp.h, [], [],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP_H
+# include <netinet/ip.h>
+#endif
+])
+AC_CHECK_HEADERS(netinet/ip_var.h, [], [],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP_H
+# include <netinet/ip.h>
+#endif
+])
+AC_CHECK_HEADERS(netinet/ip6.h, [], [],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+])
+AC_CHECK_HEADERS(netinet/icmp6.h, [], [],
+[#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP6_H
+# include <netinet/ip6.h>
+#endif
+])
+
+# For cpu modules
+AC_CHECK_HEADERS(sys/sysctl.h sys/dkstat.h)
+AC_CHECK_HEADERS(mach/mach_init.h)
+AC_CHECK_HEADERS(mach/host_priv.h)
+AC_CHECK_HEADERS(mach/mach_error.h)
+AC_CHECK_HEADERS(mach/mach_host.h)
+AC_CHECK_HEADERS(mach/mach_port.h)
+AC_CHECK_HEADERS(mach/mach_types.h)
+AC_CHECK_HEADERS(mach/message.h)
+AC_CHECK_HEADERS(mach/processor_set.h)
+AC_CHECK_HEADERS(mach/processor.h)
+AC_CHECK_HEADERS(mach/processor_info.h)
+AC_CHECK_HEADERS(mach/task.h)
+AC_CHECK_HEADERS(mach/thread_act.h)
+AC_CHECK_HEADERS(mach/vm_region.h)
+AC_CHECK_HEADERS(mach/vm_map.h)
+AC_CHECK_HEADERS(mach/vm_prot.h)
+AC_CHECK_HEADERS(mach/vm_statistics.h)
+AC_CHECK_HEADERS(mach/kern_return.h)
+
+# For hddtemp module
+AC_CHECK_HEADERS(linux/major.h)
+
+# For the apple_sensors module
+AC_CHECK_HEADERS(CoreFoundation/CoreFoundation.h)
+AC_CHECK_HEADERS(IOKit/IOKitLib.h)
+AC_CHECK_HEADERS(IOKit/IOTypes.h)
+
+# For the battery plugin
+AC_CHECK_HEADERS(IOKit/ps/IOPowerSources.h, [], [],
+[
+#if HAVE_IOKIT_IOKITLIB_H
+#  include <IOKit/IOKitLib.h>
+#endif
+#if HAVE_IOKIT_IOTYPES_H
+#  include <IOKit/IOTypes.h>
+#endif
+])
+AC_CHECK_HEADERS(IOKit/ps/IOPSKeys.h)
+
+# For load module
+AC_CHECK_HEADERS(sys/loadavg.h)
+
+# For the swap module
+AC_CHECK_HEADERS(sys/swap.h)
+
+# For users module
+AC_CHECK_HEADERS(utmp.h)
+AC_CHECK_HEADERS(utmpx.h)
+
+# For traffic plugin
+AC_CHECK_HEADERS(ifaddrs.h)
+AC_CHECK_HEADERS(net/if.h, [], [],
+[
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+])
+AC_CHECK_HEADERS(linux/if.h, [], [],
+[
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+])
+AC_CHECK_HEADERS(linux/netdevice.h, [], [],
+[
+#if HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#if HAVE_LINUX_IF_H
+# include <linux/if.h>
+#endif
+])
+
+# For apache plugin
+AC_CHECK_HEADERS(curl/curl.h)
+
+# For quota module
+AC_CHECK_HEADERS(grp.h pwd.h sys/ucred.h)
+AC_CHECK_HEADERS(ctype.h)
+AC_CHECK_HEADERS(limits.h)
+AC_CHECK_HEADERS(sys/quota.h)
+AC_CHECK_HEADERS(xfs/xqm.h)
+
+# For mount interface
+AC_CHECK_HEADERS(fs_info.h)
+AC_CHECK_HEADERS(fshelp.h)
+AC_CHECK_HEADERS(paths.h)
+AC_CHECK_HEADERS(mntent.h)
+AC_CHECK_HEADERS(mnttab.h)
+AC_CHECK_HEADERS(sys/fstyp.h)
+AC_CHECK_HEADERS(sys/fs_types.h)
+AC_CHECK_HEADERS(sys/mntent.h)
+AC_CHECK_HEADERS(sys/mnttab.h)
+AC_CHECK_HEADERS(sys/mount.h)
+AC_CHECK_HEADERS(sys/statfs.h)
+AC_CHECK_HEADERS(sys/statvfs.h)
+AC_CHECK_HEADERS(sys/vfs.h)
+AC_CHECK_HEADERS(sys/vfstab.h)
+
+# For debugging interface (variable number of arguments)
+AC_CHECK_HEADERS(stdarg.h)
+
+dnl Checking for libraries
+AC_CHECK_LIB(m, ext)
+
+#
+# Checks for typedefs, structures, and compiler characteristics.
+#
+AC_C_CONST
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_UID_T
+AC_HEADER_TIME
+
+#
+# Checks for library functions.
+#
+AC_PROG_GCC_TRADITIONAL
+AC_CHECK_FUNCS(gettimeofday select strdup strtol)
+AC_CHECK_FUNCS(getaddrinfo getnameinfo)
+AC_CHECK_FUNCS(strchr memcpy strstr strcmp strncmp strncpy strlen)
+AC_CHECK_FUNCS(strncasecmp strcasecmp)
+AC_CHECK_FUNCS(openlog syslog closelog)
+
+socket_needs_socket="no"
+AC_CHECK_FUNCS(socket, [], AC_CHECK_LIB(socket, socket, [socket_needs_socket="yes"], AC_MSG_ERROR(cannot find socket)))
+AM_CONDITIONAL(BUILD_WITH_LIBSOCKET, test "x$socket_needs_socket" = "xyes")
+
+nanosleep_needs_rt="no"
+AC_CHECK_FUNCS(nanosleep, [], AC_CHECK_LIB(rt, nanosleep, [nanosleep_needs_rt="yes"], AC_MSG_ERROR(cannot find nanosleep)))
+AM_CONDITIONAL(BUILD_WITH_LIBRT, test "x$nanosleep_needs_rt" = "xyes")
+
+# For cpu module
+AC_CHECK_FUNCS(sysctlbyname, [have_sysctlbyname="yes"], [have_sysctlbyname="no"])
+
+# For df module
+AC_CHECK_FUNCS(statfs statvfs)
+
+# For load module
+AC_CHECK_FUNCS(getloadavg, [have_getloadavg="yes"], [have_getloadavg="no"])
+
+# For the `processes' plugin
+AC_CHECK_FUNCS(thread_info)
+
+# For users module
+AC_CHECK_FUNCS(getutent getutxent)
+
+# For quota module
+AC_CHECK_FUNCS(quotactl)
+AC_CHECK_FUNCS(getgrgid getpwuid)
+
+# For traffic module
+AC_CHECK_FUNCS(getifaddrs)
+
+# For mount interface
+AC_CHECK_FUNCS(getfsent getvfsent listmntent)
+AC_CHECK_FUNCS(getfsstat)
+
+# Check for different versions of `getmntent' here..
+AC_FUNC_GETMNTENT
+if test "x$ac_cv_lib_sun_getmntent" = "xyes"
+then
+	AC_DEFINE(HAVE_SUN_GETMNTENT, 1,
+		  [Define if the function getmntent exists. It's the version from libsun.])
+fi
+if test "x$ac_cv_lib_seq_getmntent" = "xyes"
+then
+	AC_DEFINE(HAVE_SEQ_GETMNTENT, 1,
+		  [Define if the function getmntent exists. It's the version from libseq.])
+fi
+if test "x$ac_cv_lib_gen_getmntent" = "xyes"
+then
+	AC_DEFINE(HAVE_GEN_GETMNTENT, 1,
+		  [Define if the function getmntent exists. It's the version from libgen.])
+fi
+
+if test "x$ac_cv_func_getmntent" = "xyes"; then
+	saveCFLAGS="$CFLAGS"
+	CFLAGS="-Wall -Werror $CFLAGS"
+	AC_CACHE_CHECK([whether getmntent takes one argument],
+		[fu_cv_getmntent1],
+		AC_COMPILE_IFELSE(
+			AC_LANG_PROGRAM([[AC_INCLUDES_DEFAULT
+#include "$srcdir/src/utils_mount.h"]],
+				[[(void)getmntent((FILE *)NULL);]]
+			),
+			[fu_cv_getmntent1=yes],
+			[fu_cv_getmntent1=no]
+		)
+	)
+	if test "x$fu_cv_getmntent1" = "xno"; then
+		AC_CACHE_CHECK([whether getmntent takes two arguments],
+			[fu_cv_getmntent2],
+			AC_COMPILE_IFELSE(
+				AC_LANG_PROGRAM([[AC_INCLUDES_DEFAULT
+#include "$srcdir/src/utils_mount.h"]],
+					[[(void)getmntent((FILE *)NULL,
+						(struct mnttab *)NULL);]]
+				),
+				[fu_cv_getmntent2=yes],
+				[fu_cv_getmntent2=no]
+			)
+		)
+	fi
+	CFLAGS="$saveCFLAGS"
+fi
+if test "x$fu_cv_getmntent1" = "xyes"; then
+	AC_DEFINE(HAVE_GETMNTENT1,
+		1,
+		[Define if there is a function named getmntent
+			for reading the list of mounted filesystems, and
+			that function takes a single argument. (4.3BSD,
+			SunOS, HP-UX, Dynix, Irix, Linux)]
+		)
+fi
+if test "x$fu_cv_getmntent2" = "xyes"; then
+	AC_DEFINE(HAVE_GETMNTENT2,
+		1,
+		[Define if there is a function named getmntent
+			for reading the list of mounted filesystems, and
+			that function takes two arguments. (SVR4)]
+		)
+fi
+
+# Check for structures
+AC_CHECK_MEMBERS([struct if_data.ifi_ibytes, struct if_data.ifi_obytes],
+	[AC_DEFINE(HAVE_STRUCT_IF_DATA, 1, [Define if struct if_data exists and is usable.])],
+	[],
+	[
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#include <net/if.h>
+	])
+AC_CHECK_MEMBERS([struct net_device_stats.rx_bytes, struct net_device_stats.tx_bytes],
+	[AC_DEFINE(HAVE_STRUCT_NET_DEVICE_STATS, 1, [Define if struct net_device_stats exists and is usable.])],
+	[],
+	[
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#include <linux/if.h>
+	#include <linux/netdevice.h>
+	])
+
+AC_MSG_CHECKING([for kernel type ($host_os)])
+case $host_os in
+	*linux*)
+	AC_DEFINE([KERNEL_LINUX], 1, [True if program is to be compiled for a Linux kernel])
+	ac_system="Linux"
+	;;
+	*solaris*)
+	AC_DEFINE([KERNEL_SOLARIS], 1, [True if program is to be compiled for a Solaris kernel])
+	ac_system="Solaris"
+	;;
+	*)
+	ac_system="unknown"
+esac
+AC_MSG_RESULT([$ac_system])
+
+with_libresolv="yes"
+AC_CHECK_LIB(resolv, res_search,
+[
+	AC_DEFINE(HAVE_LIBRESOLV, 1, [Define to 1 if you have the 'resolv' library (-lresolv).])
+],
+[with_libresolv="no"])
+AM_CONDITIONAL(BUILD_WITH_LIBRESOLV, test "x$with_libresolv" = "xyes")
+
+
+m4_divert_once([HELP_WITH], [
+collectd additional packages:])
+
+# AC_ARG_WITH (package, help-string, [action-if-given], [action-if-not-given])
+AC_ARG_WITH(rrdtool, [AS_HELP_STRING([--with-rrdtool@<:@=PREFIX@:>@], [Path to rrdtool.])],
+[	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+	then
+		LDFLAGS="$LDFLAGS -L$withval/lib"
+		CPPFLAGS="$CPPFLAGS -I$withval/include"
+		with_rrdtool="yes"
+	fi
+], [with_rrdtool="yes"])
+if test "x$with_rrdtool" = "xyes"
+then
+	AC_CHECK_LIB(rrd, rrd_update,
+	[
+		AC_DEFINE(HAVE_LIBRRD, 1, [Define to 1 if you have the rrd library (-lrrd).])
+	],
+	[with_rrdtool="no (librrd not found)"], [-lm])
+fi
+if test "x$with_rrdtool" = "xyes"
+then
+	AC_CHECK_HEADERS(rrd.h,, [with_rrdtool="no (rrd.h not found)"])
+fi
+if test "x$with_rrdtool" = "xyes"
+then
+	collect_rrdtool=1
+else
+	collect_rrdtool=0
+fi
+AC_DEFINE_UNQUOTED(COLLECT_RRDTOOL, [$collect_rrdtool],
+	[Wether or not to use rrdtool library])
+AM_CONDITIONAL(BUILD_WITH_RRDTOOL, test "x$with_rrdtool" = "xyes")
+
+#AC_ARG_WITH(pth, [AS_HELP_STRING([--with-pth=@<:@=PREFIX@:>@], [Path to pth (experimental).]),
+#[	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+#	then
+#		LDFLAGS="$LDFLAGS -L$withval/lib"
+#		CPPFLAGS="$CPPFLAGS -I$withval/include"
+#		with_pth="yes"
+#	fi
+#], [with_pth="no"])
+#if test "x$with_pth" = "xyes"
+#then
+#	AC_CHECK_LIB(pth, pth_init,, [with_pth="no (libpth not found)"], [])
+#fi
+#if test "x$with_pth" = "xyes"
+#then
+#	AC_CHECK_HEADERS(pth.h,, [with_pth="no (pth.h not found)"])
+#fi
+#if test "x$with_pth" = "xyes"
+#then
+#	collect_pth=1
+#else
+#	collect_pth=0
+#fi
+#AC_DEFINE_UNQUOTED(COLLECT_PTH, [$collect_pth],
+#	[Wether or not to use pth (portable threads) library])
+#AM_CONDITIONAL(BUILD_WITH_PTH, test "x$with_pth" = "xyes")
+
+if test "$ac_system" = "Solaris"
+then
+	with_kstat="yes"
+	with_devinfo="yes"
+else
+	with_kstat="no (Solaris only)"
+	with_devinfo="no (Solaris only)"
+fi
+
+if test "x$with_kstat" = "xyes"
+then
+	AC_CHECK_LIB(kstat, kstat_open,, [with_kstat="no (libkstat not found)"])
+fi
+if test "x$with_kstat" = "xyes"
+then
+	AC_CHECK_LIB(devinfo, di_init,, [with_devinfo="no (not found)"])
+	AC_CHECK_HEADERS(kstat.h,, [with_kstat="no (kstat.h not found)"])
+fi
+if test "x$with_kstat" = "xyes"
+then
+	collect_kstat=1
+else
+	collect_kstat=0
+fi
+AC_DEFINE_UNQUOTED(COLLECT_KSTAT, [$collect_kstat],
+	[Wether or not to use kstat library (Solaris)])
+AM_CONDITIONAL(BUILD_WITH_LIBKSTAT, test "x$with_kstat" = "xyes")
+AM_CONDITIONAL(BUILD_WITH_LIBDEVINFO, test "x$with_devinfo" = "xyes")
+
+### BEGIN of check for libcurl ###
+with_curl_config="curl-config"
+with_curl_prefix=0
+with_curl_libs=""
+AC_ARG_WITH(libcurl, [AS_HELP_STRING([--with-libcurl@<:@=PREFIX@:>@], [Path to libcurl.])],
+[
+	if test "x$withval" != "xno" -a "x$withval" != "xyes"
+	then
+		if test -x "$withval/bin/curl-config"
+		then
+			with_curl_config="$withval/bin/curl-config"
+			with_curl_prefix=1
+		fi
+	fi
+	if test "x$withval" = "xno"
+	then
+		with_libcurl="no"
+	else
+		with_libcurl="yes"
+	fi
+],
+[
+	with_libcurl="yes"
+])
+if test "x$with_libcurl" = "xyes"
+then
+	with_curl_libs=`$with_curl_config --libs 2>/dev/null`
+	curl_config_status=$?
+
+	if test $curl_config_status -ne 0
+	then
+		with_libcurl="no"
+	else
+		AC_CHECK_LIB(curl, curl_easy_init,
+		[
+			BUILD_WITH_LIBCURL_LIBS="$with_curl_libs"
+			AC_SUBST(BUILD_WITH_LIBCURL_LIBS)
+		],
+		[
+			with_libcurl="no"
+		],
+		[$with_curl_libs])
+	fi
+fi
+if test "x$with_libcurl" = "xyes" -a $with_curl_prefix -ne 0
+then
+	with_curl_prefix=`$with_curl_config --libs 2>/dev/null`
+	curl_config_status=$?
+
+	if test $curl_config_status -ne 0
+	then
+		with_libcurl="no"
+	else
+		if test -d "$with_curl_prefix/include"
+		then
+			CPPFLAGS="$CPPFLAGS -I$with_curl_prefix/include"
+		fi
+	fi
+fi
+
+with_libcurl_numeric=0
+if test "x$with_libcurl" = "xyes"
+then
+	with_libcurl_numeric=1
+fi
+AC_DEFINE_UNQUOTED(HAVE_LIBCURL, [$with_libcurl_numeric], [Define to 1 if you have the 'curl' library (-lcurl).])
+AM_CONDITIONAL(BUILD_WITH_LIBCURL, test "x$with_libcurl" = "xyes")
+### END of check for libcurl ###
+
+with_libiokit="no"
+collectd_libiokit=0
+AC_CHECK_LIB(IOKit, IOServiceGetMatchingServices,
+[
+	with_libiokit="yes"
+	collectd_libiokit=1
+], 
+[
+	with_libiokit="no"
+	collectd_libiokit=0
+])
+AC_DEFINE_UNQUOTED(COLLECT_LIBIOKIT, [$collect_libiokit], [Wether or not to use the IOKit library])
+AM_CONDITIONAL(BUILD_WITH_LIBIOKIT, test "x$with_libiokit" = "xyes")
+
+AC_ARG_WITH(libstatgrab, [AS_HELP_STRING([--with-libstatgrab@<:@=PREFIX@:>@], [Path to libstatgrab.])],
+[
+	if test "x$withval" != "xno" -a "x$withval" != "xyes"
+	then
+		LDFLAGS="$LDFLAGS -L$withval/lib"
+		CPPFLAGS="$CPPFLAGS -I$withval/include"
+		with_libstatgrab="yes"
+	fi
+],
+[
+	if test "x$ac_system" == "xunknown"
+	then
+		with_libstatgrab="yes"
+	else
+		with_libstatgrab="no"
+	fi
+])
+if test "x$with_libstatgrab" = "xyes"
+then
+	AC_CHECK_LIB(devstat, getdevs)
+	AC_CHECK_LIB(kvm, kvm_getargv)
+	AC_CHECK_LIB(statgrab, sg_init,, [with_libstatgrab="no (libstatgrab not found)"])
+fi
+if test "x$with_libstatgrab" = "xyes"
+then
+	AC_CHECK_HEADERS(statgrab.h,,    [with_libstatgrab="no (statgrab.h not found)"])
+fi
+if test "x$with_libstatgrab" = "xyes"
+then
+	collect_libstatgrab=1
+else
+	collect_libstatgrab=0
+fi
+AC_DEFINE_UNQUOTED(COLLECT_LIBSTATGRAB, [$collect_libstatgrab],
+	[Wether or not to use statgrab library])
+AM_CONDITIONAL(BUILD_WITH_LIBSTATGRAB, test "x$with_libstatgrab" = "xyes")
+
+AC_ARG_WITH(lm-sensors, [AS_HELP_STRING([--with-lm-sensors@<:@=PREFIX@:>@], [Path to lm_sensors.])],
+[
+	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+	then
+		LDFLAGS="$LDFLAGS -L$withval/lib"
+		CPPFLAGS="$CPPFLAGS -I$withval/include"
+		with_lm_sensors="yes"
+	fi
+],
+[
+	if test "x$ac_system" = "xLinux"
+	then
+		with_lm_sensors="yes"
+	else
+		with_lm_sensors="no"
+	fi
+])
+if test "x$with_lm_sensors" = "xyes"
+then
+	AC_CHECK_LIB(sensors, sensors_init,
+	[
+		AC_DEFINE(HAVE_LIBSENSORS, 1, [Define to 1 if you have the sensors library (-lsensors).])
+	],
+	[with_lm_sensors="no (libsensors not found)"])
+fi
+if test "x$with_lm_sensors" = "xyes"
+then
+	AC_CHECK_HEADERS(sensors/sensors.h,
+	[
+		AC_DEFINE(HAVE_SENSORS_SENSORS_H, 1, [Define to 1 if you have the <sensors/sensors.h> header file.])
+	],
+	[with_lm_sensors="no (sensors/sensors.h not found)"])
+fi
+if test "x$with_lm_sensors" = "xyes"
+then
+	collect_lm_sensors=1
+else
+	collect_lm_sensors=0
+fi
+AC_DEFINE_UNQUOTED(COLLECT_LM_SENSORS, [$collect_lm_sensors],
+	[Wether or not to use sensors library])
+AM_CONDITIONAL(BUILD_WITH_LM_SENSORS, test "x$with_lm_sensors" = "xyes")
+
+AC_ARG_WITH(libmysql, [AS_HELP_STRING([--with-libmysql@<:@=PREFIX@:>@], [Path to libmysql.])],
+[
+	if test "x$withval" != "xno" && test "x$withval" != "xyes"
+	then
+		LDFLAGS="$LDFLAGS -L$withval/lib"
+		CPPFLAGS="$CPPFLAGS -I$withval/include"
+		with_libmysql="yes"
+	fi
+],
+[
+	with_libmysql="yes"
+])
+if test "x$with_libmysql" = "xyes"
+then
+	AC_CHECK_LIB(mysqlclient, mysql_init,
+	[
+		AC_DEFINE(HAVE_LIBMYSQLCLIENT, 1, [Define to 1 if you have the mysqlclient library (-lmysqlclient).])
+	], [with_libmysql="no (libmysql not found)"])
+fi
+if test "x$with_libmysql" = "xyes"
+then
+	AC_CHECK_HEADERS(mysql/mysql.h,
+	[
+		AC_DEFINE(HAVE_MYSQL_MYSQL_H, 1, [Define to 1 if you have the <mysql/mysql.h> header file.])
+	], [with_libmysql="no (mysql/mysql.h not found)"])
+fi
+if test "x$with_libmysql" = "xyes"
+then
+	collect_libmysql=1
+else
+	collect_libmysql=0
+fi
+AC_DEFINE_UNQUOTED(COLLECT_LIBMYSQL, [$collect_libmysql],
+	[Wether or not to use mysql library])
+AM_CONDITIONAL(BUILD_WITH_LIBMYSQL, test "x$with_libmysql" = "xyes")
+
+# Define `step' and `hearbeat' values..
+declare -i collectd_step=10
+declare -i collectd_heartbeat=25
+AC_ARG_WITH(step, [AS_HELP_STRING([--with-step=SECONDS], [Interval in which plugins are queried.])],
+[
+	if test "x$withval" != "xno" -a "x$withval" != "xyes"
+	then
+		declare -i tmp_collectd_step="$withval"
+		if test $tmp_collectd_step -gt 0
+		then
+			collectd_step=$tmp_collectd_step
+			let "collectd_heartbeat=$collectd_step*2"
+		fi
+	fi
+], [])
+AC_ARG_WITH(heartbeat, [AS_HELP_STRING([--with-heartbeat=SECONDS], [Heartbeat of the DS in generated RRD files.])],
+[
+	if test "x$withval" != "xno" -a "x$withval" != "xyes"
+	then
+		declare -i tmp_collectd_heartbeat="$withval"
+		if test $tmp_collectd_heartbeat -gt 0
+		then
+			collectd_heartbeat=$tmp_collectd_heartbeat
+		fi
+	fi
+], [])
+
+if test $collectd_step -ne 10
+then
+	AC_DEFINE_UNQUOTED(COLLECTD_STEP, "$collectd_step", [Interval in which plugins are queried.])
+fi
+if test $collectd_heartbeat -ne 25
+then
+	AC_DEFINE_UNQUOTED(COLLECTD_HEARTBEAT, "$collectd_heartbeat", [Interval in which plugins are queried.])
+fi
+
+#
+# Check for enabled/disabled features
+#
+
+# AC_COLLECTD(name, enable/disable, info-text, feature/module)
+# ------------------------------------------------------------
+dnl
+m4_define([my_toupper], [m4_translit([$1], m4_defn([m4_cr_letters]), m4_defn([m4_cr_LETTERS]))])
+dnl
+AC_DEFUN(
+	[AC_COLLECTD],
+	[
+	m4_if([$1], [], [AC_FATAL([AC_COLLECTD([$1], [$2], [$3], [$4]): 1st argument must not be empty])])dnl
+	m4_if(
+		[$2],
+		[enable],
+		[dnl
+		m4_define([EnDis],[disabled])dnl
+		m4_define([YesNo],[no])dnl
+		],dnl
+		[m4_if(
+			[$2],
+			[disable],
+			[dnl
+			m4_define([EnDis],[enabled])dnl
+			m4_define([YesNo],[yes])dnl
+			],
+			[dnl
+			AC_FATAL([AC_COLLECTD([$1], [$2], [$3], [$4]): 2nd argument must be either enable or disable])dnl
+			]dnl
+		)]dnl
+	)dnl
+	m4_if([$3], [feature], [],
+		[m4_if(
+			[$3], [module], [],
+			[dnl
+			AC_FATAL([AC_COLLECTD([$1], [$2], [$3], [$4]): 3rd argument must be either feature or disable])dnl
+			]dnl
+		)]dnl
+	)dnl
+	AC_ARG_ENABLE(
+		[$1],
+		AS_HELP_STRING([--$2-$1], [$2 $4 (EnDis by def)]),
+		[],
+		enable_$1='[YesNo]'dnl
+	)# AC_ARG_ENABLE
+if test "x$enable_$1" = "xno"
+then
+	collectd_$1=0
+else
+	if test "x$enable_$1" = "xyes"
+	then
+		collectd_$1=1
+	else
+		AC_MSG_NOTICE([please specify either --enable-$1 or --disable-$1; enabling $1.])
+		collectd_$1=1
+		enable_$1='yes'
+	fi
+fi
+	AC_DEFINE_UNQUOTED([COLLECT_]my_toupper([$1]), [$collectd_$1], [wether or not to enable $3 $4])
+	AM_CONDITIONAL([BUILD_]my_toupper([$3])[_]my_toupper([$1]), [test "x$enable_$1" = "xyes"])dnl
+	]dnl
+)# AC_COLLECTD(name, enable/disable, info-text, feature/module)
+
+m4_divert_once([HELP_ENABLE], [
+collectd features:])
+AC_COLLECTD([debug],     [enable],  [feature], [debugging])
+AC_COLLECTD([daemon],    [disable], [feature], [daemon mode])
+
+m4_divert_once([HELP_ENABLE], [
+collectd modules:])
+AC_COLLECTD([apache],    [disable], [module], [Apache httpd statistics])
+AC_COLLECTD([apple_sensors], [disable], [module], [Apple's hardware sensors])
+AC_COLLECTD([battery],   [disable], [module], [battery statistics])
+AC_COLLECTD([cpu],       [disable], [module], [cpu usage statistics])
+AC_COLLECTD([cpufreq],   [disable], [module], [system cpu frequency statistics])
+AC_COLLECTD([disk],      [disable], [module], [disk/partition statistics])
+AC_COLLECTD([df],        [disable], [module], [df statistics])
+AC_COLLECTD([quota],     [enable],  [module], [quota statistics (experimental)])
+AC_COLLECTD([hddtemp],   [disable], [module], [hdd temperature statistics])
+AC_COLLECTD([load],      [disable], [module], [system load statistics])
+AC_COLLECTD([memory],    [disable], [module], [memory statistics])
+AC_COLLECTD([mysql],     [disable], [module], [mysql statistics])
+AC_COLLECTD([nfs],       [disable], [module], [nfs statistics])
+AC_COLLECTD([ping],      [disable], [module], [ping statistics])
+AC_COLLECTD([processes], [disable], [module], [processes statistics])
+AC_COLLECTD([sensors],   [disable], [module], [lm_sensors statistics])
+AC_COLLECTD([serial],    [disable], [module], [serial statistics])
+AC_COLLECTD([swap],      [disable], [module], [swap statistics])
+AC_COLLECTD([tape],      [disable], [module], [tape statistics])
+AC_COLLECTD([traffic],   [disable], [module], [system traffic statistics])
+AC_COLLECTD([users],     [disable], [module], [user count statistics])
+AC_COLLECTD([vserver],   [disable], [module], [vserver statistics])
+AC_COLLECTD([wireless],  [disable], [module], [wireless link statistics])
+
+#m4_divert_once([HELP_ENABLE], [
+#collectd modules:])
+#AC_ARG_ENABLE(cpu, AC_HELP_STRING([--disable-cpu], [Disable CPU usage statistics]),, [enable_cpu="yes"])
+#if test "x$enable_cpu" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux" -o "x$with_kstat" = "xyes" -o "x$have_sysctlbyname" = "xyes"
+#	then
+#		enable_cpu="yes"
+#	else
+#		enable_cpu="no"
+#	fi
+#fi
+#if test "x$enable_cpu" = "xno"
+#then
+#	AC_DEFINE(COLLECT_CPU, 0, [Wether or not to collect CPU usage statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_CPU, test "x$enable_cpu" = "xyes")
+
+#AC_ARG_ENABLE(cpufreq, AC_HELP_STRING([--disable-cpufreq], [Disable system cpu frequency statistics]),, [enable_cpufreq="yes"])
+#if test "x$enable_cpufreq" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux"
+#	then
+#		enable_cpufreq="yes"
+#	else
+#		enable_cpufreq="no"
+#	fi
+#fi
+#if test "x$enable_cpufreq" = "xno"
+#then
+#	AC_DEFINE(COLLECT_CPUFREQ, 0, [Wether or not to collect cpu frequency statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_CPUFREQ, test "x$enable_cpufreq" = "xyes")
+
+#AC_ARG_ENABLE(disk, AC_HELP_STRING([--disable-disk], [Disable disk/partition statistics]),, [enable_disk="yes"])
+#if test "x$enable_disk" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux" -o "x$with_kstat" = "xyes"
+#	then
+#		enable_disk="yes"
+#	else
+#		enable_disk="no"
+#	fi
+#fi
+#if test "x$enable_disk" = "xno"
+#then
+#	AC_DEFINE(COLLECT_DISK, 0, [Wether or not to collect diskstats])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_DISK, test "x$enable_disk" = "xyes")
+
+#AC_ARG_ENABLE(hddtemp, AC_HELP_STRING([--disable-hddtemp], [Disable hdd temperature statistics]),, [enable_hddtemp="yes"])
+#if test "x$enable_hddtemp" = "xno"
+#then
+#	AC_DEFINE(COLLECT_HDDTEMP, 0, [Wether or not to collect hdd temperature statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_HDDTEMP, test "x$enable_hddtemp" = "xyes")
+
+#AC_ARG_ENABLE(load, AC_HELP_STRING([--disable-load], [Disable system load statistics]),, [enable_load="yes"])
+#if test "x$enable_load" != "xno"
+#then
+#	if test "x$have_getloadavg" = "xyes" -o "x$ac_system" = "xLinux" -o "x$with_libstatgrab" = "xyes"
+#	then
+#		enable_load="yes"
+#	else
+#		enable_load="no"
+#	fi
+#fi
+#if test "x$enable_load" = "xno"
+#then
+#	AC_DEFINE(COLLECT_LOAD, 0, [Wether or not to collect system load statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_LOAD, test "x$enable_load" = "xyes")
+
+#AC_ARG_ENABLE(memory, AC_HELP_STRING([--disable-memory], [Disable memory statistics]),, [enable_memory="yes"])
+#if test "x$enable_memory" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux" -o "x$with_kstat" = "xyes" -o "x$with_libstatgrab" = "xyes"
+#	then
+#		enable_memory="yes"
+#	else
+#		enable_memory="no"
+#	fi
+#fi
+#if test "x$enable_memory" = "xno"
+#then
+#	AC_DEFINE(COLLECT_MEMORY, 0, [Wether or not to collect memory statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_MEMORY, test "x$enable_memory" = "xyes")
+
+#AC_ARG_ENABLE(nfs, AC_HELP_STRING([--disable-nfs], [Disable nfs statistics]),, [enable_nfs="yes"])
+#if test "x$enable_nfs" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux"
+#	then
+#		enable_nfs="yes"
+#	else
+#		enable_nfs="no"
+#	fi
+#fi
+#if test "x$enable_nfs" = "xno"
+#then
+#	AC_DEFINE(COLLECT_NFS, 0, [Wether or not to collect nfs statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_NFS, test "x$enable_nfs" = "xyes")
+
+#AC_ARG_ENABLE(ping, AC_HELP_STRING([--disable-ping], [Disable ping statistics]),, [enable_ping="yes"])
+#if test "x$enable_ping" != "xno"
+#then
+#	enable_ping="yes"
+#fi
+#if test "x$enable_ping" = "xno"
+#then
+#	AC_DEFINE(COLLECT_PING, 0, [Wether or not to collect ping statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_PING, test "x$enable_ping" = "xyes")
+
+#AC_ARG_ENABLE(processes, AC_HELP_STRING([--disable-processes], [Disable processes statistics]),, [enable_processes="yes"])
+#if test "x$enable_processes" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux" 
+#	then
+#		enable_processes="yes"
+#	else
+#		enable_processes="no"
+#	fi
+#fi
+#if test "x$enable_processes" = "xno"
+#then
+#	AC_DEFINE(COLLECT_PROCESSES, 0, [Wether or not to collect processes statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_PROCESSES, test "x$enable_processes" = "xyes")
+
+##AC_COLLECTD([quota],     [enable],  [module], [quota statistics (experimental)])
+
+#AC_ARG_ENABLE(sensors, AC_HELP_STRING([--disable-sensors], [Disable lm_sensors statistics]),, [enable_sensors=$with_lm_sensors])
+#if test "x$enable_sensors" != "xno"
+#then
+#	if test "x$with_lm_sensors" = "xyes"
+#	then
+#		enable_sensors="yes"
+#	else
+#		enable_sensors="no"
+#	fi
+#fi
+#if test "x$enable_sensors" = "xno"
+#then
+#	AC_DEFINE(COLLECT_SENSORS, 0, [Wether or not to collect lm_sensors statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_SENSORS, test "x$enable_sensors" = "xyes")
+
+#AC_ARG_ENABLE(serial, AC_HELP_STRING([--disable-serial], [Disable serial statistics]),, [enable_serial="yes"])
+#if test "x$enable_serial" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux"
+#	then
+#		enable_serial="yes"
+#	else
+#		enable_serial="no"
+#	fi
+#fi
+#if test "x$enable_serial" = "xno"
+#then
+#	AC_DEFINE(COLLECT_SERIAL, 0, [Wether or not to collect serial statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_SERIAL, test "x$enable_serial" = "xyes")
+
+#AC_ARG_ENABLE(swap, AC_HELP_STRING([--disable-swap], [Disable swap statistics]),, [enable_swap="yes"])
+#if test "x$enable_swap" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux" -o "x$with_kstat" = "xyes" -o "x$with_libstatgrab" = "xyes"
+#	then
+#		enable_swap="yes"
+#	else
+#		enable_swap="no"
+#	fi
+#fi
+#if test "x$enable_swap" = "xno"
+#then
+#	AC_DEFINE(COLLECT_SWAP, 0, [Wether or not to collect swap statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_SWAP, test "x$enable_swap" = "xyes")
+
+#AC_ARG_ENABLE(tape, AC_HELP_STRING([--disable-tape], [Disable tape statistics]),, [enable_tape="yes"])
+#if test "x$enable_tape" != "xno"
+#then
+#	if test "x$with_kstat" = "xyes"
+#	then
+#		enable_tape="yes"
+#	else
+#		enable_tape="no"
+#	fi
+#fi
+#if test "x$enable_tape" = "xno"
+#then
+#	AC_DEFINE(COLLECT_TAPE, 0, [Wether or not to collect tape statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_TAPE, test "x$enable_tape" = "xyes")
+
+#AC_ARG_ENABLE(traffic, AC_HELP_STRING([--disable-traffic], [Disable system traffic statistics]),, [enable_traffic="yes"])
+#if test "x$enable_traffic" != "xno"
+#then
+#	if test "x$ac_system" = "xLinux" -o "x$with_kstat" = "xyes" -o "x$with_libstatgrab" = "xyes"
+#	then
+#		enable_traffic="yes"
+#	else
+#		enable_traffic="no"
+#	fi
+#fi
+#if test "x$enable_traffic" = "xno"
+#then
+#	AC_DEFINE(COLLECT_TRAFFIC, 0, [Wether or not to collect network traffic statistics])
+#fi
+#AM_CONDITIONAL(BUILD_MODULE_TRAFFIC, test "x$enable_traffic" = "xyes")
+
+#AC_COLLECTD([users],     [disable], [module], [user count statistics])
+
+AC_OUTPUT(Makefile src/libconfig/Makefile src/liboping/Makefile src/Makefile)
+
+cat <<EOF;
+
+Configuration:
+  Libraries:
+    libcurl . . . . . . $with_libcurl
+    libiokit  . . . . . $with_libiokit
+    librrd  . . . . . . $with_rrdtool
+    lm_sensors  . . . . $with_lm_sensors
+    libstatgrab . . . . $with_libstatgrab
+    libkstat  . . . . . $with_kstat
+    libmysql  . . . . . $with_libmysql
+
+  Features:
+    debug . . . . . . . $enable_debug
+    daemon mode . . . . $enable_daemon
+    step  . . . . . . . $collectd_step seconds
+    heartbeat . . . . . $collectd_heartbeat seconds
+
+  Modules:
+    apache  . . . . . . $enable_apache
+    apple_sensors . . . $enable_apple_sensors
+    battery . . . . . . $enable_battery
+    cpu . . . . . . . . $enable_cpu
+    cpufreq . . . . . . $enable_cpufreq
+    df  . . . . . . . . $enable_df
+    disk  . . . . . . . $enable_disk
+    hddtemp . . . . . . $enable_hddtemp
+    load  . . . . . . . $enable_load
+    memory  . . . . . . $enable_memory
+    mysql . . . . . . . $enable_mysql
+    nfs . . . . . . . . $enable_nfs
+    ping  . . . . . . . $enable_ping
+    processes . . . . . $enable_processes
+    sensors . . . . . . $enable_sensors
+    serial  . . . . . . $enable_serial
+    swap  . . . . . . . $enable_swap
+    tape  . . . . . . . $enable_tape
+    traffic . . . . . . $enable_traffic
+    users . . . . . . . $enable_users
+    vserver . . . . . . $enable_vserver
+    wireless  . . . . . $enable_wireless
+
+EOF

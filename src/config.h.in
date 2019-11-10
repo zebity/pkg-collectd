@@ -1,0 +1,617 @@
+/* src/config.h.in.  Generated from configure.in by autoheader.  */
+
+/* Interval in which plugins are queried. */
+#undef COLLECTD_HEARTBEAT
+
+/* Interval in which plugins are queried. */
+#undef COLLECTD_STEP
+
+/* wether or not to enable module Apache httpd statistics */
+#undef COLLECT_APACHE
+
+/* wether or not to enable module Apple's hardware sensors */
+#undef COLLECT_APPLE_SENSORS
+
+/* wether or not to enable module battery statistics */
+#undef COLLECT_BATTERY
+
+/* wether or not to enable module cpu usage statistics */
+#undef COLLECT_CPU
+
+/* wether or not to enable module system cpu frequency statistics */
+#undef COLLECT_CPUFREQ
+
+/* wether or not to enable feature daemon mode */
+#undef COLLECT_DAEMON
+
+/* wether or not to enable feature debugging */
+#undef COLLECT_DEBUG
+
+/* wether or not to enable module df statistics */
+#undef COLLECT_DF
+
+/* wether or not to enable module disk/partition statistics */
+#undef COLLECT_DISK
+
+/* wether or not to enable module hdd temperature statistics */
+#undef COLLECT_HDDTEMP
+
+/* Wether or not to use kstat library (Solaris) */
+#undef COLLECT_KSTAT
+
+/* Wether or not to use the IOKit library */
+#undef COLLECT_LIBIOKIT
+
+/* Wether or not to use mysql library */
+#undef COLLECT_LIBMYSQL
+
+/* Wether or not to use statgrab library */
+#undef COLLECT_LIBSTATGRAB
+
+/* Wether or not to use sensors library */
+#undef COLLECT_LM_SENSORS
+
+/* wether or not to enable module system load statistics */
+#undef COLLECT_LOAD
+
+/* wether or not to enable module memory statistics */
+#undef COLLECT_MEMORY
+
+/* wether or not to enable module mysql statistics */
+#undef COLLECT_MYSQL
+
+/* wether or not to enable module nfs statistics */
+#undef COLLECT_NFS
+
+/* wether or not to enable module ping statistics */
+#undef COLLECT_PING
+
+/* wether or not to enable module processes statistics */
+#undef COLLECT_PROCESSES
+
+/* wether or not to enable module quota statistics (experimental) */
+#undef COLLECT_QUOTA
+
+/* Wether or not to use rrdtool library */
+#undef COLLECT_RRDTOOL
+
+/* wether or not to enable module lm_sensors statistics */
+#undef COLLECT_SENSORS
+
+/* wether or not to enable module serial statistics */
+#undef COLLECT_SERIAL
+
+/* wether or not to enable module swap statistics */
+#undef COLLECT_SWAP
+
+/* wether or not to enable module tape statistics */
+#undef COLLECT_TAPE
+
+/* wether or not to enable module system traffic statistics */
+#undef COLLECT_TRAFFIC
+
+/* wether or not to enable module user count statistics */
+#undef COLLECT_USERS
+
+/* wether or not to enable module vserver statistics */
+#undef COLLECT_VSERVER
+
+/* wether or not to enable module wireless link statistics */
+#undef COLLECT_WIRELESS
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the `closelog' function. */
+#undef HAVE_CLOSELOG
+
+/* Define to 1 if you have the <CoreFoundation/CoreFoundation.h> header file.
+   */
+#undef HAVE_COREFOUNDATION_COREFOUNDATION_H
+
+/* Define to 1 if you have the <ctype.h> header file. */
+#undef HAVE_CTYPE_H
+
+/* Define to 1 if you have the <curl/curl.h> header file. */
+#undef HAVE_CURL_CURL_H
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the <fshelp.h> header file. */
+#undef HAVE_FSHELP_H
+
+/* Define to 1 if you have the <fs_info.h> header file. */
+#undef HAVE_FS_INFO_H
+
+/* Define if the function getmntent exists. It's the version from libgen. */
+#undef HAVE_GEN_GETMNTENT
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* Define to 1 if you have the `getfsent' function. */
+#undef HAVE_GETFSENT
+
+/* Define to 1 if you have the `getfsstat' function. */
+#undef HAVE_GETFSSTAT
+
+/* Define to 1 if you have the `getgrgid' function. */
+#undef HAVE_GETGRGID
+
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
+/* Define to 1 if you have the `getloadavg' function. */
+#undef HAVE_GETLOADAVG
+
+/* Define to 1 if you have the `getmntent' function. */
+#undef HAVE_GETMNTENT
+
+/* Define if there is a function named getmntent for reading the list of
+   mounted filesystems, and that function takes a single argument. (4.3BSD,
+   SunOS, HP-UX, Dynix, Irix, Linux) */
+#undef HAVE_GETMNTENT1
+
+/* Define if there is a function named getmntent for reading the list of
+   mounted filesystems, and that function takes two arguments. (SVR4) */
+#undef HAVE_GETMNTENT2
+
+/* Define to 1 if you have the `getnameinfo' function. */
+#undef HAVE_GETNAMEINFO
+
+/* Define to 1 if you have the `getpwuid' function. */
+#undef HAVE_GETPWUID
+
+/* Define to 1 if you have the `gettimeofday' function. */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the `getutent' function. */
+#undef HAVE_GETUTENT
+
+/* Define to 1 if you have the `getutxent' function. */
+#undef HAVE_GETUTXENT
+
+/* Define to 1 if you have the `getvfsent' function. */
+#undef HAVE_GETVFSENT
+
+/* Define to 1 if you have the <grp.h> header file. */
+#undef HAVE_GRP_H
+
+/* Define to 1 if you have the <ifaddrs.h> header file. */
+#undef HAVE_IFADDRS_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <IOKit/IOKitLib.h> header file. */
+#undef HAVE_IOKIT_IOKITLIB_H
+
+/* Define to 1 if you have the <IOKit/IOTypes.h> header file. */
+#undef HAVE_IOKIT_IOTYPES_H
+
+/* Define to 1 if you have the <IOKit/ps/IOPowerSources.h> header file. */
+#undef HAVE_IOKIT_PS_IOPOWERSOURCES_H
+
+/* Define to 1 if you have the <IOKit/ps/IOPSKeys.h> header file. */
+#undef HAVE_IOKIT_PS_IOPSKEYS_H
+
+/* Define to 1 if you have the <kstat.h> header file. */
+#undef HAVE_KSTAT_H
+
+/* Define to 1 if you have the 'curl' library (-lcurl). */
+#undef HAVE_LIBCURL
+
+/* Define to 1 if you have the `devinfo' library (-ldevinfo). */
+#undef HAVE_LIBDEVINFO
+
+/* Define to 1 if you have the `devstat' library (-ldevstat). */
+#undef HAVE_LIBDEVSTAT
+
+/* Define to 1 if you have the `kstat' library (-lkstat). */
+#undef HAVE_LIBKSTAT
+
+/* Define to 1 if you have the `kvm' library (-lkvm). */
+#undef HAVE_LIBKVM
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the mysqlclient library (-lmysqlclient). */
+#undef HAVE_LIBMYSQLCLIENT
+
+/* Define to 1 if you have the 'resolv' library (-lresolv). */
+#undef HAVE_LIBRESOLV
+
+/* Define to 1 if you have the rrd library (-lrrd). */
+#undef HAVE_LIBRRD
+
+/* Define to 1 if you have the sensors library (-lsensors). */
+#undef HAVE_LIBSENSORS
+
+/* Define to 1 if you have the `statgrab' library (-lstatgrab). */
+#undef HAVE_LIBSTATGRAB
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <linux/if.h> header file. */
+#undef HAVE_LINUX_IF_H
+
+/* Define to 1 if you have the <linux/major.h> header file. */
+#undef HAVE_LINUX_MAJOR_H
+
+/* Define to 1 if you have the <linux/netdevice.h> header file. */
+#undef HAVE_LINUX_NETDEVICE_H
+
+/* Define to 1 if you have the `listmntent' function. */
+#undef HAVE_LISTMNTENT
+
+/* Define to 1 if you have the <mach/host_priv.h> header file. */
+#undef HAVE_MACH_HOST_PRIV_H
+
+/* Define to 1 if you have the <mach/kern_return.h> header file. */
+#undef HAVE_MACH_KERN_RETURN_H
+
+/* Define to 1 if you have the <mach/mach_error.h> header file. */
+#undef HAVE_MACH_MACH_ERROR_H
+
+/* Define to 1 if you have the <mach/mach_host.h> header file. */
+#undef HAVE_MACH_MACH_HOST_H
+
+/* Define to 1 if you have the <mach/mach_init.h> header file. */
+#undef HAVE_MACH_MACH_INIT_H
+
+/* Define to 1 if you have the <mach/mach_port.h> header file. */
+#undef HAVE_MACH_MACH_PORT_H
+
+/* Define to 1 if you have the <mach/mach_types.h> header file. */
+#undef HAVE_MACH_MACH_TYPES_H
+
+/* Define to 1 if you have the <mach/message.h> header file. */
+#undef HAVE_MACH_MESSAGE_H
+
+/* Define to 1 if you have the <mach/processor.h> header file. */
+#undef HAVE_MACH_PROCESSOR_H
+
+/* Define to 1 if you have the <mach/processor_info.h> header file. */
+#undef HAVE_MACH_PROCESSOR_INFO_H
+
+/* Define to 1 if you have the <mach/processor_set.h> header file. */
+#undef HAVE_MACH_PROCESSOR_SET_H
+
+/* Define to 1 if you have the <mach/task.h> header file. */
+#undef HAVE_MACH_TASK_H
+
+/* Define to 1 if you have the <mach/thread_act.h> header file. */
+#undef HAVE_MACH_THREAD_ACT_H
+
+/* Define to 1 if you have the <mach/vm_map.h> header file. */
+#undef HAVE_MACH_VM_MAP_H
+
+/* Define to 1 if you have the <mach/vm_prot.h> header file. */
+#undef HAVE_MACH_VM_PROT_H
+
+/* Define to 1 if you have the <mach/vm_region.h> header file. */
+#undef HAVE_MACH_VM_REGION_H
+
+/* Define to 1 if you have the <mach/vm_statistics.h> header file. */
+#undef HAVE_MACH_VM_STATISTICS_H
+
+/* Define to 1 if you have the <math.h> header file. */
+#undef HAVE_MATH_H
+
+/* Define to 1 if you have the `memcpy' function. */
+#undef HAVE_MEMCPY
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <mntent.h> header file. */
+#undef HAVE_MNTENT_H
+
+/* Define to 1 if you have the <mnttab.h> header file. */
+#undef HAVE_MNTTAB_H
+
+/* Define to 1 if you have the <mysql/mysql.h> header file. */
+#undef HAVE_MYSQL_MYSQL_H
+
+/* Define to 1 if you have the `nanosleep' function. */
+#undef HAVE_NANOSLEEP
+
+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+#undef HAVE_NDIR_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/icmp6.h> header file. */
+#undef HAVE_NETINET_ICMP6_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netinet/in_systm.h> header file. */
+#undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define to 1 if you have the <netinet/ip6.h> header file. */
+#undef HAVE_NETINET_IP6_H
+
+/* Define to 1 if you have the <netinet/ip.h> header file. */
+#undef HAVE_NETINET_IP_H
+
+/* Define to 1 if you have the <netinet/ip_icmp.h> header file. */
+#undef HAVE_NETINET_IP_ICMP_H
+
+/* Define to 1 if you have the <netinet/ip_var.h> header file. */
+#undef HAVE_NETINET_IP_VAR_H
+
+/* Define to 1 if you have the <net/if.h> header file. */
+#undef HAVE_NET_IF_H
+
+/* Define to 1 if you have the `openlog' function. */
+#undef HAVE_OPENLOG
+
+/* Define to 1 if you have the <paths.h> header file. */
+#undef HAVE_PATHS_H
+
+/* Define to 1 if you have the <pwd.h> header file. */
+#undef HAVE_PWD_H
+
+/* Define to 1 if you have the `quotactl' function. */
+#undef HAVE_QUOTACTL
+
+/* Define to 1 if you have the <rrd.h> header file. */
+#undef HAVE_RRD_H
+
+/* Define to 1 if you have the `select' function. */
+#undef HAVE_SELECT
+
+/* Define to 1 if you have the <sensors/sensors.h> header file. */
+#undef HAVE_SENSORS_SENSORS_H
+
+/* Define if the function getmntent exists. It's the version from libseq. */
+#undef HAVE_SEQ_GETMNTENT
+
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `socket' function. */
+#undef HAVE_SOCKET
+
+/* Define to 1 if you have the `statfs' function. */
+#undef HAVE_STATFS
+
+/* Define to 1 if you have the <statgrab.h> header file. */
+#undef HAVE_STATGRAB_H
+
+/* Define to 1 if you have the `statvfs' function. */
+#undef HAVE_STATVFS
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strchr' function. */
+#undef HAVE_STRCHR
+
+/* Define to 1 if you have the `strcmp' function. */
+#undef HAVE_STRCMP
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlen' function. */
+#undef HAVE_STRLEN
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#undef HAVE_STRNCASECMP
+
+/* Define to 1 if you have the `strncmp' function. */
+#undef HAVE_STRNCMP
+
+/* Define to 1 if you have the `strncpy' function. */
+#undef HAVE_STRNCPY
+
+/* Define to 1 if you have the `strstr' function. */
+#undef HAVE_STRSTR
+
+/* Define to 1 if you have the `strtol' function. */
+#undef HAVE_STRTOL
+
+/* Define if struct if_data exists and is usable. */
+#undef HAVE_STRUCT_IF_DATA
+
+/* Define to 1 if `ifi_ibytes' is member of `struct if_data'. */
+#undef HAVE_STRUCT_IF_DATA_IFI_IBYTES
+
+/* Define to 1 if `ifi_obytes' is member of `struct if_data'. */
+#undef HAVE_STRUCT_IF_DATA_IFI_OBYTES
+
+/* Define if struct net_device_stats exists and is usable. */
+#undef HAVE_STRUCT_NET_DEVICE_STATS
+
+/* Define to 1 if `rx_bytes' is member of `struct net_device_stats'. */
+#undef HAVE_STRUCT_NET_DEVICE_STATS_RX_BYTES
+
+/* Define to 1 if `tx_bytes' is member of `struct net_device_stats'. */
+#undef HAVE_STRUCT_NET_DEVICE_STATS_TX_BYTES
+
+/* Define if the function getmntent exists. It's the version from libsun. */
+#undef HAVE_SUN_GETMNTENT
+
+/* Define to 1 if you have the `sysctlbyname' function. */
+#undef HAVE_SYSCTLBYNAME
+
+/* Define to 1 if you have the `syslog' function. */
+#undef HAVE_SYSLOG
+
+/* Define to 1 if you have the <syslog.h> header file. */
+#undef HAVE_SYSLOG_H
+
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/dkstat.h> header file. */
+#undef HAVE_SYS_DKSTAT_H
+
+/* Define to 1 if you have the <sys/fstyp.h> header file. */
+#undef HAVE_SYS_FSTYP_H
+
+/* Define to 1 if you have the <sys/fs_types.h> header file. */
+#undef HAVE_SYS_FS_TYPES_H
+
+/* Define to 1 if you have the <sys/loadavg.h> header file. */
+#undef HAVE_SYS_LOADAVG_H
+
+/* Define to 1 if you have the <sys/mntent.h> header file. */
+#undef HAVE_SYS_MNTENT_H
+
+/* Define to 1 if you have the <sys/mnttab.h> header file. */
+#undef HAVE_SYS_MNTTAB_H
+
+/* Define to 1 if you have the <sys/mount.h> header file. */
+#undef HAVE_SYS_MOUNT_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/quota.h> header file. */
+#undef HAVE_SYS_QUOTA_H
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/statfs.h> header file. */
+#undef HAVE_SYS_STATFS_H
+
+/* Define to 1 if you have the <sys/statvfs.h> header file. */
+#undef HAVE_SYS_STATVFS_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/swap.h> header file. */
+#undef HAVE_SYS_SWAP_H
+
+/* Define to 1 if you have the <sys/sysctl.h> header file. */
+#undef HAVE_SYS_SYSCTL_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/ucred.h> header file. */
+#undef HAVE_SYS_UCRED_H
+
+/* Define to 1 if you have the <sys/vfstab.h> header file. */
+#undef HAVE_SYS_VFSTAB_H
+
+/* Define to 1 if you have the <sys/vfs.h> header file. */
+#undef HAVE_SYS_VFS_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the `thread_info' function. */
+#undef HAVE_THREAD_INFO
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <utmpx.h> header file. */
+#undef HAVE_UTMPX_H
+
+/* Define to 1 if you have the <utmp.h> header file. */
+#undef HAVE_UTMP_H
+
+/* Define to 1 if you have the <xfs/xqm.h> header file. */
+#undef HAVE_XFS_XQM_H
+
+/* True if program is to be compiled for a Linux kernel */
+#undef KERNEL_LINUX
+
+/* True if program is to be compiled for a Solaris kernel */
+#undef KERNEL_SOLARIS
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t
