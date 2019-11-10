@@ -1,20 +1,28 @@
 /**
- * oconfig - src/oconfig.c
- * Copyright (C) 2006,2007  Florian octo Forster <octo at verplant.org>
+ * collectd - src/liboconfig/oconfig.c
+ * Copyright (C) 2006,2007  Florian Forster
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; only version 2 of the License is applicable.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
- */
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *   Florian Forster <octo at collectd.org>
+ **/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -187,7 +195,7 @@ oconfig_item_t *oconfig_clone (const oconfig_item_t *ci_orig)
   return (ci_copy);
 } /* oconfig_item_t *oconfig_clone */
 
-void oconfig_free (oconfig_item_t *ci)
+void oconfig_free_all (oconfig_item_t *ci)
 {
   int i;
 
@@ -206,10 +214,17 @@ void oconfig_free (oconfig_item_t *ci)
     free (ci->values);
 
   for (i = 0; i < ci->children_num; i++)
-    oconfig_free (ci->children + i);
+    oconfig_free_all (ci->children + i);
 
   if (ci->children != NULL)
     free (ci->children);
+}
+
+void oconfig_free (oconfig_item_t *ci)
+{
+  oconfig_free_all (ci);
+  free (ci);
+  ci = NULL;
 }
 
 /*

@@ -1,20 +1,25 @@
 /**
  * collectd - src/write_riemann.c
- *
  * Copyright (C) 2012,2013  Pierre-Yves Ritschard
  * Copyright (C) 2013       Florian octo Forster
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER
- * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
  *   Pierre-Yves Ritschard <pyr at spootnik.org>
@@ -38,25 +43,36 @@
 #define RIEMANN_HOST		"localhost"
 #define RIEMANN_PORT		"5555"
 #define RIEMANN_TTL_FACTOR      2.0
+#define RIEMANN_BATCH_MAX      8192
+
+int write_riemann_threshold_check(const data_set_t *, const value_list_t *, int *);
 
 struct riemann_host {
 	char			*name;
-#define F_CONNECT		 0x01
+	char			*event_service_prefix;
+#define F_CONNECT	 0x01
 	uint8_t			 flags;
-	pthread_mutex_t		 lock;
+	pthread_mutex_t	 lock;
+    _Bool            batch_mode;
+	_Bool            notifications;
+	_Bool            check_thresholds;
 	_Bool			 store_rates;
 	_Bool			 always_append_ds;
 	char			*node;
 	char			*service;
 	_Bool			 use_tcp;
-	int			 s;
+	int			     s;
 	double			 ttl_factor;
-
-	int			 reference_count;
+    Msg             *batch_msg;
+    cdtime_t         batch_init;
+    int              batch_max;
+	int			     reference_count;
 };
 
 static char	**riemann_tags;
 static size_t	  riemann_tags_num;
+static char	**riemann_attrs;
+static size_t     riemann_attrs_num;
 
 static void riemann_event_protobuf_free (Event *event) /* {{{ */
 {
@@ -86,7 +102,7 @@ static void riemann_event_protobuf_free (Event *event) /* {{{ */
 	sfree (event);
 } /* }}} void riemann_event_protobuf_free */
 
-static void riemann_msg_protobuf_free (Msg *msg) /* {{{ */
+static void riemann_msg_protobuf_free(Msg *msg) /* {{{ */
 {
 	size_t i;
 
@@ -106,8 +122,7 @@ static void riemann_msg_protobuf_free (Msg *msg) /* {{{ */
 } /* }}} void riemann_msg_protobuf_free */
 
 /* host->lock must be held when calling this function. */
-static int
-riemann_connect(struct riemann_host *host)
+static int riemann_connect(struct riemann_host *host) /* {{{ */
 {
 	int			 e;
 	struct addrinfo		*ai, *res, hints;
@@ -149,7 +164,7 @@ riemann_connect(struct riemann_host *host)
 		}
 
 		host->flags |= F_CONNECT;
-		DEBUG("write_riemann plugin: got a succesful connection for: %s:%s",
+		DEBUG("write_riemann plugin: got a successful connection for: %s:%s",
 				node, service);
 		break;
 	}
@@ -162,11 +177,10 @@ riemann_connect(struct riemann_host *host)
 		return -1;
 	}
 	return 0;
-}
+} /* }}} int riemann_connect */
 
 /* host->lock must be held when calling this function. */
-static int
-riemann_disconnect (struct riemann_host *host)
+static int riemann_disconnect (struct riemann_host *host) /* {{{ */
 {
 	if ((host->flags & F_CONNECT) == 0)
 		return (0);
@@ -176,31 +190,25 @@ riemann_disconnect (struct riemann_host *host)
 	host->flags &= ~F_CONNECT;
 
 	return (0);
-}
+} /* }}} int riemann_disconnect */
 
-static int
-riemann_send(struct riemann_host *host, Msg const *msg)
+static int riemann_send_msg (struct riemann_host *host, const Msg *msg) /* {{{ */
 {
-	u_char *buffer;
+	int status = 0;
+	u_char *buffer = NULL;
 	size_t  buffer_len;
-	int status;
-
-	pthread_mutex_lock (&host->lock);
 
 	status = riemann_connect (host);
 	if (status != 0)
-	{
-		pthread_mutex_unlock (&host->lock);
 		return status;
-	}
 
 	buffer_len = msg__get_packed_size(msg);
+
 	if (host->use_tcp)
 		buffer_len += 4;
 
 	buffer = malloc (buffer_len);
 	if (buffer == NULL) {
-		pthread_mutex_unlock (&host->lock);
 		ERROR ("write_riemann plugin: malloc failed.");
 		return ENOMEM;
 	}
@@ -221,10 +229,6 @@ riemann_send(struct riemann_host *host, Msg const *msg)
 	if (status != 0)
 	{
 		char errbuf[1024];
-
-		riemann_disconnect (host);
-		pthread_mutex_unlock (&host->lock);
-
 		ERROR ("write_riemann plugin: Sending to Riemann at %s:%s failed: %s",
 				(host->node != NULL) ? host->node : RIEMANN_HOST,
 				(host->service != NULL) ? host->service : RIEMANN_PORT,
@@ -233,17 +237,94 @@ riemann_send(struct riemann_host *host, Msg const *msg)
 		return -1;
 	}
 
-	pthread_mutex_unlock (&host->lock);
 	sfree (buffer);
 	return 0;
-}
+} /* }}} int riemann_send_msg */
+
+static int riemann_recv_ack(struct riemann_host *host) /* {{{ */
+{
+	int status = 0;
+	Msg *msg = NULL;
+	uint32_t header;
+
+	status = (int) sread (host->s, &header, 4);
+
+	if (status != 0)
+		return -1;
+
+	size_t size = ntohl(header);
+
+	// Buffer on the stack since acknowledges are typically small.
+	u_char buffer[size];
+	memset (buffer, 0, size);
+
+	status = (int) sread (host->s, buffer, size);
+
+	if (status != 0)
+		return status;
+
+	msg = msg__unpack (NULL, size, buffer);
+
+	if (msg == NULL)
+		return -1;
+
+	if (!msg->ok)
+	{
+		ERROR ("write_riemann plugin: Sending to Riemann at %s:%s acknowledgement message reported error: %s",
+				(host->node != NULL) ? host->node : RIEMANN_HOST,
+				(host->service != NULL) ? host->service : RIEMANN_PORT,
+				msg->error);
+
+		msg__free_unpacked(msg, NULL);
+		return -1;
+	}
+
+	msg__free_unpacked (msg, NULL);
+	return 0;
+} /* }}} int riemann_recv_ack */
+
+/**
+ * Function to send messages (Msg) to riemann.
+ *
+ * Acquires the host lock, disconnects on errors.
+ */
+static int riemann_send(struct riemann_host *host, Msg const *msg) /* {{{ */
+{
+	int status = 0;
+	pthread_mutex_lock (&host->lock);
+
+	status = riemann_send_msg(host, msg);
+	if (status != 0) {
+		riemann_disconnect (host);
+		pthread_mutex_unlock (&host->lock);
+		return status;
+	}
+
+	/*
+	 * For TCP we need to receive message acknowledgemenent.
+	 */
+	if (host->use_tcp)
+	{
+		status = riemann_recv_ack(host);
+
+		if (status != 0)
+		{
+			riemann_disconnect (host);
+			pthread_mutex_unlock (&host->lock);
+			return status;
+		}
+	}
+
+	pthread_mutex_unlock (&host->lock);
+	return 0;
+} /* }}} int riemann_send */
 
 static int riemann_event_add_tag (Event *event, char const *tag) /* {{{ */
 {
 	return (strarray_add (&event->tags, &event->n_tags, tag));
 } /* }}} int riemann_event_add_tag */
 
-static int riemann_event_add_attribute (Event *event, /* {{{ */
+static int riemann_event_add_attribute(Event *event, /* {{{ */
 		char const *key, char const *value)
 {
 	Attribute **new_attributes;
@@ -276,7 +357,7 @@ static int riemann_event_add_attribute (Event *event, /* {{{ */
 	return (0);
 } /* }}} int riemann_event_add_attribute */
 
-static Msg *riemann_notification_to_protobuf (struct riemann_host *host, /* {{{ */
+static Msg *riemann_notification_to_protobuf(struct riemann_host *host, /* {{{ */
 		notification_t const *n)
 {
 	Msg *msg;
@@ -345,6 +426,11 @@ static Msg *riemann_notification_to_protobuf (struct riemann_host *host, /* {{{ 
 		riemann_event_add_attribute (event, "type_instance",
 				n->type_instance);
 
+	for (i = 0; i < riemann_attrs_num; i += 2)
+		riemann_event_add_attribute(event,
+					    riemann_attrs[i],
+					    riemann_attrs[i +1]);
+
 	for (i = 0; i < riemann_tags_num; i++)
 		riemann_event_add_tag (event, riemann_tags[i]);
 
@@ -353,15 +439,23 @@ static Msg *riemann_notification_to_protobuf (struct riemann_host *host, /* {{{ 
 			n->type, n->type_instance);
 	event->service = strdup (&service_buffer[1]);
 
-	/* Pull in values from threshold */
+	if (n->message[0] != 0)
+		riemann_event_add_attribute (event, "description", n->message);
+
+	/* Pull in values from threshold and add extra attributes */
 	for (meta = n->meta; meta != NULL; meta = meta->next)
 	{
-		if (strcasecmp ("CurrentValue", meta->name) != 0)
+		if (strcasecmp ("CurrentValue", meta->name) == 0 && meta->type == NM_TYPE_DOUBLE)
+		{
+			event->metric_d = meta->nm_value.nm_double;
+			event->has_metric_d = 1;
 			continue;
+		}
 
-		event->metric_d = meta->nm_value.nm_double;
-		event->has_metric_d = 1;
-		break;
+		if (meta->type == NM_TYPE_STRING) {
+			riemann_event_add_attribute (event, meta->name, meta->nm_value.nm_string);
+			continue;
+		}
 	}
 
 	DEBUG ("write_riemann plugin: Successfully created protobuf for notification: "
@@ -370,10 +464,11 @@ static Msg *riemann_notification_to_protobuf (struct riemann_host *host, /* {{{ 
 	return (msg);
 } /* }}} Msg *riemann_notification_to_protobuf */
 
-static Event *riemann_value_to_protobuf (struct riemann_host const *host, /* {{{ */
+static Event *riemann_value_to_protobuf(struct riemann_host const *host, /* {{{ */
 		data_set_t const *ds,
 		value_list_t const *vl, size_t index,
-		gauge_t const *rates)
+					 gauge_t const *rates,
+					 int status)
 {
 	Event *event;
 	char name_buffer[5 * DATA_MAX_NAME_LEN];
@@ -393,6 +488,23 @@ static Event *riemann_value_to_protobuf (struct riemann_host const *host, /* {{{
 	event->host = strdup (vl->host);
 	event->time = CDTIME_T_TO_TIME_T (vl->time);
 	event->has_time = 1;
+
+	if (host->check_thresholds) {
+		switch (status) {
+			case STATE_OKAY:
+				event->state = strdup("ok");
+				break;
+			case STATE_ERROR:
+				event->state = strdup("critical");
+				break;
+			case STATE_WARNING:
+				event->state = strdup("warning");
+				break;
+			case STATE_MISSING:
+				event->state = strdup("unknown");
+				break;
+		}
+	}
 
 	ttl = CDTIME_T_TO_DOUBLE (vl->interval) * host->ttl_factor;
 	event->ttl = (float) ttl;
@@ -429,6 +541,11 @@ static Event *riemann_value_to_protobuf (struct riemann_host const *host, /* {{{
 		riemann_event_add_attribute (event, "ds_index", ds_index);
 	}
 
+	for (i = 0; i < riemann_attrs_num; i += 2)
+		riemann_event_add_attribute(event,
+					    riemann_attrs[i],
+					    riemann_attrs[i +1]);
+
 	for (i = 0; i < riemann_tags_num; i++)
 		riemann_event_add_tag (event, riemann_tags[i]);
 
@@ -457,11 +574,22 @@ static Event *riemann_value_to_protobuf (struct riemann_host const *host, /* {{{
 			/* host = */ "", vl->plugin, vl->plugin_instance,
 			vl->type, vl->type_instance);
 	if (host->always_append_ds || (ds->ds_num > 1))
-		ssnprintf (service_buffer, sizeof (service_buffer),
-				"%s/%s", &name_buffer[1], ds->ds[index].name);
+	{
+		if (host->event_service_prefix == NULL)
+			ssnprintf (service_buffer, sizeof (service_buffer), "%s/%s",
+					&name_buffer[1], ds->ds[index].name);
+		else
+			ssnprintf (service_buffer, sizeof (service_buffer), "%s%s/%s",
+					host->event_service_prefix, &name_buffer[1], ds->ds[index].name);
+	}
 	else
-		sstrncpy (service_buffer, &name_buffer[1],
-				sizeof (service_buffer));
+	{
+		if (host->event_service_prefix == NULL)
+			sstrncpy (service_buffer, &name_buffer[1], sizeof (service_buffer));
+		else
+			ssnprintf (service_buffer, sizeof (service_buffer), "%s%s",
+					host->event_service_prefix, &name_buffer[1]);
+	}
 
 	event->service = strdup (service_buffer);
 
@@ -472,8 +600,9 @@ static Event *riemann_value_to_protobuf (struct riemann_host const *host, /* {{{
 } /* }}} Event *riemann_value_to_protobuf */
 
 static Msg *riemann_value_list_to_protobuf (struct riemann_host const *host, /* {{{ */
-		data_set_t const *ds,
-		value_list_t const *vl)
+					    data_set_t const *ds,
+					    value_list_t const *vl,
+					    int *statuses)
 {
 	Msg *msg;
 	size_t i;
@@ -513,7 +642,7 @@ static Msg *riemann_value_list_to_protobuf (struct riemann_host const *host, /* 
 	for (i = 0; i < msg->n_events; i++)
 	{
 		msg->events[i] = riemann_value_to_protobuf (host, ds, vl,
-				(int) i, rates);
+							    (int) i, rates, statuses[i]);
 		if (msg->events[i] == NULL)
 		{
 			riemann_msg_protobuf_free (msg);
@@ -526,13 +655,115 @@ static Msg *riemann_value_list_to_protobuf (struct riemann_host const *host, /* 
 	return (msg);
 } /* }}} Msg *riemann_value_list_to_protobuf */
 
-static int
-riemann_notification(const notification_t *n, user_data_t *ud)
+
+/*
+ * Always call while holding host->lock !
+ */
+static int riemann_batch_flush_nolock (cdtime_t timeout,
+                                       struct riemann_host *host)
+{
+    cdtime_t    now;
+    int         status = 0;
+
+    if (timeout > 0) {
+        now = cdtime ();
+        if ((host->batch_init + timeout) > now)
+            return status;
+    }
+    riemann_send_msg(host, host->batch_msg);
+    riemann_msg_protobuf_free(host->batch_msg);
+
+	if (host->use_tcp && ((status = riemann_recv_ack(host)) != 0))
+        riemann_disconnect (host);
+
+    host->batch_init = cdtime();
+    host->batch_msg = NULL;
+    return status;
+}
+
+static int riemann_batch_flush (cdtime_t timeout,
+        const char *identifier __attribute__((unused)),
+        user_data_t *user_data)
+{
+    struct riemann_host *host;
+    int status;
+
+    if (user_data == NULL)
+        return (-EINVAL);
+
+    host = user_data->data;
+    pthread_mutex_lock (&host->lock);
+    status = riemann_batch_flush_nolock (timeout, host);
+    if (status != 0)
+        ERROR ("write_riemann plugin: riemann_send failed with status %i",
+               status);
+
+    pthread_mutex_unlock(&host->lock);
+    return status;
+}
+
+static int riemann_batch_add_value_list (struct riemann_host *host, /* {{{ */
+                                         data_set_t const *ds,
+                                         value_list_t const *vl,
+                                         int *statuses)
+{
+	size_t i;
+    Event **events;
+    Msg *msg;
+    size_t len;
+    int ret;
+
+    msg = riemann_value_list_to_protobuf (host, ds, vl, statuses);
+    if (msg == NULL)
+        return -1;
+
+    pthread_mutex_lock(&host->lock);
+
+    if (host->batch_msg == NULL) {
+        host->batch_msg = msg;
+    } else {
+        len = msg->n_events + host->batch_msg->n_events;
+        events = realloc(host->batch_msg->events,
+                         (len * sizeof(*host->batch_msg->events)));
+        if (events == NULL) {
+            pthread_mutex_unlock(&host->lock);
+            ERROR ("write_riemann plugin: out of memory");
+            riemann_msg_protobuf_free (msg);
+            return -1;
+        }
+        host->batch_msg->events = events;
+
+        for (i = host->batch_msg->n_events; i < len; i++)
+            host->batch_msg->events[i] = msg->events[i - host->batch_msg->n_events];
+
+        host->batch_msg->n_events = len;
+        sfree (msg->events);
+        msg->n_events = 0;
+        sfree (msg);
+    }
+
+	len = msg__get_packed_size(host->batch_msg);
+    ret = 0;
+    if (len >= host->batch_max) {
+        ret = riemann_batch_flush_nolock(0, host);
+    }
+
+    pthread_mutex_unlock(&host->lock);
+    return ret;
+} /* }}} Msg *riemann_batch_add_value_list */
+
+static int riemann_notification(const notification_t *n, user_data_t *ud) /* {{{ */
 {
 	int			 status;
 	struct riemann_host	*host = ud->data;
 	Msg			*msg;
 
+	if (!host->notifications)
+		return 0;
+
+    /*
+     * Never batch for notifications, send them ASAP
+     */
 	msg = riemann_notification_to_protobuf (host, n);
 	if (msg == NULL)
 		return (-1);
@@ -546,30 +777,40 @@ riemann_notification(const notification_t *n, user_data_t *ud)
 	return (status);
 } /* }}} int riemann_notification */
 
-static int
-riemann_write(const data_set_t *ds,
+static int riemann_write(const data_set_t *ds, /* {{{ */
 	      const value_list_t *vl,
 	      user_data_t *ud)
 {
-	int			 status;
+	int			 status = 0;
+	int			 statuses[vl->values_len];
 	struct riemann_host	*host = ud->data;
 	Msg			*msg;
 
-	msg = riemann_value_list_to_protobuf (host, ds, vl);
-	if (msg == NULL)
-		return (-1);
+	if (host->check_thresholds)
+		write_riemann_threshold_check(ds, vl, statuses);
 
-	status = riemann_send (host, msg);
-	if (status != 0)
-		ERROR ("write_riemann plugin: riemann_send failed with status %i",
-				status);
+    if (host->use_tcp == 1 && host->batch_mode) {
 
-	riemann_msg_protobuf_free (msg);
+        riemann_batch_add_value_list (host, ds, vl, statuses);
+
+
+    } else {
+
+        msg = riemann_value_list_to_protobuf (host, ds, vl, statuses);
+        if (msg == NULL)
+            return (-1);
+
+        status = riemann_send (host, msg);
+        if (status != 0)
+            ERROR ("write_riemann plugin: riemann_send failed with status %i",
+                   status);
+
+        riemann_msg_protobuf_free (msg);
+    }
 	return status;
-}
+} /* }}} int riemann_write */
 
-static void
-riemann_free(void *p)
+static void riemann_free(void *p) /* {{{ */
 {
 	struct riemann_host	*host = p;
 
@@ -590,10 +831,9 @@ riemann_free(void *p)
 	sfree(host->service);
 	pthread_mutex_destroy (&host->lock);
 	sfree(host);
-}
+} /* }}} void riemann_free */
 
-static int
-riemann_config_node(oconfig_item_t *ci)
+static int riemann_config_node(oconfig_item_t *ci) /* {{{ */
 {
 	struct riemann_host	*host = NULL;
 	int			 status = 0;
@@ -610,9 +850,14 @@ riemann_config_node(oconfig_item_t *ci)
 	host->reference_count = 1;
 	host->node = NULL;
 	host->service = NULL;
+	host->notifications = 1;
+	host->check_thresholds = 0;
 	host->store_rates = 1;
 	host->always_append_ds = 0;
-	host->use_tcp = 0;
+	host->use_tcp = 1;
+	host->batch_mode = 1;
+	host->batch_max = RIEMANN_BATCH_MAX; /* typical MSS */
+	host->batch_init = cdtime();
 	host->ttl_factor = RIEMANN_TTL_FACTOR;
 
 	status = cf_util_get_string (ci, &host->name);
@@ -634,6 +879,26 @@ riemann_config_node(oconfig_item_t *ci)
 			status = cf_util_get_string (child, &host->node);
 			if (status != 0)
 				break;
+		} else if (strcasecmp ("Notifications", child->key) == 0) {
+			status = cf_util_get_boolean(child, &host->notifications);
+			if (status != 0)
+				break;
+		} else if (strcasecmp ("EventServicePrefix", child->key) == 0) {
+			status = cf_util_get_string (child, &host->event_service_prefix);
+			if (status != 0)
+				break;
+		} else if (strcasecmp ("CheckThresholds", child->key) == 0) {
+			status = cf_util_get_boolean(child, &host->check_thresholds);
+			if (status != 0)
+				break;
+        } else if (strcasecmp ("Batch", child->key) == 0) {
+            status = cf_util_get_boolean(child, &host->batch_mode);
+            if (status != 0)
+                break;
+        } else if (strcasecmp("BatchMaxSize", child->key) == 0) {
+            status = cf_util_get_int(child, &host->batch_max);
+            if (status != 0)
+                break;
 		} else if (strcasecmp ("Port", child->key) == 0) {
 			status = cf_util_get_service (child, &host->service);
 			if (status != 0) {
@@ -718,6 +983,11 @@ riemann_config_node(oconfig_item_t *ci)
 	pthread_mutex_lock (&host->lock);
 
 	status = plugin_register_write (callback_name, riemann_write, &ud);
+
+    if (host->use_tcp == 1 && host->batch_mode) {
+        ud.free_func = NULL;
+        plugin_register_flush(callback_name, riemann_batch_flush, &ud);
+    }
 	if (status != 0)
 		WARNING ("write_riemann plugin: plugin_register_write (\"%s\") "
 				"failed with status %i.",
@@ -749,10 +1019,9 @@ riemann_config_node(oconfig_item_t *ci)
 	pthread_mutex_unlock (&host->lock);
 
 	return status;
-}
+} /* }}} int riemann_config_node */
 
-static int
-riemann_config(oconfig_item_t *ci)
+static int riemann_config(oconfig_item_t *ci) /* {{{ */
 {
 	int		 i;
 	oconfig_item_t	*child;
@@ -763,6 +1032,32 @@ riemann_config(oconfig_item_t *ci)
 
 		if (strcasecmp("Node", child->key) == 0) {
 			riemann_config_node (child);
+		} else if (strcasecmp(child->key, "attribute") == 0) {
+			char *key = NULL;
+			char *val = NULL;
+
+			if (child->values_num != 2) {
+				WARNING("riemann attributes need both a key and a value.");
+				return (-1);
+			}
+			if (child->values[0].type != OCONFIG_TYPE_STRING ||
+			    child->values[1].type != OCONFIG_TYPE_STRING) {
+				WARNING("riemann attribute needs string arguments.");
+				return (-1);
+			}
+			if ((key = strdup(child->values[0].value.string)) == NULL) {
+				WARNING("cannot allocate memory for attribute key.");
+				return (-1);
+			}
+			if ((val = strdup(child->values[1].value.string)) == NULL) {
+				WARNING("cannot allocate memory for attribute value.");
+				return (-1);
+			}
+			strarray_add(&riemann_attrs, &riemann_attrs_num, key);
+			strarray_add(&riemann_attrs, &riemann_attrs_num, val);
+			DEBUG("write_riemann: got attr: %s => %s", key, val);
+			sfree(key);
+			sfree(val);
 		} else if (strcasecmp(child->key, "tag") == 0) {
 			char *tmp = NULL;
 			status = cf_util_get_string(child, &tmp);
@@ -779,10 +1074,9 @@ riemann_config(oconfig_item_t *ci)
 		}
 	}
 	return (0);
-}
+} /* }}} int riemann_config */
 
-void
-module_register(void)
+void module_register(void)
 {
 	plugin_register_complex_config ("write_riemann", riemann_config);
 }

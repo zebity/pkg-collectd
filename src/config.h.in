@@ -1,5 +1,8 @@
 /* src/config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* User agent for http requests */
+#undef COLLECTD_USERAGENT
+
 /* wether or not to enable feature daemon mode */
 #undef COLLECT_DAEMON
 
@@ -69,8 +72,14 @@
 /* Define to 1 if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
 
+/* Define to 1 if you have the <asm/msr-index.h> header file. */
+#undef HAVE_ASM_MSR_INDEX_H
+
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the <atasmart.h> header file. */
+#undef HAVE_ATASMART_H
 
 /* Define to 1 if you have the <bsd/nlist.h> header file. */
 #undef HAVE_BSD_NLIST_H
@@ -88,11 +97,17 @@
    */
 #undef HAVE_COREFOUNDATION_COREFOUNDATION_H
 
-/* Define to 1 if you have the <credis.h> header file. */
-#undef HAVE_CREDIS_H
+/* Define to 1 if you have the <cpuid.h> header file. */
+#undef HAVE_CPUID_H
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
+
+/* Define if libcurl supports CURLOPT_TIMEOUT_MS option. */
+#undef HAVE_CURLOPT_TIMEOUT_MS
+
+/* Define if libcurl supports CURLOPT_USERNAME option. */
+#undef HAVE_CURLOPT_USERNAME
 
 /* Define to 1 if you have the <curl/curl.h> header file. */
 #undef HAVE_CURL_CURL_H
@@ -207,6 +222,9 @@
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
 
+/* Define to 1 if you have the <hiredis/hiredis.h> header file. */
+#undef HAVE_HIREDIS_HIREDIS_H
+
 /* Define to 1 if you have the `host_statistics' function. */
 #undef HAVE_HOST_STATISTICS
 
@@ -271,8 +289,14 @@
 /* Define to 1 if you have the <kvm.h> header file. */
 #undef HAVE_KVM_H
 
+/* Define to 1 if you have the <ldap.h> header file. */
+#undef HAVE_LDAP_H
+
 /* Define to 1 if you have the <libaquaero5.h> header file. */
 #undef HAVE_LIBAQUAERO5_H
+
+/* Define if libatasmart is present and usable. */
+#undef HAVE_LIBATASMART
 
 /* Define if you have the libdl library or equivalent. */
 #undef HAVE_LIBDL
@@ -355,6 +379,18 @@
 /* Define if librabbitmq is present and usable. */
 #undef HAVE_LIBRABBITMQ
 
+/* Define if librdkafka is present and usable. */
+#undef HAVE_LIBRDKAFKA
+
+/* Define if librdkafka log facility is present and usable. */
+#undef HAVE_LIBRDKAFKA_LOGGER
+
+/* Define if librdkafka log facility is present and usable. */
+#undef HAVE_LIBRDKAFKA_LOG_CB
+
+/* Define to 1 if you have the <librdkafka/rdkafka.h> header file. */
+#undef HAVE_LIBRDKAFKA_RDKAFKA_H
+
 /* Define to 1 if you have the 'resolv' library (-lresolv). */
 #undef HAVE_LIBRESOLV
 
@@ -370,8 +406,17 @@
 /* Define to 1 if you have the 'statgrab' library (-lstatgrab) */
 #undef HAVE_LIBSTATGRAB
 
+/* Define to 1 if libstatgrab version >= 0.90 */
+#undef HAVE_LIBSTATGRAB_0_90
+
 /* Define to 1 if you have the tokyotyrant library (-ltokyotyrant). */
 #undef HAVE_LIBTOKYOTYRANT
+
+/* Define to 1 if you have the udev library (-ludev). */
+#undef HAVE_LIBUDEV
+
+/* Define to 1 if you have the <libudev.h> header file. */
+#undef HAVE_LIBUDEV_H
 
 /* Define to 1 if you have the <libvirt/libvirt.h> header file. */
 #undef HAVE_LIBVIRT_LIBVIRT_H
@@ -400,6 +445,9 @@
 /* Define to 1 if you have the <linux/if.h> header file. */
 #undef HAVE_LINUX_IF_H
 
+/* Define to 1 if you have the <linux/inet_diag.h> header file. */
+#undef HAVE_LINUX_INET_DIAG_H
+
 /* Define to 1 if you have the <linux/ip_vs.h> header file. */
 #undef HAVE_LINUX_IP_VS_H
 
@@ -408,17 +456,6 @@
 
 /* Define to 1 if you have the <linux/netdevice.h> header file. */
 #undef HAVE_LINUX_NETDEVICE_H
-
-/* Define to 1 if you have the <linux/netfilter_ipv4/ip_tables.h> header file.
-   */
-#undef HAVE_LINUX_NETFILTER_IPV4_IP_TABLES_H
-
-/* Define to 1 if you have the <linux/netfilter_ipv6/ip6_tables.h> header
-   file. */
-#undef HAVE_LINUX_NETFILTER_IPV6_IP6_TABLES_H
-
-/* Define to 1 if you have the <linux/netfilter/x_tables.h> header file. */
-#undef HAVE_LINUX_NETFILTER_X_TABLES_H
 
 /* Define to 1 if you have the <linux/pkt_sched.h> header file. */
 #undef HAVE_LINUX_PKT_SCHED_H
@@ -437,6 +474,9 @@
 
 /* Define to 1 if you have the `listmntent' function. */
 #undef HAVE_LISTMNTENT
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
 
 /* Define this if a modern libltdl is already installed */
 #undef HAVE_LTDL
@@ -657,11 +697,17 @@
 /* Define to 1 if the ascent plugin is enabled. */
 #undef HAVE_PLUGIN_ASCENT
 
+/* Define to 1 if the barometer plugin is enabled. */
+#undef HAVE_PLUGIN_BAROMETER
+
 /* Define to 1 if the battery plugin is enabled. */
 #undef HAVE_PLUGIN_BATTERY
 
 /* Define to 1 if the bind plugin is enabled. */
 #undef HAVE_PLUGIN_BIND
+
+/* Define to 1 if the ceph plugin is enabled. */
+#undef HAVE_PLUGIN_CEPH
 
 /* Define to 1 if the cgroups plugin is enabled. */
 #undef HAVE_PLUGIN_CGROUPS
@@ -702,6 +748,9 @@
 /* Define to 1 if the dns plugin is enabled. */
 #undef HAVE_PLUGIN_DNS
 
+/* Define to 1 if the drbd plugin is enabled. */
+#undef HAVE_PLUGIN_DRBD
+
 /* Define to 1 if the email plugin is enabled. */
 #undef HAVE_PLUGIN_EMAIL
 
@@ -713,6 +762,9 @@
 
 /* Define to 1 if the exec plugin is enabled. */
 #undef HAVE_PLUGIN_EXEC
+
+/* Define to 1 if the fhcount plugin is enabled. */
+#undef HAVE_PLUGIN_FHCOUNT
 
 /* Define to 1 if the filecount plugin is enabled. */
 #undef HAVE_PLUGIN_FILECOUNT
@@ -729,6 +781,9 @@
 /* Define to 1 if the interface plugin is enabled. */
 #undef HAVE_PLUGIN_INTERFACE
 
+/* Define to 1 if the ipc plugin is enabled. */
+#undef HAVE_PLUGIN_IPC
+
 /* Define to 1 if the ipmi plugin is enabled. */
 #undef HAVE_PLUGIN_IPMI
 
@@ -744,14 +799,14 @@
 /* Define to 1 if the java plugin is enabled. */
 #undef HAVE_PLUGIN_JAVA
 
-/* Define to 1 if the libvirt plugin is enabled. */
-#undef HAVE_PLUGIN_LIBVIRT
-
 /* Define to 1 if the load plugin is enabled. */
 #undef HAVE_PLUGIN_LOAD
 
 /* Define to 1 if the logfile plugin is enabled. */
 #undef HAVE_PLUGIN_LOGFILE
+
+/* Define to 1 if the log_logstash plugin is enabled. */
+#undef HAVE_PLUGIN_LOG_LOGSTASH
 
 /* Define to 1 if the lpar plugin is enabled. */
 #undef HAVE_PLUGIN_LPAR
@@ -840,6 +895,9 @@
 /* Define to 1 if the onewire plugin is enabled. */
 #undef HAVE_PLUGIN_ONEWIRE
 
+/* Define to 1 if the openldap plugin is enabled. */
+#undef HAVE_PLUGIN_OPENLDAP
+
 /* Define to 1 if the openvpn plugin is enabled. */
 #undef HAVE_PLUGIN_OPENVPN
 
@@ -893,6 +951,9 @@
 
 /* Define to 1 if the sigrok plugin is enabled. */
 #undef HAVE_PLUGIN_SIGROK
+
+/* Define to 1 if the smart plugin is enabled. */
+#undef HAVE_PLUGIN_SMART
 
 /* Define to 1 if the snmp plugin is enabled. */
 #undef HAVE_PLUGIN_SNMP
@@ -951,6 +1012,9 @@
 /* Define to 1 if the tokyotyrant plugin is enabled. */
 #undef HAVE_PLUGIN_TOKYOTYRANT
 
+/* Define to 1 if the turbostat plugin is enabled. */
+#undef HAVE_PLUGIN_TURBOSTAT
+
 /* Define to 1 if the unixsock plugin is enabled. */
 #undef HAVE_PLUGIN_UNIXSOCK
 
@@ -965,6 +1029,9 @@
 
 /* Define to 1 if the varnish plugin is enabled. */
 #undef HAVE_PLUGIN_VARNISH
+
+/* Define to 1 if the virt plugin is enabled. */
+#undef HAVE_PLUGIN_VIRT
 
 /* Define to 1 if the vmem plugin is enabled. */
 #undef HAVE_PLUGIN_VMEM
@@ -981,6 +1048,12 @@
 /* Define to 1 if the write_http plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_HTTP
 
+/* Define to 1 if the write_kafka plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_KAFKA
+
+/* Define to 1 if the write_log plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_LOG
+
 /* Define to 1 if the write_mongodb plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_MONGODB
 
@@ -990,11 +1063,20 @@
 /* Define to 1 if the write_riemann plugin is enabled. */
 #undef HAVE_PLUGIN_WRITE_RIEMANN
 
+/* Define to 1 if the write_sensu plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_SENSU
+
+/* Define to 1 if the write_tsdb plugin is enabled. */
+#undef HAVE_PLUGIN_WRITE_TSDB
+
 /* Define to 1 if the xmms plugin is enabled. */
 #undef HAVE_PLUGIN_XMMS
 
 /* Define to 1 if the zfs_arc plugin is enabled. */
 #undef HAVE_PLUGIN_ZFS_ARC
+
+/* Define to 1 if the zookeeper plugin is enabled. */
+#undef HAVE_PLUGIN_ZOOKEEPER
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
@@ -1041,6 +1123,9 @@
 /* Define to 1 if you have the <rrd.h> header file. */
 #undef HAVE_RRD_H
 
+/* Define if struct rtnl_link_stats64 exists and is usable. */
+#undef HAVE_RTNL_LINK_STATS64
+
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
 
@@ -1055,6 +1140,9 @@
 
 /* Define to 1 if you have the `setgroups' function. */
 #undef HAVE_SETGROUPS
+
+/* Define to 1 if you have the `setlocale' function. */
+#undef HAVE_SETLOCALE
 
 /* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD
@@ -1149,6 +1237,12 @@
 /* Define to 1 if `ifi_opackets' is a member of `struct if_data'. */
 #undef HAVE_STRUCT_IF_DATA_IFI_OPACKETS
 
+/* Define to 1 if `id' is a member of `struct inet_diag_req'. */
+#undef HAVE_STRUCT_INET_DIAG_REQ_ID
+
+/* Define to 1 if `idiag_states' is a member of `struct inet_diag_req'. */
+#undef HAVE_STRUCT_INET_DIAG_REQ_IDIAG_STATES
+
 /* Define to 1 if `imr_ifindex' is a member of `struct ip_mreqn'. */
 #undef HAVE_STRUCT_IP_MREQN_IMR_IFINDEX
 
@@ -1164,14 +1258,17 @@
 /* Define to 1 if `ki_rusage' is a member of `struct kinfo_proc'. */
 #undef HAVE_STRUCT_KINFO_PROC_KI_RUSAGE
 
-/* Define to 1 if `kp_eproc' is a member of `struct kinfo_proc'. */
-#undef HAVE_STRUCT_KINFO_PROC_KP_EPROC
-
-/* Define to 1 if `kp_proc' is a member of `struct kinfo_proc'. */
-#undef HAVE_STRUCT_KINFO_PROC_KP_PROC
-
 /* Define if struct kinfo_proc exists in the OpenBSD variant. */
 #undef HAVE_STRUCT_KINFO_PROC_OPENBSD
+
+/* Define to 1 if `p_pid' is a member of `struct kinfo_proc'. */
+#undef HAVE_STRUCT_KINFO_PROC_P_PID
+
+/* Define to 1 if `p_vm_rssize' is a member of `struct kinfo_proc'. */
+#undef HAVE_STRUCT_KINFO_PROC_P_VM_RSSIZE
+
+/* Define if struct inet_diag_req exists and is usable. */
+#undef HAVE_STRUCT_LINUX_INET_DIAG_REQ
 
 /* Define if struct net_device_stats exists and is usable. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS
@@ -1184,6 +1281,10 @@
 
 /* Define to 1 if `tx_packets' is a member of `struct net_device_stats'. */
 #undef HAVE_STRUCT_NET_DEVICE_STATS_TX_PACKETS
+
+/* Define to 1 if `tx_window_errors' is a member of `struct
+   rtnl_link_stats64'. */
+#undef HAVE_STRUCT_RTNL_LINK_STATS64_TX_WINDOW_ERRORS
 
 /* Define to 1 if `dest' is a member of `struct udphdr'. */
 #undef HAVE_STRUCT_UDPHDR_DEST
@@ -1226,6 +1327,9 @@
 
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
+
+/* Define to 1 if you have the <sys/capability.h> header file. */
+#undef HAVE_SYS_CAPABILITY_H
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
@@ -1307,6 +1411,9 @@
 /* Define to 1 if you have the <sys/vfs.h> header file. */
 #undef HAVE_SYS_VFS_H
 
+/* Define to 1 if you have the <sys/vmmeter.h> header file. */
+#undef HAVE_SYS_VMMETER_H
+
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
@@ -1355,6 +1462,12 @@
 /* Varnish 3 API support */
 #undef HAVE_VARNISH_V3
 
+/* Varnish 4 API support */
+#undef HAVE_VARNISH_V4
+
+/* Define to 1 if you have the <varnish/vapi/vsc.h> header file. */
+#undef HAVE_VARNISH_VAPI_VSC_H
+
 /* Define to 1 if you have the <varnish/varnishapi.h> header file. */
 #undef HAVE_VARNISH_VARNISHAPI_H
 
@@ -1385,11 +1498,17 @@
 /* True if program is to be compiled for a AIX kernel */
 #undef KERNEL_AIX
 
+/* True if program is to be compiled for a Darwin kernel */
+#undef KERNEL_DARWIN
+
 /* True if program is to be compiled for a FreeBSD kernel */
 #undef KERNEL_FREEBSD
 
 /* True if program is to be compiled for a Linux kernel */
 #undef KERNEL_LINUX
+
+/* True if program is to be compiled for an OpenBSD kernel */
+#undef KERNEL_OPENBSD
 
 /* True if program is to be compiled for a Solaris kernel */
 #undef KERNEL_SOLARIS
@@ -1436,12 +1555,6 @@
 /* Define if dlsym() requires a leading underscore in symbol names. */
 #undef NEED_USCORE
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
-
-/* Define to 1 if we use the shipped iptc library. */
-#undef OWN_LIBIPTC
-
 /* Name of package */
 #undef PACKAGE
 
@@ -1485,6 +1598,11 @@
    `char[]'. */
 #undef YYTEXT_POINTER
 
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
@@ -1506,6 +1624,11 @@
 /* Define to use the thread-safe version of errno under AIX. */
 #undef _THREAD_SAFE_ERRNO
 
+/* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+#undef _UINT32_T
+
 /* Define to enforce X/Open 7 (XSI) compliance. */
 #undef _XOPEN_SOURCE
 
@@ -1521,11 +1644,27 @@
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
 
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `long int' if <sys/types.h> does not define. */
+#undef off_t
+
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
+/* Define to `int' if <sys/types.h> does not define. */
+#undef ssize_t
+
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef uid_t
+
+/* Define to the type of an unsigned integer type of width exactly 32 bits if
+   such a type exists and the standard includes do not define it. */
+#undef uint32_t

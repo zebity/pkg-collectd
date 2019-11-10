@@ -1,19 +1,24 @@
 /**
  * collectd - src/dbi.c
- * Copyright (C) 2008-2013  Florian octo Forster
+ * Copyright (C) 2008-2015  Florian octo Forster
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; only version 2 of the License is applicable.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
  *   Florian octo Forster <octo at collectd.org>
@@ -26,6 +31,18 @@
 #include "utils_db_query.h"
 
 #include <dbi/dbi.h>
+
+/* libdbi 0.9.0 introduced a new thread-safe interface and marked the old
+ * functions "deprecated". These macros convert the new functions to their old
+ * counterparts for backwards compatibility. */
+#if !defined(LIBDBI_VERSION) || (LIBDBI_VERSION < 900)
+# define HAVE_LEGACY_LIBDBI 1
+# define dbi_initialize_r(a,inst) dbi_initialize(a)
+# define dbi_shutdown_r(inst) dbi_shutdown()
+# define dbi_set_verbosity_r(a,inst) dbi_set_verbosity(a)
+# define dbi_driver_list_r(a,inst) dbi_driver_list(a)
+# define dbi_driver_open_r(a,inst) dbi_driver_open(a)
+#endif
 
 /*
  * Data types
@@ -63,10 +80,15 @@ typedef struct cdbi_database_s cdbi_database_t; /* }}} */
 /*
  * Global variables
  */
+#if !defined(HAVE_LEGACY_LIBDBI) || !HAVE_LEGACY_LIBDBI
+static dbi_inst          dbi_instance  = 0;
+#endif
 static udb_query_t     **queries       = NULL;
 static size_t            queries_num   = 0;
 static cdbi_database_t **databases     = NULL;
 static size_t            databases_num = 0;
+
+static int cdbi_read_database (user_data_t *ud);
 
 /*
  * Functions
@@ -369,9 +391,24 @@ static int cdbi_config_add_database (oconfig_item_t *ci) /* {{{ */
     }
     else
     {
+      user_data_t ud;
+      char *name = NULL;
+
       databases = temp;
       databases[databases_num] = db;
       databases_num++;
+
+      memset (&ud, 0, sizeof (ud));
+      ud.data = (void *) db;
+      ud.free_func = NULL;
+      name = ssnprintf_alloc("dbi:%s", db->name);
+
+      plugin_register_complex_read (/* group = */ NULL,
+          /* name = */ name ? name : db->name,
+          /* callback = */ cdbi_read_database,
+          /* interval = */ NULL,
+          /* user_data = */ &ud);
+      free (name);
     }
   }
 
@@ -398,7 +435,7 @@ static int cdbi_config (oconfig_item_t *ci) /* {{{ */
       cdbi_config_add_database (child);
     else
     {
-      WARNING ("snmp plugin: Ignoring unknown config option `%s'.", child->key);
+      WARNING ("dbi plugin: Ignoring unknown config option `%s'.", child->key);
     }
   } /* for (ci->children) */
 
@@ -429,20 +466,20 @@ static int cdbi_init (void) /* {{{ */
     return (-1);
   }
 
-  status = dbi_initialize (NULL);
+  status = dbi_initialize_r (/* driverdir = */ NULL, &dbi_instance);
   if (status < 0)
   {
-    ERROR ("dbi plugin: cdbi_init: dbi_initialize failed with status %i.",
+    ERROR ("dbi plugin: cdbi_init: dbi_initialize_r failed with status %i.",
         status);
     return (-1);
   }
   else if (status == 0)
   {
-    ERROR ("dbi plugin: `dbi_initialize' could not load any drivers. Please "
+    ERROR ("dbi plugin: `dbi_initialize_r' could not load any drivers. Please "
         "install at least one `DBD' or check your installation.");
     return (-1);
   }
-  DEBUG ("dbi plugin: cdbi_init: dbi_initialize reports %i driver%s.",
+  DEBUG ("dbi plugin: cdbi_init: dbi_initialize_r reports %i driver%s.",
       status, (status == 1) ? "" : "s");
 
   return (0);
@@ -650,16 +687,16 @@ static int cdbi_connect_database (cdbi_database_t *db) /* {{{ */
     db->connection = NULL;
   }
 
-  driver = dbi_driver_open (db->driver);
+  driver = dbi_driver_open_r (db->driver, dbi_instance);
   if (driver == NULL)
   {
-    ERROR ("dbi plugin: cdbi_connect_database: dbi_driver_open (%s) failed.",
+    ERROR ("dbi plugin: cdbi_connect_database: dbi_driver_open_r (%s) failed.",
         db->driver);
     INFO ("dbi plugin: Maybe the driver isn't installed? "
         "Known drivers are:");
-    for (driver = dbi_driver_list (NULL);
+    for (driver = dbi_driver_list_r (NULL, dbi_instance);
         driver != NULL;
-        driver = dbi_driver_list (driver))
+        driver = dbi_driver_list_r (driver, dbi_instance))
     {
       INFO ("dbi plugin: * %s", dbi_driver_get_name (driver));
     }
@@ -758,8 +795,9 @@ static int cdbi_connect_database (cdbi_database_t *db) /* {{{ */
   return (0);
 } /* }}} int cdbi_connect_database */
 
-static int cdbi_read_database (cdbi_database_t *db) /* {{{ */
+static int cdbi_read_database (user_data_t *ud) /* {{{ */
 {
+  cdbi_database_t *db = (cdbi_database_t *) ud->data;
   size_t i;
   int success;
   int status;
@@ -798,29 +836,6 @@ static int cdbi_read_database (cdbi_database_t *db) /* {{{ */
   return (0);
 } /* }}} int cdbi_read_database */
 
-static int cdbi_read (void) /* {{{ */
-{
-  size_t i;
-  int success = 0;
-  int status;
-
-  for (i = 0; i < databases_num; i++)
-  {
-    status = cdbi_read_database (databases[i]);
-    if (status == 0)
-      success++;
-  }
-
-  if (success == 0)
-  {
-    ERROR ("dbi plugin: No database could be read. Will return an error so "
-        "the plugin will be delayed.");
-    return (-1);
-  }
-
-  return (0);
-} /* }}} int cdbi_read */
-
 static int cdbi_shutdown (void) /* {{{ */
 {
   size_t i;
@@ -848,7 +863,6 @@ void module_register (void) /* {{{ */
 {
   plugin_register_complex_config ("dbi", cdbi_config);
   plugin_register_init ("dbi", cdbi_init);
-  plugin_register_read ("dbi", cdbi_read);
   plugin_register_shutdown ("dbi", cdbi_shutdown);
 } /* }}} void module_register */
 

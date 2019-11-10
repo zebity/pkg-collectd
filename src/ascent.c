@@ -1,22 +1,27 @@
 /**
  * collectd - src/ascent.c
- * Copyright (C) 2008  Florian octo Forster
+ * Copyright (C) 2008       Florian octo Forster
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; only version 2 of the License is applicable.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *   Florian octo Forster <octo at verplant.org>
+ *   Florian octo Forster <octo at collectd.org>
  **/
 
 #include "collectd.h"
@@ -97,6 +102,7 @@ static char *pass        = NULL;
 static char *verify_peer = NULL;
 static char *verify_host = NULL;
 static char *cacert      = NULL;
+static char *timeout     = NULL;
 
 static CURL *curl = NULL;
 
@@ -112,7 +118,8 @@ static const char *config_keys[] =
   "Password",
   "VerifyPeer",
   "VerifyHost",
-  "CACert"
+  "CACert",
+  "Timeout",
 };
 static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 
@@ -513,14 +520,14 @@ static int ascent_config (const char *key, const char *value) /* {{{ */
     return (config_set (&verify_host, value));
   else if (strcasecmp (key, "CACert") == 0)
     return (config_set (&cacert, value));
+  else if (strcasecmp (key, "Timeout") == 0)
+    return (config_set (&timeout, value));
   else
     return (-1);
 } /* }}} int ascent_config */
 
 static int ascent_init (void) /* {{{ */
 {
-  static char credentials[1024];
-
   if (url == NULL)
   {
     WARNING ("ascent plugin: ascent_init: No URL configured, "
@@ -541,11 +548,16 @@ static int ascent_init (void) /* {{{ */
 
   curl_easy_setopt (curl, CURLOPT_NOSIGNAL, 1L);
   curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, ascent_curl_callback);
-  curl_easy_setopt (curl, CURLOPT_USERAGENT, PACKAGE_NAME"/"PACKAGE_VERSION);
+  curl_easy_setopt (curl, CURLOPT_USERAGENT, COLLECTD_USERAGENT);
   curl_easy_setopt (curl, CURLOPT_ERRORBUFFER, ascent_curl_error);
 
   if (user != NULL)
   {
+#ifdef HAVE_CURLOPT_USERNAME
+    curl_easy_setopt (curl, CURLOPT_USERNAME, user);
+    curl_easy_setopt (curl, CURLOPT_PASSWORD, (pass == NULL) ? "" : pass);
+#else
+    static char credentials[1024];
     int status;
 
     status = ssnprintf (credentials, sizeof (credentials), "%s:%s",
@@ -558,6 +570,7 @@ static int ascent_init (void) /* {{{ */
     }
 
     curl_easy_setopt (curl, CURLOPT_USERPWD, credentials);
+#endif
   }
 
   curl_easy_setopt (curl, CURLOPT_URL, url);
@@ -576,6 +589,14 @@ static int ascent_init (void) /* {{{ */
 
   if (cacert != NULL)
     curl_easy_setopt (curl, CURLOPT_CAINFO, cacert);
+
+#ifdef HAVE_CURLOPT_TIMEOUT_MS
+  if (timeout != NULL)
+    curl_easy_setopt (curl, CURLOPT_TIMEOUT_MS, atol(timeout));
+  else
+    curl_easy_setopt (curl, CURLOPT_TIMEOUT_MS,
+       CDTIME_T_TO_MS(plugin_get_interval()));
+#endif
 
   return (0);
 } /* }}} int ascent_init */

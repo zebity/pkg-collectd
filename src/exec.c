@@ -18,11 +18,12 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Authors:
- *   Florian octo Forster <octo at verplant.org>
+ *   Florian octo Forster <octo at collectd.org>
  *   Sebastian Harl <sh at tokkee.org>
  *   Peter Holik <peter at holik.at>
  **/
 
+#define _DEFAULT_SOURCE
 #define _BSD_SOURCE /* For setgroups */
 
 #include "collectd.h"

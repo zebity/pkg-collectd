@@ -84,7 +84,7 @@
     _b[sizeof (_b) - 1] = 0; \
     SSTRCAT ((d), _b); \
   } while (0)
-    
+
 
 #define LCC_SET_ERRSTR(c, ...) do { \
   snprintf ((c)->errbuf, sizeof ((c)->errbuf), __VA_ARGS__); \
@@ -258,6 +258,7 @@ static int lcc_send (lcc_connection_t *c, const char *command) /* {{{ */
     lcc_set_errno (c, errno);
     return (-1);
   }
+  fflush(c->fh);
 
   return (0);
 } /* }}} int lcc_send */

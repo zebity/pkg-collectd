@@ -76,10 +76,12 @@ struct cx_s /* {{{ */
   char *user;
   char *pass;
   char *credentials;
+  _Bool digest;
   _Bool verify_peer;
   _Bool verify_host;
   char *cacert;
   char *post_body;
+  int timeout;
   struct curl_slist *headers;
 
   cx_namespace_t *namespaces;
@@ -341,6 +343,7 @@ static int cx_handle_single_value_xpath (xmlXPathContextPtr xpath_ctx, /* {{{ */
 
   /* free up object */
   xmlXPathFreeObject (values_node_obj);
+  sfree (node_value);
 
   /* We have reached here which means that
    * we have got something to work */
@@ -385,7 +388,7 @@ static int cx_handle_instance_xpath (xmlXPathContextPtr xpath_ctx, /* {{{ */
   /* If the base xpath returns more than one block, the result is assumed to be
    * a table. The `Instance' option is not optional in this case. Check for the
    * condition and inform the user. */
-  if (is_table && (vl->type_instance == NULL))
+  if (is_table && (xpath->instance == NULL))
   {
     WARNING ("curl_xml plugin: "
         "Base-XPath %s is a table (more than one result was returned), "
@@ -438,8 +441,12 @@ static int cx_handle_instance_xpath (xmlXPathContextPtr xpath_ctx, /* {{{ */
   if (xpath->instance_prefix != NULL)
   {
     if (instance_node != NULL)
+    {
+      char *node_value = (char *) xmlNodeGetContent(instance_node->nodeTab[0]);
       ssnprintf (vl->type_instance, sizeof (vl->type_instance),"%s%s",
-          xpath->instance_prefix, (char *) xmlNodeGetContent(instance_node->nodeTab[0]));
+          xpath->instance_prefix, node_value);
+      sfree (node_value);
+    }
     else
       sstrncpy (vl->type_instance, xpath->instance_prefix,
           sizeof (vl->type_instance));
@@ -449,8 +456,11 @@ static int cx_handle_instance_xpath (xmlXPathContextPtr xpath_ctx, /* {{{ */
     /* If instance_prefix and instance_node are NULL, then
      * don't set the type_instance */
     if (instance_node != NULL)
-      sstrncpy (vl->type_instance, (char *) xmlNodeGetContent(instance_node->nodeTab[0]),
-          sizeof (vl->type_instance));
+    {
+      char *node_value = (char *) xmlNodeGetContent(instance_node->nodeTab[0]);
+      sstrncpy (vl->type_instance, node_value, sizeof (vl->type_instance));
+      sfree (node_value);
+    }
   }
 
   /* Free `instance_node_obj' this late, because `instance_node' points to
@@ -838,13 +848,19 @@ static int cx_init_curl (cx_t *db) /* {{{ */
   curl_easy_setopt (db->curl, CURLOPT_NOSIGNAL, 1L);
   curl_easy_setopt (db->curl, CURLOPT_WRITEFUNCTION, cx_curl_callback);
   curl_easy_setopt (db->curl, CURLOPT_WRITEDATA, db);
-  curl_easy_setopt (db->curl, CURLOPT_USERAGENT,
-                    PACKAGE_NAME"/"PACKAGE_VERSION);
+  curl_easy_setopt (db->curl, CURLOPT_USERAGENT, COLLECTD_USERAGENT);
   curl_easy_setopt (db->curl, CURLOPT_ERRORBUFFER, db->curl_errbuf);
   curl_easy_setopt (db->curl, CURLOPT_URL, db->url);
+  curl_easy_setopt (db->curl, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt (db->curl, CURLOPT_MAXREDIRS, 50L);
 
   if (db->user != NULL)
   {
+#ifdef HAVE_CURLOPT_USERNAME
+    curl_easy_setopt (db->curl, CURLOPT_USERNAME, db->user);
+    curl_easy_setopt (db->curl, CURLOPT_PASSWORD,
+        (db->pass == NULL) ? "" : db->pass);
+#else
     size_t credentials_size;
 
     credentials_size = strlen (db->user) + 2;
@@ -861,6 +877,10 @@ static int cx_init_curl (cx_t *db) /* {{{ */
     ssnprintf (db->credentials, credentials_size, "%s:%s",
                db->user, (db->pass == NULL) ? "" : db->pass);
     curl_easy_setopt (db->curl, CURLOPT_USERPWD, db->credentials);
+#endif
+
+    if (db->digest)
+      curl_easy_setopt (db->curl, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
   }
 
   curl_easy_setopt (db->curl, CURLOPT_SSL_VERIFYPEER, db->verify_peer ? 1L : 0L);
@@ -872,6 +892,14 @@ static int cx_init_curl (cx_t *db) /* {{{ */
     curl_easy_setopt (db->curl, CURLOPT_HTTPHEADER, db->headers);
   if (db->post_body != NULL)
     curl_easy_setopt (db->curl, CURLOPT_POSTFIELDS, db->post_body);
+
+#ifdef HAVE_CURLOPT_TIMEOUT_MS
+  if (db->timeout >= 0)
+    curl_easy_setopt (db->curl, CURLOPT_TIMEOUT_MS, (long) db->timeout);
+  else
+    curl_easy_setopt (db->curl, CURLOPT_TIMEOUT_MS,
+       CDTIME_T_TO_MS(plugin_get_interval()));
+#endif
 
   return (0);
 } /* }}} int cx_init_curl */
@@ -897,6 +925,8 @@ static int cx_config_add_url (oconfig_item_t *ci) /* {{{ */
     return (-1);
   }
   memset (db, 0, sizeof (*db));
+
+  db->timeout = -1;
 
   if (strcasecmp ("URL", ci->key) == 0)
   {
@@ -927,6 +957,8 @@ static int cx_config_add_url (oconfig_item_t *ci) /* {{{ */
       status = cf_util_get_string (child, &db->user);
     else if (strcasecmp ("Password", child->key) == 0)
       status = cf_util_get_string (child, &db->pass);
+    else if (strcasecmp ("Digest", child->key) == 0)
+      status = cf_util_get_boolean (child, &db->digest);
     else if (strcasecmp ("VerifyPeer", child->key) == 0)
       status = cf_util_get_boolean (child, &db->verify_peer);
     else if (strcasecmp ("VerifyHost", child->key) == 0)
@@ -941,6 +973,8 @@ static int cx_config_add_url (oconfig_item_t *ci) /* {{{ */
       status = cf_util_get_string (child, &db->post_body);
     else if (strcasecmp ("Namespace", child->key) == 0)
       status = cx_config_add_namespace (db, child);
+    else if (strcasecmp ("Timeout", child->key) == 0)
+      status = cf_util_get_int (child, &db->timeout);
     else
     {
       WARNING ("curl_xml plugin: Option `%s' not allowed here.", child->key);
@@ -1033,9 +1067,18 @@ static int cx_config (oconfig_item_t *ci) /* {{{ */
   return (0);
 } /* }}} int cx_config */
 
+static int cx_init (void) /* {{{ */
+{
+  /* Call this while collectd is still single-threaded to avoid
+   * initialization issues in libgcrypt. */
+  curl_global_init (CURL_GLOBAL_SSL);
+  return (0);
+} /* }}} int cx_init */
+
 void module_register (void)
 {
   plugin_register_complex_config ("curl_xml", cx_config);
+  plugin_register_init ("curl_xml", cx_init);
 } /* void module_register */
 
 /* vim: set sw=2 sts=2 et fdm=marker : */

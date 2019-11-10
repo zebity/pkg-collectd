@@ -2,7 +2,7 @@
  * collectd - src/write_http.c
  * Copyright (C) 2009       Paul Sadauskas
  * Copyright (C) 2009       Doug MacEachern
- * Copyright (C) 2007-2009  Florian octo Forster
+ * Copyright (C) 2007-2014  Florian octo Forster
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,7 +18,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Authors:
- *   Florian octo Forster <octo at verplant.org>
+ *   Florian octo Forster <octo at collectd.org>
  *   Doug MacEachern <dougm@hyperic.com>
  *   Paul Sadauskas <psadauskas@gmail.com>
  **/
@@ -27,7 +27,6 @@
 #include "plugin.h"
 #include "common.h"
 #include "utils_cache.h"
-#include "utils_parse_option.h"
 #include "utils_format_json.h"
 
 #if HAVE_PTHREAD_H
@@ -36,20 +35,33 @@
 
 #include <curl/curl.h>
 
+#ifndef WRITE_HTTP_DEFAULT_BUFFER_SIZE
+# define WRITE_HTTP_DEFAULT_BUFFER_SIZE 4096
+#endif
+
 /*
  * Private variables
  */
 struct wh_callback_s
 {
-        char *location;
+        char *name;
 
+        char *location;
         char *user;
         char *pass;
         char *credentials;
-        int   verify_peer;
-        int   verify_host;
+        _Bool verify_peer;
+        _Bool verify_host;
         char *cacert;
-        int   store_rates;
+        char *capath;
+        char *clientkey;
+        char *clientcert;
+        char *clientkeypass;
+        long sslversion;
+        _Bool store_rates;
+        int   low_speed_limit;
+        time_t low_speed_time;
+        int timeout;
 
 #define WH_FORMAT_COMMAND 0
 #define WH_FORMAT_JSON    1
@@ -58,7 +70,8 @@ struct wh_callback_s
         CURL *curl;
         char curl_errbuf[CURL_ERROR_SIZE];
 
-        char   send_buffer[4096];
+        char  *send_buffer;
+        size_t send_buffer_size;
         size_t send_buffer_free;
         size_t send_buffer_fill;
         cdtime_t send_buffer_init_time;
@@ -69,8 +82,8 @@ typedef struct wh_callback_s wh_callback_t;
 
 static void wh_reset_buffer (wh_callback_t *cb)  /* {{{ */
 {
-        memset (cb->send_buffer, 0, sizeof (cb->send_buffer));
-        cb->send_buffer_free = sizeof (cb->send_buffer);
+        memset (cb->send_buffer, 0, cb->send_buffer_size);
+        cb->send_buffer_free = cb->send_buffer_size;
         cb->send_buffer_fill = 0;
         cb->send_buffer_init_time = cdtime ();
 
@@ -111,8 +124,21 @@ static int wh_callback_init (wh_callback_t *cb) /* {{{ */
                 return (-1);
         }
 
+        if (cb->low_speed_limit > 0 && cb->low_speed_time > 0)
+        {
+                curl_easy_setopt (cb->curl, CURLOPT_LOW_SPEED_LIMIT,
+                                  (long) (cb->low_speed_limit * cb->low_speed_time));
+                curl_easy_setopt (cb->curl, CURLOPT_LOW_SPEED_TIME,
+                                  (long) cb->low_speed_time);
+        }
+
+#ifdef HAVE_CURLOPT_TIMEOUT_MS
+        if (cb->timeout > 0)
+                curl_easy_setopt (cb->curl, CURLOPT_TIMEOUT_MS, (long) cb->timeout);
+#endif
+
         curl_easy_setopt (cb->curl, CURLOPT_NOSIGNAL, 1L);
-        curl_easy_setopt (cb->curl, CURLOPT_USERAGENT, PACKAGE_NAME"/"PACKAGE_VERSION);
+        curl_easy_setopt (cb->curl, CURLOPT_USERAGENT, COLLECTD_USERAGENT);
 
         headers = NULL;
         headers = curl_slist_append (headers, "Accept:  */*");
@@ -125,9 +151,16 @@ static int wh_callback_init (wh_callback_t *cb) /* {{{ */
 
         curl_easy_setopt (cb->curl, CURLOPT_ERRORBUFFER, cb->curl_errbuf);
         curl_easy_setopt (cb->curl, CURLOPT_URL, cb->location);
+        curl_easy_setopt (cb->curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt (cb->curl, CURLOPT_MAXREDIRS, 50L);
 
         if (cb->user != NULL)
         {
+#ifdef HAVE_CURLOPT_USERNAME
+                curl_easy_setopt (cb->curl, CURLOPT_USERNAME, cb->user);
+                curl_easy_setopt (cb->curl, CURLOPT_PASSWORD,
+                        (cb->pass == NULL) ? "" : cb->pass);
+#else
                 size_t credentials_size;
 
                 credentials_size = strlen (cb->user) + 2;
@@ -144,14 +177,27 @@ static int wh_callback_init (wh_callback_t *cb) /* {{{ */
                 ssnprintf (cb->credentials, credentials_size, "%s:%s",
                                 cb->user, (cb->pass == NULL) ? "" : cb->pass);
                 curl_easy_setopt (cb->curl, CURLOPT_USERPWD, cb->credentials);
+#endif
                 curl_easy_setopt (cb->curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
         }
 
         curl_easy_setopt (cb->curl, CURLOPT_SSL_VERIFYPEER, (long) cb->verify_peer);
         curl_easy_setopt (cb->curl, CURLOPT_SSL_VERIFYHOST,
                         cb->verify_host ? 2L : 0L);
+        curl_easy_setopt (cb->curl, CURLOPT_SSLVERSION, cb->sslversion);
         if (cb->cacert != NULL)
                 curl_easy_setopt (cb->curl, CURLOPT_CAINFO, cb->cacert);
+        if (cb->capath != NULL)
+                curl_easy_setopt (cb->curl, CURLOPT_CAPATH, cb->capath);
+
+        if (cb->clientkey != NULL && cb->clientcert != NULL)
+        {
+            curl_easy_setopt (cb->curl, CURLOPT_SSLKEY, cb->clientkey);
+            curl_easy_setopt (cb->curl, CURLOPT_SSLCERT, cb->clientcert);
+
+            if (cb->clientkeypass != NULL)
+                curl_easy_setopt (cb->curl, CURLOPT_SSLKEYPASSWD, cb->clientkeypass);
+        }
 
         wh_reset_buffer (cb);
 
@@ -263,12 +309,22 @@ static void wh_callback_free (void *data) /* {{{ */
 
         wh_flush_nolock (/* timeout = */ 0, cb);
 
-        curl_easy_cleanup (cb->curl);
+        if (cb->curl != NULL)
+        {
+                curl_easy_cleanup (cb->curl);
+                cb->curl = NULL;
+        }
+        sfree (cb->name);
         sfree (cb->location);
         sfree (cb->user);
         sfree (cb->pass);
         sfree (cb->credentials);
         sfree (cb->cacert);
+        sfree (cb->capath);
+        sfree (cb->clientkey);
+        sfree (cb->clientcert);
+        sfree (cb->clientkeypass);
+        sfree (cb->send_buffer);
 
         sfree (cb);
 } /* }}} void wh_callback_free */
@@ -350,8 +406,8 @@ static int wh_write_command (const data_set_t *ds, const value_list_t *vl, /* {{
 
         DEBUG ("write_http plugin: <%s> buffer %zu/%zu (%g%%) \"%s\"",
                         cb->location,
-                        cb->send_buffer_fill, sizeof (cb->send_buffer),
-                        100.0 * ((double) cb->send_buffer_fill) / ((double) sizeof (cb->send_buffer)),
+                        cb->send_buffer_fill, cb->send_buffer_size,
+                        100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size),
                         command);
 
         /* Check if we have enough space for this command. */
@@ -405,8 +461,8 @@ static int wh_write_json (const data_set_t *ds, const value_list_t *vl, /* {{{ *
 
         DEBUG ("write_http plugin: <%s> buffer %zu/%zu (%g%%)",
                         cb->location,
-                        cb->send_buffer_fill, sizeof (cb->send_buffer),
-                        100.0 * ((double) cb->send_buffer_fill) / ((double) sizeof (cb->send_buffer)));
+                        cb->send_buffer_fill, cb->send_buffer_size,
+                        100.0 * ((double) cb->send_buffer_fill) / ((double) cb->send_buffer_size));
 
         /* Check if we have enough space for this command. */
         pthread_mutex_unlock (&cb->send_lock);
@@ -432,47 +488,6 @@ static int wh_write (const data_set_t *ds, const value_list_t *vl, /* {{{ */
 
         return (status);
 } /* }}} int wh_write */
-
-static int config_set_string (char **ret_string, /* {{{ */
-                oconfig_item_t *ci)
-{
-        char *string;
-
-        if ((ci->values_num != 1)
-                        || (ci->values[0].type != OCONFIG_TYPE_STRING))
-        {
-                WARNING ("write_http plugin: The `%s' config option "
-                                "needs exactly one string argument.", ci->key);
-                return (-1);
-        }
-
-        string = strdup (ci->values[0].value.string);
-        if (string == NULL)
-        {
-                ERROR ("write_http plugin: strdup failed.");
-                return (-1);
-        }
-
-        if (*ret_string != NULL)
-                free (*ret_string);
-        *ret_string = string;
-
-        return (0);
-} /* }}} int config_set_string */
-
-static int config_set_boolean (int *dest, oconfig_item_t *ci) /* {{{ */
-{
-        if ((ci->values_num != 1) || (ci->values[0].type != OCONFIG_TYPE_BOOLEAN))
-        {
-                WARNING ("write_http plugin: The `%s' config option "
-                                "needs exactly one boolean argument.", ci->key);
-                return (-1);
-        }
-
-        *dest = ci->values[0].value.boolean ? 1 : 0;
-
-        return (0);
-} /* }}} int config_set_boolean */
 
 static int config_set_format (wh_callback_t *cb, /* {{{ */
                 oconfig_item_t *ci)
@@ -500,12 +515,14 @@ static int config_set_format (wh_callback_t *cb, /* {{{ */
         }
 
         return (0);
-} /* }}} int config_set_string */
+} /* }}} int config_set_format */
 
-static int wh_config_url (oconfig_item_t *ci) /* {{{ */
+static int wh_config_node (oconfig_item_t *ci) /* {{{ */
 {
         wh_callback_t *cb;
+        int buffer_size = 0;
         user_data_t user_data;
+        char callback_name[DATA_MAX_NAME_LEN];
         int i;
 
         cb = malloc (sizeof (*cb));
@@ -515,40 +532,83 @@ static int wh_config_url (oconfig_item_t *ci) /* {{{ */
                 return (-1);
         }
         memset (cb, 0, sizeof (*cb));
-        cb->location = NULL;
-        cb->user = NULL;
-        cb->pass = NULL;
-        cb->credentials = NULL;
         cb->verify_peer = 1;
         cb->verify_host = 1;
-        cb->cacert = NULL;
         cb->format = WH_FORMAT_COMMAND;
-        cb->curl = NULL;
+        cb->sslversion = CURL_SSLVERSION_DEFAULT;
+        cb->low_speed_limit = 0;
+        cb->timeout = 0;
 
         pthread_mutex_init (&cb->send_lock, /* attr = */ NULL);
 
-        config_set_string (&cb->location, ci);
-        if (cb->location == NULL)
-                return (-1);
+        cf_util_get_string (ci, &cb->name);
+
+        /* FIXME: Remove this legacy mode in version 6. */
+        if (strcasecmp ("URL", ci->key) == 0)
+                cf_util_get_string (ci, &cb->location);
 
         for (i = 0; i < ci->children_num; i++)
         {
                 oconfig_item_t *child = ci->children + i;
 
-                if (strcasecmp ("User", child->key) == 0)
-                        config_set_string (&cb->user, child);
+                if (strcasecmp ("URL", child->key) == 0)
+                        cf_util_get_string (child, &cb->location);
+                else if (strcasecmp ("User", child->key) == 0)
+                        cf_util_get_string (child, &cb->user);
                 else if (strcasecmp ("Password", child->key) == 0)
-                        config_set_string (&cb->pass, child);
+                        cf_util_get_string (child, &cb->pass);
                 else if (strcasecmp ("VerifyPeer", child->key) == 0)
-                        config_set_boolean (&cb->verify_peer, child);
+                        cf_util_get_boolean (child, &cb->verify_peer);
                 else if (strcasecmp ("VerifyHost", child->key) == 0)
-                        config_set_boolean (&cb->verify_host, child);
+                        cf_util_get_boolean (child, &cb->verify_host);
                 else if (strcasecmp ("CACert", child->key) == 0)
-                        config_set_string (&cb->cacert, child);
+                        cf_util_get_string (child, &cb->cacert);
+                else if (strcasecmp ("CAPath", child->key) == 0)
+                        cf_util_get_string (child, &cb->capath);
+                else if (strcasecmp ("ClientKey", child->key) == 0)
+                        cf_util_get_string (child, &cb->clientkey);
+                else if (strcasecmp ("ClientCert", child->key) == 0)
+                        cf_util_get_string (child, &cb->clientcert);
+                else if (strcasecmp ("ClientKeyPass", child->key) == 0)
+                        cf_util_get_string (child, &cb->clientkeypass);
+                else if (strcasecmp ("SSLVersion", child->key) == 0)
+                {
+                        char *value = NULL;
+
+                        cf_util_get_string (child, &value);
+
+                        if (value == NULL || strcasecmp ("default", value) == 0)
+                                cb->sslversion = CURL_SSLVERSION_DEFAULT;
+                        else if (strcasecmp ("SSLv2", value) == 0)
+                                cb->sslversion = CURL_SSLVERSION_SSLv2;
+                        else if (strcasecmp ("SSLv3", value) == 0)
+                                cb->sslversion = CURL_SSLVERSION_SSLv3;
+                        else if (strcasecmp ("TLSv1", value) == 0)
+                                cb->sslversion = CURL_SSLVERSION_TLSv1;
+#if (LIBCURL_VERSION_MAJOR > 7) || (LIBCURL_VERSION_MAJOR == 7 && LIBCURL_VERSION_MINOR >= 34)
+                        else if (strcasecmp ("TLSv1_0", value) == 0)
+                                cb->sslversion = CURL_SSLVERSION_TLSv1_0;
+                        else if (strcasecmp ("TLSv1_1", value) == 0)
+                                cb->sslversion = CURL_SSLVERSION_TLSv1_1;
+                        else if (strcasecmp ("TLSv1_2", value) == 0)
+                                cb->sslversion = CURL_SSLVERSION_TLSv1_2;
+#endif
+                        else
+                                ERROR ("write_http plugin: Invalid SSLVersion "
+                                                "option: %s.", value);
+
+                        sfree(value);
+                }
                 else if (strcasecmp ("Format", child->key) == 0)
                         config_set_format (cb, child);
                 else if (strcasecmp ("StoreRates", child->key) == 0)
-                        config_set_boolean (&cb->store_rates, child);
+                        cf_util_get_boolean (child, &cb->store_rates);
+                else if (strcasecmp ("BufferSize", child->key) == 0)
+                        cf_util_get_int (child, &buffer_size);
+                else if (strcasecmp ("LowSpeedLimit", child->key) == 0)
+                        cf_util_get_int (child, &cb->low_speed_limit);
+                else if (strcasecmp ("Timeout", child->key) == 0)
+                        cf_util_get_int (child, &cb->timeout);
                 else
                 {
                         ERROR ("write_http plugin: Invalid configuration "
@@ -556,19 +616,51 @@ static int wh_config_url (oconfig_item_t *ci) /* {{{ */
                 }
         }
 
-        DEBUG ("write_http: Registering write callback with URL %s",
-                        cb->location);
+        if (cb->location == NULL)
+        {
+                ERROR ("write_http plugin: no URL defined for instance '%s'",
+                        cb->name);
+                wh_callback_free (cb);
+                return (-1);
+        }
+
+        if (cb->low_speed_limit > 0)
+                cb->low_speed_time = CDTIME_T_TO_TIME_T(plugin_get_interval());
+
+        /* Determine send_buffer_size. */
+        cb->send_buffer_size = WRITE_HTTP_DEFAULT_BUFFER_SIZE;
+        if (buffer_size >= 1024)
+                cb->send_buffer_size = (size_t) buffer_size;
+        else if (buffer_size != 0)
+                ERROR ("write_http plugin: Ignoring invalid BufferSize setting (%d).",
+                                buffer_size);
+
+        /* Allocate the buffer. */
+        cb->send_buffer = malloc (cb->send_buffer_size);
+        if (cb->send_buffer == NULL)
+        {
+                ERROR ("write_http plugin: malloc(%zu) failed.", cb->send_buffer_size);
+                wh_callback_free (cb);
+                return (-1);
+        }
+        /* Nulls the buffer and sets ..._free and ..._fill. */
+        wh_reset_buffer (cb);
+
+        ssnprintf (callback_name, sizeof (callback_name), "write_http/%s",
+                        cb->name);
+        DEBUG ("write_http: Registering write callback '%s' with URL '%s'",
+                        callback_name, cb->location);
 
         memset (&user_data, 0, sizeof (user_data));
         user_data.data = cb;
         user_data.free_func = NULL;
-        plugin_register_flush ("write_http", wh_flush, &user_data);
+        plugin_register_flush (callback_name, wh_flush, &user_data);
 
         user_data.free_func = wh_callback_free;
-        plugin_register_write ("write_http", wh_write, &user_data);
+        plugin_register_write (callback_name, wh_write, &user_data);
 
         return (0);
-} /* }}} int wh_config_url */
+} /* }}} int wh_config_node */
 
 static int wh_config (oconfig_item_t *ci) /* {{{ */
 {
@@ -578,8 +670,14 @@ static int wh_config (oconfig_item_t *ci) /* {{{ */
         {
                 oconfig_item_t *child = ci->children + i;
 
-                if (strcasecmp ("URL", child->key) == 0)
-                        wh_config_url (child);
+                if (strcasecmp ("Node", child->key) == 0)
+                        wh_config_node (child);
+                /* FIXME: Remove this legacy mode in version 6. */
+                else if (strcasecmp ("URL", child->key) == 0) {
+                        WARNING ("write_http plugin: Legacy <URL> block found. "
+                                "Please use <Node> instead.");
+                        wh_config_node (child);
+                }
                 else
                 {
                         ERROR ("write_http plugin: Invalid configuration "
@@ -590,9 +688,18 @@ static int wh_config (oconfig_item_t *ci) /* {{{ */
         return (0);
 } /* }}} int wh_config */
 
+static int wh_init (void) /* {{{ */
+{
+        /* Call this while collectd is still single-threaded to avoid
+         * initialization issues in libgcrypt. */
+        curl_global_init (CURL_GLOBAL_SSL);
+        return (0);
+} /* }}} int wh_init */
+
 void module_register (void) /* {{{ */
 {
         plugin_register_complex_config ("write_http", wh_config);
+        plugin_register_init ("write_http", wh_init);
 } /* }}} void module_register */
 
 /* vim: set fdm=marker sw=8 ts=8 tw=78 et : */

@@ -6,9 +6,7 @@ collectd-perl - Documentation of collectd's C<perl plugin>
 
 =head1 SYNOPSIS
 
-  <LoadPlugin perl>
-    Globals true
-  </LoadPlugin>
+  LoadPlugin perl
   # ...
   <Plugin perl>
     IncludeDir "/path/to/perl/plugins"
@@ -28,12 +26,6 @@ interface to collectd's plugin system. This makes it possible to write plugins
 for collectd in Perl. This is a lot more efficient than executing a
 Perl-script every time you want to read a value with the C<exec plugin> (see
 L<collectd-exec(5)>) and provides a lot more functionality, too.
-
-When loading the C<perl plugin>, the B<Globals> option should be enabled.
-Else, the perl plugin will fail to load any Perl modules implemented in C,
-which includes, amongst many others, the B<threads> module used by the plugin
-itself. See the documentation of the B<Globals> option in L<collectd.conf(5)>
-for details.
 
 =head1 CONFIGURATION
 
@@ -716,7 +708,7 @@ types used by the read, write and match functions.
 =item
 
 Please feel free to send in new plugins to collectd's mailing list at
-E<lt>collectdE<nbsp>atE<nbsp>verplant.orgE<gt> for review and, possibly,
+E<lt>collectdE<nbsp>atE<nbsp>collectd.orgE<gt> for review and, possibly,
 inclusion in the main distribution. In the latter case, we will take care of
 keeping the plugin up to date and adapting it to new versions of collectd.
 
@@ -796,7 +788,7 @@ The C<perl plugin> has been written by Sebastian Harl
 E<lt>shE<nbsp>atE<nbsp>tokkee.orgE<gt>.
 
 This manpage has been written by Florian Forster
-E<lt>octoE<nbsp>atE<nbsp>verplant.orgE<gt> and Sebastian Harl
+E<lt>octoE<nbsp>atE<nbsp>collectd.orgE<gt> and Sebastian Harl
 E<lt>shE<nbsp>atE<nbsp>tokkee.orgE<gt>.
 
 =cut
