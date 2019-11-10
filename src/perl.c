@@ -1,6 +1,6 @@
 /**
  * collectd - src/perl.c
- * Copyright (C) 2007  Sebastian Harl
+ * Copyright (C) 2007, 2008  Sebastian Harl
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1475,6 +1475,11 @@ static int perl_config_enabledebugger (pTHX_ oconfig_item_t *ci)
 	if ((0 != ci->children_num) || (1 != ci->values_num)
 			|| (OCONFIG_TYPE_STRING != ci->values[0].type)) {
 		log_err ("EnableDebugger expects a single string argument.");
+		return 1;
+	}
+
+	if (NULL != perl_threads) {
+		log_warn ("EnableDebugger has no effects if used after LoadPlugin.");
 		return 1;
 	}
 

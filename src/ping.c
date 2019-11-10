@@ -106,15 +106,18 @@ static void add_hosts (void)
 			hl_this = hl_this->next;
 		}
 	}
-}
+} /* void add_hosts */
 
 static int ping_init (void)
 {
+	if (pingobj == NULL)
+		return (-1);
+
 	if (hosts != NULL)
 		add_hosts ();
 
 	return (0);
-}
+} /* int ping_init */
 
 static int ping_config (const char *key, const char *value)
 {
@@ -159,7 +162,7 @@ static int ping_config (const char *key, const char *value)
 	else if (strcasecmp (key, "ttl") == 0)
 	{
 		int ttl = atoi (value);
-		if (ping_setopt (pingobj, PING_DEF_TIMEOUT, (void *) &ttl))
+		if (ping_setopt (pingobj, PING_OPT_TTL, (void *) &ttl))
 		{
 			WARNING ("ping: liboping did not accept the TTL value %i", ttl);
 			return (1);

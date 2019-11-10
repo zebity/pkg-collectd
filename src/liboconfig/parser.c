@@ -107,6 +107,7 @@ extern int yylineno;
 extern char *yytext;
 
 extern oconfig_item_t *ci_root;
+extern char           *c_file;
 
 
 /* Enabling traces.  */
@@ -119,7 +120,7 @@ extern oconfig_item_t *ci_root;
 # undef YYERROR_VERBOSE
 # define YYERROR_VERBOSE 1
 #else
-# define YYERROR_VERBOSE 0
+# define YYERROR_VERBOSE 1
 #endif
 
 /* Enabling the token table.  */
@@ -129,7 +130,7 @@ extern oconfig_item_t *ci_root;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 37 "parser.y"
+#line 38 "parser.y"
 {
 	double  number;
 	int     boolean;
@@ -140,7 +141,7 @@ typedef union YYSTYPE
 	statement_list_t sl;
 }
 /* Line 187 of yacc.c.  */
-#line 144 "parser.c"
+#line 145 "parser.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -153,7 +154,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 157 "parser.c"
+#line 158 "parser.c"
 
 #ifdef short
 # undef short
@@ -442,9 +443,9 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    69,    69,    70,    74,    75,    76,    77,    81,    88,
-      97,   101,   111,   117,   127,   134,   150,   151,   152,   156,
-     166,   183
+       0,    73,    73,    74,    78,    79,    80,    81,    85,    92,
+     101,   105,   115,   121,   131,   138,   154,   155,   156,   160,
+     170,   187
 };
 #endif
 
@@ -1368,37 +1369,37 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 69 "parser.y"
+#line 73 "parser.y"
     {(yyval.string) = unquote ((yyvsp[(1) - (1)].string));}
     break;
 
   case 3:
-#line 70 "parser.y"
+#line 74 "parser.y"
     {(yyval.string) = strdup ((yyvsp[(1) - (1)].string));}
     break;
 
   case 4:
-#line 74 "parser.y"
+#line 78 "parser.y"
     {(yyval.cv).value.number = (yyvsp[(1) - (1)].number); (yyval.cv).type = OCONFIG_TYPE_NUMBER;}
     break;
 
   case 5:
-#line 75 "parser.y"
+#line 79 "parser.y"
     {(yyval.cv).value.boolean = 1; (yyval.cv).type = OCONFIG_TYPE_BOOLEAN;}
     break;
 
   case 6:
-#line 76 "parser.y"
+#line 80 "parser.y"
     {(yyval.cv).value.boolean = 0; (yyval.cv).type = OCONFIG_TYPE_BOOLEAN;}
     break;
 
   case 7:
-#line 77 "parser.y"
+#line 81 "parser.y"
     {(yyval.cv).value.string = (yyvsp[(1) - (1)].string); (yyval.cv).type = OCONFIG_TYPE_STRING;}
     break;
 
   case 8:
-#line 82 "parser.y"
+#line 86 "parser.y"
     {
 	 (yyval.al) = (yyvsp[(1) - (2)].al);
 	 (yyval.al).argument_num++;
@@ -1408,7 +1409,7 @@ yyreduce:
     break;
 
   case 9:
-#line 89 "parser.y"
+#line 93 "parser.y"
     {
 	 (yyval.al).argument = malloc (sizeof (oconfig_value_t));
 	 (yyval.al).argument[0] = (yyvsp[(1) - (1)].cv);
@@ -1417,12 +1418,12 @@ yyreduce:
     break;
 
   case 10:
-#line 97 "parser.y"
+#line 101 "parser.y"
     {(yyval.string) = strdup ((yyvsp[(1) - (1)].string));}
     break;
 
   case 11:
-#line 102 "parser.y"
+#line 106 "parser.y"
     {
 	 memset (&(yyval.ci), '\0', sizeof ((yyval.ci)));
 	 (yyval.ci).key = (yyvsp[(1) - (3)].string);
@@ -1432,7 +1433,7 @@ yyreduce:
     break;
 
   case 12:
-#line 112 "parser.y"
+#line 116 "parser.y"
     {
 	 memset (&(yyval.ci), '\0', sizeof ((yyval.ci)));
 	 (yyval.ci).key = (yyvsp[(2) - (4)].string);
@@ -1440,7 +1441,7 @@ yyreduce:
     break;
 
   case 13:
-#line 118 "parser.y"
+#line 122 "parser.y"
     {
 	 memset (&(yyval.ci), '\0', sizeof ((yyval.ci)));
 	 (yyval.ci).key = (yyvsp[(2) - (5)].string);
@@ -1450,14 +1451,14 @@ yyreduce:
     break;
 
   case 14:
-#line 128 "parser.y"
+#line 132 "parser.y"
     {
 	 (yyval.string) = (yyvsp[(3) - (5)].string);
 	}
     break;
 
   case 15:
-#line 135 "parser.y"
+#line 139 "parser.y"
     {
 	 if (strcmp ((yyvsp[(1) - (3)].ci).key, (yyvsp[(3) - (3)].string)) != 0)
 	 {
@@ -1473,22 +1474,22 @@ yyreduce:
     break;
 
   case 16:
-#line 150 "parser.y"
+#line 154 "parser.y"
     {(yyval.ci) = (yyvsp[(1) - (1)].ci);}
     break;
 
   case 17:
-#line 151 "parser.y"
+#line 155 "parser.y"
     {(yyval.ci) = (yyvsp[(1) - (1)].ci);}
     break;
 
   case 18:
-#line 152 "parser.y"
+#line 156 "parser.y"
     {(yyval.ci).values_num = 0;}
     break;
 
   case 19:
-#line 157 "parser.y"
+#line 161 "parser.y"
     {
 	 (yyval.sl) = (yyvsp[(1) - (2)].sl);
 	 if (((yyvsp[(2) - (2)].ci).values_num > 0) || ((yyvsp[(2) - (2)].ci).children_num > 0))
@@ -1501,7 +1502,7 @@ yyreduce:
     break;
 
   case 20:
-#line 167 "parser.y"
+#line 171 "parser.y"
     {
 	 if (((yyvsp[(1) - (1)].ci).values_num > 0) || ((yyvsp[(1) - (1)].ci).children_num > 0))
 	 {
@@ -1518,7 +1519,7 @@ yyreduce:
     break;
 
   case 21:
-#line 184 "parser.y"
+#line 188 "parser.y"
     {
 	 ci_root = malloc (sizeof (oconfig_item_t));
 	 memset (ci_root, '\0', sizeof (oconfig_item_t));
@@ -1529,7 +1530,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1533 "parser.c"
+#line 1534 "parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1743,11 +1744,19 @@ yyreturn:
 }
 
 
-#line 192 "parser.y"
+#line 196 "parser.y"
 
 static int yyerror (const char *s)
 {
-	fprintf (stderr, "Error in line %i near `%s': %s\n", yylineno, yytext, s);
+	char *text;
+
+	if (*yytext == '\n')
+		text = "<newline>";
+	else
+		text = yytext;
+
+	fprintf (stderr, "Parse error in file `%s', line %i near `%s': %s\n",
+		c_file, yylineno, text, s);
 	return (-1);
 } /* int yyerror */
 

@@ -66,7 +66,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 37 "parser.y"
+#line 38 "parser.y"
 {
 	double  number;
 	int     boolean;

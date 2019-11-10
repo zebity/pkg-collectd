@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD.CONF 5"
-.TH COLLECTD.CONF 5 "2008-02-18" "4.3.0" "collectd"
+.TH COLLECTD.CONF 5 "2008-03-29" "4.3.2" "collectd"
 .SH "NAME"
 collectd.conf \- Configuration for the system statistics collection daemon \fBcollectd\fR
 .SH "SYNOPSIS"
@@ -194,6 +194,11 @@ use statements like the following:
 .Vb 1
 \&  Include "/etc/collectd.d/*.conf"
 .Ve
+.Sp
+If more than one files are included by a single \fBInclude\fR option, the files
+will be included in lexicographical order (as defined by the \f(CW\*(C`strcmp\*(C'\fR
+function). Thus, you can e.\ g. use numbered prefixes to specify the
+order in which the files are loaded.
 .Sp
 To prevent loops and shooting yourself in the foot in interesting ways the
 nesting is limited to a depth of 8\ levels, which should be sufficient for

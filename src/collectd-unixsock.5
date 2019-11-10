@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "COLLECTD-UNIXSOCK 5"
-.TH COLLECTD-UNIXSOCK 5 "2008-02-18" "4.3.0" "collectd"
+.TH COLLECTD-UNIXSOCK 5 "2008-03-29" "4.3.2" "collectd"
 .SH "NAME"
 collectd\-unixsock \- Documentation of collectd's \f(CW\*(C`unixsock plugin\*(C'\fR
 .SH "SYNOPSIS"
@@ -208,12 +208,12 @@ plugin within collectd. \fItype\fR identifies the type and number of values
 (i.\ e. data\-set) passed to collectd. A large list of predefined
 data-sets is available in the \fBtypes.db\fR file.
 .Sp
-The \fIOptionList\fR is an optional list of \fIOptions\fR, where each option if a
+The \fIOptionList\fR is an optional list of \fIOptions\fR, where each option is a
 key\-value\-pair. A list of currently understood options can be found below, all
 other options will be ignored.
 .Sp
 \&\fIValuelist\fR is a colon-separated list of the time and the values, each either
-an integer if the data-source is a counter, of a double if the data-source if
+an integer if the data-source is a counter, or a double if the data-source is
 of type \*(L"gauge\*(R". You can submit an undefined gauge-value by using \fBU\fR. When
 submitting \fBU\fR to a counter the behavior is undefined. The time is given as
 epoch (i.\ e. standard \s-1UNIX\s0 time).
@@ -325,10 +325,12 @@ follow, such as the \fB\s-1GETVAL\s0\fR command. These commands usually return a
 value on failure and never return zero.
 .SH "ABSTRACTION LAYER"
 .IX Header "ABSTRACTION LAYER"
-Shipped with the sourcecode comes the Perl-Module Collectd::Unixsock which
+\&\fBcollectd\fR ships the Perl-Module Collectd::Unixsock which
 provides an abstraction layer over the actual socket connection. It can be
-found in the directory \fIcontrib/PerlLib\fR. If you want to use Perl to
-communicate with the daemon, you're encouraged to use and expand this module.
+found in the directory \fIbindings/perl/\fR in the source distribution or
+(usually) somewhere near \fI/usr/share/perl5/\fR if you're using a package. If
+you want to use Perl to communicate with the daemon, you're encouraged to use
+and expand this module.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIcollectd\fR\|(1),

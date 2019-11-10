@@ -52,11 +52,13 @@ static pthread_mutex_t getpwnam_r_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t strerror_r_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-void sstrncpy (char *d, const char *s, int len)
+char *sstrncpy (char *dest, const char *src, size_t n)
 {
-	strncpy (d, s, len);
-	d[len - 1] = '\0';
-}
+	strncpy (dest, src, n);
+	dest[n - 1] = '\0';
+
+	return (dest);
+} /* char *sstrncpy */
 
 char *sstrdup (const char *s)
 {
@@ -569,6 +571,83 @@ unsigned long long htonll (unsigned long long n)
 	return (((unsigned long long) htonl (n)) << 32) + htonl (n >> 32);
 #endif
 } /* unsigned long long htonll */
+
+#if FP_LAYOUT_NEED_NOTHING
+/* Well, we need nothing.. */
+/* #endif FP_LAYOUT_NEED_NOTHING */
+
+#elif FP_LAYOUT_NEED_ENDIANFLIP || FP_LAYOUT_NEED_INTSWAP
+# if FP_LAYOUT_NEED_ENDIANFLIP
+#  define FP_CONVERT(A) ((((uint64_t)(A) & 0xff00000000000000LL) >> 56) | \
+                         (((uint64_t)(A) & 0x00ff000000000000LL) >> 40) | \
+                         (((uint64_t)(A) & 0x0000ff0000000000LL) >> 24) | \
+                         (((uint64_t)(A) & 0x000000ff00000000LL) >> 8)  | \
+                         (((uint64_t)(A) & 0x00000000ff000000LL) << 8)  | \
+                         (((uint64_t)(A) & 0x0000000000ff0000LL) << 24) | \
+                         (((uint64_t)(A) & 0x000000000000ff00LL) << 40) | \
+                         (((uint64_t)(A) & 0x00000000000000ffLL) << 56))
+# else
+#  define FP_CONVERT(A) ((((uint64_t)(A) & 0xffffffff00000000LL) >> 32) | \
+                         (((uint64_t)(A) & 0x00000000ffffffffLL) << 32))
+# endif
+
+double ntohd (double d)
+{
+	union
+	{
+		uint8_t  byte[8];
+		uint64_t integer;
+		double   floating;
+	} ret;
+
+	ret.floating = d;
+
+	/* NAN in x86 byte order */
+	if ((ret.byte[0] == 0x00) && (ret.byte[1] == 0x00)
+			&& (ret.byte[2] == 0x00) && (ret.byte[3] == 0x00)
+			&& (ret.byte[4] == 0x00) && (ret.byte[5] == 0x00)
+			&& (ret.byte[6] == 0xf8) && (ret.byte[7] == 0x7f))
+	{
+		return (NAN);
+	}
+	else
+	{
+		uint64_t tmp;
+
+		tmp = ret.integer;
+		ret.integer = FP_CONVERT (tmp);
+		return (ret.floating);
+	}
+} /* double ntohd */
+
+double htond (double d)
+{
+	union
+	{
+		uint8_t  byte[8];
+		uint64_t integer;
+		double   floating;
+	} ret;
+
+	if (isnan (d))
+	{
+		ret.byte[0] = ret.byte[1] = ret.byte[2] = ret.byte[3] = 0x00;
+		ret.byte[4] = ret.byte[5] = 0x00;
+		ret.byte[6] = 0xf8;
+		ret.byte[7] = 0x7f;
+		return (ret.floating);
+	}
+	else
+	{
+		uint64_t tmp;
+
+		ret.floating = d;
+		tmp = FP_CONVERT (ret.integer);
+		ret.integer = tmp;
+		return (ret.floating);
+	}
+} /* double htond */
+#endif /* FP_LAYOUT_NEED_ENDIANFLIP || FP_LAYOUT_NEED_INTSWAP */
 
 int format_name (char *ret, int ret_len,
 		const char *hostname,

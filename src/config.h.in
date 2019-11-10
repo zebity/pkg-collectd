@@ -18,6 +18,15 @@
 /* Wether or not to use statgrab library */
 #undef COLLECT_LIBSTATGRAB
 
+/* Define if endianflip is needed to convert to x86 representation. */
+#undef FP_LAYOUT_NEED_ENDIANFLIP
+
+/* Define if intswap is needed to convert to x86 representation. */
+#undef FP_LAYOUT_NEED_INTSWAP
+
+/* Define if doubles are stored in x86 representation. */
+#undef FP_LAYOUT_NEED_NOTHING
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
@@ -561,6 +570,9 @@
 
 /* Define if the function getmntent exists. It's the version from libseq. */
 #undef HAVE_SEQ_GETMNTENT
+
+/* Define to 1 if you have the `setgroups' function. */
+#undef HAVE_SETGROUPS
 
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H

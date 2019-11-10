@@ -333,9 +333,10 @@ am__entropy_la_SOURCES_DIST = entropy.c
 entropy_la_OBJECTS = $(am_entropy_la_OBJECTS)
 @BUILD_PLUGIN_ENTROPY_TRUE@am_entropy_la_rpath = -rpath $(pkglibdir)
 exec_la_LIBADD =
-am__exec_la_SOURCES_DIST = exec.c utils_cmd_putval.c \
-	utils_cmd_putval.h
+am__exec_la_SOURCES_DIST = exec.c utils_cmd_putnotif.c \
+	utils_cmd_putnotif.h utils_cmd_putval.c utils_cmd_putval.h
 @BUILD_PLUGIN_EXEC_TRUE@am_exec_la_OBJECTS = exec.lo \
+@BUILD_PLUGIN_EXEC_TRUE@	utils_cmd_putnotif.lo \
 @BUILD_PLUGIN_EXEC_TRUE@	utils_cmd_putval.lo
 exec_la_OBJECTS = $(am_exec_la_OBJECTS)
 @BUILD_PLUGIN_EXEC_TRUE@am_exec_la_rpath = -rpath $(pkglibdir)
@@ -891,6 +892,7 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DSYMUTIL = @DSYMUTIL@
 ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -916,6 +918,7 @@ LN_S = @LN_S@
 LTDLINCL = @LTDLINCL@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+NMEDIT = @NMEDIT@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -1099,7 +1102,10 @@ pkglib_LTLIBRARIES = $(am__append_17) $(am__append_22) \
 @BUILD_PLUGIN_EMAIL_TRUE@	$(am__append_57)
 @BUILD_PLUGIN_ENTROPY_TRUE@entropy_la_SOURCES = entropy.c
 @BUILD_PLUGIN_ENTROPY_TRUE@entropy_la_LDFLAGS = -module -avoid-version
-@BUILD_PLUGIN_EXEC_TRUE@exec_la_SOURCES = exec.c utils_cmd_putval.c utils_cmd_putval.h
+@BUILD_PLUGIN_EXEC_TRUE@exec_la_SOURCES = exec.c \
+@BUILD_PLUGIN_EXEC_TRUE@		  utils_cmd_putnotif.c utils_cmd_putnotif.h \
+@BUILD_PLUGIN_EXEC_TRUE@		  utils_cmd_putval.c utils_cmd_putval.h
+
 @BUILD_PLUGIN_EXEC_TRUE@exec_la_LDFLAGS = -module -avoid-version \
 @BUILD_PLUGIN_EXEC_TRUE@	$(am__append_64)
 @BUILD_PLUGIN_HDDTEMP_TRUE@hddtemp_la_SOURCES = hddtemp.c
