@@ -1,3 +1,15 @@
+collectd (5.9.2-3) unstable; urgency=medium
+
+  As announced in
+  <https://lists.debian.org/debian-python/2019/07/msg00080.html>,
+  Python2 will be removed from Debian.
+  So starting from now on, collectd will be using Python3!
+
+  Please be aware that this also requires you to fix your plugins
+  in case they are not compatible to Python3!
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 11 Nov 2019 01:18:29 +0100
+
 collectd (5.1.0-1) unstable; urgency=low
 
   Version 5 of collectd introduced a couple of backward-incompatible changes.
