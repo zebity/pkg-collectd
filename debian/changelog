@@ -1,3 +1,13 @@
+collectd (5.9.2-3) unstable; urgency=medium
+
+  * [e4535ac] Migrate to python3
+  * [53fe51f] It is debian/NEWS, not debian/NEWS.Debian
+  * [5f21e0e] Mention migration to Python3 in debian/NEWS
+  * [8846b45] Disable nut plugin for now.
+    Nut has too many rc bugs to enter testing soon.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 11 Nov 2019 01:47:49 +0100
+
 collectd (5.9.2-2) unstable; urgency=medium
 
   * [0155b6e] revert @zenity's configure exit change
