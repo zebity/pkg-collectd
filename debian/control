@@ -108,6 +108,7 @@ Description: statistics collection and monitoring daemon (core system)
  package.
  .
    * AMQP output plugin: amqp
+   * AMQP 1.0 output plugin: amqp1
    * Apache and lighttpd statistics provided by mod_status: apache
    * APC UPS's charge, load, input/output/battery voltage, etc.: apcups
    * Ascent server statistics: ascent
