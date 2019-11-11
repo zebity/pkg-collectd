@@ -1,3 +1,10 @@
+collectd (5.9.2-4) unstable; urgency=medium
+
+  * The "do not dput without looking at the CI upload".
+  * [4720c20] Finish the NEWS file renaming.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 11 Nov 2019 02:06:32 +0100
+
 collectd (5.9.2-3) unstable; urgency=medium
 
   * [e4535ac] Migrate to python3
