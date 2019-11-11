@@ -100,7 +100,9 @@ confflags += --disable-lvm
 # libnvidia-ml is non-free
 confflags += --disable-gpu_nvidia
 
-
+# disable nut plugin for now.
+# nut is not in testing, see #937169 #885358
+confflags += --disable-nut
 
 # These plugins are Linux-specific.
 ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
