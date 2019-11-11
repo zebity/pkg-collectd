@@ -1,3 +1,17 @@
+collectd (5.9.2-2) unstable; urgency=medium
+
+  * [0155b6e] revert @zenity's configure exit change
+  * [9df748b] LVM is still deprecated
+  * [fbc4f98] Build-depend on libqpid-proton11-dev.
+    For the amqp1 module
+  * [dfb3ff6] Disable gpu_nvidia module.
+    Needs non-free libraries.
+  * [3fe11c6] Enable mqtt again - moquitto is in testing
+  * [6f7072b] pci_errors module is broken on some arches
+  * [21de403] Mention amqp1 output plugin in description.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 11 Nov 2019 01:00:31 +0100
+
 collectd (5.9.2-1) unstable; urgency=medium
 
   * [e2bc528] Stay with the common debian/version tag.
