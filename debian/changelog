@@ -1,3 +1,16 @@
+collectd (5.9.2.g-1~1.gbp8929f0) UNRELEASED; urgency=medium
+
+  ** SNAPSHOT build @8929f0e28363f8c5fc9fc7bf929e5479df60de41 **
+
+  * [978cc41] Use github tags instead of collectd.org.
+    Seems the build process is buggy, see #944535.
+  * [8929f0e] Update upstream source from tag 'upstream/5.9.2.g'
+    Update to upstream version '5.9.2.g'
+    (Importing the github tarball of 5.9.2)
+    with Debian dir 3d9a5865a5c149693e7dc99672fbd725af72b2be
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 13 Nov 2019 14:48:44 +0100
+
 collectd (5.9.2-4) unstable; urgency=medium
 
   * The "do not dput without looking at the CI upload".
