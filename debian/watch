@@ -1,5 +1,2 @@
 version=3
-
-opts="uversionmangle=s/beta/~beta/;s/[-.]rc/~rc/" \
-https://collectd.org/files/ collectd-(.*)\.tar\..*
-
+https://github.com/collectd/collectd/tags /collectd/collectd/archive/stable-([0-9.-]+).tar.gz
