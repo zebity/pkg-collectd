@@ -1,6 +1,6 @@
 /**
- * collectd - src/utils_crc32.h
- * Copyright (C) 2014       Pierre-Yves Ritschard
+ * libcollectdclient - src/libcollectdclient/lcc_features.h
+ * Copyright (C) 2009  Sebastian Harl
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,12 +21,44 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *   Pierre-Yves Ritschard <pyr at spootnik.org>
- */
+ *   Sebastian tokkee Harl <sh at tokkee.org>
+ **/
 
-#ifndef UTILS_CRC32_H
-#define UTILS_CRC32_H 1
+#ifndef LIBCOLLECTD_LCC_FEATURES_H
+#define LIBCOLLECTD_LCC_FEATURES_H 1
 
-uint32_t crc32_buffer(const unsigned char *, size_t);
-
+#ifdef __cplusplus
+# define LCC_BEGIN_DECLS extern "C" {
+# define LCC_END_DECLS   }
+#else
+# define LCC_BEGIN_DECLS
+# define LCC_END_DECLS
 #endif
+
+#define LCC_API_VERSION 0
+
+#define LCC_VERSION_MAJOR 5
+#define LCC_VERSION_MINOR 9
+#define LCC_VERSION_PATCH 2
+
+#define LCC_VERSION_EXTRA ""
+
+#define LCC_VERSION_STRING "5.9.2"
+
+#define LCC_VERSION_ENCODE(major, minor, patch) \
+	((major) * 10000 + (minor) * 100 + (patch))
+
+#define LCC_VERSION \
+	LCC_VERSION_ENCODE(LCC_VERSION_MAJOR, LCC_VERSION_MINOR, LCC_VERSION_PATCH)
+
+LCC_BEGIN_DECLS
+
+unsigned int lcc_version (void);
+
+const char *lcc_version_string (void);
+
+const char *lcc_version_extra (void);
+
+LCC_END_DECLS
+
+#endif /* ! LIBCOLLECTD_LCC_FEATURES_H */
