@@ -99,10 +99,7 @@ int ssnprintf(char *str, size_t sz, const char *format, ...) {
 
   va_end(ap);
 
-  if (ret < 0) {
-    return ret;
-  }
-  return (size_t)ret >= sz;
+  return ret;
 } /* int ssnprintf */
 
 char *ssnprintf_alloc(char const *format, ...) /* {{{ */
@@ -1456,13 +1453,13 @@ int service_name_to_port_number(const char *service_name) {
       service_number = (int)ntohs(sa->sin6_port);
     }
 
-    if (service_number > 0)
+    if ((service_number > 0) && (service_number <= 65535))
       break;
   }
 
   freeaddrinfo(ai_list);
 
-  if (service_number > 0)
+  if ((service_number > 0) && (service_number <= 65535))
     return service_number;
   return -1;
 } /* int service_name_to_port_number */

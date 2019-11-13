@@ -743,12 +743,27 @@ test_cxx_flags() {
 #
 AC_CHECK_FUNCS_ONCE([ \
     asprintf \
+    closelog \
+    getaddrinfo \
+    getgrnam_r \
+    getnameinfo \
     getpwnam \
     getpwnam_r \
+    gettimeofday \
     if_indextoname \
+    openlog \
+    regcomp \
+    regerror \
+    regexec \
+    regfree \
+    select \
     setenv \
     setgroups \
-    setlocale
+    setlocale \
+    strcasecmp \
+    strdup \
+    strncasecmp \
+    sysconf
   ]
 )
 
@@ -3950,13 +3965,7 @@ if test "x$with_libnetsnmpagent" = "xyes"; then
   )
 
   AC_CHECK_LIB([netsnmpagent], [init_agent],
-    [
-      # libnetsnmp can be built without mib loading support
-      AC_CHECK_LIB([netsnmp], [get_tree],
-        [with_libnetsnmpagent="yes"],
-        [with_libnetsnmpagent="no (libnetsnmp doesn't support mib loading)"]
-      )
-    ],
+    [with_libnetsnmpagent="yes"],
     [with_libnetsnmpagent="no (libnetsnmpagent not found)"],
     [$libnetsnmphelpers]
   )
@@ -6362,7 +6371,6 @@ plugin_battery="no"
 plugin_bind="no"
 plugin_ceph="no"
 plugin_cgroups="no"
-plugin_connectivity="no"
 plugin_conntrack="no"
 plugin_contextswitch="no"
 plugin_cpu="no"
@@ -6403,14 +6411,12 @@ plugin_pcie_errors="no"
 plugin_perl="no"
 plugin_pinba="no"
 plugin_processes="no"
-plugin_procevent="no"
 plugin_protocols="no"
 plugin_python="no"
 plugin_serial="no"
 plugin_smart="no"
 plugin_swap="no"
 plugin_synproxy="no"
-plugin_sysevent="no"
 plugin_tape="no"
 plugin_tcpconns="no"
 plugin_ted="no"
@@ -6480,11 +6486,6 @@ if test "x$ac_system" = "xLinux"; then
   if test "x$with_libyajl" = "xyes" && test "x$with_libyajl2" = "xyes"; then
     plugin_ovs_events="yes"
     plugin_ovs_stats="yes"
-    plugin_procevent="yes"
-
-    if test "x$with_libmnl" = "xyes"; then
-      plugin_connectivity="yes"
-    fi
   fi
 
   if test "x$have_pci_regs_h" = "xyes"; then
@@ -6598,7 +6599,6 @@ fi
 
 if test "x$with_libyajl" = "xyes"; then
   plugin_ceph="yes"
-  plugin_sysevent="yes"
 fi
 
 if test "x$have_processor_info" = "xyes"; then
@@ -6795,8 +6795,6 @@ AC_PLUGIN([bind],                [$plugin_bind],              [ISC Bind nameserv
 AC_PLUGIN([ceph],                [$plugin_ceph],              [Ceph daemon statistics])
 AC_PLUGIN([cgroups],             [$plugin_cgroups],           [CGroups CPU usage accounting])
 AC_PLUGIN([chrony],              [yes],                       [Chrony statistics])
-AC_PLUGIN([check_uptime],        [yes],                       [Notify about uptime reset])
-AC_PLUGIN([connectivity],        [$plugin_connectivity],      [Network interface up/down events])
 AC_PLUGIN([conntrack],           [$plugin_conntrack],         [nf_conntrack statistics])
 AC_PLUGIN([contextswitch],       [$plugin_contextswitch],     [context switch statistics])
 AC_PLUGIN([cpu],                 [$plugin_cpu],               [CPU usage statistics])
@@ -6885,7 +6883,6 @@ AC_PLUGIN([ping],                [$with_liboping],            [Network latency s
 AC_PLUGIN([postgresql],          [$with_libpq],               [PostgreSQL database statistics])
 AC_PLUGIN([powerdns],            [yes],                       [PowerDNS statistics])
 AC_PLUGIN([processes],           [$plugin_processes],         [Process statistics])
-AC_PLUGIN([procevent],           [$plugin_procevent],         [Process event (start, stop) statistics])
 AC_PLUGIN([protocols],           [$plugin_protocols],         [Protocol (IP, TCP, ...) statistics])
 AC_PLUGIN([python],              [$plugin_python],            [Embed a Python interpreter])
 AC_PLUGIN([redis],               [$with_libhiredis],          [Redis plugin])
@@ -6901,7 +6898,6 @@ AC_PLUGIN([snmp_agent],          [$with_libnetsnmpagent],     [SNMP agent plugin
 AC_PLUGIN([statsd],              [yes],                       [StatsD plugin])
 AC_PLUGIN([swap],                [$plugin_swap],              [Swap usage statistics])
 AC_PLUGIN([synproxy],            [$plugin_synproxy],          [Synproxy stats plugin])
-AC_PLUGIN([sysevent],            [$plugin_sysevent],          [rsyslog events])
 AC_PLUGIN([syslog],              [$have_syslog],              [Syslog logging plugin])
 AC_PLUGIN([table],               [yes],                       [Parsing of tabular data])
 AC_PLUGIN([tail],                [yes],                       [Parsing of logfiles])
@@ -7228,8 +7224,6 @@ AC_MSG_RESULT([    bind  . . . . . . . . $enable_bind])
 AC_MSG_RESULT([    ceph  . . . . . . . . $enable_ceph])
 AC_MSG_RESULT([    cgroups . . . . . . . $enable_cgroups])
 AC_MSG_RESULT([    chrony. . . . . . . . $enable_chrony])
-AC_MSG_RESULT([    check_uptime. . . . . $enable_check_uptime])
-AC_MSG_RESULT([    connectivity. . . . . $enable_connectivity])
 AC_MSG_RESULT([    conntrack . . . . . . $enable_conntrack])
 AC_MSG_RESULT([    contextswitch . . . . $enable_contextswitch])
 AC_MSG_RESULT([    cpu . . . . . . . . . $enable_cpu])
@@ -7317,7 +7311,6 @@ AC_MSG_RESULT([    ping  . . . . . . . . $enable_ping])
 AC_MSG_RESULT([    postgresql  . . . . . $enable_postgresql])
 AC_MSG_RESULT([    powerdns  . . . . . . $enable_powerdns])
 AC_MSG_RESULT([    processes . . . . . . $enable_processes])
-AC_MSG_RESULT([    procevent . . . . . . $enable_procevent])
 AC_MSG_RESULT([    protocols . . . . . . $enable_protocols])
 AC_MSG_RESULT([    python  . . . . . . . $enable_python])
 AC_MSG_RESULT([    redis . . . . . . . . $enable_redis])
@@ -7333,7 +7326,6 @@ AC_MSG_RESULT([    snmp_agent  . . . . . $enable_snmp_agent])
 AC_MSG_RESULT([    statsd  . . . . . . . $enable_statsd])
 AC_MSG_RESULT([    swap  . . . . . . . . $enable_swap])
 AC_MSG_RESULT([    synproxy  . . . . . . $enable_synproxy])
-AC_MSG_RESULT([    sysevent. . . . . . . $enable_sysevent])
 AC_MSG_RESULT([    syslog  . . . . . . . $enable_syslog])
 AC_MSG_RESULT([    table . . . . . . . . $enable_table])
 AC_MSG_RESULT([    tail_csv  . . . . . . $enable_tail_csv])
